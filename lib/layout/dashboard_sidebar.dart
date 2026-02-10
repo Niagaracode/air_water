@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/app_theme/app_theme.dart';
-import '../controllers/sidebar_provider.dart';
+import '../core/app_theme/app_theme.dart';
+import '../features/dashboard/presentation/controllers/sidebar_provider.dart';
 
 class DashboardSidebar extends ConsumerWidget {
   const DashboardSidebar({super.key});
