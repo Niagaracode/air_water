@@ -10,12 +10,12 @@ class LoginHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return Stack(
       children: [
         Container(
-          height: isNarrow ? MediaQuery.of(context).size.height * 0.35:
-          MediaQuery.of(context).size.height,
+          height: isNarrow
+              ? MediaQuery.of(context).size.height * 0.35
+              : MediaQuery.of(context).size.height,
           width: double.infinity,
           color: Theme.of(context).primaryColor,
           child: CustomPaint(painter: BackgroundLinesPainter()),

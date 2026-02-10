@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/responsive/screen_layout_builder.dart';
+import '../dashboard_shell.dart';
 
 class CompanyAdminLayout extends ScreenLayoutBuilder {
   const CompanyAdminLayout({super.key});
@@ -12,12 +13,12 @@ class CompanyAdminLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const _CompanyAdminTablet();
+    return const DashboardShell(child: _CompanyAdminTablet());
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const _CompanyAdminDesktop();
+    return const DashboardShell(child: _CompanyAdminDesktop());
   }
 }
 
@@ -26,9 +27,7 @@ class _CompanyAdminMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Company Admin - Mobile')),
-    );
+    return const Scaffold(body: Center(child: Text('Company Admin - Mobile')));
   }
 }
 
@@ -37,9 +36,7 @@ class _CompanyAdminTablet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Company Admin - Tablet')),
-    );
+    return const Center(child: Text('Company Admin - Tablet'));
   }
 }
 
@@ -48,8 +45,6 @@ class _CompanyAdminDesktop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Company Admin - Desktop')),
-    );
+    return const Center(child: Text('Company Admin - Desktop'));
   }
 }

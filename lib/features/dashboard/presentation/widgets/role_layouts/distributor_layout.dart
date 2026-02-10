@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/responsive/screen_layout_builder.dart';
+import '../dashboard_shell.dart';
 
 class DistributorLayout extends ScreenLayoutBuilder {
   const DistributorLayout({super.key});
@@ -12,12 +13,12 @@ class DistributorLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const _DistributorTablet();
+    return const DashboardShell(child: _DistributorTablet());
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const _DistributorDesktop();
+    return const DashboardShell(child: _DistributorDesktop());
   }
 }
 
@@ -26,9 +27,7 @@ class _DistributorMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Distributor - Mobile')),
-    );
+    return const Scaffold(body: Center(child: Text('Distributor - Mobile')));
   }
 }
 
@@ -37,9 +36,7 @@ class _DistributorTablet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Distributor - Tablet')),
-    );
+    return const Center(child: Text('Distributor - Tablet'));
   }
 }
 
@@ -48,8 +45,6 @@ class _DistributorDesktop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Distributor - Desktop')),
-    );
+    return const Center(child: Text('Distributor - Desktop'));
   }
 }

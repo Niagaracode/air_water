@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/responsive/screen_layout_builder.dart';
+import '../dashboard_shell.dart';
 
 class CustomerLayout extends ScreenLayoutBuilder {
   const CustomerLayout({super.key});
@@ -12,12 +13,12 @@ class CustomerLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const _CustomerTablet();
+    return const DashboardShell(child: _CustomerTablet());
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const _CustomerDesktop();
+    return const DashboardShell(child: _CustomerDesktop());
   }
 }
 
@@ -26,9 +27,7 @@ class _CustomerMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Customer - Mobile')),
-    );
+    return const Scaffold(body: Center(child: Text('Customer - Mobile')));
   }
 }
 
@@ -37,9 +36,7 @@ class _CustomerTablet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Customer - Tablet')),
-    );
+    return const Center(child: Text('Customer - Tablet'));
   }
 }
 
@@ -48,8 +45,6 @@ class _CustomerDesktop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Customer - Desktop')),
-    );
+    return const Center(child: Text('Customer - Desktop'));
   }
 }

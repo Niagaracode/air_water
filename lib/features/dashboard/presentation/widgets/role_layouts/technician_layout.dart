@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../core/responsive/screen_layout_builder.dart';
+import '../dashboard_shell.dart';
 
 class TechnicianLayout extends ScreenLayoutBuilder {
   const TechnicianLayout({super.key});
@@ -12,12 +13,12 @@ class TechnicianLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const _TechnicianTablet();
+    return const DashboardShell(child: _TechnicianTablet());
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const _TechnicianDesktop();
+    return const DashboardShell(child: _TechnicianDesktop());
   }
 }
 
@@ -26,9 +27,7 @@ class _TechnicianMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Technician - Mobile')),
-    );
+    return const Scaffold(body: Center(child: Text('Technician - Mobile')));
   }
 }
 
@@ -37,9 +36,7 @@ class _TechnicianTablet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Technician - Tablet')),
-    );
+    return const Center(child: Text('Technician - Tablet'));
   }
 }
 
@@ -48,8 +45,6 @@ class _TechnicianDesktop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Technician - Desktop')),
-    );
+    return const Center(child: Text('Technician - Desktop'));
   }
 }
