@@ -1,9 +1,8 @@
+import 'package:air_water/features/auth/presentation/view/login_desktop.dart';
+import 'package:air_water/features/auth/presentation/view/login_mobile.dart';
+import 'package:air_water/features/auth/presentation/view/login_tablet.dart';
 import 'package:flutter/material.dart';
-
-import '../../../../core/responsive/screen_layout_builder.dart';
-import 'view/login_desktop.dart';
-import 'view/login_mobile.dart';
-import 'view/login_tablet.dart';
+import '../../../core/responsive/screen_layout_builder.dart';
 
 
 class LoginLayout extends ScreenLayoutBuilder {

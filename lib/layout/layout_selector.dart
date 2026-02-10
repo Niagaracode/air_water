@@ -1,13 +1,9 @@
-import 'package:flutter/material.dart';
 
-import '../../../../core/responsive/screen_layout_builder.dart';
-import '../../../../core/user_config/user_role.dart';
-import 'role_layouts/super_admin_layout.dart';
-import 'role_layouts/company_admin_layout.dart';
-import 'role_layouts/distributor_layout.dart';
-import 'role_layouts/supervisor_layout.dart';
-import 'role_layouts/technician_layout.dart';
-import 'role_layouts/customer_layout.dart';
+import 'package:air_water/layout/user_layout.dart';
+import 'package:flutter/cupertino.dart';
+
+import '../core/responsive/screen_layout_builder.dart';
+import '../core/user_config/user_role.dart';
 
 class LayoutSelector extends StatelessWidget {
   const LayoutSelector({super.key, required this.userRole});

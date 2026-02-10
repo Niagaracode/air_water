@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/auth/presentation/pages/login_layout.dart';
-import '../../features/dashboard/presentation/dashboard_page.dart';
+import '../../features/auth/presentation/login_layout.dart';
+import '../../features/dashboard/presentation/dashboard_layout.dart';
 import '../../app_startup/app_startup.dart';
 import 'router_refresh_notifier.dart';
 
@@ -58,7 +58,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       GoRoute(
         path: '/dashboard',
-        builder: (_, __) => const DashboardPage(),
+        builder: (_, __) => const DashboardLayout(),
       ),
     ],
   );

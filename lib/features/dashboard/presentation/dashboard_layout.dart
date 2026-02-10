@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/user_config/user_role_provider.dart';
-import 'widgets/layout_selector.dart';
+import '../../../layout/layout_selector.dart';
 
-class DashboardPage extends ConsumerWidget {
-  const DashboardPage({super.key});
+class DashboardLayout extends ConsumerWidget {
+  const DashboardLayout({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

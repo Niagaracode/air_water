@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../widgets/login_form.dart';
-import '../../widgets/login_header.dart';
-import 'login_mobile.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginTablet extends StatelessWidget {
-  const LoginTablet({super.key});
+import '../widgets/login_form.dart';
+import '../widgets/login_header.dart';
+
+class LoginDesktop extends ConsumerStatefulWidget {
+  const LoginDesktop({super.key});
+
+  @override
+  ConsumerState<LoginDesktop> createState() => _LoginDesktopState();
+}
+
+class _LoginDesktopState extends ConsumerState<LoginDesktop> {
 
   @override
   Widget build(BuildContext context) {
@@ -12,14 +19,16 @@ class LoginTablet extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
+      body: Row(
+        children: [
+          Expanded(
+            child: Container(
               color: theme.primaryColor,
-              child: const LoginHeader(isNarrow: true),
+              child: const LoginHeader(isNarrow: false),
             ),
-            Center(
+          ),
+          Expanded(
+            child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Padding(
@@ -28,8 +37,8 @@ class LoginTablet extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

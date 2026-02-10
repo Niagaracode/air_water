@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../widgets/login_form.dart';
+import '../widgets/login_header.dart';
 
-import '../../widgets/login_form.dart';
-import '../../widgets/login_header.dart';
-
-class LoginMobile extends ConsumerStatefulWidget {
-  const LoginMobile({super.key});
-
-  @override
-  ConsumerState<LoginMobile> createState() => _LoginMobileState();
-}
-
-class _LoginMobileState extends ConsumerState<LoginMobile> {
+class LoginTablet extends StatelessWidget {
+  const LoginTablet({super.key});
 
   @override
   Widget build(BuildContext context) {
