@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
+import 'core/app_theme/app_theme.dart';
 import 'core/router/app_router.dart';
 
 void main() {
@@ -19,6 +20,10 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      // System decides light/dark
+      themeMode: ThemeMode.system,
     );
   }
 }
