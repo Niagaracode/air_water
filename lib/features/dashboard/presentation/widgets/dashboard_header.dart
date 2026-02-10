@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../core/app_theme/app_theme.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 class DashboardHeader extends StatelessWidget {
   const DashboardHeader({super.key});
@@ -52,10 +52,7 @@ class DashboardHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.settings_outlined, color: primary),
-          ),
+          IconButton(onPressed: () {}, icon: Icon(Icons.settings_outlined)),
 
           const SizedBox(width: 24),
 

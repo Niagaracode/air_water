@@ -19,7 +19,6 @@ import '../features/dashboard/presentation/view/supervisor/supervisor_tablet.dar
 import '../features/dashboard/presentation/view/technician/technician_desktop.dart';
 import '../features/dashboard/presentation/view/technician/technician_mobile.dart';
 import '../features/dashboard/presentation/view/technician/technician_tablet.dart';
-import 'dashboard_shell.dart';
 
 class SuperAdminLayout extends ScreenLayoutBuilder {
   const SuperAdminLayout({super.key});
@@ -31,12 +30,12 @@ class SuperAdminLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const DashboardShell(child: SuperAdminTablet());
+    return const SuperAdminTablet();
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const DashboardShell(child: SuperAdminDesktop());
+    return const SuperAdminDesktop();
   }
 }
 
@@ -50,12 +49,12 @@ class CompanyAdminLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const DashboardShell(child: CompanyAdminTablet());
+    return const CompanyAdminTablet();
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const DashboardShell(child: CompanyAdminDesktop());
+    return const CompanyAdminDesktop();
   }
 }
 
@@ -69,12 +68,12 @@ class DistributorLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const DashboardShell(child: DistributorTablet());
+    return const DistributorTablet();
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const DashboardShell(child: DistributorDesktop());
+    return const DistributorDesktop();
   }
 }
 
@@ -88,12 +87,12 @@ class SupervisorLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const DashboardShell(child: SupervisorTablet());
+    return const SupervisorTablet();
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const DashboardShell(child: SupervisorDesktop());
+    return const SupervisorDesktop();
   }
 }
 
@@ -107,12 +106,12 @@ class TechnicianLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const DashboardShell(child: TechnicianTablet());
+    return const TechnicianTablet();
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const DashboardShell(child: TechnicianDesktop());
+    return const TechnicianDesktop();
   }
 }
 
@@ -126,11 +125,11 @@ class CustomerLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const DashboardShell(child: CustomerTablet());
+    return const CustomerTablet();
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const DashboardShell(child: CustomerDesktop());
+    return const CustomerDesktop();
   }
 }

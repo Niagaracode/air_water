@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../core/app_theme/app_theme.dart';
-import '../features/dashboard/presentation/controllers/sidebar_provider.dart';
+import '../../../../core/app_theme/app_theme.dart';
+import '../controllers/sidebar_provider.dart';
 
 class DashboardSidebar extends ConsumerWidget {
   const DashboardSidebar({super.key});
@@ -202,7 +202,7 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = primary;
+    //final primaryColor = primary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -215,9 +215,9 @@ class _SidebarItem extends StatelessWidget {
             horizontal: isExpanded ? 16 : 0,
           ),
           decoration: BoxDecoration(
-            color: isSelected
-                ? primaryColor.withOpacity(0.1)
-                : Colors.transparent,
+            // color: isSelected
+            //     ? primaryColor.withOpacity(0.1)
+            //     : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -227,7 +227,7 @@ class _SidebarItem extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isSelected ? primaryColor : Colors.grey[600],
+                //color: isSelected ? primaryColor : Colors.grey[600],
                 size: 24,
               ),
               if (isExpanded) ...[
@@ -237,7 +237,7 @@ class _SidebarItem extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? primaryColor : Colors.grey[800],
+                    // color: isSelected ? primaryColor : Colors.grey[800],
                   ),
                 ),
               ],
