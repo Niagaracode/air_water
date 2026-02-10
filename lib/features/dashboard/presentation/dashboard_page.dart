@@ -13,11 +13,12 @@ class DashboardPage extends ConsumerWidget {
 
     return roleAsync.when(
       data: (role) => LayoutSelector(userRole: role),
-      loading: () => Scaffold(
-        appBar: AppBar(title: const Text('loading')),
-        body: const Center(child: CircularProgressIndicator()),
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       ),
-      error: (e, _) => Scaffold(body: Center(child: Text(e.toString()))),
+      error: (e, _) => Scaffold(
+        body: Center(child: Text(e.toString())),
+      ),
     );
   }
 }
