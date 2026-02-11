@@ -1,15 +1,9 @@
-import 'package:flutter/material.dart';
-
+import 'package:flutter/cupertino.dart';
 import 'screen_helper.dart';
 import 'screen_type.dart';
 
-abstract class ScreenLayoutBuilder extends StatelessWidget {
-  final Widget child;
-
-  const ScreenLayoutBuilder({
-    super.key,
-    required this.child,
-  });
+abstract class PageLayoutBuilder extends StatelessWidget {
+  const PageLayoutBuilder({super.key});
 
   Widget buildNarrow(BuildContext context);
   Widget buildMiddle(BuildContext context);

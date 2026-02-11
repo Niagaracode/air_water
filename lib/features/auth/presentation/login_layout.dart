@@ -6,7 +6,7 @@ import '../../../core/responsive/screen_layout_builder.dart';
 
 
 class LoginLayout extends ScreenLayoutBuilder {
-  const LoginLayout({super.key});
+  const LoginLayout({super.key, required super.child});
 
   @override
   Widget buildNarrow(BuildContext context) {
