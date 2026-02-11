@@ -12,11 +12,21 @@ class AuthInterceptor extends Interceptor {
       RequestOptions options,
       RequestInterceptorHandler handler,
       ) async {
+
+    // Skip auth for login
+    if (options.path.contains('/login')) {
+      return handler.next(options);
+    }
+
     final token = await storage.readToken();
 
-    if (token != null) {
+    if (token != null && token.isNotEmpty) {
       options.headers['Authorization'] = 'Bearer $token';
     }
+
+    options.headers.putIfAbsent(
+      'Content-Type', () => 'application/json',
+    );
 
     return handler.next(options);
   }

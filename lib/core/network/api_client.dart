@@ -14,8 +14,8 @@ class ApiClient {
   }
 
   Future<Response> post(String endpoint, {dynamic data}) {
-    print("endpoint:${endpoint} data:${data}");
-    return _dio.post("${AppConfig.apiUrl}/$endpoint", data: data);
+    print("endpoint:$endpoint, data:$data");
+    return _dio.post(endpoint, data: data);
   }
 
   Future<Response> put(String path, {dynamic data}) {

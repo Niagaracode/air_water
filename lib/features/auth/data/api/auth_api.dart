@@ -11,7 +11,7 @@ class AuthApi {
       String password,
       ) async {
     final response = await _client.post(
-      'login',
+      '/login',
       data: {
         'username': username,
         'password': password,
