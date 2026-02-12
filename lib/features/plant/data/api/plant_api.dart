@@ -16,8 +16,28 @@ class PlantApi {
       query['search'] = search;
     }
 
-    final response = await _client.get('/plants', query: query);
+    final response = await _client.get('/plants/grouped', query: query);
     return PlantResponse.fromJson(Map<String, dynamic>.from(response.data));
+  }
+
+  Future<PlantGroupedResponse> getPlantsGrouped({
+    int page = 1,
+    int limit = 50,
+    String? name,
+    String? companyId,
+  }) async {
+    final Map<String, dynamic> query = {'page': page, 'limit': limit};
+    if (name != null && name.isNotEmpty) {
+      query['name'] = name;
+    }
+    if (companyId != null && companyId.isNotEmpty) {
+      query['company_id'] = companyId;
+    }
+
+    final response = await _client.get('/plants/grouped', query: query);
+    return PlantGroupedResponse.fromJson(
+      Map<String, dynamic>.from(response.data),
+    );
   }
 
   Future<void> createPlant(PlantCreateRequest request) async {

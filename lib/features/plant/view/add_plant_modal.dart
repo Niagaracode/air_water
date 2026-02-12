@@ -5,6 +5,12 @@ import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/app_dropdown.dart';
 import '../../../shared/widgets/app_radio_button.dart';
 import '../controller/plant_provider.dart';
+import '../../../core/user_config/user_role.dart';
+import '../../../core/user_config/user_role_provider.dart';
+import '../../company/presentation/controller/company_provider.dart';
+import '../../../shared/widgets/app_autocomplete.dart';
+import '../../../core/app_theme/app_theme.dart';
+import '../../company/presentation/model/company_model.dart';
 
 class AddPlantModal extends ConsumerStatefulWidget {
   const AddPlantModal({super.key});
@@ -48,11 +54,19 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
   }
 
   Future<void> _save() async {
+    final roleAsync = ref.read(userRoleProvider);
+    final isSuperAdmin = roleAsync.asData?.value == UserRole.superAdmin;
+
     // Basic validation
-    if (_nameController.text.isEmpty || _companyController.text.isEmpty) {
+    if (_nameController.text.isEmpty ||
+        (isSuperAdmin && _companyController.text.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in Plant Name and Company Name'),
+        SnackBar(
+          content: Text(
+            isSuperAdmin
+                ? 'Please fill in Plant Name and Company Name'
+                : 'Please fill in Plant Name',
+          ),
         ),
       );
       return;
@@ -89,179 +103,233 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        width: 800,
-        padding: const EdgeInsets.all(32),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'ADD NEW PLANT',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8EFFF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
+    final roleAsync = ref.watch(userRoleProvider);
+
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Material(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+        ),
+        child: Container(
+          width: 600,
+          height: MediaQuery.of(context).size.height,
+          padding: const EdgeInsets.all(32),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.info, color: Color(0xFF1B1B4B), size: 20),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Enter The Plant Name And Specify Multiple Addresses.',
-                        style: TextStyle(
-                          color: Color(0xFF1B1B4B),
-                          fontSize: 13,
+                    const Text(
+                      'ADD NEW PLANT',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: Colors.grey.shade300),
                         ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: infoBackground,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info, color: primaryDeep, size: 20),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Enter The Plant Name And Specify Multiple Addresses.',
+                          style: TextStyle(
+                            color: Color(0xFF1B1B4B),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                roleAsync.when(
+                  data: (role) {
+                    final isSuperAdmin = role == UserRole.superAdmin;
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Plant Name*',
-                          style: TextStyle(fontWeight: FontWeight.w500),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Plant Name*',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  AppTextField(
+                                    controller: _nameController,
+                                    hint: 'Enter plant name',
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isSuperAdmin) ...[
+                              const SizedBox(width: 24),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Company Name*',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    AppAutocomplete<CompanyGroup>(
+                                      controller: _companyController,
+                                      hint: 'Enter Company Name',
+                                      displayStringForOption: (option) =>
+                                          option.name,
+                                      optionsBuilder: (textEditingValue) async {
+                                        if (textEditingValue.text.isEmpty) {
+                                          return const Iterable<
+                                            CompanyGroup
+                                          >.empty();
+                                        }
+                                        final response = await ref
+                                            .read(companyRepositoryProvider)
+                                            .getGroupedCompanies(
+                                              search: textEditingValue.text,
+                                            );
+                                        return response.data
+                                            as Iterable<CompanyGroup>;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                        AppTextField(
-                          controller: _nameController,
-                          hint: 'Enter plant name',
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'LOCATION DETAILS',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.1,
+                                fontSize: 14,
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: _addAddressRow,
+                              icon: const Icon(Icons.add, size: 16),
+                              label: const Text('ADD'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primaryDeep,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 32),
+                        ...List.generate(
+                          _addressRows.length,
+                          (index) => _buildAddressRow(index),
+                        ),
+                        const SizedBox(height: 32),
+                        const Text(
+                          'STATUS',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            AppRadioButton<int>(
+                              value: 1,
+                              groupValue: _status,
+                              label: 'ACTIVE',
+                              onChanged: (v) => setState(() => _status = v!),
+                            ),
+                            const SizedBox(width: 32),
+                            AppRadioButton<int>(
+                              value: 0,
+                              groupValue: _status,
+                              label: 'INACTIVE',
+                              onChanged: (v) => setState(() => _status = v!),
+                            ),
+                          ],
                         ),
                       ],
-                    ),
+                    );
+                  },
+                  loading: () => const SizedBox(
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator()),
                   ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Company Name*',
-                          style: TextStyle(fontWeight: FontWeight.w500),
+                  error: (err, stack) => SizedBox(
+                    height: 200,
+                    child: Center(child: Text('Error: $err')),
+                  ),
+                ),
+                const SizedBox(height: 48),
+                Center(
+                  child: SizedBox(
+                    width: 200,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryDeep,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(height: 8),
-                        AppTextField(
-                          controller: _companyController,
-                          hint: 'Enter Company Name',
+                      ),
+                      child: const Text(
+                        'SAVE',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'LOCATION DETAILS',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.1,
-                      fontSize: 14,
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: _addAddressRow,
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('ADD'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B1B4B),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 32),
-              ...List.generate(
-                _addressRows.length,
-                (index) => _buildAddressRow(index),
-              ),
-              const SizedBox(height: 32),
-              const Text(
-                'STATUS',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  AppRadioButton<int>(
-                    value: 1,
-                    groupValue: _status,
-                    label: 'ACTIVE',
-                    onChanged: (v) => setState(() => _status = v!),
-                  ),
-                  const SizedBox(width: 32),
-                  AppRadioButton<int>(
-                    value: 0,
-                    groupValue: _status,
-                    label: 'INACTIVE',
-                    onChanged: (v) => setState(() => _status = v!),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 48),
-              Center(
-                child: SizedBox(
-                  width: 200,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _save,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1B1B4B),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'SAVE',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -283,7 +351,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Address 1*',
+                    'Address*',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),

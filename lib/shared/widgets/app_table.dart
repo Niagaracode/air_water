@@ -20,17 +20,6 @@ class AppTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (itemCount == 0 && !isLoading) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        alignment: Alignment.center,
-        child: const Text(
-          'No record found',
-          style: TextStyle(color: Colors.grey, fontSize: 16),
-        ),
-      );
-    }
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -47,25 +36,36 @@ class AppTable extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildHeader(),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: itemCount,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: itemBuilder,
-          ),
-          if (hasMore)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: isLoading
-                    ? const CircularProgressIndicator()
-                    : TextButton(
-                        onPressed: onLoadMore,
-                        child: const Text('Load More'),
-                      ),
+          if (itemCount == 0 && !isLoading)
+            Container(
+              padding: const EdgeInsets.all(32),
+              alignment: Alignment.center,
+              child: const Text(
+                'No record found',
+                style: TextStyle(color: Colors.grey, fontSize: 16),
               ),
+            )
+          else ...[
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: itemCount,
+              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemBuilder: itemBuilder,
             ),
+            if (hasMore)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(
+                  child: isLoading
+                      ? const CircularProgressIndicator()
+                      : TextButton(
+                          onPressed: onLoadMore,
+                          child: const Text('Load More'),
+                        ),
+                ),
+              ),
+          ],
         ],
       ),
     );

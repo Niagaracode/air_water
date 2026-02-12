@@ -7,5 +7,12 @@ abstract class PlantRepository {
     String? search,
   });
 
+  Future<PlantGroupedResponse> getPlantsGrouped({
+    int page = 1,
+    int limit = 50,
+    String? name,
+    String? companyId,
+  });
+
   Future<void> createPlant(PlantCreateRequest request);
 }

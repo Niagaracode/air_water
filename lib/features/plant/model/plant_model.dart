@@ -132,6 +132,104 @@ class PlantLocation {
   }
 }
 
+class PlantGroupAddress {
+  final int? plantId;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? addressLine1;
+  final String? addressLine2;
+  final String? addressLine3;
+  final String? pincode;
+  final int? companyId;
+  final String? companyName;
+  final int? status;
+
+  PlantGroupAddress({
+    this.plantId,
+    this.city,
+    this.state,
+    this.country,
+    this.addressLine1,
+    this.addressLine2,
+    this.addressLine3,
+    this.pincode,
+    this.companyId,
+    this.companyName,
+    this.status,
+  });
+
+  factory PlantGroupAddress.fromJson(Map<String, dynamic> json) {
+    return PlantGroupAddress(
+      plantId: json['plant_id'] as int?,
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      country: json['country'] as String?,
+      addressLine1: json['address_line_1'] as String?,
+      addressLine2: json['address_line_2'] as String?,
+      addressLine3: json['address_line_3'] as String?,
+      pincode: json['pincode'] as String?,
+      companyId: json['company_id'] as int?,
+      companyName: json['company_name'] as String?,
+      status: json['status'] as int?,
+    );
+  }
+
+  String get statusText => status == 1 ? 'Active' : 'Inactive';
+
+  String get fullAddress {
+    final parts = [
+      addressLine1,
+      addressLine2,
+      addressLine3,
+    ].where((p) => p != null && p.isNotEmpty).toList();
+    return parts.isNotEmpty ? parts.join(', ') : '';
+  }
+}
+
+class PlantGroup {
+  final String? plantOrganizationCode;
+  final String name;
+  final String? createdAt;
+  final List<PlantGroupAddress> addresses;
+
+  PlantGroup({
+    this.plantOrganizationCode,
+    required this.name,
+    this.createdAt,
+    required this.addresses,
+  });
+
+  factory PlantGroup.fromJson(Map<String, dynamic> json) {
+    return PlantGroup(
+      plantOrganizationCode: json['plant_organization_code'] as String?,
+      name: json['name'] as String,
+      createdAt: json['created_at'] as String?,
+      addresses: (json['addresses'] as List)
+          .map((a) => PlantGroupAddress.fromJson(a as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class PlantGroupedResponse {
+  final List<PlantGroup> data;
+  final Pagination pagination;
+
+  PlantGroupedResponse({required this.data, required this.pagination});
+
+  factory PlantGroupedResponse.fromJson(Map<String, dynamic> json) {
+    return PlantGroupedResponse(
+      data: (json['data'] as List)
+          .map((i) => PlantGroup.fromJson(i as Map<String, dynamic>))
+          .toList(),
+      pagination: Pagination.fromJson(
+        json['pagination'] as Map<String, dynamic>,
+      ),
+    );
+  }
+}
+
 class PlantCreateRequest {
   final String name;
   final String companyName;

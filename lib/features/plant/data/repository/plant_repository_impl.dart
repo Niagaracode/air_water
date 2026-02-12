@@ -17,6 +17,21 @@ class PlantRepositoryImpl implements PlantRepository {
   }
 
   @override
+  Future<PlantGroupedResponse> getPlantsGrouped({
+    int page = 1,
+    int limit = 50,
+    String? name,
+    String? companyId,
+  }) async {
+    return await _api.getPlantsGrouped(
+      page: page,
+      limit: limit,
+      name: name,
+      companyId: companyId,
+    );
+  }
+
+  @override
   Future<void> createPlant(PlantCreateRequest request) async {
     await _api.createPlant(request);
   }
