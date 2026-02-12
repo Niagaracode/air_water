@@ -1,5 +1,6 @@
 const Map<String, String> menuRoutes = {
   'Dashboard': '/dashboard',
+  'Company': '/company',
   'Plant': '/plant',
   'Tank': '/tank',
   'Device': '/device',
