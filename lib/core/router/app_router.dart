@@ -1,3 +1,4 @@
+import 'package:air_water/features/company/company_layout.dart';
 import 'package:air_water/features/group/user_group_layout.dart';
 import 'package:air_water/features/message_template/message_template_layout.dart';
 import 'package:air_water/features/product/product_layout.dart';
@@ -68,6 +69,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/dashboard',
             builder: (_, __) => const DashboardLayout(),
+          ),
+          GoRoute(
+            path: '/company',
+            builder: (_, __) => const CompanyLayout(),
           ),
           GoRoute(
             path: '/plant',
