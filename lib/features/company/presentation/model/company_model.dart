@@ -62,6 +62,28 @@ class CompanyAddress {
     ].where((p) => p.isNotEmpty).toList();
     return parts.join(', ');
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CompanyAddress &&
+          runtimeType == other.runtimeType &&
+          addressLine1 == other.addressLine1 &&
+          pincode == other.pincode &&
+          country == other.country &&
+          state == other.state &&
+          city == other.city &&
+          companyId == other.companyId;
+
+  @override
+  int get hashCode => Object.hash(
+        addressLine1,
+        pincode,
+        country,
+        state,
+        city,
+        companyId,
+      );
 }
 
 class Company {
@@ -110,6 +132,16 @@ class CompanyGroup {
       createdAt: json['created_at'] as String?,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CompanyGroup &&
+          runtimeType == other.runtimeType &&
+          name == other.name;
+
+  @override
+  int get hashCode => name.hashCode;
 }
 
 class CompanyGroupedResponse {

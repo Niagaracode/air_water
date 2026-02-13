@@ -20,15 +20,17 @@ class CompanyState {
   final bool hasMore;
   final int page;
   final int totalEntries;
+  final String? selectedDate;
+  final bool isProcessing;
   final String? error;
   final String searchName;
   final int? selectedStatus;
-  final String? selectedDate;
 
   CompanyState({
     this.groupedCompanies = const [],
     this.expandedGroups = const {},
     this.isLoading = false,
+    this.isProcessing = false,
     this.hasMore = true,
     this.page = 1,
     this.totalEntries = 0,
@@ -49,6 +51,7 @@ class CompanyState {
     String? searchName,
     int? selectedStatus,
     String? selectedDate,
+    bool? isProcessing,
     bool clearStatus = false,
     bool clearDate = false,
   }) {
@@ -56,6 +59,7 @@ class CompanyState {
       groupedCompanies: groupedCompanies ?? this.groupedCompanies,
       expandedGroups: expandedGroups ?? this.expandedGroups,
       isLoading: isLoading ?? this.isLoading,
+      isProcessing: isProcessing ?? this.isProcessing,
       hasMore: hasMore ?? this.hasMore,
       page: page ?? this.page,
       totalEntries: totalEntries ?? this.totalEntries,
@@ -99,14 +103,10 @@ class CompanyNotifier extends Notifier<CompanyState> {
       if (timestamp != _lastRequestTimestamp) return;
 
       final updatedGroupedCompanies = response.data;
-      final expandedGroups = Set<String>.from(state.expandedGroups);
+      final expandedGroups = <String>{};
 
-      // Default expand first group if not already expanded and if filters are empty
-      if (state.searchName.isEmpty &&
-          state.selectedStatus == null &&
-          state.selectedDate == null &&
-          updatedGroupedCompanies.isNotEmpty &&
-          expandedGroups.isEmpty) {
+      // Always expand the first group by default
+      if (updatedGroupedCompanies.isNotEmpty) {
         expandedGroups.add(updatedGroupedCompanies.first.name);
       }
 
@@ -185,40 +185,77 @@ class CompanyNotifier extends Notifier<CompanyState> {
   }
 
   Future<bool> createCompany(CompanyCreateRequest request) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isProcessing: true, error: null);
     try {
       final repository = ref.read(companyRepositoryProvider);
       await repository.createCompany(request);
       await loadGroupedCompanies();
+      state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
     }
   }
 
+  /// Reload data from API but keep the current expanded groups intact.
+  Future<void> _reloadKeepingState() async {
+    final currentExpanded = Set<String>.from(state.expandedGroups);
+
+    try {
+      final repository = ref.read(companyRepositoryProvider);
+      final response = await repository.getGroupedCompanies(
+        page: state.page,
+        limit: _limit,
+        search: state.searchName,
+        status: state.selectedStatus,
+        date: state.selectedDate,
+      );
+
+      // Keep expanded groups that still exist in the new data
+      final newNames = response.data.map((g) => g.name).toSet();
+      final preserved = currentExpanded.intersection(newNames);
+      if (preserved.isEmpty && response.data.isNotEmpty) {
+        preserved.add(response.data.first.name);
+      }
+
+      state = state.copyWith(
+        groupedCompanies: response.data,
+        isLoading: false,
+        hasMore: response.pagination.page < response.pagination.totalPages,
+        page: 1,
+        totalEntries: response.pagination.total,
+        expandedGroups: preserved,
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
   Future<bool> updateCompany(int id, Map<String, dynamic> data) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isProcessing: true, error: null);
     try {
       final repository = ref.read(companyRepositoryProvider);
       await repository.updateCompany(id, data);
-      await loadGroupedCompanies();
+      await _reloadKeepingState();
+      state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
     }
   }
 
   Future<bool> deleteCompany(int id) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isProcessing: true, error: null);
     try {
       final repository = ref.read(companyRepositoryProvider);
       await repository.deleteCompany(id);
-      await loadGroupedCompanies();
+      await _reloadKeepingState();
+      state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
     }
   }

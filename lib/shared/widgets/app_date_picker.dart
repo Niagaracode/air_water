@@ -1,31 +1,198 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class AppDatePicker extends StatefulWidget {
-  final DateTime initialDate;
+/// A date picker field that shows the calendar as an overlay below the field.
+class AppDatePickerField extends StatefulWidget {
+  final DateTime? selectedDate;
   final DateTime firstDate;
   final DateTime lastDate;
+  final ValueChanged<DateTime?> onDateChanged;
+  final String hint;
 
-  const AppDatePicker({
+  const AppDatePickerField({
     super.key,
-    required this.initialDate,
+    this.selectedDate,
     required this.firstDate,
     required this.lastDate,
+    required this.onDateChanged,
+    this.hint = 'Select Date',
   });
 
   @override
-  State<AppDatePicker> createState() => _AppDatePickerState();
+  State<AppDatePickerField> createState() => _AppDatePickerFieldState();
 }
 
-class _AppDatePickerState extends State<AppDatePicker> {
+class _AppDatePickerFieldState extends State<AppDatePickerField> {
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  bool _isOpen = false;
+  late DateTime _currentMonth;
+  DateTime? _tempSelected;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentMonth = DateTime(
+      (widget.selectedDate ?? DateTime.now()).year,
+      (widget.selectedDate ?? DateTime.now()).month,
+    );
+    _tempSelected = widget.selectedDate;
+  }
+
+  void _toggle() {
+    if (_isOpen) {
+      _close();
+    } else {
+      _open();
+    }
+  }
+
+  void _open() {
+    _currentMonth = DateTime(
+      (widget.selectedDate ?? DateTime.now()).year,
+      (widget.selectedDate ?? DateTime.now()).month,
+    );
+    _tempSelected = widget.selectedDate;
+
+    final renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _close,
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox.expand(),
+              ),
+            ),
+            CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              offset: Offset(0, size.height + 4),
+              child: Material(
+                elevation: 8,
+                borderRadius: BorderRadius.circular(16),
+                color: Colors.white,
+                child: _DatePickerCalendar(
+                  initialMonth: _currentMonth,
+                  selectedDate: _tempSelected,
+                  firstDate: widget.firstDate,
+                  lastDate: widget.lastDate,
+                  onCancel: _close,
+                  onConfirm: (date) {
+                    widget.onDateChanged(date);
+                    _close();
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _isOpen = true);
+  }
+
+  void _close() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    setState(() => _isOpen = false);
+  }
+
+  @override
+  void dispose() {
+    _close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final displayText = widget.selectedDate != null
+        ? "${widget.selectedDate!.year}-${widget.selectedDate!.month.toString().padLeft(2, '0')}-${widget.selectedDate!.day.toString().padLeft(2, '0')}"
+        : null;
+
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: _toggle,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F6FA),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  displayText ?? widget.hint,
+                  style: TextStyle(
+                    color: displayText != null
+                        ? Colors.black
+                        : Colors.grey.shade600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              if (widget.selectedDate != null)
+                GestureDetector(
+                  onTap: () {
+                    widget.onDateChanged(null);
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.only(right: 8),
+                    child: Icon(Icons.close, size: 16, color: Colors.grey),
+                  ),
+                ),
+              const Icon(
+                Icons.calendar_today,
+                color: Colors.grey,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The calendar portion, used internally by AppDatePickerField overlay.
+class _DatePickerCalendar extends StatefulWidget {
+  final DateTime initialMonth;
+  final DateTime? selectedDate;
+  final DateTime firstDate;
+  final DateTime lastDate;
+  final VoidCallback onCancel;
+  final ValueChanged<DateTime?> onConfirm;
+
+  const _DatePickerCalendar({
+    required this.initialMonth,
+    this.selectedDate,
+    required this.firstDate,
+    required this.lastDate,
+    required this.onCancel,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_DatePickerCalendar> createState() => _DatePickerCalendarState();
+}
+
+class _DatePickerCalendarState extends State<_DatePickerCalendar> {
   late DateTime _currentMonth;
   DateTime? _selectedDate;
 
   @override
   void initState() {
     super.initState();
-    _currentMonth = DateTime(widget.initialDate.year, widget.initialDate.month);
-    _selectedDate = widget.initialDate;
+    _currentMonth = widget.initialMonth;
+    _selectedDate = widget.selectedDate;
   }
 
   void _previousMonth() {
@@ -42,45 +209,46 @@ class _AppDatePickerState extends State<AppDatePicker> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Container(
-        width: 350,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 24),
-            _buildWeekdayLabels(),
-            const SizedBox(height: 8),
-            _buildDayGrid(),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.grey),
+    return Container(
+      width: 350,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 24),
+          _buildWeekdayLabels(),
+          const SizedBox(height: 8),
+          _buildDayGrid(),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: widget.onCancel,
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: () => widget.onConfirm(_selectedDate),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: Color(0xFF2962FF),
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, _selectedDate),
-                  child: const Text(
-                    'OK',
-                    style: TextStyle(
-                      color: Color(0xFF2962FF),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -144,12 +312,9 @@ class _AppDatePickerState extends State<AppDatePicker> {
       1,
     ).weekday;
 
-    // Adjust for Monday start (weekday is 1-7 for Mon-Sun)
     final offset = firstWeekday - 1;
-
     final List<Widget> dayWidgets = [];
 
-    // Previous month padding
     final lastDayPrevMonth = DateTime(
       _currentMonth.year,
       _currentMonth.month,
@@ -160,12 +325,10 @@ class _AppDatePickerState extends State<AppDatePicker> {
       dayWidgets.add(_buildDayCell(day, isCurrentMonth: false));
     }
 
-    // Current month days
     for (int day = 1; day <= daysInMonth; day++) {
       dayWidgets.add(_buildDayCell(day, isCurrentMonth: true));
     }
 
-    // Next month padding
     final totalCells = dayWidgets.length;
     final remaining = (7 - (totalCells % 7)) % 7;
     for (int day = 1; day <= remaining; day++) {

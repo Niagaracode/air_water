@@ -14,4 +14,7 @@ abstract class CompanyRepository {
   Future<void> createCompany(CompanyCreateRequest request);
   Future<void> updateCompany(int id, Map<String, dynamic> data);
   Future<void> deleteCompany(int id);
+
+  Future<List<Company>> getUniqueCompanyNames();
+  Future<List<CompanyAddress>> getCompanyAddresses(int companyId);
 }

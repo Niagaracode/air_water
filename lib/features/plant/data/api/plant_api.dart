@@ -1,4 +1,4 @@
-import '../../model/plant_model.dart';
+import '../../presentation/model/plant_model.dart';
 import '../../../../core/network/api_client.dart';
 
 class PlantApi {
@@ -25,6 +25,8 @@ class PlantApi {
     int limit = 50,
     String? name,
     String? companyId,
+    int? status,
+    String? date,
   }) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
     if (name != null && name.isNotEmpty) {
@@ -32,6 +34,12 @@ class PlantApi {
     }
     if (companyId != null && companyId.isNotEmpty) {
       query['company_id'] = companyId;
+    }
+    if (status != null) {
+      query['status'] = status;
+    }
+    if (date != null && date.isNotEmpty) {
+      query['date'] = date;
     }
 
     final response = await _client.get('/plants/grouped', query: query);

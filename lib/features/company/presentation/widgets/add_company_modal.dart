@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:csc_picker_plus/csc_picker_plus.dart';
 import '../model/company_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_radio_button.dart';
 import '../../../../shared/widgets/app_autocomplete.dart';
+import '../../../../shared/widgets/location_picker.dart';
 import '../controller/company_provider.dart';
 import '../../../../core/app_theme/app_theme.dart';
 
@@ -220,19 +220,39 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
-                AppAutocomplete<String>(
-                  controller: _nameController,
-                  hint: 'Enter Company name',
-                  displayStringForOption: (option) => option,
-                  optionsBuilder: (textEditingValue) async {
-                    if (textEditingValue.text.isEmpty) {
-                      return const Iterable<String>.empty();
-                    }
-                    return await ref
-                        .read(companyRepositoryProvider)
-                        .getAutocompleteSuggestions(textEditingValue.text);
-                  },
-                ),
+                if (widget.initialAddress != null)
+                  TextField(
+                    controller: _nameController,
+                    enabled: false,
+                    decoration: InputDecoration(
+                      hintText: 'Enter Company name',
+                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                      disabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                  )
+                else
+                  AppAutocomplete<String>(
+                    controller: _nameController,
+                    hint: 'Enter Company name',
+                    displayStringForOption: (option) => option,
+                    optionsBuilder: (textEditingValue) async {
+                      if (textEditingValue.text.isEmpty) {
+                        return const Iterable<String>.empty();
+                      }
+                      return await ref
+                          .read(companyRepositoryProvider)
+                          .getAutocompleteSuggestions(textEditingValue.text);
+                    },
+                  ),
                 const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -379,17 +399,21 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
           ],
         ),
         const SizedBox(height: 16),
-        CSCPickerPlus(
-          layout: Layout.horizontal,
-          flagState: CountryFlag.DISABLE,
+        LocationPicker(
+          currentCountry: controllers.country,
+          currentState: controllers.state,
+          currentCity: controllers.city,
           onCountryChanged: (value) {
             setState(() {
               controllers.country = value;
+              controllers.state = null;
+              controllers.city = null;
             });
           },
           onStateChanged: (value) {
             setState(() {
               controllers.state = value;
+              controllers.city = null;
             });
           },
           onCityChanged: (value) {
@@ -397,24 +421,6 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
               controllers.city = value;
             });
           },
-          selectedItemStyle: const TextStyle(fontSize: 14),
-          dropdownHeadingStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-          dropdownItemStyle: const TextStyle(fontSize: 14),
-          dropdownDecoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          disabledDropdownDecoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-            color: Colors.grey.shade100,
-          ),
-          currentCountry: controllers.country,
-          currentState: controllers.state,
-          currentCity: controllers.city,
         ),
         if (index != _addressRows.length - 1) const Divider(height: 48),
         if (index == _addressRows.length - 1) const SizedBox(height: 32),
