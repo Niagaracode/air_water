@@ -9,11 +9,11 @@ class AuthInterceptor extends Interceptor {
 
   @override
   Future<void> onRequest(
-      RequestOptions options,
-      RequestInterceptorHandler handler,
-      ) async {
-
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     // Skip auth for login
+
     if (options.path.contains('/login')) {
       return handler.next(options);
     }
@@ -24,9 +24,7 @@ class AuthInterceptor extends Interceptor {
       options.headers['Authorization'] = 'Bearer $token';
     }
 
-    options.headers.putIfAbsent(
-      'Content-Type', () => 'application/json',
-    );
+    options.headers.putIfAbsent('Content-Type', () => 'application/json');
 
     return handler.next(options);
   }

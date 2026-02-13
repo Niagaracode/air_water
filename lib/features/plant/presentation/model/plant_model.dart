@@ -1,3 +1,5 @@
+import '../../../company/presentation/model/company_model.dart';
+
 class Plant {
   final int id;
   final String name;
@@ -143,7 +145,13 @@ class PlantGroupAddress {
   final String? pincode;
   final int? companyId;
   final String? companyName;
+  final String? companyAddressLine1;
+  final String? companyCity;
+  final String? companyState;
+  final String? companyCountry;
+  final String? companyPincode;
   final int? status;
+  final String? createdAt;
 
   PlantGroupAddress({
     this.plantId,
@@ -156,7 +164,13 @@ class PlantGroupAddress {
     this.pincode,
     this.companyId,
     this.companyName,
+    this.companyAddressLine1,
+    this.companyCity,
+    this.companyState,
+    this.companyCountry,
+    this.companyPincode,
     this.status,
+    this.createdAt,
   });
 
   factory PlantGroupAddress.fromJson(Map<String, dynamic> json) {
@@ -171,11 +185,47 @@ class PlantGroupAddress {
       pincode: json['pincode'] as String?,
       companyId: json['company_id'] as int?,
       companyName: json['company_name'] as String?,
+      companyAddressLine1: json['company_address_line_1'] as String?,
+      companyCity: json['company_city'] as String?,
+      companyState: json['company_state'] as String?,
+      companyCountry: json['company_country'] as String?,
+      companyPincode: json['company_pincode'] as String?,
       status: json['status'] as int?,
+      createdAt: json['created_at'] as String?,
     );
   }
 
   String get statusText => status == 1 ? 'Active' : 'Inactive';
+
+  String get plantLocation {
+    final parts = [
+      city,
+      state,
+      country,
+    ].where((p) => p != null && p.isNotEmpty).toList();
+    return parts.join(', ');
+  }
+
+  String get companyFullAddress {
+    final locParts = [
+      companyCity,
+      companyState,
+      companyCountry,
+    ].where((p) => p != null && p.isNotEmpty).toList();
+
+    final locString = locParts.join(', ');
+    final pinSuffix = (companyPincode != null && companyPincode!.isNotEmpty)
+        ? ' - $companyPincode'
+        : '';
+
+    final addressLine = companyAddressLine1 ?? '';
+
+    return (addressLine.isNotEmpty && locString.isNotEmpty)
+        ? '$addressLine, $locString$pinSuffix'
+        : (addressLine.isNotEmpty
+              ? '$addressLine$pinSuffix'
+              : '$locString$pinSuffix');
+  }
 
   String get fullAddress {
     final parts = [
@@ -232,23 +282,20 @@ class PlantGroupedResponse {
 
 class PlantCreateRequest {
   final String name;
-  final String companyName;
-  final List<PlantLocation> locations;
-  final int status;
+  final int companyId;
+  final List<CompanyAddress> addresses;
 
   PlantCreateRequest({
     required this.name,
-    required this.companyName,
-    required this.locations,
-    required this.status,
+    required this.companyId,
+    required this.addresses,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      'company_name': companyName,
-      'locations': locations.map((l) => l.toJson()).toList(),
-      'status': status,
+      'company_id': companyId,
+      'addresses': addresses.map((a) => a.toJson()).toList(),
     };
   }
 }

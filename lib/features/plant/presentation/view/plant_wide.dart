@@ -1,30 +1,30 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../shared/widgets/app_dropdown.dart';
-import '../../../../shared/widgets/app_text_field.dart';
-import '../../../../shared/widgets/app_date_picker.dart';
-import '../controller/company_provider.dart';
-import '../widgets/add_company_modal.dart';
-import '../model/company_model.dart';
+import 'package:air_water/shared/widgets/app_text_field.dart';
+import 'package:air_water/shared/widgets/app_dropdown.dart';
+import 'package:air_water/shared/widgets/app_date_picker.dart';
 import '../../../../core/app_theme/app_theme.dart';
-import '../../../../shared/widgets/app_loader.dart';
+import '../controller/plant_provider.dart';
+import '../widgets/add_plant_modal.dart';
+import '../model/plant_model.dart';
+import 'dart:async';
 
-class CompanyWide extends ConsumerStatefulWidget {
-  const CompanyWide({super.key});
+class PlantWide extends ConsumerStatefulWidget {
+  const PlantWide({super.key});
 
   @override
-  ConsumerState<CompanyWide> createState() => _CompanyWideState();
+  ConsumerState<PlantWide> createState() => _PlantWideState();
 }
 
-class _CompanyWideState extends ConsumerState<CompanyWide> {
-  final _searchController = TextEditingController();
+class _PlantWideState extends ConsumerState<PlantWide> {
+  final _plantSearchController = TextEditingController();
   Timer? _debounce;
+  String? _hoveredOrgCode;
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_onSearchChanged);
+    _plantSearchController.addListener(_onSearchChanged);
   }
 
   void _onSearchChanged() {
@@ -32,44 +32,38 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     _debounce = Timer(const Duration(milliseconds: 200), () {
       if (mounted) {
         ref
-            .read(companyNotifierProvider.notifier)
-            .setSearchName(_searchController.text);
+            .read(plantNotifierProvider.notifier)
+            .setSearchName(_plantSearchController.text);
       }
     });
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
-    _searchController.dispose();
+    _plantSearchController.removeListener(_onSearchChanged);
+    _plantSearchController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final companyState = ref.watch(companyNotifierProvider);
-    final companyNotifier = ref.read(companyNotifierProvider.notifier);
+    final plantState = ref.watch(plantNotifierProvider);
+    final plantNotifier = ref.read(plantNotifierProvider.notifier);
 
     return Scaffold(
       backgroundColor: cardBackgroundColor,
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [_buildManagementCard(companyState, companyNotifier)],
-            ),
-          ),
-          if (companyState.isProcessing)
-            const AppLoader(message: 'Processing...'),
-        ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [_buildManagementCard(plantState, plantNotifier)],
+        ),
       ),
     );
   }
 
-  Widget _buildManagementCard(CompanyState state, CompanyNotifier notifier) {
+  Widget _buildManagementCard(PlantState state, PlantNotifier notifier) {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -80,7 +74,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Company MANAGEMENT',
+            'PLANT MANAGEMENT',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -89,11 +83,11 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Centralize Company Information Including Identification, Locations, And Status Management',
+            'Centralize Plant Information Including Identification, Locations, And Status Management',
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
           const SizedBox(height: 32),
-          _buildFilterRow(notifier, state),
+          _buildFilterRow(notifier),
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
@@ -104,14 +98,14 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
           ),
           const SizedBox(height: 16),
           _buildGroupedTable(state, notifier),
-          if (state.hasMore && state.groupedCompanies.isNotEmpty)
+          if (state.hasMore && state.groupedPlants.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Center(
                 child: state.isLoading
                     ? const CircularProgressIndicator()
                     : TextButton(
-                        onPressed: () => notifier.loadMore(),
+                        onPressed: () => notifier.loadMoreGrouped(),
                         child: const Text('Load More'),
                       ),
               ),
@@ -121,14 +115,15 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     );
   }
 
-  Widget _buildFilterRow(CompanyNotifier notifier, CompanyState state) {
+  Widget _buildFilterRow(PlantNotifier notifier) {
+    final state = ref.watch(plantNotifierProvider);
     return Row(
       children: [
         Expanded(
           flex: 2,
           child: AppTextField(
-            controller: _searchController,
-            hint: 'Search By Name',
+            controller: _plantSearchController,
+            hint: 'Search By Plant',
           ),
         ),
         const SizedBox(width: 16),
@@ -136,7 +131,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
           flex: 1,
           child: AppDropdown<int>(
             value: state.selectedStatus,
-            items: [1, 0],
+            items: const [1, 0],
             hint: 'Status',
             itemLabel: (v) => v == 1 ? 'Active' : 'Inactive',
             onChanged: (v) => notifier.setStatus(v),
@@ -168,10 +163,10 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
             showGeneralDialog(
               context: context,
               barrierDismissible: true,
-              barrierLabel: 'AddCompany',
+              barrierLabel: 'AddPlant',
               barrierColor: Colors.black54,
               transitionDuration: const Duration(milliseconds: 300),
-              pageBuilder: (context, anim1, anim2) => const AddCompanyModal(),
+              pageBuilder: (context, anim1, anim2) => const AddPlantModal(),
               transitionBuilder: (context, anim1, anim2, child) {
                 return SlideTransition(
                   position:
@@ -201,7 +196,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     );
   }
 
-  Widget _buildGroupedTable(CompanyState state, CompanyNotifier notifier) {
+  Widget _buildGroupedTable(PlantState state, PlantNotifier notifier) {
     return Stack(
       children: [
         Container(
@@ -227,16 +222,16 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                       _tableHeaderCell('SI.NO', width: 70),
                       _tableHeaderCell('City', flex: 2),
                       _tableHeaderCell('Date', flex: 2),
+                      _tableHeaderCell('Company', flex: 2),
                       _tableHeaderCell('State', flex: 2),
                       _tableHeaderCell('Country', flex: 2),
                       _tableHeaderCell('Status', flex: 2),
                       _tableHeaderCell('Address', flex: 3),
-                      _tableHeaderCell('Actions', width: 100),
                     ],
                   ),
                 ),
                 // Table body
-                if (state.groupedCompanies.isEmpty && !state.isLoading)
+                if (state.groupedPlants.isEmpty && !state.isLoading)
                   Container(
                     padding: const EdgeInsets.all(48),
                     alignment: Alignment.center,
@@ -246,21 +241,22 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                     ),
                   )
                 else
-                  ...List.generate(state.groupedCompanies.length, (index) {
-                    final group = state.groupedCompanies[index];
-                    final isExpanded = state.expandedGroups.contains(
-                      group.name,
-                    );
+                  ...List.generate(state.groupedPlants.length, (index) {
+                    final group = state.groupedPlants[index];
+                    final orgCode =
+                        group.plantOrganizationCode ?? 'unknown_$index';
+                    final isExpanded = state.expandedGroups.contains(orgCode);
 
                     return _buildGroupSection(
                       index: index,
                       group: group,
+                      orgCode: orgCode,
                       isExpanded: isExpanded,
                       notifier: notifier,
-                      isLast: index == state.groupedCompanies.length - 1,
+                      isLast: index == state.groupedPlants.length - 1,
                     );
                   }),
-                if (state.isLoading && state.groupedCompanies.isEmpty)
+                if (state.isLoading && state.groupedPlants.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(32.0),
                     child: Center(child: CircularProgressIndicator()),
@@ -269,8 +265,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
             ),
           ),
         ),
-        // Loading overlay on top of table
-        if (state.isLoading && state.groupedCompanies.isNotEmpty)
+        if (state.isLoading && state.groupedPlants.isNotEmpty)
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -297,69 +292,91 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
 
   Widget _buildGroupSection({
     required int index,
-    required CompanyGroup group,
+    required PlantGroup group,
+    required String orgCode,
     required bool isExpanded,
-    required CompanyNotifier notifier,
+    required PlantNotifier notifier,
     required bool isLast,
   }) {
     return Column(
       children: [
         if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
-        // Group header row
-        InkWell(
-          onTap: () => notifier.toggleGroup(group.name),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            color: Colors.grey.shade50,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 70,
-                  child: Text(
-                    (index + 1).toString().padLeft(2, '0'),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
+        // Group header row (plant name row)
+        MouseRegion(
+          onEnter: (_) {
+            setState(() => _hoveredOrgCode = orgCode);
+            if (!isExpanded) notifier.toggleGroup(orgCode);
+          },
+          onExit: (_) => setState(() => _hoveredOrgCode = null),
+          child: InkWell(
+            onTap: () => notifier.toggleGroup(orgCode),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              color: Colors.grey.shade50,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 70,
+                    child: Text(
+                      (index + 1).toString().padLeft(2, '0'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    group.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      group.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    group.createdAt?.split('T').first ?? '',
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-                const Expanded(flex: 2, child: SizedBox()),
-                const Expanded(flex: 2, child: SizedBox()),
-                const Expanded(flex: 2, child: SizedBox()),
-                Expanded(
-                  flex: 2,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: Colors.grey.shade600,
+
+                  const Expanded(flex: 2, child: SizedBox()), // Align with Date
+                  const Expanded(
+                    flex: 2,
+                    child: SizedBox(),
+                  ), // Align with Company
+                  const Expanded(
+                    flex: 2,
+                    child: SizedBox(),
+                  ), // Align with State
+                  const Expanded(
+                    flex: 2,
+                    child: SizedBox(),
+                  ), // Align with Country
+                  const Expanded(
+                    flex: 2,
+                    child: SizedBox(),
+                  ), // Align with Status
+                  Expanded(
+                    flex: 3, // Align with Address
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Visibility(
+                        visible: _hoveredOrgCode == orgCode || isExpanded,
+                        maintainSize: true,
+                        maintainAnimation: true,
+                        maintainState: true,
+                        child: Icon(
+                          isExpanded
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-        // Address rows
+        // Address rows (visible when expanded)
         if (isExpanded)
           ...group.addresses.map((addr) {
             return Column(
@@ -376,7 +393,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                       Expanded(
                         flex: 2,
                         child: Text(
-                          addr.city,
+                          addr.city ?? '',
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -389,15 +406,37 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                       ),
                       Expanded(
                         flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              addr.companyName ?? '',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              addr.companyFullAddress,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
                         child: Text(
-                          addr.state,
+                          addr.state ?? '',
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
                       Expanded(
                         flex: 2,
                         child: Text(
-                          addr.country,
+                          addr.country ?? '',
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -414,7 +453,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              addr.status == 1 ? 'Active' : 'Inactive',
+                              addr.statusText,
                               style: TextStyle(
                                 color: addr.status == 1
                                     ? Colors.green
@@ -427,35 +466,13 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                       ),
                       Expanded(
                         flex: 3,
-                        child: Text(
-                          addr.fullAddress,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 100,
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.blue,
-                                size: 18,
-                              ),
-                              onPressed: () => _showEditModal(group, addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                                size: 18,
-                              ),
-                              onPressed: () => _confirmDelete(addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                            Text(
+                              addr.fullAddress,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 13),
                             ),
                           ],
                         ),
@@ -467,62 +484,6 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
             );
           }),
       ],
-    );
-  }
-
-  void _showEditModal(CompanyGroup group, CompanyAddress addr) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'EditCompany',
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) =>
-          AddCompanyModal(companyGroup: group, initialAddress: addr),
-      transitionBuilder: (context, anim1, anim2, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
-          child: child,
-        );
-      },
-    );
-  }
-
-  void _confirmDelete(CompanyAddress addr) {
-    if (addr.companyId == null) return;
-
-    final notifier = ref.read(companyNotifierProvider.notifier);
-    final companyId = addr.companyId!;
-
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Confirm Delete'),
-        content: const Text(
-          'Are you sure you want to delete this company record?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('CANCEL'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-              final success = await notifier.deleteCompany(companyId);
-              if (success && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Company deleted successfully')),
-                );
-              }
-            },
-            child: const Text('DELETE', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -43,4 +43,14 @@ class CompanyRepositoryImpl implements CompanyRepository {
   Future<void> deleteCompany(int id) async {
     await _api.deleteCompany(id);
   }
+
+  @override
+  Future<List<Company>> getUniqueCompanyNames() async {
+    return await _api.getUniqueCompanyNames();
+  }
+
+  @override
+  Future<List<CompanyAddress>> getCompanyAddresses(int companyId) async {
+    return await _api.getCompanyAddresses(companyId);
+  }
 }

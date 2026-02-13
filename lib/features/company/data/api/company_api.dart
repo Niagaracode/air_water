@@ -50,4 +50,16 @@ class CompanyApi {
   Future<void> deleteCompany(int id) async {
     await _client.delete('/companies/$id');
   }
+
+  Future<List<Company>> getUniqueCompanyNames() async {
+    final response = await _client.get('/companies/unique-names');
+    final List<dynamic> data = response.data['data'] ?? [];
+    return data.map((item) => Company.fromJson(item)).toList();
+  }
+
+  Future<List<CompanyAddress>> getCompanyAddresses(int companyId) async {
+    final response = await _client.get('/companies/$companyId/addresses');
+    final List<dynamic> data = response.data['data'] ?? [];
+    return data.map((item) => CompanyAddress.fromJson(item)).toList();
+  }
 }

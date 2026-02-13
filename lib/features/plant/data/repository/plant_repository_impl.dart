@@ -1,6 +1,6 @@
-import '../../model/plant_model.dart';
+import '../../presentation/model/plant_model.dart';
 import '../api/plant_api.dart';
-import 'plant_repository.dart';
+import '../../domain/repository/plant_repository.dart';
 
 class PlantRepositoryImpl implements PlantRepository {
   final PlantApi _api;
@@ -22,12 +22,16 @@ class PlantRepositoryImpl implements PlantRepository {
     int limit = 50,
     String? name,
     String? companyId,
+    int? status,
+    String? date,
   }) async {
     return await _api.getPlantsGrouped(
       page: page,
       limit: limit,
       name: name,
       companyId: companyId,
+      status: status,
+      date: date,
     );
   }
 

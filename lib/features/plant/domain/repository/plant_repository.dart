@@ -1,4 +1,4 @@
-import '../../model/plant_model.dart';
+import '../../presentation/model/plant_model.dart';
 
 abstract class PlantRepository {
   Future<PlantResponse> getPlants({
@@ -12,6 +12,8 @@ abstract class PlantRepository {
     int limit = 50,
     String? name,
     String? companyId,
+    int? status,
+    String? date,
   });
 
   Future<void> createPlant(PlantCreateRequest request);
