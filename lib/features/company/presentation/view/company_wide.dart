@@ -306,57 +306,43 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
       children: [
         if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
         // Group header row
-        InkWell(
-          onTap: () => notifier.toggleGroup(group.name),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            color: Colors.grey.shade50,
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 70,
-                  child: Text(
-                    (index + 1).toString().padLeft(2, '0'),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          color: Colors.grey.shade50,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 70,
+                child: Text(
+                  (index + 1).toString().padLeft(2, '0'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    group.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  group.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    group.createdAt?.split('T').first ?? '',
-                    style: const TextStyle(fontSize: 13),
-                  ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  group.createdAt?.split('T').first ?? '',
+                  style: const TextStyle(fontSize: 13),
                 ),
-                const Expanded(flex: 2, child: SizedBox()),
-                const Expanded(flex: 2, child: SizedBox()),
-                const Expanded(flex: 2, child: SizedBox()),
-                Expanded(
-                  flex: 2,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const Expanded(flex: 2, child: SizedBox()),
+              const Expanded(flex: 2, child: SizedBox()),
+              const Expanded(flex: 2, child: SizedBox()),
+              const Expanded(flex: 2, child: SizedBox()),
+            ],
           ),
         ),
         // Address rows

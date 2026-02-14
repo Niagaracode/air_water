@@ -19,7 +19,6 @@ class PlantNarrow extends ConsumerStatefulWidget {
 class _PlantNarrowState extends ConsumerState<PlantNarrow> {
   final _plantSearchController = TextEditingController();
   Timer? _debounce;
-  String? _hoveredOrgCode;
 
   @override
   void initState() {
@@ -280,54 +279,31 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
       children: [
         if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
         // Group header
-        MouseRegion(
-          onEnter: (_) {
-            setState(() => _hoveredOrgCode = orgCode);
-            if (!isExpanded) notifier.toggleGroup(orgCode);
-          },
-          onExit: (_) => setState(() => _hoveredOrgCode = null),
-          child: InkWell(
-            onTap: () => notifier.toggleGroup(orgCode),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              color: Colors.grey.shade50,
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 40,
-                    child: Text(
-                      (index + 1).toString().padLeft(2, '0'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          color: Colors.grey.shade50,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 40,
+                child: Text(
+                  (index + 1).toString().padLeft(2, '0'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
                   ),
-                  Expanded(
-                    child: Text(
-                      group.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  Visibility(
-                    visible: _hoveredOrgCode == orgCode || isExpanded,
-                    maintainSize: true,
-                    maintainAnimation: true,
-                    maintainState: true,
-                    child: Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: Colors.grey.shade600,
-                      size: 18,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              Expanded(
+                child: Text(
+                  group.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         // Address rows

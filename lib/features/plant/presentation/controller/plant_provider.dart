@@ -101,10 +101,9 @@ class PlantNotifier extends Notifier<PlantState> {
         date: state.selectedDate,
       );
 
-      final expandedGroups = <String>{};
-      if (response.data.isNotEmpty) {
-        expandedGroups.add(response.data.first.plantOrganizationCode!);
-      }
+      final expandedGroups = response.data
+          .map((g) => g.plantOrganizationCode!)
+          .toSet();
 
       state = state.copyWith(
         groupedPlants: response.data,
@@ -134,11 +133,16 @@ class PlantNotifier extends Notifier<PlantState> {
         status: state.selectedStatus,
         date: state.selectedDate,
       );
+      final newExpanded = response.data
+          .map((g) => g.plantOrganizationCode!)
+          .toSet();
+
       state = state.copyWith(
         groupedPlants: [...state.groupedPlants, ...response.data],
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
+        expandedGroups: {...state.expandedGroups, ...newExpanded},
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

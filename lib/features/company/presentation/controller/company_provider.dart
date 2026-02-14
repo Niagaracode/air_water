@@ -103,12 +103,7 @@ class CompanyNotifier extends Notifier<CompanyState> {
       if (timestamp != _lastRequestTimestamp) return;
 
       final updatedGroupedCompanies = response.data;
-      final expandedGroups = <String>{};
-
-      // Always expand the first group by default
-      if (updatedGroupedCompanies.isNotEmpty) {
-        expandedGroups.add(updatedGroupedCompanies.first.name);
-      }
+      final expandedGroups = updatedGroupedCompanies.map((g) => g.name).toSet();
 
       state = state.copyWith(
         groupedCompanies: updatedGroupedCompanies,
@@ -139,11 +134,14 @@ class CompanyNotifier extends Notifier<CompanyState> {
         status: state.selectedStatus,
         date: state.selectedDate,
       );
+      final newExpanded = response.data.map((g) => g.name).toSet();
+
       state = state.copyWith(
         groupedCompanies: [...state.groupedCompanies, ...response.data],
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
+        expandedGroups: {...state.expandedGroups, ...newExpanded},
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

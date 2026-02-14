@@ -19,7 +19,6 @@ class PlantWide extends ConsumerStatefulWidget {
 class _PlantWideState extends ConsumerState<PlantWide> {
   final _plantSearchController = TextEditingController();
   Timer? _debounce;
-  String? _hoveredOrgCode;
 
   @override
   void initState() {
@@ -303,78 +302,38 @@ class _PlantWideState extends ConsumerState<PlantWide> {
       children: [
         if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
         // Group header row (plant name row)
-        MouseRegion(
-          onEnter: (_) {
-            setState(() => _hoveredOrgCode = orgCode);
-            if (!isExpanded) notifier.toggleGroup(orgCode);
-          },
-          onExit: (_) => setState(() => _hoveredOrgCode = null),
-          child: InkWell(
-            onTap: () => notifier.toggleGroup(orgCode),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              color: Colors.grey.shade50,
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 70,
-                    child: Text(
-                      (index + 1).toString().padLeft(2, '0'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          color: Colors.grey.shade50,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 70,
+                child: Text(
+                  (index + 1).toString().padLeft(2, '0'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      group.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-
-                  const Expanded(flex: 2, child: SizedBox()), // Align with Date
-                  const Expanded(
-                    flex: 2,
-                    child: SizedBox(),
-                  ), // Align with Company
-                  const Expanded(
-                    flex: 2,
-                    child: SizedBox(),
-                  ), // Align with State
-                  const Expanded(
-                    flex: 2,
-                    child: SizedBox(),
-                  ), // Align with Country
-                  const Expanded(
-                    flex: 2,
-                    child: SizedBox(),
-                  ), // Align with Status
-                  Expanded(
-                    flex: 3, // Align with Address
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Visibility(
-                        visible: _hoveredOrgCode == orgCode || isExpanded,
-                        maintainSize: true,
-                        maintainAnimation: true,
-                        maintainState: true,
-                        child: Icon(
-                          isExpanded
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  group.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const Expanded(flex: 2, child: SizedBox()), // Align with Date
+              const Expanded(flex: 2, child: SizedBox()), // Align with Company
+              const Expanded(flex: 2, child: SizedBox()), // Align with State
+              const Expanded(flex: 2, child: SizedBox()), // Align with Country
+              const Expanded(flex: 2, child: SizedBox()), // Align with Status
+              const Expanded(flex: 3, child: SizedBox()), // Align with Address
+            ],
           ),
         ),
         // Address rows (visible when expanded)
