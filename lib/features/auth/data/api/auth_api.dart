@@ -6,15 +6,12 @@ class AuthApi {
 
   AuthApi(this._client);
 
-  Future<Map<String, dynamic>> login(
-      String username,
-      String password,
-      ) async {
+  Future<Map<String, dynamic>> login(String un, String pw,) async {
     final response = await _client.post(
       '/login',
       data: {
-        'username': username,
-        'password': password,
+        'username': un,
+        'password': pw,
       },
     );
 
