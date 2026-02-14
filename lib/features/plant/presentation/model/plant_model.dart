@@ -136,6 +136,7 @@ class PlantLocation {
 
 class PlantGroupAddress {
   final int? plantId;
+  final String? plantName;
   final String? city;
   final String? state;
   final String? country;
@@ -155,6 +156,7 @@ class PlantGroupAddress {
 
   PlantGroupAddress({
     this.plantId,
+    this.plantName,
     this.city,
     this.state,
     this.country,
@@ -176,6 +178,7 @@ class PlantGroupAddress {
   factory PlantGroupAddress.fromJson(Map<String, dynamic> json) {
     return PlantGroupAddress(
       plantId: json['plant_id'] as int?,
+      plantName: json['plant_name'] as String?,
       city: json['city'] as String?,
       state: json['state'] as String?,
       country: json['country'] as String?,
@@ -283,11 +286,17 @@ class PlantGroupedResponse {
 class PlantCreateRequest {
   final String name;
   final int companyId;
+  final String? country;
+  final String? state;
+  final String? city;
   final List<CompanyAddress> addresses;
 
   PlantCreateRequest({
     required this.name,
     required this.companyId,
+    this.country,
+    this.state,
+    this.city,
     required this.addresses,
   });
 
@@ -295,6 +304,9 @@ class PlantCreateRequest {
     return {
       'name': name,
       'company_id': companyId,
+      'country': country,
+      'state': state,
+      'city': city,
       'addresses': addresses.map((a) => a.toJson()).toList(),
     };
   }

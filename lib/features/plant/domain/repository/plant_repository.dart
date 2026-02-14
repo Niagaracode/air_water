@@ -17,4 +17,6 @@ abstract class PlantRepository {
   });
 
   Future<void> createPlant(PlantCreateRequest request);
+  Future<void> updatePlant(int id, PlantCreateRequest request);
+  Future<void> deletePlant(int id);
 }

@@ -39,4 +39,14 @@ class PlantRepositoryImpl implements PlantRepository {
   Future<void> createPlant(PlantCreateRequest request) async {
     await _api.createPlant(request);
   }
+
+  @override
+  Future<void> updatePlant(int id, PlantCreateRequest request) async {
+    await _api.updatePlant(id, request);
+  }
+
+  @override
+  Future<void> deletePlant(int id) async {
+    await _api.deletePlant(id);
+  }
 }

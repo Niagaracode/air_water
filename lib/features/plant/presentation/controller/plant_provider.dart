@@ -239,6 +239,34 @@ class PlantNotifier extends Notifier<PlantState> {
       return false;
     }
   }
+
+  Future<bool> updatePlant(int id, PlantCreateRequest request) async {
+    state = state.copyWith(isProcessing: true, error: null);
+    try {
+      final repository = ref.read(plantRepositoryProvider);
+      await repository.updatePlant(id, request);
+      await loadGroupedPlants();
+      state = state.copyWith(isProcessing: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> deletePlant(int id) async {
+    state = state.copyWith(isProcessing: true, error: null);
+    try {
+      final repository = ref.read(plantRepositoryProvider);
+      await repository.deletePlant(id);
+      await loadGroupedPlants();
+      state = state.copyWith(isProcessing: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, error: e.toString());
+      return false;
+    }
+  }
 }
 
 final plantNotifierProvider = NotifierProvider<PlantNotifier, PlantState>(

@@ -13,7 +13,8 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../../../company/presentation/model/company_model.dart';
 
 class AddPlantModal extends ConsumerStatefulWidget {
-  const AddPlantModal({super.key});
+  final PlantGroupAddress? initialPlant;
+  const AddPlantModal({super.key, this.initialPlant});
 
   @override
   ConsumerState<AddPlantModal> createState() => _AddPlantModalState();
@@ -56,6 +57,17 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialPlant != null) {
+      _nameController.text = widget.initialPlant!.plantName ?? '';
+      _status = widget.initialPlant!.status ?? 1;
+      _addressRows.first.addressController.text =
+          widget.initialPlant!.addressLine1 ?? '';
+      _addressRows.first.pinCodeController.text =
+          widget.initialPlant!.pincode ?? '';
+      _addressRows.first.country = widget.initialPlant!.country;
+      _addressRows.first.state = widget.initialPlant!.state;
+      _addressRows.first.city = widget.initialPlant!.city;
+    }
     Future.microtask(() => _loadInitialData());
   }
 
@@ -83,7 +95,25 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
     } catch (e) {
       debugPrint('Error loading companies: $e');
     } finally {
-      if (mounted) setState(() => _isLoadingCompanies = false);
+      if (mounted) {
+        setState(() => _isLoadingCompanies = false);
+        if (widget.initialPlant != null) {
+          final initialGroup = _companyGroups
+              .where(
+                (g) => g.addresses.any(
+                  (a) => a.companyId == widget.initialPlant!.companyId,
+                ),
+              )
+              .firstOrNull;
+          if (initialGroup != null) {
+            _selectedGroup = initialGroup;
+            _addressRows.first.selectedRegisteredAddress = initialGroup
+                .addresses
+                .where((a) => a.companyId == widget.initialPlant!.companyId)
+                .firstOrNull;
+          }
+        }
+      }
     }
   }
 
@@ -175,17 +205,33 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
     final request = PlantCreateRequest(
       name: _nameController.text,
       companyId: primaryCompanyId,
+      country: _addressRows.first.country,
+      state: _addressRows.first.state,
+      city: _addressRows.first.city,
       addresses: addresses,
     );
 
-    final success = await ref
-        .read(plantNotifierProvider.notifier)
-        .createPlant(request);
+    final bool success;
+    if (widget.initialPlant != null) {
+      success = await ref
+          .read(plantNotifierProvider.notifier)
+          .updatePlant(widget.initialPlant!.plantId!, request);
+    } else {
+      success = await ref
+          .read(plantNotifierProvider.notifier)
+          .createPlant(request);
+    }
 
     if (success && mounted) {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Plant created successfully')),
+        SnackBar(
+          content: Text(
+            widget.initialPlant != null
+                ? 'Plant updated successfully'
+                : 'Plant created successfully',
+          ),
+        ),
       );
     }
   }
@@ -217,9 +263,11 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'ADD NEW PLANT',
-                          style: TextStyle(
+                        Text(
+                          widget.initialPlant != null
+                              ? 'EDIT PLANT'
+                              : 'ADD NEW PLANT',
+                          style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -248,10 +296,12 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                         children: [
                           Icon(Icons.info, color: primaryDeep, size: 20),
                           const SizedBox(width: 12),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'Enter The Plant Name And Specify Registered Locations.',
-                              style: TextStyle(
+                              widget.initialPlant != null
+                                  ? 'Update The Plant Details And Locations.'
+                                  : 'Enter The Plant Name And Specify Registered Locations.',
+                              style: const TextStyle(
                                 color: Color(0xFF1B1B4B),
                                 fontSize: 13,
                               ),
@@ -327,18 +377,19 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                                     fontSize: 14,
                                   ),
                                 ),
-                                ElevatedButton.icon(
-                                  onPressed: _addAddressRow,
-                                  icon: const Icon(Icons.add, size: 16),
-                                  label: const Text('ADD'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primaryDeep,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
+                                if (widget.initialPlant == null)
+                                  ElevatedButton.icon(
+                                    onPressed: _addAddressRow,
+                                    icon: const Icon(Icons.add, size: 16),
+                                    label: const Text('ADD'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primaryDeep,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
                                     ),
                                   ),
-                                ),
                               ],
                             ),
                             const Divider(height: 32),
@@ -400,9 +451,9 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text(
-                            'SAVE',
-                            style: TextStyle(
+                          child: Text(
+                            widget.initialPlant != null ? 'UPDATE' : 'SAVE',
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
@@ -462,16 +513,17 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
               ),
             ),
             const SizedBox(width: 16),
-            IconButton(
-              icon: Icon(Icons.delete_outline, color: Colors.red.shade400),
-              onPressed: () => _removeAddressRow(index),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.red.shade50,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+            if (widget.initialPlant == null)
+              IconButton(
+                icon: Icon(Icons.delete_outline, color: Colors.red.shade400),
+                onPressed: () => _removeAddressRow(index),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.shade50,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ),
-            ),
           ],
         ),
         const SizedBox(height: 16),

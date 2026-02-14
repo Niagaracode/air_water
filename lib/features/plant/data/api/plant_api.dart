@@ -51,4 +51,12 @@ class PlantApi {
   Future<void> createPlant(PlantCreateRequest request) async {
     await _client.post('/plants', data: request.toJson());
   }
+
+  Future<void> updatePlant(int id, PlantCreateRequest request) async {
+    await _client.put('/plants/$id', data: request.toJson());
+  }
+
+  Future<void> deletePlant(int id) async {
+    await _client.delete('/plants/$id');
+  }
 }

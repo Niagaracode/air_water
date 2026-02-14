@@ -227,6 +227,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
                       _tableHeaderCell('Country', flex: 2),
                       _tableHeaderCell('Status', flex: 2),
                       _tableHeaderCell('Address', flex: 3),
+                      _tableHeaderCell('Actions', width: 100),
                     ],
                   ),
                 ),
@@ -466,13 +467,36 @@ class _PlantWideState extends ConsumerState<PlantWide> {
                       ),
                       Expanded(
                         flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Text(
+                          addr.fullAddress,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 100,
+                        child: Row(
                           children: [
-                            Text(
-                              addr.fullAddress,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 13),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit,
+                                color: Colors.blue,
+                                size: 18,
+                              ),
+                              onPressed: () => _showEditModal(group, addr),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete,
+                                color: Colors.red.shade400,
+                                size: 18,
+                              ),
+                              onPressed: () => _showDeleteDialog(addr),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                           ],
                         ),
@@ -485,5 +509,59 @@ class _PlantWideState extends ConsumerState<PlantWide> {
           }),
       ],
     );
+  }
+
+  void _showEditModal(PlantGroup group, PlantGroupAddress addr) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      pageBuilder: (context, anim1, anim2) {
+        return AddPlantModal(initialPlant: addr);
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(anim1),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Future<void> _showDeleteDialog(PlantGroupAddress addr) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Plant'),
+        content: Text(
+          'Are you sure you want to delete "${addr.plantName}" at "${addr.city}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('DELETE'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && addr.plantId != null) {
+      final success = await ref
+          .read(plantNotifierProvider.notifier)
+          .deletePlant(addr.plantId!);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Plant deleted successfully')),
+        );
+      }
+    }
   }
 }

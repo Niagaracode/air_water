@@ -209,7 +209,7 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
                       Expanded(
                         flex: 1,
                         child: Text(
-                          'Status',
+                          'Actions',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 11,
@@ -367,22 +367,26 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
                         flex: 1,
                         child: Row(
                           children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: addr.status == 1
-                                  ? Colors.green
-                                  : Colors.grey,
-                              size: 14,
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit,
+                                color: Colors.blue,
+                                size: 16,
+                              ),
+                              onPressed: () => _showEditModal(group, addr),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              addr.statusText,
-                              style: TextStyle(
-                                color: addr.status == 1
-                                    ? Colors.green
-                                    : Colors.grey,
-                                fontSize: 11,
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete,
+                                color: Colors.red.shade400,
+                                size: 16,
                               ),
+                              onPressed: () => _showDeleteDialog(addr),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                           ],
                         ),
@@ -395,5 +399,59 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
           }),
       ],
     );
+  }
+
+  void _showEditModal(PlantGroup group, PlantGroupAddress addr) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      pageBuilder: (context, anim1, anim2) {
+        return AddPlantModal(initialPlant: addr);
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(anim1),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Future<void> _showDeleteDialog(PlantGroupAddress addr) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Plant'),
+        content: Text(
+          'Are you sure you want to delete "${addr.plantName}" at "${addr.city}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('DELETE'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && addr.plantId != null) {
+      final success = await ref
+          .read(plantNotifierProvider.notifier)
+          .deletePlant(addr.plantId!);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Plant deleted successfully')),
+        );
+      }
+    }
   }
 }
