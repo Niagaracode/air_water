@@ -1,5 +1,5 @@
 class AppConfig {
   static const String apiUrl =
-      'https://unsophisticated-hypernutritive-shela.ngrok-free.dev/api';
+      'https://vinyl-replies-rain-pattern.trycloudflare.com/api';
   static const String mqttUrl = 'broker.yourdomain.com';
 }
