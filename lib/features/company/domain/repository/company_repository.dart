@@ -9,7 +9,7 @@ abstract class CompanyRepository {
     String? date,
   });
 
-  Future<List<String>> getAutocompleteSuggestions(String query);
+  Future<List<CompanyAutocompleteInfo>> getCompanyAutocomplete({String? q});
 
   Future<void> createCompany(CompanyCreateRequest request);
   Future<void> updateCompany(int id, Map<String, dynamic> data);

@@ -4,6 +4,8 @@ import '../../data/api/plant_api.dart';
 import '../../domain/repository/plant_repository.dart';
 import '../../data/repository/plant_repository_impl.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../features/company/presentation/controller/company_provider.dart';
+import '../../../../features/company/presentation/model/company_model.dart';
 
 final plantApiProvider = Provider(
   (ref) => PlantApi(ref.read(apiClientProvider)),
@@ -151,7 +153,25 @@ class PlantNotifier extends Notifier<PlantState> {
 
   void setSearchName(String name) {
     state = state.copyWith(searchName: name);
-    loadGroupedPlants();
+    // Explicit trigger required from UI
+  }
+
+  Future<List<PlantAutocompleteInfo>> searchPlants(String query) async {
+    try {
+      final repository = ref.read(plantRepositoryProvider);
+      return await repository.getPlantAutocomplete(q: query);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<CompanyAutocompleteInfo>> searchCompanies(String query) async {
+    try {
+      final repository = ref.read(companyRepositoryProvider);
+      return await repository.getCompanyAutocomplete(q: query);
+    } catch (e) {
+      return [];
+    }
   }
 
   void setStatus(int? status) {

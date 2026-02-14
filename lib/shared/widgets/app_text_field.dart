@@ -9,6 +9,11 @@ class AppTextField extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onToggle;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
+
+  final int? maxLines;
+  final FocusNode? focusNode;
+  final TextInputType? keyboardType;
 
   const AppTextField({
     super.key,
@@ -18,8 +23,12 @@ class AppTextField extends StatelessWidget {
     this.obscure = false,
     this.readOnly = false,
     this.enabled = true,
+    this.maxLines = 1,
+    this.focusNode,
+    this.keyboardType,
     this.onToggle,
     this.onChanged,
+    this.onSubmitted,
   });
 
   @override
@@ -29,7 +38,11 @@ class AppTextField extends StatelessWidget {
       obscureText: obscure,
       readOnly: readOnly,
       enabled: enabled,
+      maxLines: maxLines,
+      focusNode: focusNode,
+      keyboardType: keyboardType,
       onChanged: onChanged,
+      onSubmitted: onSubmitted,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),

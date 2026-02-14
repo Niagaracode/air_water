@@ -76,14 +76,8 @@ class CompanyAddress {
           companyId == other.companyId;
 
   @override
-  int get hashCode => Object.hash(
-        addressLine1,
-        pincode,
-        country,
-        state,
-        city,
-        companyId,
-      );
+  int get hashCode =>
+      Object.hash(addressLine1, pincode, country, state, city, companyId);
 }
 
 class Company {
@@ -158,6 +152,26 @@ class CompanyGroupedResponse {
       pagination: Pagination.fromJson(
         json['pagination'] as Map<String, dynamic>,
       ),
+    );
+  }
+}
+
+class CompanyAutocompleteInfo {
+  final int companyId;
+  final String name;
+  final String? organizationCode;
+
+  CompanyAutocompleteInfo({
+    required this.companyId,
+    required this.name,
+    this.organizationCode,
+  });
+
+  factory CompanyAutocompleteInfo.fromJson(Map<String, dynamic> json) {
+    return CompanyAutocompleteInfo(
+      companyId: json['id'] as int,
+      name: json['name'] as String,
+      organizationCode: json['organization_code'] as String?,
     );
   }
 }

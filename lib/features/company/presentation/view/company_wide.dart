@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
@@ -19,30 +18,15 @@ class CompanyWide extends ConsumerStatefulWidget {
 
 class _CompanyWideState extends ConsumerState<CompanyWide> {
   final _searchController = TextEditingController();
-  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_onSearchChanged);
-  }
-
-  void _onSearchChanged() {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 200), () {
-      if (mounted) {
-        ref
-            .read(companyNotifierProvider.notifier)
-            .setSearchName(_searchController.text);
-      }
-    });
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
-    _debounce?.cancel();
     super.dispose();
   }
 
@@ -126,9 +110,70 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
       children: [
         Expanded(
           flex: 2,
-          child: AppTextField(
-            controller: _searchController,
-            hint: 'Search By Name',
+          child: RawAutocomplete<CompanyAutocompleteInfo>(
+            optionsBuilder: (TextEditingValue textEditingValue) async {
+              if (textEditingValue.text.isEmpty) {
+                return const Iterable<CompanyAutocompleteInfo>.empty();
+              }
+              return await notifier.searchCompanies(textEditingValue.text);
+            },
+            displayStringForOption: (CompanyAutocompleteInfo option) =>
+                option.name,
+            onSelected: (CompanyAutocompleteInfo selection) {
+              _searchController.text = selection.name;
+              notifier.setSearchName(selection.name);
+              notifier.loadGroupedCompanies();
+            },
+            fieldViewBuilder:
+                (context, controller, focusNode, onFieldSubmitted) {
+                  if (_searchController.text != controller.text &&
+                      _searchController.text.isNotEmpty &&
+                      controller.text.isEmpty) {
+                    controller.text = _searchController.text;
+                  }
+
+                  return AppTextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    hint: 'Search By Name',
+                    onSubmitted: (value) {
+                      _searchController.text = value;
+                      notifier.setSearchName(value);
+                      notifier.loadGroupedCompanies();
+                    },
+                  );
+                },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4.0,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: 400,
+                    constraints: const BoxConstraints(maxHeight: 300),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: options.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final option = options.elementAt(index);
+                        return ListTile(
+                          title: Text(
+                            option.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: option.organizationCode != null
+                              ? Text(option.organizationCode!)
+                              : null,
+                          onTap: () => onSelected(option),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
         const SizedBox(width: 16),

@@ -7,7 +7,6 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../controller/plant_provider.dart';
 import '../widgets/add_plant_modal.dart';
 import '../model/plant_model.dart';
-import 'dart:async';
 
 class PlantMiddle extends ConsumerStatefulWidget {
   const PlantMiddle({super.key});
@@ -18,30 +17,15 @@ class PlantMiddle extends ConsumerStatefulWidget {
 
 class _PlantMiddleState extends ConsumerState<PlantMiddle> {
   final _plantSearchController = TextEditingController();
-  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    _plantSearchController.addListener(_onSearchChanged);
-  }
-
-  void _onSearchChanged() {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 200), () {
-      if (mounted) {
-        ref
-            .read(plantNotifierProvider.notifier)
-            .setSearchName(_plantSearchController.text);
-      }
-    });
   }
 
   @override
   void dispose() {
-    _plantSearchController.removeListener(_onSearchChanged);
     _plantSearchController.dispose();
-    _debounce?.cancel();
     super.dispose();
   }
 
@@ -124,10 +108,77 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
       runSpacing: 12,
       children: [
         SizedBox(
-          width: 200,
-          child: AppTextField(
-            controller: _plantSearchController,
-            hint: 'Search By Plant',
+          width: 250, // Slightly wider for middle
+          child: RawAutocomplete<PlantAutocompleteInfo>(
+            optionsBuilder: (TextEditingValue textEditingValue) async {
+              if (textEditingValue.text.isEmpty) {
+                return const Iterable<PlantAutocompleteInfo>.empty();
+              }
+              return await notifier.searchPlants(textEditingValue.text);
+            },
+            displayStringForOption: (PlantAutocompleteInfo option) =>
+                option.plantName,
+            onSelected: (PlantAutocompleteInfo selection) {
+              _plantSearchController.text = selection.plantName;
+              notifier.setSearchName(selection.plantName);
+              notifier.loadGroupedPlants();
+            },
+            fieldViewBuilder:
+                (context, controller, focusNode, onFieldSubmitted) {
+                  if (_plantSearchController.text != controller.text &&
+                      _plantSearchController.text.isNotEmpty &&
+                      controller.text.isEmpty) {
+                    controller.text = _plantSearchController.text;
+                  }
+
+                  return AppTextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    hint: 'Search By Plant',
+                    onSubmitted: (value) {
+                      _plantSearchController.text = value;
+                      notifier.setSearchName(value);
+                      notifier.loadGroupedPlants();
+                    },
+                  );
+                },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4.0,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: 300,
+                    constraints: const BoxConstraints(maxHeight: 250),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: options.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final option = options.elementAt(index);
+                        return ListTile(
+                          title: Text(
+                            option.plantName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          subtitle: option.displayName != null
+                              ? Text(
+                                  option.displayName!,
+                                  style: const TextStyle(fontSize: 11),
+                                )
+                              : null,
+                          onTap: () => onSelected(option),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
         SizedBox(

@@ -59,4 +59,15 @@ class PlantApi {
   Future<void> deletePlant(int id) async {
     await _client.delete('/plants/$id');
   }
+
+  Future<List<PlantAutocompleteInfo>> getPlantAutocomplete({String? q}) async {
+    final query = q != null ? {'q': q} : <String, dynamic>{};
+    final response = await _client.get('/plants/autocomplete', query: query);
+    final List data = response.data['data'] ?? [];
+    return data
+        .map(
+          (e) => PlantAutocompleteInfo.fromJson(Map<String, dynamic>.from(e)),
+        )
+        .toList();
+  }
 }

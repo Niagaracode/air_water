@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/plant_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_autocomplete.dart';
 import '../../../../shared/widgets/app_radio_button.dart';
 import '../../../../shared/widgets/location_picker.dart';
 import '../controller/plant_provider.dart';
@@ -331,9 +332,32 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                                         ),
                                       ),
                                       const SizedBox(height: 8),
-                                      AppTextField(
+                                      AppAutocomplete<String>(
                                         controller: _nameController,
                                         hint: 'Enter plant name',
+                                        displayStringForOption: (option) =>
+                                            option,
+                                        optionsBuilder:
+                                            (textEditingValue) async {
+                                              if (textEditingValue
+                                                  .text
+                                                  .isEmpty) {
+                                                return const Iterable<
+                                                  String
+                                                >.empty();
+                                              }
+                                              final plants = await ref
+                                                  .read(
+                                                    plantNotifierProvider
+                                                        .notifier,
+                                                  )
+                                                  .searchPlants(
+                                                    textEditingValue.text,
+                                                  );
+                                              return plants
+                                                  .map((e) => e.plantName)
+                                                  .toList();
+                                            },
                                       ),
                                     ],
                                   ),

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
@@ -19,30 +18,15 @@ class CompanyMiddle extends ConsumerStatefulWidget {
 
 class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
   final _searchController = TextEditingController();
-  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_onSearchChanged);
-  }
-
-  void _onSearchChanged() {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 200), () {
-      if (mounted) {
-        ref
-            .read(companyNotifierProvider.notifier)
-            .setSearchName(_searchController.text);
-      }
-    });
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
-    _debounce?.cancel();
     super.dispose();
   }
 
@@ -130,10 +114,77 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
       runSpacing: 12,
       children: [
         SizedBox(
-          width: 200,
-          child: AppTextField(
-            controller: _searchController,
-            hint: 'Search By Name',
+          width: 250, // Slightly wider for middle
+          child: RawAutocomplete<CompanyAutocompleteInfo>(
+            optionsBuilder: (TextEditingValue textEditingValue) async {
+              if (textEditingValue.text.isEmpty) {
+                return const Iterable<CompanyAutocompleteInfo>.empty();
+              }
+              return await notifier.searchCompanies(textEditingValue.text);
+            },
+            displayStringForOption: (CompanyAutocompleteInfo option) =>
+                option.name,
+            onSelected: (CompanyAutocompleteInfo selection) {
+              _searchController.text = selection.name;
+              notifier.setSearchName(selection.name);
+              notifier.loadGroupedCompanies();
+            },
+            fieldViewBuilder:
+                (context, controller, focusNode, onFieldSubmitted) {
+                  if (_searchController.text != controller.text &&
+                      _searchController.text.isNotEmpty &&
+                      controller.text.isEmpty) {
+                    controller.text = _searchController.text;
+                  }
+
+                  return AppTextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    hint: 'Search By Name',
+                    onSubmitted: (value) {
+                      _searchController.text = value;
+                      notifier.setSearchName(value);
+                      notifier.loadGroupedCompanies();
+                    },
+                  );
+                },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4.0,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: 350,
+                    constraints: const BoxConstraints(maxHeight: 250),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: options.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final option = options.elementAt(index);
+                        return ListTile(
+                          title: Text(
+                            option.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          subtitle: option.organizationCode != null
+                              ? Text(
+                                  option.organizationCode!,
+                                  style: const TextStyle(fontSize: 11),
+                                )
+                              : null,
+                          onTap: () => onSelected(option),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
         SizedBox(

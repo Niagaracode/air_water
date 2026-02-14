@@ -150,7 +150,16 @@ class CompanyNotifier extends Notifier<CompanyState> {
 
   void setSearchName(String name) {
     state = state.copyWith(searchName: name);
-    loadGroupedCompanies();
+    // Explicit trigger required from UI
+  }
+
+  Future<List<CompanyAutocompleteInfo>> searchCompanies(String query) async {
+    try {
+      final repository = ref.read(companyRepositoryProvider);
+      return await repository.getCompanyAutocomplete(q: query);
+    } catch (e) {
+      return [];
+    }
   }
 
   void setStatus(int? status) {

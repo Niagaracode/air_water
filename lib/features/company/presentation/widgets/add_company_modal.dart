@@ -226,7 +226,10 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                     enabled: false,
                     decoration: InputDecoration(
                       hintText: 'Enter Company name',
-                      hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                      hintStyle: TextStyle(
+                        color: Colors.grey.shade400,
+                        fontSize: 14,
+                      ),
                       disabledBorder: OutlineInputBorder(
                         borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
                         borderRadius: BorderRadius.circular(8),
@@ -248,9 +251,10 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                       if (textEditingValue.text.isEmpty) {
                         return const Iterable<String>.empty();
                       }
-                      return await ref
+                      final companies = await ref
                           .read(companyRepositoryProvider)
-                          .getAutocompleteSuggestions(textEditingValue.text);
+                          .getCompanyAutocomplete(q: textEditingValue.text);
+                      return companies.map((e) => e.name).toList();
                     },
                   ),
                 const SizedBox(height: 32),

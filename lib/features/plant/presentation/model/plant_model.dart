@@ -311,3 +311,48 @@ class PlantCreateRequest {
     };
   }
 }
+
+class PlantAutocompleteInfo {
+  final int plantId;
+  final String plantName;
+  final String? displayName;
+  final String? addressLine1;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? pincode;
+
+  PlantAutocompleteInfo({
+    required this.plantId,
+    required this.plantName,
+    this.displayName,
+    this.addressLine1,
+    this.city,
+    this.state,
+    this.country,
+    this.pincode,
+  });
+
+  factory PlantAutocompleteInfo.fromJson(Map<String, dynamic> json) {
+    return PlantAutocompleteInfo(
+      plantId: json['plant_id'] as int,
+      plantName: json['plant_name'] as String,
+      displayName: json['display_name'] as String?,
+      addressLine1: json['address_line_1'] as String?,
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      country: json['country'] as String?,
+      pincode: json['pincode'] as String?,
+    );
+  }
+
+  String get fullAddress {
+    final parts = [
+      addressLine1,
+      city,
+      state,
+      country,
+    ].where((p) => p != null && p.isNotEmpty).toList();
+    return parts.join(', ');
+  }
+}

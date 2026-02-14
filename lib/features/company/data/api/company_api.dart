@@ -30,13 +30,17 @@ class CompanyApi {
     );
   }
 
-  Future<List<String>> getAutocompleteSuggestions(String query) async {
-    final response = await _client.get(
-      '/companies/autocomplete',
-      query: {'q': query},
-    );
-    final List<dynamic> data = response.data['data'] ?? [];
-    return data.map((item) => item['name'] as String).toList();
+  Future<List<CompanyAutocompleteInfo>> getCompanyAutocomplete({
+    String? q,
+  }) async {
+    final Map<String, dynamic> query = q != null ? {'q': q} : {};
+    final response = await _client.get('/companies/autocomplete', query: query);
+    final List data = response.data['data'] ?? [];
+    return data
+        .map(
+          (e) => CompanyAutocompleteInfo.fromJson(Map<String, dynamic>.from(e)),
+        )
+        .toList();
   }
 
   Future<void> createCompany(CompanyCreateRequest request) async {
