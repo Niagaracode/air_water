@@ -1,6 +1,6 @@
-import 'package:air_water/features/product/view/product_wide.dart';
-import 'package:air_water/features/product/view/product_narrow.dart';
-import 'package:air_water/features/product/view/product_middle.dart';
+import 'package:air_water/features/product/presentation/view/product_middle.dart';
+import 'package:air_water/features/product/presentation/view/product_narrow.dart';
+import 'package:air_water/features/product/presentation/view/product_wide.dart';
 import 'package:flutter/cupertino.dart';
 import '../../core/responsive/page_layout_builder.dart';
 
