@@ -4,7 +4,9 @@ class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final bool isPassword;
+  @Deprecated('Use obscureText instead')
   final bool obscure;
+  final bool obscureText;
   final bool readOnly;
   final bool enabled;
   final VoidCallback? onToggle;
@@ -21,6 +23,7 @@ class AppTextField extends StatelessWidget {
     required this.hint,
     this.isPassword = false,
     this.obscure = false,
+    this.obscureText = false,
     this.readOnly = false,
     this.enabled = true,
     this.maxLines = 1,
@@ -33,9 +36,10 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isObscured = obscure || obscureText;
     return TextField(
       controller: controller,
-      obscureText: obscure,
+      obscureText: isObscured,
       readOnly: readOnly,
       enabled: enabled,
       maxLines: maxLines,
@@ -48,7 +52,9 @@ class AppTextField extends StatelessWidget {
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
         suffixIcon: isPassword
             ? IconButton(
-                icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+                icon: Icon(
+                  isObscured ? Icons.visibility_off : Icons.visibility,
+                ),
                 onPressed: onToggle,
               )
             : null,

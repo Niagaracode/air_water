@@ -186,28 +186,39 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                               Expanded(
                                 child: _buildLabelField(
                                   'Category*',
-                                  AppDropdown<dynamic>(
-                                    value: _selectedCategory,
-                                    items: _dropdownData?['categories'] ?? [],
-                                    itemLabel: (v) => v['name'],
-                                    hint: 'Select Category',
-                                    onChanged: (v) =>
-                                        setState(() => _selectedCategory = v),
-                                  ),
+                                  _isLoadingDropdowns
+                                      ? const LinearProgressIndicator(
+                                          minHeight: 2,
+                                        )
+                                      : AppDropdown<dynamic>(
+                                          value: _selectedCategory,
+                                          items:
+                                              _dropdownData?['categories'] ??
+                                              [],
+                                          itemLabel: (v) => v['name'],
+                                          hint: 'Select Category',
+                                          onChanged: (v) => setState(
+                                            () => _selectedCategory = v,
+                                          ),
+                                        ),
                                 ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: _buildLabelField(
                                   'Unit*',
-                                  AppDropdown<dynamic>(
-                                    value: _selectedUnit,
-                                    items: _dropdownData?['units'] ?? [],
-                                    itemLabel: (u) => u['name'],
-                                    hint: 'Select Unit',
-                                    onChanged: (v) =>
-                                        setState(() => _selectedUnit = v),
-                                  ),
+                                  _isLoadingDropdowns
+                                      ? const LinearProgressIndicator(
+                                          minHeight: 2,
+                                        )
+                                      : AppDropdown<dynamic>(
+                                          value: _selectedUnit,
+                                          items: _dropdownData?['units'] ?? [],
+                                          itemLabel: (u) => u['name'],
+                                          hint: 'Select Unit',
+                                          onChanged: (v) =>
+                                              setState(() => _selectedUnit = v),
+                                        ),
                                 ),
                               ),
                             ],
@@ -320,7 +331,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                   ),
                 ],
               ),
-              if (deviceState.isProcessing || _isLoadingDropdowns)
+              if (deviceState.isProcessing)
                 Positioned.fill(
                   child: Container(
                     color: Colors.black26,

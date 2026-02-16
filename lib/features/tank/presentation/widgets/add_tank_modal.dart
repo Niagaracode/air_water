@@ -226,14 +226,16 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                         Expanded(
                           child: _buildLabelField(
                             'Unit*',
-                            AppDropdown<dynamic>(
-                              value: _selectedUnit,
-                              items: _dropdownData?['units'] ?? [],
-                              itemLabel: (u) => u['name'],
-                              hint: 'Select Unit',
-                              onChanged: (v) =>
-                                  setState(() => _selectedUnit = v),
-                            ),
+                            _isLoadingDropdowns
+                                ? const LinearProgressIndicator(minHeight: 2)
+                                : AppDropdown<dynamic>(
+                                    value: _selectedUnit,
+                                    items: _dropdownData?['units'] ?? [],
+                                    itemLabel: (u) => u['name'],
+                                    hint: 'Select Unit',
+                                    onChanged: (v) =>
+                                        setState(() => _selectedUnit = v),
+                                  ),
                           ),
                         ),
                       ],
@@ -318,16 +320,21 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                   Expanded(
                                     child: _buildLabelField(
                                       'Tank Type*',
-                                      AppDropdown<dynamic>(
-                                        value: _selectedTankType,
-                                        items:
-                                            _dropdownData?['tank_types'] ?? [],
-                                        itemLabel: (tt) => tt['name'],
-                                        hint: 'Select Tank',
-                                        onChanged: (v) => setState(
-                                          () => _selectedTankType = v,
-                                        ),
-                                      ),
+                                      _isLoadingDropdowns
+                                          ? const LinearProgressIndicator(
+                                              minHeight: 2,
+                                            )
+                                          : AppDropdown<dynamic>(
+                                              value: _selectedTankType,
+                                              items:
+                                                  _dropdownData?['tank_types'] ??
+                                                  [],
+                                              itemLabel: (tt) => tt['name'],
+                                              hint: 'Select Tank',
+                                              onChanged: (v) => setState(
+                                                () => _selectedTankType = v,
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ],
@@ -340,15 +347,18 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                     const SizedBox(height: 32),
                     _buildLabelField(
                       'Product*',
-                      AppDropdown<dynamic>(
-                        value: _selectedProduct,
-                        items: _products,
-                        itemLabel: (p) => p is TankProduct
-                            ? p.productName
-                            : p['product_name'],
-                        hint: 'Select Product',
-                        onChanged: (v) => setState(() => _selectedProduct = v),
-                      ),
+                      _isLoadingDropdowns
+                          ? const LinearProgressIndicator(minHeight: 2)
+                          : AppDropdown<dynamic>(
+                              value: _selectedProduct,
+                              items: _products,
+                              itemLabel: (p) => p is TankProduct
+                                  ? p.productName
+                                  : p['product_name'],
+                              hint: 'Select Product',
+                              onChanged: (v) =>
+                                  setState(() => _selectedProduct = v),
+                            ),
                     ),
                     const SizedBox(height: 32),
                     _buildLabelField(
@@ -418,7 +428,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                 ),
               ),
             ),
-            if (tankState.isProcessing || _isLoadingDropdowns)
+            if (tankState.isProcessing)
               Positioned.fill(
                 child: Container(
                   color: Colors.black26,
