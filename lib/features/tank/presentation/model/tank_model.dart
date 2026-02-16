@@ -184,6 +184,7 @@ class TankCreateRequest {
   final double? height;
   final double? dishHeight;
   final int? plantId;
+  final int? status;
 
   TankCreateRequest({
     required this.tankNumber,
@@ -197,6 +198,7 @@ class TankCreateRequest {
     this.height,
     this.dishHeight,
     this.plantId,
+    this.status,
   });
 
   Map<String, dynamic> toJson() {
@@ -211,6 +213,7 @@ class TankCreateRequest {
       'height': height,
       'dish_height': dishHeight,
       'plant_id': plantId,
+      'status': status,
     };
   }
 }

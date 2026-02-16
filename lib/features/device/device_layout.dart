@@ -1,22 +1,18 @@
-import 'package:air_water/features/device/view/device_middle.dart';
-import 'package:air_water/features/device/view/device_narrow.dart';
-import 'package:air_water/features/device/view/device_wide.dart';
-import 'package:flutter/cupertino.dart';
-
+import 'package:flutter/material.dart';
 import '../../core/responsive/page_layout_builder.dart';
+import 'presentation/view/device_wide.dart';
+import 'presentation/view/device_middle.dart';
+import 'presentation/view/device_narrow.dart';
 
 class DeviceLayout extends PageLayoutBuilder {
   const DeviceLayout({super.key});
 
   @override
-  Widget buildNarrow(BuildContext context) =>
-      const DeviceNarrow();
+  Widget buildWide(BuildContext context) => const DeviceWide();
 
   @override
-  Widget buildMiddle(BuildContext context) =>
-      const DeviceMiddle();
+  Widget buildMiddle(BuildContext context) => const DeviceMiddle();
 
   @override
-  Widget buildWide(BuildContext context) =>
-      const DeviceWide();
+  Widget buildNarrow(BuildContext context) => const DeviceNarrow();
 }

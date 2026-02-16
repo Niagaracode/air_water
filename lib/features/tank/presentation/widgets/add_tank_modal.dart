@@ -39,6 +39,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   XFile? _imageFile;
   Uint8List? _previewBytes;
   bool _isDragging = false;
+  int _status = 1;
 
   @override
   void initState() {
@@ -51,6 +52,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           widget.initialTank!.dishHeight?.toString() ?? '';
       _descriptionController.text = widget.initialTank!.description ?? '';
       _plantAutocompleteController.text = widget.initialTank!.plantName ?? '';
+      _status = widget.initialTank!.status;
     }
     _loadDropdownData();
   }
@@ -144,6 +146,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           ? _selectedProduct.productId
           : _selectedProduct?['id'],
       imageFile: _imageFile,
+      status: _status,
     );
 
     final success = widget.initialTank != null
@@ -354,6 +357,37 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                         controller: _descriptionController,
                         hint: 'Enter Description',
                         maxLines: 4,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    _buildLabelField(
+                      'Status*',
+                      Row(
+                        children: [
+                          Row(
+                            children: [
+                              Radio<int>(
+                                value: 1,
+                                groupValue: _status,
+                                activeColor: const Color(0xFF1B1B4B),
+                                onChanged: (v) => setState(() => _status = v!),
+                              ),
+                              const Text('Active'),
+                            ],
+                          ),
+                          const SizedBox(width: 24),
+                          Row(
+                            children: [
+                              Radio<int>(
+                                value: 0,
+                                groupValue: _status,
+                                activeColor: const Color(0xFF1B1B4B),
+                                onChanged: (v) => setState(() => _status = v!),
+                              ),
+                              const Text('Inactive'),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 48),

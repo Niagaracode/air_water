@@ -315,6 +315,8 @@ class PlantCreateRequest {
 class PlantAutocompleteInfo {
   final int plantId;
   final String plantName;
+  final int? companyId;
+  final String? companyName;
   final String? displayName;
   final String? addressLine1;
   final String? city;
@@ -325,6 +327,8 @@ class PlantAutocompleteInfo {
   PlantAutocompleteInfo({
     required this.plantId,
     required this.plantName,
+    this.companyId,
+    this.companyName,
     this.displayName,
     this.addressLine1,
     this.city,
@@ -337,6 +341,8 @@ class PlantAutocompleteInfo {
     return PlantAutocompleteInfo(
       plantId: json['plant_id'] as int,
       plantName: json['plant_name'] as String,
+      companyId: json['company_id'] as int?,
+      companyName: json['company_name'] as String?,
       displayName: json['display_name'] as String?,
       addressLine1: json['address_line_1'] as String?,
       city: json['city'] as String?,

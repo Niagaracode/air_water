@@ -159,8 +159,9 @@ class _TankWideState extends ConsumerState<TankWide> {
           textEditingController: _plantSearchController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty)
+            if (textEditingValue.text.isEmpty) {
               return const Iterable<PlantAutocompleteInfo>.empty();
+            }
             return await ref
                 .read(tankProvider.notifier)
                 .searchPlants(textEditingValue.text);
@@ -190,7 +191,14 @@ class _TankWideState extends ConsumerState<TankWide> {
                     itemBuilder: (context, index) {
                       final option = options.elementAt(index);
                       return ListTile(
-                        title: Text(option.plantName),
+                        title: Text(
+                          option.plantName,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        subtitle: Text(
+                          option.fullAddress,
+                          style: const TextStyle(fontSize: 11),
+                        ),
                         onTap: () => onSelected(option),
                       );
                     },
@@ -211,8 +219,9 @@ class _TankWideState extends ConsumerState<TankWide> {
           textEditingController: _tankSearchController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty)
+            if (textEditingValue.text.isEmpty) {
               return const Iterable<String>.empty();
+            }
             return await ref
                 .read(tankProvider.notifier)
                 .getTankNameSuggestions(textEditingValue.text);
@@ -541,7 +550,14 @@ class _TankWideState extends ConsumerState<TankWide> {
     );
 
     if (confirmed == true) {
-      await ref.read(tankProvider.notifier).deleteTank(tank.tankId);
+      final success = await ref
+          .read(tankProvider.notifier)
+          .deleteTank(tank.tankId);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tank deleted successfully')),
+        );
+      }
     }
   }
 }
