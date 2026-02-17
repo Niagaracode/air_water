@@ -31,6 +31,60 @@ class ScreenSidebar extends ConsumerWidget {
       loading: () => const SizedBox(),
       error: (_, __) => const SizedBox(),
       data: (role) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeInOut,
+          width: isExpanded ? 250 : 80,
+          child: Material(
+            color: Colors.white,
+            elevation: 2,
+            child: Column(
+              children: [
+                SidebarHeader(isExpanded: isExpanded),
+                Divider(height: 0, color: Colors.grey.shade300),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    children: [
+                      _buildGroup(
+                        title: 'MAIN MENU',
+                        items: mainMenu,
+                        location: location,
+                        isExpanded: isExpanded,
+                        context: context,
+                        role: role,
+                      ),
+                      _buildGroup(
+                        title: 'CONFIGURATION',
+                        items: configurationMenu,
+                        location: location,
+                        isExpanded: isExpanded,
+                        context: context,
+                        role: role,
+                      ),
+                      _buildGroup(
+                        title: 'USER',
+                        items: userMenu,
+                        location: location,
+                        isExpanded: isExpanded,
+                        context: context,
+                        role: role,
+                      ),
+                      _buildGroup(
+                        title: 'EVENTS',
+                        items: eventsMenu,
+                        location: location,
+                        isExpanded: isExpanded,
+                        context: context,
+                        role: role,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
         return SizedBox(
           width: isExpanded ? 250 : 80,
           child: Material(
