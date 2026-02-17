@@ -39,8 +39,7 @@ class ScreenSidebar extends ConsumerWidget {
             child: Column(
               children: [
                 SidebarHeader(isExpanded: isExpanded),
-                const Divider(height: 0),
-
+                Divider(height: 0, color: Colors.grey.shade300),
                 Expanded(
                   child: ListView(
                     padding:

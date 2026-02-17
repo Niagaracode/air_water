@@ -4,4 +4,5 @@ abstract class AuthRepository {
   Future<void> logout();
   //Future<bool> restoreSession();
   Future<String?> getUserRole();
+  Future<String?> getUserName();
 }

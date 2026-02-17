@@ -24,8 +24,14 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = res['user'];
       if (user != null && user is Map) {
         final role = user['role_name'];
+        final name = user['username'];
+
         if (role != null) {
           await _storage.saveRole(role.toString());
+        }
+
+        if (name != null) {
+          await _storage.saveUserName(name.toString());
         }
       }
     } on DioException catch (e) {
@@ -51,6 +57,11 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> logout() async {
     await _storage.clear();
+  }
+
+  @override
+  Future<String?> getUserName() async {
+    return _storage.readUserName();
   }
 
   @override

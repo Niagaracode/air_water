@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/app_theme/app_theme.dart';
+import '../../features/auth/presentation/controllers/auth_providers.dart';
 
-class ScreenHeader extends StatelessWidget {
+
+class ScreenHeader extends ConsumerWidget {
   const ScreenHeader({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+
+    final userNameAsync = ref.watch(userNameProvider);
 
     return SizedBox(
-      height: 61,
+      height: 64,
       width: double.infinity,
       child: Material(
         color: Colors.white,
@@ -20,13 +25,14 @@ class ScreenHeader extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: Colors.grey.shade200,
+                color: Colors.grey.shade300,
                 width: 1,
               ),
             ),
           ),
           child: Row(
             children: [
+
               Expanded(
                 child: Container(
                   height: 48,
@@ -40,8 +46,6 @@ class ScreenHeader extends StatelessWidget {
                       hintText: 'Search',
                       prefixIcon: Icon(Icons.search_rounded),
                       border: InputBorder.none,
-                      contentPadding:
-                      EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
                 ),
@@ -52,35 +56,65 @@ class ScreenHeader extends StatelessWidget {
               IconButton(
                 onPressed: () {},
                 icon: Badge(
-                  label: Text('2'),
+                  label: const Text('2'),
                   child: Icon(Icons.notifications_none_rounded,
                       color: primary),
                 ),
               ),
 
-              const SizedBox(width: 8),
-
-              IconButton(
-                onPressed: () {},
-                icon: const Icon(Icons.settings_outlined),
-              ),
-
               const SizedBox(width: 24),
 
-              Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 20,
-                    backgroundImage: NetworkImage(
-                      'https://i.pravatar.cc/150?u=danielle',
+              PopupMenuButton<String>(
+                offset: const Offset(0, 50),
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                onSelected: (value) async {
+                  if (value == 'logout') {
+                    await ref.read(authControllerProvider.notifier)
+                        .logout();
+                  }
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8, right: 5, top: 3, bottom: 3),
+                  child: Row(
+                    children: [
+                      const CircleAvatar(radius: 17),
+                      const SizedBox(width: 12),
+                      userNameAsync.when(
+                        data: (name) => Text(
+                          name ?? 'User',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        loading: () => const Text('Loading...'),
+                        error: (_, __) => const Text('User'),
+                      ),
+                      const Icon(Icons.keyboard_arrow_down_rounded),
+                    ],
+                  ),
+                ),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(
+                    value: 'profile',
+                    child: ListTile(
+                      leading: Icon(Icons.person_outline),
+                      title: Text('Profile'),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Danielle Campbell',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  PopupMenuDivider(height: 0),
+                  PopupMenuItem(
+                    value: 'logout',
+                    child: ListTile(
+                      leading: Icon(Icons.logout, color: Colors.red),
+                      title: Text(
+                        'Logout',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ),
                   ),
-                  const Icon(Icons.keyboard_arrow_down_rounded),
                 ],
               ),
             ],
