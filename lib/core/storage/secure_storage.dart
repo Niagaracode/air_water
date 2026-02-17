@@ -9,6 +9,7 @@ class SecureStorage {
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
   static const _roleKey = 'user_role';
+  static const _userNameKey = 'user_name';
 
   Future<void> saveToken(String token) =>
       _storage.write(key: _accessTokenKey, value: token);
@@ -27,6 +28,12 @@ class SecureStorage {
 
   Future<String?> readRole() =>
       _storage.read(key: _roleKey);
+
+  Future<void> saveUserName(String name) =>
+      _storage.write(key: _userNameKey, value: name);
+
+  Future<String?> readUserName() =>
+      _storage.read(key: _userNameKey);
 
   Future<void> clear() async {
     await _storage.deleteAll();

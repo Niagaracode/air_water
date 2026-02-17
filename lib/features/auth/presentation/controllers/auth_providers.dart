@@ -20,3 +20,8 @@ final loginUseCaseProvider = Provider((ref) => LoginUseCase(
 final authControllerProvider = AsyncNotifierProvider<AuthController, void>(
   AuthController.new,
 );
+
+final userNameProvider = FutureProvider<String?>((ref) async {
+  final storage = ref.read(secureStorageProvider);
+  return storage.readUserName();
+});
