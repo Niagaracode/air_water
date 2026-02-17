@@ -22,6 +22,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _companyAutocompleteController = TextEditingController();
+  final _sessionTimeoutController = TextEditingController();
 
   List<Role>? _roles;
   Role? _selectedRole;
@@ -40,6 +41,8 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       _mobileController.text = widget.user!.mobileNumber ?? '';
       _companyAutocompleteController.text = widget.user!.companyName ?? '';
       _status = widget.user!.status;
+      _sessionTimeoutController.text = (widget.user!.sessionTimeout ?? 86400)
+          .toString();
 
       // Set selected company if available
       if (widget.user!.companyId != null && widget.user!.companyName != null) {
@@ -48,6 +51,8 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           name: widget.user!.companyName!,
         );
       }
+    } else {
+      _sessionTimeoutController.text = '86400';
     }
     _loadRoles();
   }
@@ -82,6 +87,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _companyAutocompleteController.dispose();
+    _sessionTimeoutController.dispose();
     super.dispose();
   }
 
@@ -142,7 +148,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           ? null
           : _mobileController.text,
       status: _status,
-      sessionTimeout: 86400,
+      sessionTimeout: int.tryParse(_sessionTimeoutController.text) ?? 86400,
     );
 
     final success = widget.user != null
@@ -186,12 +192,28 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.user != null ? 'EDIT USER' : 'ADD USER',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        widget.user != null ? 'EDIT USER' : 'ADD USER',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   _buildInfoBar(),
@@ -294,18 +316,37 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          _buildLabelField(
-                            'Role*',
-                            _isLoadingRoles
-                                ? const LinearProgressIndicator(minHeight: 2)
-                                : AppDropdown<Role>(
-                                    value: _selectedRole,
-                                    items: _roles ?? [],
-                                    itemLabel: (role) => role.name,
-                                    hint: 'Select Role',
-                                    onChanged: (v) =>
-                                        setState(() => _selectedRole = v),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: _buildLabelField(
+                                  'Role*',
+                                  _isLoadingRoles
+                                      ? const LinearProgressIndicator(
+                                          minHeight: 2,
+                                        )
+                                      : AppDropdown<Role>(
+                                          value: _selectedRole,
+                                          items: _roles ?? [],
+                                          itemLabel: (role) => role.name,
+                                          hint: 'Select Role',
+                                          onChanged: (v) =>
+                                              setState(() => _selectedRole = v),
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildLabelField(
+                                  'Session Timeout (sec)',
+                                  AppTextField(
+                                    controller: _sessionTimeoutController,
+                                    hint: '86400',
                                   ),
+                                ),
+                              ),
+                            ],
                           ),
 
                           const SizedBox(height: 12),
