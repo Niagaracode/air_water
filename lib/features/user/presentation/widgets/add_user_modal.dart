@@ -54,6 +54,23 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     } else {
       _sessionTimeoutController.text = '86400';
     }
+
+    // Auto-fill company for non-Super Admins
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentUser = ref.read(userProvider).currentUser;
+      if (currentUser != null && currentUser.roleId != 1) {
+        if (widget.user == null) {
+          setState(() {
+            _selectedCompany = CompanyAutocomplete(
+              id: currentUser.companyId!,
+              name: currentUser.companyName!,
+            );
+            _companyAutocompleteController.text = currentUser.companyName!;
+          });
+        }
+      }
+    });
+
     _loadRoles();
   }
 
@@ -428,6 +445,17 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   }
 
   Widget _buildCompanyAutocomplete() {
+    final currentUser = ref.read(userProvider).currentUser;
+    final isSuperAdmin = currentUser?.roleId == 1;
+
+    if (!isSuperAdmin) {
+      return AppTextField(
+        controller: _companyAutocompleteController,
+        readOnly: true,
+        hint: 'Company',
+      );
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         return RawAutocomplete<CompanyAutocomplete>(
