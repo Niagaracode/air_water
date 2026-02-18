@@ -127,14 +127,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             height: 54,
             child: ElevatedButton(
               onPressed: state.isLoading ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                textStyle: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
               child: state.isLoading
                   ? const CircularProgressIndicator()
                   : const Text('Login'),

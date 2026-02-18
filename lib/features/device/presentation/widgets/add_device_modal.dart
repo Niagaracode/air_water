@@ -307,13 +307,6 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed: deviceState.isProcessing ? null : _save,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B1B4B),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
                       child: deviceState.isProcessing
                           ? const SizedBox(
                               height: 20,

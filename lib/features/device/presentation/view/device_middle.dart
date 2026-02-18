@@ -65,10 +65,6 @@ class _DeviceMiddleState extends ConsumerState<DeviceMiddle> {
                     ),
                     ElevatedButton(
                       onPressed: () => _showAddModal(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        foregroundColor: Colors.white,
-                      ),
                       child: const Text('ADD'),
                     ),
                   ],

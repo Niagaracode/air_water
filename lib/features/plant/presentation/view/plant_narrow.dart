@@ -35,7 +35,6 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
     final plantNotifier = ref.read(plantNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: cardBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -179,14 +178,6 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
               },
               icon: const Icon(Icons.add, size: 16),
               label: const Text('ADD'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryDeep,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 44),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
             ),
             const SizedBox(height: 8),
             Align(

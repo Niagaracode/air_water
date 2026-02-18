@@ -54,7 +54,6 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
     final notifier = ref.read(tankProvider.notifier);
 
     return Scaffold(
-      backgroundColor: cardBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -87,10 +86,6 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
             ),
             ElevatedButton(
               onPressed: () => _showAddDialog(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryDeep,
-                foregroundColor: Colors.white,
-              ),
               child: const Text('ADD'),
             ),
           ],

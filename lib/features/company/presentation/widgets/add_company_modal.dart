@@ -198,17 +198,17 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: infoBackground,
+                    color:  Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info, color: primaryDeep, size: 20),
+                      Icon(Icons.info, color:  Theme.of(context).colorScheme.surface, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Enter The Company Name, And Specify Multiple Addresses.',
-                          style: TextStyle(color: primaryDeep, fontSize: 13),
+                          style: TextStyle(color:  Theme.of(context).colorScheme.surface, fontSize: 13),
                         ),
                       ),
                     ],
@@ -274,13 +274,6 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                         onPressed: _addAddressRow,
                         icon: const Icon(Icons.add, size: 16),
                         label: const Text('ADD'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryDeep,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
                       ),
                   ],
                 ),
@@ -319,13 +312,6 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed: _save,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryDeep,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
                       child: const Text(
                         'SAVE',
                         style: TextStyle(

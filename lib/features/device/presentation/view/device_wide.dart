@@ -49,7 +49,6 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     final notifier = ref.read(deviceProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       body: Column(
         children: [
           Expanded(
@@ -82,17 +81,6 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                         onPressed: () => _showAddModal(),
                         icon: const Icon(Icons.add, size: 18),
                         label: const Text('ADD'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleAt(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
                       ),
                     ],
                   ),

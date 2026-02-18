@@ -54,7 +54,6 @@ class _TankWideState extends ConsumerState<TankWide> {
     final notifier = ref.read(tankProvider.notifier);
 
     return Scaffold(
-      backgroundColor: cardBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -139,14 +138,6 @@ class _TankWideState extends ConsumerState<TankWide> {
           onPressed: () => _showAddDialog(),
           icon: const Icon(Icons.add, size: 18),
           label: const Text('ADD'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryDeep,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
         ),
       ],
     );

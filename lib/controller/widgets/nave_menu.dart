@@ -39,7 +39,7 @@ class NaveMenu extends StatelessWidget {
         hoverColor: primaryColor.withOpacity(0.06),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            vertical: 12,
+            vertical: 6,
             horizontal: isExpanded ? 12 : 0,
           ),
           child: Row(

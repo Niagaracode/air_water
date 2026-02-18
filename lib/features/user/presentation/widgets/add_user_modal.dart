@@ -389,15 +389,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                     height: 48,
                     child: ElevatedButton(
                       onPressed: userState.isProcessing ? null : _save,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1B1B4B),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: userState.isProcessing
-                          ? const SizedBox(
+                      child: userState.isProcessing ? const SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
