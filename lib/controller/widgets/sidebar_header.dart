@@ -17,15 +17,13 @@ class SidebarHeader extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: isExpanded
-          ? Row(
+      child: isExpanded ? Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Image.asset(
             'assets/png/app_logo_white.png',
             height: 36,
           ),
-
           IconButton(
             icon: const Icon(
                 Icons.keyboard_double_arrow_left),
@@ -37,8 +35,7 @@ class SidebarHeader extends ConsumerWidget {
             },
           ),
         ],
-      )
-          : Column(
+      ) : Column(
         children: [
           Container(
             padding: const EdgeInsets.all(6),
@@ -51,9 +48,7 @@ class SidebarHeader extends ConsumerWidget {
               height: 28,
             ),
           ),
-
           const SizedBox(height: 12),
-
           IconButton(
             icon: const Icon(
                 Icons.keyboard_double_arrow_right),
