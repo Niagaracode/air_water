@@ -65,11 +65,6 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
                     ),
                     ElevatedButton(
                       onPressed: () => _showAddModal(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
                       child: const Text('ADD'),
                     ),
                   ],

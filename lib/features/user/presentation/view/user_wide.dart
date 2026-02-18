@@ -81,17 +81,6 @@ class _UserWideState extends ConsumerState<UserWide> {
                         onPressed: () => _showAddModal(),
                         icon: const Icon(Icons.add, size: 18),
                         label: const Text('ADD'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
                       ),
                     ],
                   ),

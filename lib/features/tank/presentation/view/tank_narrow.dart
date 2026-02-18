@@ -53,7 +53,6 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     final notifier = ref.read(tankProvider.notifier);
 
     return Scaffold(
-      backgroundColor: cardBackgroundColor,
       appBar: AppBar(
         title: const Text(
           'TANK MANAGEMENT',

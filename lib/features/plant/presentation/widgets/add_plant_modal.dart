@@ -290,12 +290,12 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: infoBackground,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info, color: primaryDeep, size: 20),
+                          Icon(Icons.info, color: Theme.of(context).colorScheme.surface, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
@@ -406,13 +406,6 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                                     onPressed: _addAddressRow,
                                     icon: const Icon(Icons.add, size: 16),
                                     label: const Text('ADD'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: primaryDeep,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
                                   ),
                               ],
                             ),
@@ -468,13 +461,6 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                         height: 48,
                         child: ElevatedButton(
                           onPressed: _save,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryDeep,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
                           child: Text(
                             widget.initialPlant != null ? 'UPDATE' : 'SAVE',
                             style: const TextStyle(

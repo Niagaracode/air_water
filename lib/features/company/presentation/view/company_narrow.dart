@@ -36,7 +36,6 @@ class _CompanyNarrowState extends ConsumerState<CompanyNarrow> {
     final companyNotifier = ref.read(companyNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: cardBackgroundColor,
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -185,14 +184,6 @@ class _CompanyNarrowState extends ConsumerState<CompanyNarrow> {
                   },
                   icon: const Icon(Icons.add, size: 16),
                   label: const Text('ADD'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryDeep,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 44),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 8),
                 Align(

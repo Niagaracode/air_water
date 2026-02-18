@@ -4,15 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 Color primaryDark = const Color(0xFF141E7A);
 Color primary = const Color(0xFF141E7A);
 Color primaryLight = const Color(0xFF98A0E6);
-Color primaryBackground = const Color(0xFFFFFFFF);
+Color primaryBackground = const Color(0xFFF8F6F6);
 Color primaryTextColor = const Color(0xFF333333);
 Color secondaryTextColor = const Color(0xFF666666);
-Color borderColor = const Color(0xFFE0E0E0);
+/*Color borderColor = const Color(0xFFE0E0E0);
 Color primaryDeep = const Color(0xFF1B1B4B);
 Color infoBackground = const Color(0xFFE8EFFF);
 Color cardBackgroundColor = const Color(0xFFF8F9FD);
 Color greyBackgroundColor = const Color(0xFFF5F6FA);
-Color breadcrumbColor = const Color(0xFF5C6AC4);
+Color breadcrumbColor = const Color(0xFF5C6AC4);*/
 
 class AppTheme {
   static ThemeData lightTheme = ThemeData.light().copyWith(
@@ -25,12 +25,18 @@ class AppTheme {
       titleTextStyle: const TextStyle(color: Colors.white, fontSize: 22),
       iconTheme: const IconThemeData(color: Colors.white),
     ),
+
+    colorScheme: ColorScheme.light(
+      primary: primary,
+      surface: const Color(0xFFF8F9FD),   // container background
+      surfaceContainer: const Color(0xFFF5F6FA), // light cards/inputs
+    ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.white,
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),

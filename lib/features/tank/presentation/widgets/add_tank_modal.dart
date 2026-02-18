@@ -407,13 +407,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                         height: 48,
                         child: ElevatedButton(
                           onPressed: _save,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1B1B4B),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
                           child: const Text(
                             'SAVE',
                             style: TextStyle(
@@ -496,7 +489,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           borderType: BorderType.RRect,
           radius: const Radius.circular(12),
           dashPattern: const [6, 3],
-          color: _isDragging ? primaryDeep : Colors.grey.shade300,
+          color: _isDragging ? Theme.of(context).colorScheme.surface : Colors.grey.shade300,
           strokeWidth: 2,
           child: Container(
             width: 200,
@@ -504,7 +497,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: _isDragging
-                  ? primaryDeep.withOpacity(0.05)
+                  ? Theme.of(context).colorScheme.surface.withOpacity(0.05)
                   : Colors.grey.shade50,
             ),
             child: _previewBytes != null
@@ -549,7 +542,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       Icon(
                         Icons.cloud_upload_outlined,
                         size: 48,
-                        color: _isDragging ? primaryDeep : Colors.grey.shade300,
+                        color: _isDragging ? Theme.of(context).colorScheme.surface : Colors.grey.shade300,
                       ),
                       const SizedBox(height: 16),
                       const Padding(
