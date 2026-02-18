@@ -60,6 +60,7 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
         child: Column(
           children: [
             _buildHeader(),
+            if (state.error != null) _buildErrorBanner(state.error!),
             const SizedBox(height: 16),
             ...state.groupedTanks.map(
               (group) => _buildGroupCard(group, notifier),
@@ -98,7 +99,13 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
         const SizedBox(height: 16),
         _buildPlantAutocomplete(),
         const SizedBox(height: 12),
-        _buildTankAutocomplete(),
+        Row(
+          children: [
+            Expanded(child: _buildTankAutocomplete()),
+            const SizedBox(width: 8),
+            TextButton(onPressed: _clearFilters, child: const Text('CLEAR')),
+          ],
+        ),
         const SizedBox(height: 12),
         AppDropdown<int?>(
           value: _selectedStatus,
@@ -329,6 +336,40 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
       barrierColor: Colors.black54,
       pageBuilder: (context, anim1, anim2) => AddTankModal(initialTank: tank),
     );
+  }
+
+  Widget _buildErrorBanner(String error) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              error,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close, color: Colors.red.shade700, size: 18),
+            onPressed: () => ref.read(tankProvider.notifier).loadGroupedTanks(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearFilters() {
+    _plantSearchController.clear();
+    _tankSearchController.clear();
+    setState(() => _selectedStatus = null);
+    _onSearchChanged();
   }
 
   Future<void> _showDeleteDialog(Tank tank) async {

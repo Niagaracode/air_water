@@ -6,6 +6,7 @@ import '../../data/repository/user_repository_impl.dart';
 import '../../domain/repository/user_repository.dart';
 import '../model/user_model.dart';
 import '../../../plant/presentation/model/plant_model.dart';
+import '../../../tank/presentation/model/tank_model.dart';
 
 class UserState {
   final List<User> users;
@@ -73,6 +74,8 @@ class UserNotifier extends Notifier<UserState> {
     int? roleId,
     int? companyId,
     int? status,
+    int? plantId,
+    int? tankId,
   }) async {
     state = state.copyWith(isLoading: true, page: 1, users: []);
     try {
@@ -85,6 +88,8 @@ class UserNotifier extends Notifier<UserState> {
         roleId: roleId,
         companyId: companyId,
         status: status,
+        plantId: plantId,
+        tankId: tankId,
       );
 
       // Filter out the current logged-in user
@@ -111,6 +116,8 @@ class UserNotifier extends Notifier<UserState> {
     int? roleId,
     int? companyId,
     int? status,
+    int? plantId,
+    int? tankId,
   }) async {
     if (state.isLoading || !state.hasMore) return;
 
@@ -127,6 +134,8 @@ class UserNotifier extends Notifier<UserState> {
         roleId: roleId,
         companyId: companyId,
         status: status,
+        plantId: plantId,
+        tankId: tankId,
       );
 
       // Filter out the current logged-in user
@@ -215,6 +224,28 @@ class UserNotifier extends Notifier<UserState> {
       return await repository.searchPlants(query);
     } catch (e) {
       return [];
+    }
+  }
+
+  Future<TankGroupedResponse?> getTanksGrouped({
+    int page = 1,
+    int limit = 500, // Load many for selection
+    String? plantName,
+    String? tankName,
+    int? status,
+  }) async {
+    try {
+      final repository = ref.read(userRepositoryProvider);
+      return await repository.getTanksGrouped(
+        page: page,
+        limit: limit,
+        plantName: plantName,
+        tankName: tankName,
+        status: status,
+      );
+    } catch (e) {
+      debugPrint('Error fetching grouped tanks: $e');
+      return null;
     }
   }
 

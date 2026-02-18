@@ -13,6 +13,7 @@ class User {
   final int? sessionTimeout;
   final String? createdAt;
   final List<AssignedPlant>? assignedPlants;
+  final List<int>? assignedTanks;
   final int? messageCategoryId;
   final String? messageCategoryName;
 
@@ -31,6 +32,7 @@ class User {
     this.sessionTimeout,
     this.createdAt,
     this.assignedPlants,
+    this.assignedTanks,
     this.messageCategoryId,
     this.messageCategoryName,
   });
@@ -54,6 +56,9 @@ class User {
           ? (json['assigned_plants'] as List)
                 .map((i) => AssignedPlant.fromJson(i as Map<String, dynamic>))
                 .toList()
+          : null,
+      assignedTanks: json['assigned_tanks'] != null
+          ? (json['assigned_tanks'] as List).map((e) => e as int).toList()
           : null,
       messageCategoryId: json['message_category_id'] as int?,
       messageCategoryName: json['message_category_name'] as String?,
@@ -142,6 +147,7 @@ class UserCreateRequest {
   final int? status;
   final int? sessionTimeout;
   final List<int>? assignedPlants;
+  final List<int>? assignedTanks;
   final int? messageCategoryId;
 
   UserCreateRequest({
@@ -156,6 +162,7 @@ class UserCreateRequest {
     this.status,
     this.sessionTimeout,
     this.assignedPlants,
+    this.assignedTanks,
     this.messageCategoryId,
   });
 
@@ -172,6 +179,7 @@ class UserCreateRequest {
       'status': status,
       'session_timeout': sessionTimeout,
       'assigned_plants': assignedPlants,
+      'assigned_tanks': assignedTanks,
       'message_category_id': messageCategoryId,
     };
   }
@@ -198,6 +206,56 @@ class CompanyAutocomplete {
     return CompanyAutocomplete(
       id: json['id'] as int,
       name: json['name'] as String,
+    );
+  }
+}
+
+// PlantTankAssignment class for the dropdown selector widget
+// This is used internally by the widget and converted to assignedPlants/assignedTanks
+class PlantTankAssignment {
+  final int plantId;
+  final String plantName;
+  final bool allTanks;
+  final List<int>? tankIds;
+  final List<String>? tankNames;
+
+  PlantTankAssignment({
+    required this.plantId,
+    required this.plantName,
+    required this.allTanks,
+    this.tankIds,
+    this.tankNames,
+  });
+
+  String get displayText {
+    if (allTanks) {
+      return '$plantName (All Tanks)';
+    } else if (tankIds != null) {
+      return '$plantName (${tankIds!.length} tanks)';
+    }
+    return plantName;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'plant_id': plantId,
+      'plant_name': plantName,
+      'all_tanks': allTanks,
+      if (!allTanks && tankIds != null) 'tank_ids': tankIds,
+    };
+  }
+
+  factory PlantTankAssignment.fromJson(Map<String, dynamic> json) {
+    return PlantTankAssignment(
+      plantId: json['plant_id'] as int,
+      plantName: json['plant_name'] as String? ?? '',
+      allTanks: json['all_tanks'] as bool? ?? false,
+      tankIds: json['tank_ids'] != null
+          ? (json['tank_ids'] as List).map((e) => e as int).toList()
+          : null,
+      tankNames: json['tank_names'] != null
+          ? (json['tank_names'] as List).map((e) => e as String).toList()
+          : null,
     );
   }
 }

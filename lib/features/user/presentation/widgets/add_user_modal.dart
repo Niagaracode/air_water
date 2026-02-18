@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../model/user_model.dart';
-import '../controller/user_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
+import '../../../group/presentation/controller/group_provider.dart';
+import '../../../group/presentation/model/group_model.dart';
+import '../model/user_model.dart';
+import '../controller/user_provider.dart';
 
 class AddUserModal extends ConsumerStatefulWidget {
   final User? user;
@@ -23,12 +25,17 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   final _confirmPasswordController = TextEditingController();
   final _companyAutocompleteController = TextEditingController();
   final _sessionTimeoutController = TextEditingController();
+  final _companyFocusNode = FocusNode();
 
   List<Role>? _roles;
   Role? _selectedRole;
   CompanyAutocomplete? _selectedCompany;
   bool _isLoadingRoles = false;
   int _status = 1;
+
+  // Group selection
+  List<Group> _assignedGroups = [];
+  bool _isLoadingGroups = false;
 
   @override
   void initState() {
@@ -44,18 +51,17 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       _sessionTimeoutController.text = (widget.user!.sessionTimeout ?? 86400)
           .toString();
 
-      // Set selected company if available
       if (widget.user!.companyId != null && widget.user!.companyName != null) {
         _selectedCompany = CompanyAutocomplete(
           id: widget.user!.companyId!,
           name: widget.user!.companyName!,
         );
       }
+      _loadUserGroups();
     } else {
       _sessionTimeoutController.text = '86400';
     }
 
-    // Auto-fill company for non-Super Admins
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final currentUser = ref.read(userProvider).currentUser;
       if (currentUser != null && currentUser.roleId != 1) {
@@ -69,9 +75,27 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           });
         }
       }
+      ref.read(groupProvider.notifier).loadGroups();
     });
 
     _loadRoles();
+  }
+
+  Future<void> _loadUserGroups() async {
+    if (widget.user == null) return;
+    setState(() => _isLoadingGroups = true);
+    try {
+      final groups = await ref
+          .read(groupProvider.notifier)
+          .getGroupsByUserId(widget.user!.userId);
+      setState(() {
+        _assignedGroups = groups;
+      });
+    } catch (e) {
+      debugPrint('Error loading user groups: $e');
+    } finally {
+      setState(() => _isLoadingGroups = false);
+    }
   }
 
   Future<void> _loadRoles() async {
@@ -80,11 +104,10 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       final roles = await ref.read(userProvider.notifier).getRoles();
       setState(() {
         _roles = roles;
-        if (widget.user != null && widget.user!.roleId != null) {
-          _selectedRole = roles.firstWhere(
-            (r) => r.id == widget.user!.roleId,
-            orElse: () => roles.first,
-          );
+        if (widget.user != null) {
+          _selectedRole = roles
+              .where((r) => r.id == widget.user!.roleId)
+              .firstOrNull;
         }
       });
     } catch (e) {
@@ -105,6 +128,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     _confirmPasswordController.dispose();
     _companyAutocompleteController.dispose();
     _sessionTimeoutController.dispose();
+    _companyFocusNode.dispose();
     super.dispose();
   }
 
@@ -113,37 +137,13 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
 
     if (_usernameController.text.isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('User Name is required')),
-      );
-      return;
-    }
-
-    if (_emailController.text.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Email is required')),
-      );
-      return;
-    }
-
-    if (widget.user == null && _passwordController.text.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Password is required')),
-      );
-      return;
-    }
-
-    if (widget.user == null &&
-        _passwordController.text != _confirmPasswordController.text) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
+        const SnackBar(content: Text('Username is required')),
       );
       return;
     }
 
     if (_selectedRole == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Role')),
-      );
+      messenger.showSnackBar(const SnackBar(content: Text('Role is required')));
       return;
     }
 
@@ -166,25 +166,42 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           : _mobileController.text,
       status: _status,
       sessionTimeout: int.tryParse(_sessionTimeoutController.text) ?? 86400,
+      assignedPlants: [],
+      assignedTanks: [],
     );
 
-    final success = widget.user != null
-        ? await ref
-              .read(userProvider.notifier)
-              .updateUser(widget.user!.userId, request)
-        : await ref.read(userProvider.notifier).createUser(request);
+    final userNotifier = ref.read(userProvider.notifier);
+    bool success;
+    int? userId;
+
+    if (widget.user != null) {
+      success = await userNotifier.updateUser(widget.user!.userId, request);
+      userId = widget.user!.userId;
+    } else {
+      // For creation, we need the new ID. Let's assume the API returns it or it's handled.
+      // In this specific codebase, we might need a way to get the ID from the state after creation.
+      success = await userNotifier.createUser(request);
+      // Wait for state update and find user by username if needed
+      if (success) {
+        final users = ref.read(userProvider).users;
+        final newUser = users
+            .where((u) => u.username == _usernameController.text)
+            .firstOrNull;
+        userId = newUser?.userId;
+      }
+    }
+
+    if (success && userId != null) {
+      await ref
+          .read(groupProvider.notifier)
+          .assignGroupsToUser(
+            userId,
+            _assignedGroups.map((g) => g.id).toList(),
+          );
+    }
 
     if (success && mounted) {
       Navigator.pop(context);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.user != null
-                ? 'User updated successfully'
-                : 'User created successfully',
-          ),
-        ),
-      );
     }
   }
 
@@ -220,112 +237,94 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.close),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: BorderSide(color: Colors.grey.shade300),
-                          ),
-                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  _buildInfoBar(),
                   const SizedBox(height: 24),
                   Expanded(
                     child: SingleChildScrollView(
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 12),
-                          _buildLabelField(
-                            'User Name*',
+                          _buildLabel(
+                            'Username*',
                             AppTextField(
                               controller: _usernameController,
-                              hint: 'Enter User Name',
+                              hint: 'Username',
                             ),
                           ),
                           const SizedBox(height: 16),
                           Row(
                             children: [
                               Expanded(
-                                child: _buildLabelField(
-                                  'First Name*',
+                                child: _buildLabel(
+                                  'First Name',
                                   AppTextField(
                                     controller: _firstNameController,
-                                    hint: 'Enter First Name',
+                                    hint: 'First Name',
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
-                                child: _buildLabelField(
-                                  'Last Name*',
+                                child: _buildLabel(
+                                  'Last Name',
                                   AppTextField(
                                     controller: _lastNameController,
-                                    hint: 'Enter Last Name',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  'Mobile Number*',
-                                  AppTextField(
-                                    controller: _mobileController,
-                                    hint: 'Enter Mobile Number',
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'Email-ID*',
-                                  AppTextField(
-                                    controller: _emailController,
-                                    hint: 'Enter Your Email',
+                                    hint: 'Last Name',
                                   ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          _buildLabelField(
-                            'Company',
-                            _buildCompanyAutocomplete(),
-                          ),
-
-                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
-                                child: _buildLabelField(
-                                  widget.user != null
-                                      ? 'Enter Password'
-                                      : 'Enter Password*',
+                                child: _buildLabel(
+                                  'Email',
+                                  AppTextField(
+                                    controller: _emailController,
+                                    hint: 'Email',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildLabel(
+                                  'Mobile',
+                                  AppTextField(
+                                    controller: _mobileController,
+                                    hint: 'Mobile',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildLabel('Company', _buildCompanyAutocomplete()),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildLabel(
+                                  'Password',
                                   AppTextField(
                                     controller: _passwordController,
-                                    hint: 'Enter Password',
+                                    hint: 'Password',
                                     obscureText: true,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
-                                child: _buildLabelField(
-                                  widget.user != null
-                                      ? 'Re-Enter Password'
-                                      : 'Re-Enter Password*',
+                                child: _buildLabel(
+                                  'Confirm',
                                   AppTextField(
                                     controller: _confirmPasswordController,
-                                    hint: 'Re-Enter Password',
+                                    hint: 'Confirm',
                                     obscureText: true,
                                   ),
                                 ),
@@ -337,26 +336,24 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                             children: [
                               Expanded(
                                 flex: 2,
-                                child: _buildLabelField(
+                                child: _buildLabel(
                                   'Role*',
                                   _isLoadingRoles
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                        )
+                                      ? const LinearProgressIndicator()
                                       : AppDropdown<Role>(
                                           value: _selectedRole,
                                           items: _roles ?? [],
-                                          itemLabel: (role) => role.name,
-                                          hint: 'Select Role',
+                                          itemLabel: (r) => r.name,
                                           onChanged: (v) =>
                                               setState(() => _selectedRole = v),
+                                          hint: 'Select Role',
                                         ),
                                 ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
-                                child: _buildLabelField(
-                                  'Session Timeout (sec)',
+                                child: _buildLabel(
+                                  'Timeout',
                                   AppTextField(
                                     controller: _sessionTimeoutController,
                                     hint: '86400',
@@ -365,37 +362,34 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                               ),
                             ],
                           ),
-
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'STATUS',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
                           Row(
                             children: [
-                              Row(
-                                children: [
-                                  Radio<int>(
-                                    value: 1,
-                                    groupValue: _status,
-                                    activeColor: const Color(0xFF1B1B4B),
-                                    onChanged: (v) =>
-                                        setState(() => _status = v!),
-                                  ),
-                                  const Text('ACTIVE'),
-                                ],
+                              Radio<int>(
+                                value: 1,
+                                groupValue: _status,
+                                onChanged: (v) => setState(() => _status = v!),
                               ),
-                              const SizedBox(width: 24),
-                              Row(
-                                children: [
-                                  Radio<int>(
-                                    value: 0,
-                                    groupValue: _status,
-                                    activeColor: const Color(0xFF1B1B4B),
-                                    onChanged: (v) =>
-                                        setState(() => _status = v!),
-                                  ),
-                                  const Text('INACTIVE'),
-                                ],
+                              const Text('ACTIVE'),
+                              const SizedBox(width: 16),
+                              Radio<int>(
+                                value: 0,
+                                groupValue: _status,
+                                onChanged: (v) => setState(() => _status = v!),
                               ),
+                              const Text('INACTIVE'),
                             ],
                           ),
+                          const SizedBox(height: 24),
+                          const Divider(),
+                          const SizedBox(height: 24),
                         ],
                       ),
                     ),
@@ -409,34 +403,14 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1B1B4B),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
                       ),
                       child: userState.isProcessing
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text(
-                              'SAVE',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('SAVE'),
                     ),
                   ),
                 ],
               ),
-              if (userState.isProcessing)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black26,
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-                ),
             ],
           ),
         ),
@@ -444,11 +418,82 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     );
   }
 
+  Widget _buildLabel(String label, Widget child) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+        ),
+        const SizedBox(height: 8),
+        child,
+      ],
+    );
+  }
+
+  Widget _buildGroupSelection() {
+    final groups = ref.watch(groupProvider).groups;
+    if (_isLoadingGroups) return const LinearProgressIndicator();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ..._assignedGroups.map(
+              (g) => Chip(
+                label: Text(g.name),
+                onDeleted: () => setState(
+                  () => _assignedGroups.removeWhere((x) => x.id == g.id),
+                ),
+              ),
+            ),
+            ActionChip(
+              avatar: const Icon(Icons.add, size: 16),
+              label: const Text('Add Group'),
+              onPressed: () => _showGroupSelection(groups),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void _showGroupSelection(List<Group> allGroups) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => ListView.builder(
+        itemCount: allGroups.length,
+        itemBuilder: (context, i) {
+          final g = allGroups[i];
+          final isSelected = _assignedGroups.any((x) => x.id == g.id);
+          return ListTile(
+            title: Text(g.name),
+            trailing: isSelected
+                ? const Icon(Icons.check, color: Colors.green)
+                : null,
+            onTap: () {
+              setState(() {
+                if (isSelected) {
+                  _assignedGroups.removeWhere((x) => x.id == g.id);
+                } else {
+                  _assignedGroups.add(g);
+                }
+              });
+              Navigator.pop(context);
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildCompanyAutocomplete() {
     final currentUser = ref.read(userProvider).currentUser;
-    final isSuperAdmin = currentUser?.roleId == 1;
-
-    if (!isSuperAdmin) {
+    if (currentUser?.roleId != 1) {
       return AppTextField(
         controller: _companyAutocompleteController,
         readOnly: true,
@@ -457,105 +502,38 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     }
 
     return LayoutBuilder(
-      builder: (context, constraints) {
-        return RawAutocomplete<CompanyAutocomplete>(
-          textEditingController: _companyAutocompleteController,
-          focusNode: FocusNode(),
-          optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty) {
-              return const Iterable<CompanyAutocomplete>.empty();
-            }
-            return await ref
-                .read(userProvider.notifier)
-                .searchCompanies(textEditingValue.text);
-          },
-          displayStringForOption: (CompanyAutocomplete option) => option.name,
-          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return AppTextField(
+      builder: (context, constraints) => RawAutocomplete<CompanyAutocomplete>(
+        focusNode: _companyFocusNode,
+        textEditingController: _companyAutocompleteController,
+        optionsBuilder: (TextEditingValue v) => v.text.isEmpty
+            ? <CompanyAutocomplete>[]
+            : ref.read(userProvider.notifier).searchCompanies(v.text),
+        displayStringForOption: (o) => o.name,
+        fieldViewBuilder: (context, controller, focus, onSubmitted) =>
+            AppTextField(
               controller: controller,
-              focusNode: focusNode,
-              hint: 'Enter Your Company',
-            );
-          },
-          optionsViewBuilder: (context, onSelected, options) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                child: SizedBox(
-                  width: constraints.maxWidth,
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options.elementAt(index);
-                      return ListTile(
-                        title: Text(
-                          option.name,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        onTap: () {
-                          onSelected(option);
-                          setState(() => _selectedCompany = option);
-                        },
-                      );
-                    },
-                  ),
+              focusNode: focus,
+              hint: 'Company',
+            ),
+        onSelected: (o) => setState(() => _selectedCompany = o),
+        optionsViewBuilder: (context, onSelected, options) => Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, i) => ListTile(
+                  title: Text(options.elementAt(i).name),
+                  onTap: () => onSelected(options.elementAt(i)),
                 ),
               ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF1B1B4B),
-      ),
-    );
-  }
-
-  Widget _buildLabelField(String label, Widget field) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-        ),
-        const SizedBox(height: 6),
-        field,
-      ],
-    );
-  }
-
-  Widget _buildInfoBar() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF6),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info, color: Color(0xFF1B1B4B), size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              widget.user != null
-                  ? 'Enter The User Name And Basic Details To Update The User.'
-                  : 'Enter The User Name And Basic Details To Create A New User.',
-              style: const TextStyle(color: Color(0xFF1B1B4B), fontSize: 12),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

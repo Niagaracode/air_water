@@ -131,6 +131,14 @@ class _UserWideState extends ConsumerState<UserWide> {
                             },
                           ),
                         ),
+                        const SizedBox(width: 16),
+                        Text(
+                          '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -356,7 +364,6 @@ class _UserWideState extends ConsumerState<UserWide> {
   void _onSearchChanged(UserNotifier notifier) {
     notifier.loadUsers(
       searchQuery: _searchController.text,
-      companyId: null, // Add company filter if needed
       status: _selectedStatus,
     );
   }

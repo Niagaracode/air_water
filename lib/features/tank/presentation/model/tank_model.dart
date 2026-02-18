@@ -12,6 +12,7 @@ class Tank {
   final String? unitName;
   final int? productId;
   final String? productName;
+  final String? tankName;
   final String? description;
   final double? latitude;
   final double? longitude;
@@ -46,19 +47,20 @@ class Tank {
     this.companyId,
     this.companyName,
     required this.status,
+    this.tankName,
     this.createdAt,
   });
 
   factory Tank.fromJson(Map<String, dynamic> json) {
     return Tank(
-      tankId: json['tank_id'] as int,
+      tankId: _toInt(json['tank_id']) ?? 0,
       tankNumber: json['tank_number'] as String,
       tankImage: json['tank_image'] as String?,
-      tankTypeId: json['tank_type_id'] as int?,
+      tankTypeId: _toInt(json['tank_type_id']),
+      unitId: _toInt(json['unit_id']),
       tankTypeName: json['tank_type_name'] as String?,
-      unitId: json['unit_id'] as int?,
       unitName: json['unit_name'] as String?,
-      productId: json['product_id'] as int?,
+      productId: _toInt(json['product_id']),
       productName: json['product_name'] as String?,
       description: json['description'] as String?,
       latitude: (json['latitude'] is num?)
@@ -67,14 +69,15 @@ class Tank {
       longitude: (json['longitude'] is num?)
           ? (json['longitude'] as num?)?.toDouble()
           : null,
-      plantId: json['plant_id'] as int?,
+      plantId: _toInt(json['plant_id']),
       plantName: json['plant_name'] as String?,
       width: _toDouble(json['width']),
       height: _toDouble(json['height']),
       dishHeight: _toDouble(json['dish_height']),
-      companyId: json['company_id'] as int?,
+      companyId: _toInt(json['company_id']),
       companyName: json['company_name'] as String?,
       status: json['status'] ?? 1,
+      tankName: json['tank_name'] as String?,
       createdAt: json['created_at'] as String?,
     );
   }
@@ -93,6 +96,14 @@ class Tank {
     if (value is String) return double.tryParse(value);
     return null;
   }
+
+  static int? _toInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    if (value is num) return value.toInt();
+    return null;
+  }
 }
 
 class TankGroup {
@@ -102,6 +113,8 @@ class TankGroup {
   final String? state;
   final String? country;
   final String? pincode;
+  final int plantId;
+  final String? plantOrganizationCode;
   final List<Tank> tanks;
 
   TankGroup({
@@ -111,10 +124,16 @@ class TankGroup {
     this.state,
     this.country,
     this.pincode,
+    required this.plantId,
+    this.plantOrganizationCode,
     required this.tanks,
   });
 
   factory TankGroup.fromJson(Map<String, dynamic> json) {
+    final tanks = (json['tanks'] as List)
+        .map((i) => Tank.fromJson(i as Map<String, dynamic>))
+        .toList();
+
     return TankGroup(
       plantName: json['plant_name'] as String,
       addressLine1: json['address_line_1'] as String?,
@@ -122,9 +141,11 @@ class TankGroup {
       state: json['state'] as String?,
       country: json['country'] as String?,
       pincode: json['pincode'] as String?,
-      tanks: (json['tanks'] as List)
-          .map((i) => Tank.fromJson(i as Map<String, dynamic>))
-          .toList(),
+      plantId:
+          Tank._toInt(json['plant_id']) ??
+          (tanks.isNotEmpty ? (tanks.first.plantId ?? 0) : 0),
+      plantOrganizationCode: json['plant_organization_code'] as String?,
+      tanks: tanks,
     );
   }
 
@@ -137,6 +158,31 @@ class TankGroup {
     ].where((p) => p != null && p.isNotEmpty).toList();
     if (parts.isEmpty) return '';
     return parts.join(', ') + (pincode != null ? ' - $pincode' : '');
+  }
+
+  TankGroup copyWith({
+    String? plantName,
+    String? addressLine1,
+    String? city,
+    String? state,
+    String? country,
+    String? pincode,
+    int? plantId,
+    String? plantOrganizationCode,
+    List<Tank>? tanks,
+  }) {
+    return TankGroup(
+      plantName: plantName ?? this.plantName,
+      addressLine1: addressLine1 ?? this.addressLine1,
+      city: city ?? this.city,
+      state: state ?? this.state,
+      country: country ?? this.country,
+      pincode: pincode ?? this.pincode,
+      plantId: plantId ?? this.plantId,
+      plantOrganizationCode:
+          plantOrganizationCode ?? this.plantOrganizationCode,
+      tanks: tanks ?? this.tanks,
+    );
   }
 }
 
@@ -166,7 +212,7 @@ class TankProduct {
 
   factory TankProduct.fromJson(Map<String, dynamic> json) {
     return TankProduct(
-      productId: json['product_id'] as int,
+      productId: Tank._toInt(json['product_id']) ?? 0,
       productName: json['product_name'] as String,
     );
   }

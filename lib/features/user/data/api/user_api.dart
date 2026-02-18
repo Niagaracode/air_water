@@ -1,6 +1,7 @@
 import '../../../../core/network/api_client.dart';
 import '../../presentation/model/user_model.dart';
 import '../../../plant/presentation/model/plant_model.dart';
+import '../../../tank/presentation/model/tank_model.dart';
 
 class UserApi {
   final ApiClient _client;
@@ -16,6 +17,8 @@ class UserApi {
     int? roleId,
     int? companyId,
     int? status,
+    int? plantId,
+    int? tankId,
   }) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
 
@@ -25,6 +28,8 @@ class UserApi {
     if (roleId != null) query['role_id'] = roleId;
     if (companyId != null) query['company_id'] = companyId;
     if (status != null) query['status'] = status;
+    if (plantId != null) query['plant_id'] = plantId;
+    if (tankId != null) query['tank_id'] = tankId;
 
     final response = await _client.get('/users/search', query: query);
     return UserSearchResponse.fromJson(
@@ -80,6 +85,30 @@ class UserApi {
     return (response.data['data'] as List)
         .map((i) => PlantAutocompleteInfo.fromJson(i as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<TankGroupedResponse> getTanksGrouped({
+    int page = 1,
+    int limit = 50,
+    String? plantName,
+    String? tankName,
+    int? status,
+  }) async {
+    final Map<String, dynamic> query = {'page': page, 'limit': limit};
+    if (plantName != null && plantName.isNotEmpty) {
+      query['plant_name'] = plantName;
+    }
+    if (tankName != null && tankName.isNotEmpty) {
+      query['tank_number'] = tankName;
+    }
+    if (status != null) {
+      query['status'] = status;
+    }
+
+    final response = await _client.get('/tanks/grouped', query: query);
+    return TankGroupedResponse.fromJson(
+      Map<String, dynamic>.from(response.data),
+    );
   }
 
   Future<List<String>> getUserNameSuggestions(String q) async {

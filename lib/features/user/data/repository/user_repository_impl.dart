@@ -1,5 +1,6 @@
 import '../../presentation/model/user_model.dart';
 import '../../../plant/presentation/model/plant_model.dart';
+import '../../../tank/presentation/model/tank_model.dart';
 import '../../domain/repository/user_repository.dart';
 import '../api/user_api.dart';
 
@@ -18,6 +19,8 @@ class UserRepositoryImpl implements UserRepository {
     int? roleId,
     int? companyId,
     int? status,
+    int? plantId,
+    int? tankId,
   }) async {
     return await _api.searchUsers(
       page: page,
@@ -28,6 +31,8 @@ class UserRepositoryImpl implements UserRepository {
       roleId: roleId,
       companyId: companyId,
       status: status,
+      plantId: plantId,
+      tankId: tankId,
     );
   }
 
@@ -64,6 +69,23 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<List<PlantAutocompleteInfo>> searchPlants(String q) async {
     return await _api.searchPlants(q);
+  }
+
+  @override
+  Future<TankGroupedResponse> getTanksGrouped({
+    int page = 1,
+    int limit = 50,
+    String? plantName,
+    String? tankName,
+    int? status,
+  }) async {
+    return await _api.getTanksGrouped(
+      page: page,
+      limit: limit,
+      plantName: plantName,
+      tankName: tankName,
+      status: status,
+    );
   }
 
   @override

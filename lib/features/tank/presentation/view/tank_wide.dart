@@ -90,6 +90,7 @@ class _TankWideState extends ConsumerState<TankWide> {
           ),
           const SizedBox(height: 32),
           _buildFilterRow(),
+          if (state.error != null) _buildErrorBanner(state.error!),
           const SizedBox(height: 16),
           _buildGroupedTable(state, notifier),
           if (state.hasMore && state.groupedTanks.isNotEmpty)
@@ -134,7 +135,17 @@ class _TankWideState extends ConsumerState<TankWide> {
             },
           ),
         ),
-        const SizedBox(width: 32),
+        const SizedBox(width: 16),
+        TextButton.icon(
+          onPressed: _clearFilters,
+          icon: const Icon(Icons.clear_all, size: 18),
+          label: const Text('CLEAR'),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.grey.shade600,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          ),
+        ),
+        const SizedBox(width: 16),
         ElevatedButton.icon(
           onPressed: () => _showAddDialog(),
           icon: const Icon(Icons.add, size: 18),
@@ -525,6 +536,41 @@ class _TankWideState extends ConsumerState<TankWide> {
         );
       },
     );
+  }
+
+  Widget _buildErrorBanner(String error) {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              error,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close, color: Colors.red.shade700, size: 18),
+            onPressed: () => ref.read(tankProvider.notifier).loadGroupedTanks(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearFilters() {
+    _plantSearchController.clear();
+    _tankSearchController.clear();
+    setState(() => _selectedStatus = null);
+    _onSearchChanged();
   }
 
   Future<void> _showDeleteDialog(Tank tank) async {

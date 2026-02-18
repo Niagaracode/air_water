@@ -69,6 +69,11 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
       body: ListView(
         padding: const EdgeInsets.all(8),
         children: [
+          if (state.error != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: _buildErrorBanner(state.error!),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             child: Column(
@@ -88,6 +93,15 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
                     setState(() => _selectedStatus = v);
                     _onSearchChanged();
                   },
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _clearFilters,
+                    icon: const Icon(Icons.clear_all),
+                    label: const Text('Clear Filters'),
+                  ),
                 ),
               ],
             ),
@@ -206,6 +220,40 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     );
     if (confirmed == true)
       await ref.read(tankProvider.notifier).deleteTank(tank.tankId);
+  }
+
+  Widget _buildErrorBanner(String error) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              error,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close, color: Colors.red.shade700, size: 18),
+            onPressed: () => ref.read(tankProvider.notifier).loadGroupedTanks(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearFilters() {
+    _plantSearchController.clear();
+    _tankSearchController.clear();
+    setState(() => _selectedStatus = null);
+    _onSearchChanged();
   }
 
   Widget _buildPlantAutocomplete() {
