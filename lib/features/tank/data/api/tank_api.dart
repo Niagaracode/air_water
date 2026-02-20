@@ -107,4 +107,14 @@ class TankApi {
         .map((i) => TankProduct.fromJson(i as Map<String, dynamic>))
         .toList();
   }
+
+  Future<List<Tank>> getTanks({int? plantId}) async {
+    final Map<String, dynamic> query = {};
+    if (plantId != null) {
+      query['plant_id'] = plantId;
+    }
+    final response = await _client.get('/tanks', query: query);
+    final List data = response.data['data'] ?? [];
+    return data.map((i) => Tank.fromJson(i as Map<String, dynamic>)).toList();
+  }
 }

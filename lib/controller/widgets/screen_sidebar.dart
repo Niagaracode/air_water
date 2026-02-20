@@ -85,67 +85,6 @@ class ScreenSidebar extends ConsumerWidget {
             ),
           ),
         );
-        return SizedBox(
-          width: isExpanded ? 250 : 80,
-          child: Material(
-            color: Colors.white,
-            elevation: 2,
-            child: Column(
-              children: [
-                SidebarHeader(isExpanded: isExpanded),
-                Divider(height: 0, color: Colors.grey.shade300),
-                Expanded(
-                  child: ListView(
-                    padding:
-                    const EdgeInsets.symmetric(vertical: 16),
-                    children: [
-
-                      /// MAIN MENU
-                      _buildGroup(
-                        title: 'MAIN MENU',
-                        items: mainMenu,
-                        location: location,
-                        isExpanded: isExpanded,
-                        context: context,
-                        role: role,
-                      ),
-
-                      /// CONFIGURATION
-                      _buildGroup(
-                        title: 'CONFIGURATION',
-                        items: configurationMenu,
-                        location: location,
-                        isExpanded: isExpanded,
-                        context: context,
-                        role: role,
-                      ),
-
-                      /// USER
-                      _buildGroup(
-                        title: 'USER',
-                        items: userMenu,
-                        location: location,
-                        isExpanded: isExpanded,
-                        context: context,
-                        role: role,
-                      ),
-
-                      /// EVENTS
-                      _buildGroup(
-                        title: 'EVENTS',
-                        items: eventsMenu,
-                        location: location,
-                        isExpanded: isExpanded,
-                        context: context,
-                        role: role,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
       },
     );
   }
@@ -161,10 +100,10 @@ class ScreenSidebar extends ConsumerWidget {
     required BuildContext context,
     required UserRole role,
   }) {
-
     /// 🔐 Filter items based on role
-    final filteredItems =
-    items.where((item) => item.allowedRoles.contains(role)).toList();
+    final filteredItems = items
+        .where((item) => item.allowedRoles.contains(role))
+        .toList();
 
     /// If no items allowed → hide entire group
     if (filteredItems.isEmpty) {
@@ -174,14 +113,10 @@ class ScreenSidebar extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         /// Group Title
         if (isExpanded)
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Text(
               title,
               style: const TextStyle(

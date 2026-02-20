@@ -19,6 +19,8 @@ class UserApi {
     int? status,
     int? plantId,
     int? tankId,
+    List<int>? excludePlantIds,
+    String? groupName,
   }) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
 
@@ -30,6 +32,10 @@ class UserApi {
     if (status != null) query['status'] = status;
     if (plantId != null) query['plant_id'] = plantId;
     if (tankId != null) query['tank_id'] = tankId;
+    if (excludePlantIds != null && excludePlantIds.isNotEmpty) {
+      query['exclude_plant_ids'] = excludePlantIds;
+    }
+    if (groupName != null) query['group_name'] = groupName;
 
     final response = await _client.get('/users/search', query: query);
     return UserSearchResponse.fromJson(

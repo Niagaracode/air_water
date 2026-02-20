@@ -4,6 +4,7 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/PlantTankDropdownSelector.dart';
 import '../../../user/presentation/model/user_model.dart';
+import '../../../user/presentation/controller/user_provider.dart';
 import '../controller/group_provider.dart';
 import '../model/group_model.dart';
 
@@ -17,49 +18,129 @@ class AddGroupModal extends ConsumerStatefulWidget {
 }
 
 class _AddGroupModalState extends ConsumerState<AddGroupModal> {
-  final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   List<PlantTankAssignment> _assignments = [];
+
+  List<Role> _roles = [];
+  int? _selectedRoleId;
+  List<User> _roleUsers = [];
+  final Set<int> _selectedUserIds = {};
+  bool _isLoadingRoles = false;
+  bool _isLoadingUsers = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.group != null) {
-      _nameController.text = widget.group!.name;
-      _descriptionController.text = widget.group!.description ?? '';
-      // We don't have full name/names in IDs only,
-      // but PlantTankDropdownSelector will load them by ID if missing
-      _assignments = widget.group!.assignedPlants.map((plantId) {
-        final plantTanks = widget.group!.assignedTanks.toList();
-        // Note: In current simple model, we store all plant IDs and all tank IDs
-        // separately at group level.
-        // Ideally we'd store structured assignments.
-        // For now, let's treat it as "any tank in some plant"
-        return PlantTankAssignment(
-          plantId: plantId,
-          plantName: 'Plant $plantId',
-          allTanks: false,
-          tankIds: plantTanks,
-        );
-      }).toList();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoadingRoles = true);
+    try {
+      final roles = await ref.read(userProvider.notifier).getRoles();
+      setState(() {
+        _roles = roles;
+        _isLoadingRoles = false;
+      });
+
+      if (widget.group != null) {
+        _descriptionController.text = widget.group!.description ?? '';
+
+        // Load existing user assignments
+        final groupUsers = await ref
+            .read(groupProvider.notifier)
+            .getGroupUsers(widget.group!.id);
+        setState(() {
+          _selectedUserIds.addAll(groupUsers.map((u) => u.userId));
+        });
+
+        // Initialize assignments
+        _assignments = widget.group!.assignedPlants.map((plantId) {
+          final plantTanks = widget.group!.assignedTanks.toList();
+          return PlantTankAssignment(
+            plantId: plantId,
+            plantName: 'Plant $plantId',
+            allTanks: false,
+            tankIds: plantTanks,
+          );
+        }).toList();
+
+        // Find existing role if name matches
+        final role = _roles
+            .where((r) => r.name == widget.group!.name)
+            .firstOrNull;
+        if (role != null) {
+          _selectedRoleId = role.id;
+        }
+      }
+
+      // Initial user load based on current state
+      await _refreshUsers();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingRoles = false);
+      }
+    }
+  }
+
+  Future<void> _refreshUsers() async {
+    if (_selectedRoleId == null) {
+      setState(() {
+        _roleUsers = [];
+        _isLoadingUsers = false;
+      });
+      return;
+    }
+
+    final role = _roles.firstWhere((r) => r.id == _selectedRoleId);
+    final plantIds = _assignments.map((a) => a.plantId).toList();
+
+    await _loadUsersForRole(role.id, role.name, plantIds);
+  }
+
+  Future<void> _loadUsersForRole(
+    int roleId,
+    String roleName, [
+    List<int>? excludePlantIds,
+  ]) async {
+    setState(() {
+      _isLoadingUsers = true;
+      _roleUsers = [];
+    });
+    try {
+      final repository = ref.read(userRepositoryProvider);
+      final response = await repository.searchUsers(
+        roleId: roleId,
+        excludePlantIds: excludePlantIds,
+        groupName: roleName,
+        limit: 100,
+      );
+      setState(() {
+        _roleUsers = response.data;
+        _isLoadingUsers = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingUsers = false);
+      }
     }
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
-    if (_nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a group name')),
-      );
+    if (_selectedRoleId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a role')));
       return;
     }
 
+    final selectedRole = _roles.firstWhere((r) => r.id == _selectedRoleId);
     final plantIds = _assignments.map((a) => a.plantId).toList();
     final tankIds = <int>{};
     for (var a in _assignments) {
@@ -72,25 +153,27 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
           .read(groupProvider.notifier)
           .createGroup(
             GroupCreateRequest(
-              name: _nameController.text,
+              name: selectedRole.name,
               description: _descriptionController.text,
               assignedPlants: plantIds,
               assignedTanks: tankIds.toList(),
+              userIds: _selectedUserIds.toList(),
             ),
           );
     } else {
       success = await ref
           .read(groupProvider.notifier)
           .updateGroup(widget.group!.id, {
-            'name': _nameController.text,
+            'name': selectedRole.name,
             'description': _descriptionController.text,
             'assigned_plants': plantIds,
             'assigned_tanks': tankIds.toList(),
+            'user_ids': _selectedUserIds.toList(),
           });
     }
 
     if (success && mounted) {
-      Navigator.pop(context);
+      Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -111,8 +194,8 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Container(
-        width: 650,
-        constraints: const BoxConstraints(maxHeight: 800),
+        width: 700,
+        constraints: const BoxConstraints(maxHeight: 850),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -139,7 +222,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Define plant and tank permissions for this group.',
+                          'Assign a role and select users for this access group.',
                           style: TextStyle(color: Colors.grey, fontSize: 12),
                         ),
                       ],
@@ -162,18 +245,143 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'GROUP NAME',
+                      'SELECT ROLE (GROUP NAME)',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    AppTextField(
-                      controller: _nameController,
-                      hint: 'Enter group name (e.g., Coimbatore Maintenance)',
+                    _isLoadingRoles
+                        ? const Center(child: CircularProgressIndicator())
+                        : DropdownButtonFormField<int>(
+                            value: _selectedRoleId,
+                            decoration: InputDecoration(
+                              hintText: 'Select a role',
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                            ),
+                            items: _roles.map((role) {
+                              return DropdownMenuItem(
+                                value: role.id,
+                                child: Text(role.name),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _selectedRoleId = val;
+                                  _selectedUserIds.clear();
+                                });
+                                _refreshUsers();
+                              }
+                            },
+                          ),
+                    const SizedBox(height: 24),
+
+                    const Text(
+                      'PLANT & TANK ACCESS',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'First select the plants these users will have access to.',
+                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    ),
+                    const SizedBox(height: 16),
+                    PlantTankDropdownSelector(
+                      initialAssignments: _assignments,
+                      onChanged: (newAssignments) {
+                        setState(() {
+                          _assignments = newAssignments;
+                        });
+                        _refreshUsers();
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    if (_selectedRoleId != null) ...[
+                      Row(
+                        children: [
+                          const Text(
+                            'ASSIGN USERS',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (_isLoadingUsers)
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade200),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey.shade50.withOpacity(0.5),
+                        ),
+                        child: _roleUsers.isEmpty && !_isLoadingUsers
+                            ? const Center(
+                                child: Text('No users found for this role'),
+                              )
+                            : ListView.builder(
+                                itemCount: _roleUsers.length,
+                                itemBuilder: (context, index) {
+                                  final user = _roleUsers[index];
+                                  final isSelected = _selectedUserIds.contains(
+                                    user.userId,
+                                  );
+                                  return CheckboxListTile(
+                                    title: Text(user.fullName),
+                                    subtitle: Text(
+                                      user.username,
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    value: isSelected,
+                                    dense: true,
+                                    onChanged: (val) {
+                                      setState(() {
+                                        if (val == true) {
+                                          _selectedUserIds.add(user.userId);
+                                        } else {
+                                          _selectedUserIds.remove(user.userId);
+                                        }
+                                      });
+                                    },
+                                    activeColor: primary,
+                                  );
+                                },
+                              ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
                     const Text(
                       'DESCRIPTION',
                       style: TextStyle(
@@ -185,30 +393,9 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                     AppTextField(
                       controller: _descriptionController,
                       hint: 'Enter group description...',
-                      maxLines: 3,
+                      maxLines: 2,
                     ),
                     const SizedBox(height: 24),
-                    const Divider(),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'PLANT & TANK ACCESS',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Users in this group will be able to view and manage these plants and tanks.',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                    const SizedBox(height: 16),
-                    PlantTankDropdownSelector(
-                      initialAssignments: _assignments,
-                      onChanged: (newAssignments) {
-                        _assignments = newAssignments;
-                      },
-                    ),
                   ],
                 ),
               ),

@@ -11,9 +11,13 @@ class TankState {
   final bool isProcessing;
   final String? error;
   final int page;
+  final int totalEntries;
   final bool hasMore;
   final Set<String> expandedGroups;
   final List<TankProduct> products;
+  final String searchPlant;
+  final String searchTank;
+  final int? selectedStatus;
 
   TankState({
     required this.groupedTanks,
@@ -21,9 +25,13 @@ class TankState {
     this.isProcessing = false,
     this.error,
     this.page = 1,
+    this.totalEntries = 0,
     this.hasMore = false,
     required this.expandedGroups,
     this.products = const [],
+    this.searchPlant = '',
+    this.searchTank = '',
+    this.selectedStatus,
   });
 
   TankState copyWith({
@@ -32,19 +40,30 @@ class TankState {
     bool? isProcessing,
     String? error,
     int? page,
+    int? totalEntries,
     bool? hasMore,
     Set<String>? expandedGroups,
     List<TankProduct>? products,
+    String? searchPlant,
+    String? searchTank,
+    int? selectedStatus,
+    bool clearError = false,
   }) {
     return TankState(
       groupedTanks: groupedTanks ?? this.groupedTanks,
       isLoading: isLoading ?? this.isLoading,
       isProcessing: isProcessing ?? this.isProcessing,
-      error: error,
+      error: clearError ? null : (error ?? this.error),
       page: page ?? this.page,
+      totalEntries: totalEntries ?? this.totalEntries,
       hasMore: hasMore ?? this.hasMore,
       expandedGroups: expandedGroups ?? this.expandedGroups,
       products: products ?? this.products,
+      searchPlant: searchPlant ?? this.searchPlant,
+      searchTank: searchTank ?? this.searchTank,
+      selectedStatus: selectedStatus != null
+          ? selectedStatus
+          : this.selectedStatus,
     );
   }
 }
@@ -52,22 +71,43 @@ class TankState {
 class TankNotifier extends Notifier<TankState> {
   @override
   TankState build() {
+    ref.keepAlive();
+    // Initial load will be handled by the UI or via Future.microtask
+    Future.microtask(() => loadGroupedTanks());
     return TankState(groupedTanks: [], isLoading: false, expandedGroups: {});
   }
 
-  Future<void> loadGroupedTanks({
-    String? plantName,
-    String? tankName,
-    int? status,
-  }) async {
+  void setSearchPlant(String value) {
+    state = state.copyWith(searchPlant: value);
+  }
+
+  void setSearchTank(String value) {
+    state = state.copyWith(searchTank: value);
+  }
+
+  void setStatus(int? value) {
+    state = state.copyWith(selectedStatus: value);
+    loadGroupedTanks();
+  }
+
+  void clearFilters() {
+    state = state.copyWith(
+      searchPlant: '',
+      searchTank: '',
+      selectedStatus: null,
+    );
+    loadGroupedTanks();
+  }
+
+  Future<void> loadGroupedTanks() async {
     state = state.copyWith(isLoading: true, page: 1, groupedTanks: []);
     try {
       final repository = ref.read(tankRepositoryProvider);
       final response = await repository.getTanksGrouped(
         page: 1,
-        plantName: plantName,
-        tankName: tankName,
-        status: status,
+        plantName: state.searchPlant.isEmpty ? null : state.searchPlant,
+        tankName: state.searchTank.isEmpty ? null : state.searchTank,
+        status: state.selectedStatus,
       );
 
       final expandedGroups = <String>{};
@@ -78,6 +118,7 @@ class TankNotifier extends Notifier<TankState> {
       state = state.copyWith(
         groupedTanks: response.data,
         isLoading: false,
+        totalEntries: response.pagination.total,
         hasMore: response.pagination.page < response.pagination.totalPages,
         expandedGroups: expandedGroups,
       );
@@ -86,11 +127,7 @@ class TankNotifier extends Notifier<TankState> {
     }
   }
 
-  Future<void> loadMore({
-    String? plantName,
-    String? tankName,
-    int? status,
-  }) async {
+  Future<void> loadMore() async {
     if (state.isLoading || !state.hasMore) return;
 
     final nextPage = state.page + 1;
@@ -100,9 +137,9 @@ class TankNotifier extends Notifier<TankState> {
       final repository = ref.read(tankRepositoryProvider);
       final response = await repository.getTanksGrouped(
         page: nextPage,
-        plantName: plantName,
-        tankName: tankName,
-        status: status,
+        plantName: state.searchPlant.isEmpty ? null : state.searchPlant,
+        tankName: state.searchTank.isEmpty ? null : state.searchTank,
+        status: state.selectedStatus,
       );
 
       final updatedGroups = [...state.groupedTanks, ...response.data];
@@ -114,6 +151,7 @@ class TankNotifier extends Notifier<TankState> {
       state = state.copyWith(
         groupedTanks: updatedGroups,
         isLoading: false,
+        totalEntries: response.pagination.total,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
         expandedGroups: expandedGroups,
@@ -124,7 +162,7 @@ class TankNotifier extends Notifier<TankState> {
   }
 
   Future<bool> createTank(TankCreateRequest request) async {
-    state = state.copyWith(isProcessing: true, error: null);
+    state = state.copyWith(isProcessing: true, clearError: true);
     try {
       final repository = ref.read(tankRepositoryProvider);
       await repository.createTank(request);
@@ -138,7 +176,7 @@ class TankNotifier extends Notifier<TankState> {
   }
 
   Future<bool> updateTank(int id, TankCreateRequest request) async {
-    state = state.copyWith(isProcessing: true, error: null);
+    state = state.copyWith(isProcessing: true, clearError: true);
     try {
       final repository = ref.read(tankRepositoryProvider);
       await repository.updateTank(id, request);
@@ -152,7 +190,7 @@ class TankNotifier extends Notifier<TankState> {
   }
 
   Future<bool> deleteTank(int id) async {
-    state = state.copyWith(isProcessing: true, error: null);
+    state = state.copyWith(isProcessing: true, clearError: true);
     try {
       final repository = ref.read(tankRepositoryProvider);
       await repository.deleteTank(id);

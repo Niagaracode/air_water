@@ -14,6 +14,8 @@ abstract class UserRepository {
     int? status,
     int? plantId,
     int? tankId,
+    List<int>? excludePlantIds,
+    String? groupName,
   });
 
   Future<List<User>> getUsers({String? username, int? roleId});

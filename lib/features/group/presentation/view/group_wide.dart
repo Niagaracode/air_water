@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/app_theme/app_theme.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/group_provider.dart';
 import '../model/group_model.dart';
 import '../widgets/add_group_modal.dart';
-import 'group_detail.dart';
 
 class GroupWide extends ConsumerStatefulWidget {
   const GroupWide({super.key});
@@ -15,16 +15,26 @@ class GroupWide extends ConsumerStatefulWidget {
 
 class _GroupWideState extends ConsumerState<GroupWide> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(groupProvider.notifier).loadGroups());
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      // Plant user counts currently don't use pagination on backend,
+      // but we maintain the controller for consistency and future-proofing.
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -39,112 +49,37 @@ class _GroupWideState extends ConsumerState<GroupWide> {
     );
   }
 
-  void _showDetail(Group group) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (context) => GroupDetail(group: group)));
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(groupProvider);
     final notifier = ref.read(groupProvider.notifier);
 
+    // Sync search controller
+    if (state.searchQuery != _searchController.text &&
+        state.searchQuery.isEmpty) {
+      _searchController.text = '';
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'GROUP MANAGEMENT',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Manage Access Groups By Assigning Specific Plants And Tanks To Control User Permissions.',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => _showAddModal(),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('ADD GROUP'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildHeader(),
                   const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 45,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: TextField(
-                              controller: _searchController,
-                              decoration: const InputDecoration(
-                                hintText: 'Search By Group Name',
-                                prefixIcon: Icon(Icons.search, size: 20),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                              ),
-                              onSubmitted: (v) => notifier.loadGroups(name: v),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildFilterRow(state, notifier),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        'Showing ${state.groups.length} entries',
+                        'Showing ${state.plantUserCounts.length} of ${state.totalEntries} entries',
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
@@ -152,162 +87,296 @@ class _GroupWideState extends ConsumerState<GroupWide> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  if (state.isLoading && state.groups.isEmpty)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  else if (state.error != null)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40.0),
-                        child: Text(
-                          state.error!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
-                    )
-                  else
-                    _buildGroupTable(state, notifier),
                 ],
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGroupTable(GroupState state, GroupNotifier notifier) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+          if (state.isLoading && state.plantUserCounts.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(48.0),
+                child: Center(child: CircularProgressIndicator()),
               ),
-            ),
-            child: Row(
-              children: [
-                _tableHeaderCell('SI.NO', width: 70),
-                _tableHeaderCell('Group Name', flex: 3),
-                _tableHeaderCell('Company', flex: 3),
-                _tableHeaderCell('Assigned Plants', flex: 2),
-                _tableHeaderCell('Total Tanks', flex: 2),
-                _tableHeaderCell('Users', flex: 1),
-                _tableHeaderCell('Status', flex: 1),
-                _tableHeaderCell('Action', width: 120),
-              ],
-            ),
-          ),
-          if (state.groups.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(40.0),
-              child: Text('No groups found'),
+            )
+          else if (state.error != null)
+            SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: Text(
+                    state.error!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              ),
             )
           else
-            ...state.groups.asMap().entries.map((entry) {
-              return _buildGroupRow(entry.value, entry.key, notifier);
-            }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGroupRow(Group group, int index, GroupNotifier notifier) {
-    return InkWell(
-      onTap: () => _showDetail(group),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 70,
-              child: Center(
-                child: Text(
-                  (index + 1).toString().padLeft(2, '0'),
-                  style: const TextStyle(fontSize: 13),
+            _buildVirtualizedTable(state, notifier),
+          if (state.isLoading && state.plantUserCounts.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Please wait loading new record',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            _tableCell(
-              group.name,
-              flex: 3,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-            ),
-            _tableCell(group.companyName ?? '-', flex: 3),
-            _tableCell('${group.assignedPlants.length} Plants', flex: 2),
-            _tableCell('${group.assignedTanks.length} Tanks', flex: 2),
-            _tableCell(group.userCount.toString(), flex: 1),
-            Expanded(
-              flex: 1,
-              child: Center(child: _buildStatusChip(group.status)),
-            ),
-            SizedBox(
-              width: 120,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => _showDetail(group),
-                    icon: const Icon(Icons.visibility_outlined, size: 20),
-                    color: Colors.green,
-                    tooltip: 'View Detail',
-                  ),
-                  IconButton(
-                    onPressed: () => _showAddModal(group),
-                    icon: const Icon(Icons.edit_outlined, size: 20),
-                    color: Colors.blue,
-                    tooltip: 'Edit Group',
-                  ),
-                  IconButton(
-                    onPressed: () => _confirmDelete(group.id, notifier),
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                    color: Colors.red,
-                    tooltip: 'Delete Group',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          const SliverToBoxAdapter(child: SizedBox(height: 48)),
+        ],
       ),
     );
   }
 
-  Widget _buildStatusChip(int status) {
-    final isActive = status == 1;
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'GROUP MANAGEMENT',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Manage Access Groups By Assigning Specific Plants And Tanks To Control User Permissions.',
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ],
+        ),
+        ElevatedButton.icon(
+          onPressed: () => _showAddModal(),
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('ADD GROUP'),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterRow(GroupState state, GroupNotifier notifier) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isActive ? Colors.green.shade50 : Colors.red.shade50,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isActive ? Colors.green.shade200 : Colors.red.shade200,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: AppTextField(
+              controller: _searchController,
+              hint: 'Search By Plant Name',
+              prefixIcon: const Icon(Icons.search, size: 20),
+              onSubmitted: (v) {
+                notifier.setSearchQuery(v);
+                notifier.loadPlantUserCounts();
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          TextButton(
+            onPressed: () {
+              _searchController.clear();
+              notifier.clearFilters();
+            },
+            child: const Text('CLEAR'),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVirtualizedTable(GroupState state, GroupNotifier notifier) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      sliver: SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  _tableHeaderCell('SI.NO', width: 60),
+                  _tableHeaderCell('Plant Name / Location', flex: 3),
+                  _tableHeaderCell('Assigned Groups', flex: 3),
+                  _tableHeaderCell('Tanks', width: 80),
+                  _tableHeaderCell('Total Users', width: 100),
+                  _tableHeaderCell('Action', width: 80),
+                ],
+              ),
+            ),
+          ),
+          SliverList.builder(
+            itemCount: state.plantUserCounts.length,
+            itemBuilder: (context, index) {
+              final plant = state.plantUserCounts[index];
+              return _buildPlantRow(plant, index, notifier);
+            },
+          ),
+          SliverToBoxAdapter(
+            child: Container(
+              height: 12,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+                border: Border(
+                  left: BorderSide(color: Colors.grey.shade200),
+                  right: BorderSide(color: Colors.grey.shade200),
+                  bottom: BorderSide(color: Colors.grey.shade200),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlantRow(
+    PlantUserCount plant,
+    int index,
+    GroupNotifier notifier,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          left: BorderSide(color: Colors.grey.shade200),
+          right: BorderSide(color: Colors.grey.shade200),
+          bottom: BorderSide(color: Colors.grey.shade100),
         ),
       ),
-      child: Text(
-        isActive ? 'Active' : 'Inactive',
-        style: TextStyle(
-          color: isActive ? Colors.green.shade700 : Colors.red.shade700,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 60,
+            child: Center(
+              child: Text(
+                (index + 1).toString().padLeft(2, '0'),
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    plant.plantName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (plant.location != null)
+                    Text(
+                      plant.location!,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: plant.groupNames.map<Widget>((name) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.blue.shade100),
+                    ),
+                    child: Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.blue.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          _tableCell(plant.tankCount.toString(), width: 80),
+          _tableCell(
+            plant.userCount.toString(),
+            width: 100,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: primary,
+            ),
+          ),
+          SizedBox(
+            width: 80,
+            child: Center(
+              child: IconButton(
+                onPressed: () {
+                  // Navigate to plant details if needed
+                },
+                icon: const Icon(Icons.visibility_outlined, size: 20),
+                color: Colors.green,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -348,30 +417,5 @@ class _GroupWideState extends ConsumerState<GroupWide> {
 
     if (width != null) return SizedBox(width: width, child: cell);
     return Expanded(flex: flex ?? 1, child: cell);
-  }
-
-  Future<void> _confirmDelete(int id, GroupNotifier notifier) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Group'),
-        content: const Text(
-          'Are you sure you want to delete this access group?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (confirm == true) {
-      await notifier.deleteGroup(id);
-    }
   }
 }

@@ -18,15 +18,25 @@ class CompanyWide extends ConsumerStatefulWidget {
 
 class _CompanyWideState extends ConsumerState<CompanyWide> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(companyNotifierProvider.notifier).loadMore();
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -36,14 +46,27 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     final companyNotifier = ref.read(companyNotifierProvider.notifier);
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       body: Stack(
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [_buildManagementCard(companyState, companyNotifier)],
-            ),
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.all(24.0),
+                sliver: SliverToBoxAdapter(
+                  child: _buildHeader(companyState, companyNotifier),
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                sliver: _buildVirtualizedTable(companyState, companyNotifier),
+              ),
+              if (companyState.isLoading &&
+                  companyState.groupedCompanies.isNotEmpty)
+                SliverToBoxAdapter(child: _buildBottomLoader()),
+              const SliverToBoxAdapter(child: SizedBox(height: 48)),
+            ],
           ),
           if (companyState.isProcessing)
             const AppLoader(message: 'Processing...'),
@@ -52,12 +75,15 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     );
   }
 
-  Widget _buildManagementCard(CompanyState state, CompanyNotifier notifier) {
+  Widget _buildHeader(CompanyState state, CompanyNotifier notifier) {
     return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 8),
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,20 +111,31 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
               style: const TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ),
-          const SizedBox(height: 16),
-          _buildGroupedTable(state, notifier),
-          if (state.hasMore && state.groupedCompanies.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: state.isLoading
-                    ? const CircularProgressIndicator()
-                    : TextButton(
-                        onPressed: () => notifier.loadMore(),
-                        child: const Text('Load More'),
-                      ),
-              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomLoader() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Please wait loading new record',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
             ),
+          ),
         ],
       ),
     );
@@ -237,86 +274,88 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     );
   }
 
-  Widget _buildGroupedTable(CompanyState state, CompanyNotifier notifier) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
+  Widget _buildVirtualizedTable(CompanyState state, CompanyNotifier notifier) {
+    if (state.groupedCompanies.isEmpty && !state.isLoading) {
+      return SliverToBoxAdapter(
+        child: Container(
+          padding: const EdgeInsets.all(48),
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Table header
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(color: Colors.grey.shade100),
-                  child: Row(
-                    children: [
-                      _tableHeaderCell('SI.NO', width: 70),
-                      _tableHeaderCell('City', flex: 2),
-                      _tableHeaderCell('Date', flex: 2),
-                      _tableHeaderCell('State', flex: 2),
-                      _tableHeaderCell('Country', flex: 2),
-                      _tableHeaderCell('Status', flex: 2),
-                      _tableHeaderCell('Address', flex: 3),
-                      _tableHeaderCell('Actions', width: 100),
-                    ],
-                  ),
-                ),
-                // Table body
-                if (state.groupedCompanies.isEmpty && !state.isLoading)
-                  Container(
-                    padding: const EdgeInsets.all(48),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'No record found',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
-                    ),
-                  )
-                else
-                  ...List.generate(state.groupedCompanies.length, (index) {
-                    final group = state.groupedCompanies[index];
-                    final isExpanded = state.expandedGroups.contains(
-                      group.name,
-                    );
-
-                    return _buildGroupSection(
-                      index: index,
-                      group: group,
-                      isExpanded: isExpanded,
-                      notifier: notifier,
-                      isLast: index == state.groupedCompanies.length - 1,
-                    );
-                  }),
-                if (state.isLoading && state.groupedCompanies.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-              ],
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
             ),
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            'No record found',
+            style: TextStyle(color: Colors.grey, fontSize: 16),
           ),
         ),
-        // Loading overlay on top of table
-        if (state.isLoading && state.groupedCompanies.isNotEmpty)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(12),
+      );
+    }
+
+    return SliverList.builder(
+      itemCount: state.groupedCompanies.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          // Table header
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              border: Border(
+                left: BorderSide(color: Colors.grey.shade200),
+                right: BorderSide(color: Colors.grey.shade200),
+                bottom: BorderSide(color: Colors.grey.shade200),
               ),
-              child: const Center(child: CircularProgressIndicator()),
             ),
+            child: Row(
+              children: [
+                _tableHeaderCell('SI.NO', width: 70),
+                _tableHeaderCell('City', flex: 2),
+                _tableHeaderCell('Date', flex: 2),
+                _tableHeaderCell('State', flex: 2),
+                _tableHeaderCell('Country', flex: 2),
+                _tableHeaderCell('Status', flex: 2),
+                _tableHeaderCell('Address', flex: 3),
+                _tableHeaderCell('Actions', width: 100),
+              ],
+            ),
+          );
+        }
+
+        final groupIndex = index - 1;
+        final group = state.groupedCompanies[groupIndex];
+        final isExpanded = state.expandedGroups.contains(group.name);
+        final isLast = groupIndex == state.groupedCompanies.length - 1;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              left: BorderSide(color: Colors.grey.shade200),
+              right: BorderSide(color: Colors.grey.shade200),
+              bottom: isLast
+                  ? BorderSide(color: Colors.grey.shade200)
+                  : BorderSide.none,
+            ),
+            borderRadius: isLast
+                ? const BorderRadius.only(
+                    bottomLeft: Radius.circular(16),
+                    bottomRight: Radius.circular(16),
+                  )
+                : BorderRadius.zero,
           ),
-      ],
+          child: _buildGroupSection(
+            index: groupIndex,
+            group: group,
+            isExpanded: isExpanded,
+            notifier: notifier,
+            isLast: isLast,
+          ),
+        );
+      },
     );
   }
 
@@ -398,7 +437,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                       Expanded(
                         flex: 2,
                         child: Text(
-                          addr.city,
+                          addr.city ?? '',
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
@@ -412,14 +451,14 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                       Expanded(
                         flex: 2,
                         child: Text(
-                          addr.state,
+                          addr.state ?? '',
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),
                       Expanded(
                         flex: 2,
                         child: Text(
-                          addr.country,
+                          addr.country ?? '',
                           style: const TextStyle(fontSize: 13),
                         ),
                       ),

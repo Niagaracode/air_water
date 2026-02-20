@@ -16,18 +16,26 @@ class _UserWideState extends ConsumerState<UserWide> {
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _companySearchController =
       TextEditingController();
-  int? _selectedStatus;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(userProvider.notifier).loadUsers());
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(userProvider.notifier).loadMore();
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _companySearchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -47,96 +55,32 @@ class _UserWideState extends ConsumerState<UserWide> {
     final state = ref.watch(userProvider);
     final notifier = ref.read(userProvider.notifier);
 
+    // Sync controllers
+    if (state.searchQuery != _searchController.text &&
+        state.searchQuery.isEmpty) {
+      _searchController.text = '';
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'USER MANAGEMENT',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Centralize User Information Including Identification, Roles, Access, And Status Management.',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => _showAddModal(),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('ADD'),
-                      ),
-                    ],
-                  ),
+                  _buildHeader(),
                   const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(child: _buildUserNameAutocomplete(notifier)),
-                        const SizedBox(width: 16),
-                        Expanded(child: _buildCompanySearchField()),
-                        const SizedBox(width: 16),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: DropdownButton<int>(
-                            value: _selectedStatus,
-                            hint: const Text('Status'),
-                            underline: const SizedBox(),
-                            items: const [
-                              DropdownMenuItem(value: 1, child: Text('Active')),
-                              DropdownMenuItem(
-                                value: 0,
-                                child: Text('Inactive'),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              setState(() => _selectedStatus = value);
-                              _onSearchChanged(notifier);
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildFilterRow(state, notifier),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       Text(
-                        'Showing ${state.users.length} entries',
+                        'Showing ${state.users.length} of ${state.totalEntries} entries',
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
@@ -144,60 +88,185 @@ class _UserWideState extends ConsumerState<UserWide> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  if (state.isLoading && state.users.isEmpty)
-                    const Center(child: CircularProgressIndicator())
-                  else if (state.error != null)
-                    Center(child: Text(state.error!))
-                  else
-                    _buildUserTable(state, notifier),
                 ],
               ),
             ),
+          ),
+          if (state.isLoading && state.users.isEmpty)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(48.0),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            )
+          else if (state.error != null)
+            SliverToBoxAdapter(child: Center(child: Text(state.error!)))
+          else
+            _buildVirtualizedTable(state, notifier),
+          if (state.isLoading && state.users.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Please wait loading new record',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SliverToBoxAdapter(child: SizedBox(height: 48)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'USER MANAGEMENT',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Centralize User Information Including Identification, Roles, Access, And Status Management.',
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ],
+        ),
+        ElevatedButton.icon(
+          onPressed: () => _showAddModal(),
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('ADD'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterRow(UserState state, UserNotifier notifier) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _buildUserNameAutocomplete(notifier)),
+          const SizedBox(width: 16),
+          Expanded(child: _buildCompanyField(state, notifier)),
+          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButton<int>(
+              value: state.status,
+              hint: const Text('Status'),
+              underline: const SizedBox(),
+              items: const [
+                DropdownMenuItem(value: 1, child: Text('Active')),
+                DropdownMenuItem(value: 0, child: Text('Inactive')),
+              ],
+              onChanged: (value) {
+                notifier.setStatus(value);
+                notifier.loadUsers();
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          TextButton(
+            onPressed: () {
+              _searchController.clear();
+              _companySearchController.clear();
+              notifier.clearFilters();
+            },
+            child: const Text('CLEAR'),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            '${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildUserTable(UserState state, UserNotifier notifier) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+  Widget _buildVirtualizedTable(UserState state, UserNotifier notifier) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      sliver: SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  _tableHeaderCell('SI.NO', width: 70),
+                  _tableHeaderCell('Users Name', flex: 2),
+                  _tableHeaderCell('Company', flex: 2),
+                  _tableHeaderCell('Phone Number', flex: 2),
+                  _tableHeaderCell('Email', flex: 2),
+                  _tableHeaderCell('Role', flex: 2),
+                  _tableHeaderCell('Status', flex: 1),
+                  _tableHeaderCell('Action', width: 100),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                _tableHeaderCell('SI.NO', width: 70),
-                _tableHeaderCell('Users Name', flex: 2),
-                _tableHeaderCell('Company', flex: 2),
-                _tableHeaderCell('Phone Number', flex: 2),
-                _tableHeaderCell('Email', flex: 2),
-                _tableHeaderCell('Role', flex: 2),
-                _tableHeaderCell('Status', flex: 1),
-                _tableHeaderCell('Action', width: 100),
-              ],
+          ),
+          SliverList.builder(
+            itemCount: state.users.length,
+            itemBuilder: (context, index) {
+              final user = state.users[index];
+              return _buildUserRow(user, index, notifier);
+            },
+          ),
+          SliverToBoxAdapter(
+            child: Container(
+              height: 12,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+                border: Border(
+                  left: BorderSide(color: Colors.grey.shade200),
+                  right: BorderSide(color: Colors.grey.shade200),
+                  bottom: BorderSide(color: Colors.grey.shade200),
+                ),
+              ),
             ),
           ),
-          // Content
-          ...state.users.asMap().entries.map((entry) {
-            final index = entry.key;
-            final user = entry.value;
-            return _buildUserRow(user, index, notifier);
-          }),
         ],
       ),
     );
@@ -205,10 +274,15 @@ class _UserWideState extends ConsumerState<UserWide> {
 
   Widget _buildUserRow(User user, int index, UserNotifier notifier) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+        color: Colors.white,
+        border: Border(
+          left: BorderSide(color: Colors.grey.shade200),
+          right: BorderSide(color: Colors.grey.shade200),
+          bottom: BorderSide(color: Colors.grey.shade100),
+        ),
       ),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
           SizedBox(
@@ -267,14 +341,7 @@ class _UserWideState extends ConsumerState<UserWide> {
                       ),
                     );
                     if (confirm == true) {
-                      final success = await notifier.deleteUser(user.userId);
-                      if (success && mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('User deleted successfully'),
-                          ),
-                        );
-                      }
+                      await notifier.deleteUser(user.userId);
                     }
                   },
                   icon: const Icon(Icons.delete_outline, size: 20),
@@ -330,17 +397,12 @@ class _UserWideState extends ConsumerState<UserWide> {
     return Expanded(flex: flex ?? 1, child: cell);
   }
 
-  Widget _tableCell(
-    String value, {
-    int? flex,
-    double? width,
-    TextStyle? style,
-  }) {
+  Widget _tableCell(String value, {int? flex, double? width}) {
     final cell = Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Text(
         value,
-        style: style ?? const TextStyle(fontSize: 13),
+        style: const TextStyle(fontSize: 13),
         textAlign: TextAlign.center,
         overflow: TextOverflow.ellipsis,
       ),
@@ -348,13 +410,6 @@ class _UserWideState extends ConsumerState<UserWide> {
 
     if (width != null) return SizedBox(width: width, child: cell);
     return Expanded(flex: flex ?? 1, child: cell);
-  }
-
-  void _onSearchChanged(UserNotifier notifier) {
-    notifier.loadUsers(
-      searchQuery: _searchController.text,
-      status: _selectedStatus,
-    );
   }
 
   Widget _buildUserNameAutocomplete(UserNotifier notifier) {
@@ -369,8 +424,10 @@ class _UserWideState extends ConsumerState<UserWide> {
             }
             return await notifier.getUserNameSuggestions(textEditingValue.text);
           },
-          displayStringForOption: (String option) => option,
-          onSelected: (option) => _onSearchChanged(notifier),
+          onSelected: (option) {
+            notifier.setSearchQuery(option);
+            notifier.loadUsers();
+          },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return Container(
               height: 45,
@@ -387,7 +444,10 @@ class _UserWideState extends ConsumerState<UserWide> {
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 12),
                 ),
-                onSubmitted: (v) => _onSearchChanged(notifier),
+                onSubmitted: (v) {
+                  notifier.setSearchQuery(v);
+                  notifier.loadUsers();
+                },
               ),
             );
           },
@@ -422,7 +482,7 @@ class _UserWideState extends ConsumerState<UserWide> {
     );
   }
 
-  Widget _buildCompanySearchField() {
+  Widget _buildCompanyField(UserState state, UserNotifier notifier) {
     return Container(
       height: 45,
       decoration: BoxDecoration(
@@ -437,7 +497,11 @@ class _UserWideState extends ConsumerState<UserWide> {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(vertical: 12),
         ),
-        onSubmitted: (v) => _onSearchChanged(ref.read(userProvider.notifier)),
+        onSubmitted: (v) {
+          // This would ideally be an autocomplete, but sticking to existing pattern for now
+          // or just trigger loadUsers if we had a setCompanyId logic for name search
+          notifier.loadUsers();
+        },
       ),
     );
   }

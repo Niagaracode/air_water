@@ -21,6 +21,8 @@ class UserRepositoryImpl implements UserRepository {
     int? status,
     int? plantId,
     int? tankId,
+    List<int>? excludePlantIds,
+    String? groupName,
   }) async {
     return await _api.searchUsers(
       page: page,
@@ -33,6 +35,8 @@ class UserRepositoryImpl implements UserRepository {
       status: status,
       plantId: plantId,
       tankId: tankId,
+      excludePlantIds: excludePlantIds,
+      groupName: groupName,
     );
   }
 

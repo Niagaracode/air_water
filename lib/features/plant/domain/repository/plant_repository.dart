@@ -20,4 +20,5 @@ abstract class PlantRepository {
   Future<void> updatePlant(int id, PlantCreateRequest request);
   Future<void> deletePlant(int id);
   Future<List<PlantAutocompleteInfo>> getPlantAutocomplete({String? q});
+  Future<Map<String, dynamic>> getPlantWithAddresses(int id);
 }

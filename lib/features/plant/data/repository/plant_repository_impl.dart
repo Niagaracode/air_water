@@ -50,8 +50,12 @@ class PlantRepositoryImpl implements PlantRepository {
     await _api.deletePlant(id);
   }
 
-  @override
   Future<List<PlantAutocompleteInfo>> getPlantAutocomplete({String? q}) async {
     return await _api.getPlantAutocomplete(q: q);
+  }
+
+  @override
+  Future<Map<String, dynamic>> getPlantWithAddresses(int id) async {
+    return await _api.getPlantWithAddresses(id);
   }
 }

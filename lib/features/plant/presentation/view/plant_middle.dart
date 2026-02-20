@@ -17,15 +17,25 @@ class PlantMiddle extends ConsumerStatefulWidget {
 
 class _PlantMiddleState extends ConsumerState<PlantMiddle> {
   final _plantSearchController = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(plantNotifierProvider.notifier).loadMoreGrouped();
+    }
   }
 
   @override
   void dispose() {
     _plantSearchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -35,24 +45,61 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
     final plantNotifier = ref.read(plantNotifierProvider.notifier);
 
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Dashboard >> Plant',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Dashboard >> Plant',
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildHeader(plantState, plantNotifier),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildManagementCard(plantState, plantNotifier),
-          ],
-        ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            sliver: _buildVirtualizedTable(plantState, plantNotifier),
+          ),
+          if (plantState.isLoading && plantState.groupedPlants.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Please wait loading new record',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ],
       ),
     );
   }
 
-  Widget _buildManagementCard(PlantState state, PlantNotifier notifier) {
+  Widget _buildHeader(PlantState state, PlantNotifier notifier) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -81,22 +128,164 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
               style: const TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ),
-          const SizedBox(height: 12),
-          _buildGroupedTable(state, notifier),
-          if (state.hasMore && state.groupedPlants.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: state.isLoading
-                    ? const CircularProgressIndicator()
-                    : TextButton(
-                        onPressed: () => notifier.loadMoreGrouped(),
-                        child: const Text('Load More'),
-                      ),
-              ),
-            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVirtualizedTable(PlantState state, PlantNotifier notifier) {
+    if (state.groupedPlants.isEmpty && !state.isLoading) {
+      return SliverToBoxAdapter(
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            'No record found',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    if (state.isLoading && state.groupedPlants.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Container(
+          padding: const EdgeInsets.all(32.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              Text(
+                'Please wait loading new record',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SliverList.builder(
+      itemCount: state.groupedPlants.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          // Table header
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: const Row(
+              children: [
+                SizedBox(
+                  width: 50,
+                  child: Text(
+                    'SI.NO',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'City',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Date',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Company',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'State',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Country',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'Status',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'Address',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final groupIndex = index - 1;
+        final group = state.groupedPlants[groupIndex];
+        final orgCode = group.plantOrganizationCode ?? 'unknown_$groupIndex';
+        final isExpanded = state.expandedGroups.contains(orgCode);
+        final isLast = groupIndex == state.groupedPlants.length - 1;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              left: BorderSide(color: Colors.grey.shade200),
+              right: BorderSide(color: Colors.grey.shade200),
+              bottom: isLast
+                  ? BorderSide(color: Colors.grey.shade200)
+                  : BorderSide.none,
+            ),
+            borderRadius: isLast
+                ? const BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  )
+                : BorderRadius.zero,
+          ),
+          child: _buildGroupSection(
+            index: groupIndex,
+            group: group,
+            orgCode: orgCode,
+            isExpanded: isExpanded,
+            notifier: notifier,
+          ),
+        );
+      },
     );
   }
 
@@ -235,160 +424,6 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
           icon: const Icon(Icons.add, size: 16),
           label: const Text('ADD'),
         ),
-      ],
-    );
-  }
-
-  Widget _buildGroupedTable(PlantState state, PlantNotifier notifier) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Table header
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(color: Colors.grey.shade100),
-                  child: const Row(
-                    children: [
-                      SizedBox(
-                        width: 50,
-                        child: Text(
-                          'SI.NO',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          'City',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          'Date',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          'Company',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          'State',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          'Country',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Text(
-                          'Status',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          'Address',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Table body
-                if (state.groupedPlants.isEmpty && !state.isLoading)
-                  Container(
-                    padding: const EdgeInsets.all(32),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'No record found',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
-                  )
-                else
-                  ...List.generate(state.groupedPlants.length, (index) {
-                    final group = state.groupedPlants[index];
-                    final orgCode =
-                        group.plantOrganizationCode ?? 'unknown_$index';
-                    final isExpanded = state.expandedGroups.contains(orgCode);
-
-                    return _buildGroupSection(
-                      index: index,
-                      group: group,
-                      orgCode: orgCode,
-                      isExpanded: isExpanded,
-                      notifier: notifier,
-                    );
-                  }),
-                if (state.isLoading && state.groupedPlants.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        if (state.isLoading && state.groupedPlants.isNotEmpty)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-          ),
       ],
     );
   }

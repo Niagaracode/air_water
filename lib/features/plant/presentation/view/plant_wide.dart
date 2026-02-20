@@ -17,15 +17,25 @@ class PlantWide extends ConsumerStatefulWidget {
 
 class _PlantWideState extends ConsumerState<PlantWide> {
   final _plantSearchController = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(plantNotifierProvider.notifier).loadMoreGrouped();
+    }
   }
 
   @override
   void dispose() {
     _plantSearchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -35,65 +45,78 @@ class _PlantWideState extends ConsumerState<PlantWide> {
     final plantNotifier = ref.read(plantNotifierProvider.notifier);
 
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [_buildManagementCard(plantState, plantNotifier)],
-        ),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(24.0),
+            sliver: SliverToBoxAdapter(
+              child: _buildHeader(plantState, plantNotifier),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            sliver: _buildVirtualizedTable(plantState, plantNotifier),
+          ),
+          if (plantState.isLoading && plantState.groupedPlants.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Please wait loading new record',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        ],
       ),
     );
   }
 
-  Widget _buildManagementCard(PlantState state, PlantNotifier notifier) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'PLANT MANAGEMENT',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-            ),
+  Widget _buildHeader(PlantState state, PlantNotifier notifier) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'PLANT MANAGEMENT',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Centralize Plant Information Including Identification, Locations, And Status Management',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Centralize Plant Information Including Identification, Locations, And Status Management',
+          style: TextStyle(color: Colors.grey, fontSize: 14),
+        ),
+        const SizedBox(height: 32),
+        _buildFilterRow(notifier),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            'Showing  ${state.totalEntries} entries',
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
-          const SizedBox(height: 32),
-          _buildFilterRow(notifier),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Showing  ${state.totalEntries} entries',
-              style: const TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildGroupedTable(state, notifier),
-          if (state.hasMore && state.groupedPlants.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: state.isLoading
-                    ? const CircularProgressIndicator()
-                    : TextButton(
-                        onPressed: () => notifier.loadMoreGrouped(),
-                        child: const Text('Load More'),
-                      ),
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -119,7 +142,6 @@ class _PlantWideState extends ConsumerState<PlantWide> {
             },
             fieldViewBuilder:
                 (context, controller, focusNode, onFieldSubmitted) {
-                  // Sync external controller if needed, or just use this one
                   if (_plantSearchController.text != controller.text &&
                       _plantSearchController.text.isNotEmpty &&
                       controller.text.isEmpty) {
@@ -144,7 +166,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
                   elevation: 4.0,
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    width: 400, // Matching some reasonable width
+                    width: 400,
                     constraints: const BoxConstraints(maxHeight: 300),
                     child: ListView.builder(
                       padding: EdgeInsets.zero,
@@ -232,87 +254,113 @@ class _PlantWideState extends ConsumerState<PlantWide> {
     );
   }
 
-  Widget _buildGroupedTable(PlantState state, PlantNotifier notifier) {
-    return Stack(
-      children: [
-        Container(
+  Widget _buildVirtualizedTable(PlantState state, PlantNotifier notifier) {
+    if (state.groupedPlants.isEmpty && !state.isLoading) {
+      return SliverToBoxAdapter(
+        child: Container(
+          padding: const EdgeInsets.all(48),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey.shade200),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Table header
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(color: Colors.grey.shade100),
-                  child: Row(
-                    children: [
-                      _tableHeaderCell('SI.NO', width: 70),
-                      _tableHeaderCell('City', flex: 2),
-                      _tableHeaderCell('Date', flex: 2),
-                      _tableHeaderCell('Company', flex: 2),
-                      _tableHeaderCell('State', flex: 2),
-                      _tableHeaderCell('Country', flex: 2),
-                      _tableHeaderCell('Status', flex: 2),
-                      _tableHeaderCell('Address', flex: 3),
-                      _tableHeaderCell('Actions', width: 100),
-                    ],
-                  ),
-                ),
-                // Table body
-                if (state.groupedPlants.isEmpty && !state.isLoading)
-                  Container(
-                    padding: const EdgeInsets.all(48),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'No record found',
-                      style: TextStyle(color: Colors.grey, fontSize: 16),
-                    ),
-                  )
-                else
-                  ...List.generate(state.groupedPlants.length, (index) {
-                    final group = state.groupedPlants[index];
-                    final orgCode =
-                        group.plantOrganizationCode ?? 'unknown_$index';
-                    final isExpanded = state.expandedGroups.contains(orgCode);
-
-                    return _buildGroupSection(
-                      index: index,
-                      group: group,
-                      orgCode: orgCode,
-                      isExpanded: isExpanded,
-                      notifier: notifier,
-                      isLast: index == state.groupedPlants.length - 1,
-                    );
-                  }),
-                if (state.isLoading && state.groupedPlants.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-              ],
-            ),
+          alignment: Alignment.center,
+          child: const Text(
+            'No record found',
+            style: TextStyle(color: Colors.grey, fontSize: 16),
           ),
         ),
-        if (state.isLoading && state.groupedPlants.isNotEmpty)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
+      );
+    }
+
+    if (state.isLoading && state.groupedPlants.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Container(
+          padding: const EdgeInsets.all(48.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
           ),
-      ],
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Please wait loading new record',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return SliverList.builder(
+      itemCount: state.groupedPlants.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          // Table header
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                _tableHeaderCell('SI.NO', width: 70),
+                _tableHeaderCell('City', flex: 2),
+                _tableHeaderCell('Date', flex: 2),
+                _tableHeaderCell('Company', flex: 2),
+                _tableHeaderCell('State', flex: 2),
+                _tableHeaderCell('Country', flex: 2),
+                _tableHeaderCell('Status', flex: 2),
+                _tableHeaderCell('Address', flex: 3),
+                _tableHeaderCell('Actions', width: 100),
+              ],
+            ),
+          );
+        }
+
+        final groupIndex = index - 1;
+        final group = state.groupedPlants[groupIndex];
+        final orgCode = group.plantOrganizationCode ?? 'unknown_$groupIndex';
+        final isExpanded = state.expandedGroups.contains(orgCode);
+        final isLast = groupIndex == state.groupedPlants.length - 1;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              left: BorderSide(color: Colors.grey.shade200),
+              right: BorderSide(color: Colors.grey.shade200),
+              bottom: isLast
+                  ? BorderSide(color: Colors.grey.shade200)
+                  : BorderSide.none,
+            ),
+            borderRadius: isLast
+                ? const BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  )
+                : BorderRadius.zero,
+          ),
+          child: _buildGroupSection(
+            index: groupIndex,
+            group: group,
+            orgCode: orgCode,
+            isExpanded: isExpanded,
+            notifier: notifier,
+            isLast: isLast,
+          ),
+        );
+      },
     );
   }
 

@@ -18,15 +18,25 @@ class CompanyMiddle extends ConsumerStatefulWidget {
 
 class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(companyNotifierProvider.notifier).loadMore();
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -36,21 +46,37 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
     final companyNotifier = ref.read(companyNotifierProvider.notifier);
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       body: Stack(
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Dashboard >> Company',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.all(16.0),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Dashboard >> Company',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildHeader(companyState, companyNotifier),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
-                _buildManagementCard(companyState, companyNotifier),
-              ],
-            ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                sliver: _buildVirtualizedTable(companyState, companyNotifier),
+              ),
+              if (companyState.isLoading &&
+                  companyState.groupedCompanies.isNotEmpty)
+                SliverToBoxAdapter(child: _buildBottomLoader()),
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
+            ],
           ),
           if (companyState.isProcessing)
             const AppLoader(message: 'Processing...'),
@@ -59,12 +85,15 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
     );
   }
 
-  Widget _buildManagementCard(CompanyState state, CompanyNotifier notifier) {
+  Widget _buildHeader(CompanyState state, CompanyNotifier notifier) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.only(left: 20, top: 20, right: 20, bottom: 8),
+      decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,20 +117,31 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
               style: const TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ),
-          const SizedBox(height: 12),
-          _buildGroupedTable(state, notifier),
-          if (state.hasMore && state.groupedCompanies.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: state.isLoading
-                    ? const CircularProgressIndicator()
-                    : TextButton(
-                        onPressed: () => notifier.loadMore(),
-                        child: const Text('Load More'),
-                      ),
-              ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomLoader() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 14,
+            height: 14,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Please wait loading new record',
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
+          ),
         ],
       ),
     );
@@ -245,83 +285,86 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
     );
   }
 
-  Widget _buildGroupedTable(CompanyState state, CompanyNotifier notifier) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
+  Widget _buildVirtualizedTable(CompanyState state, CompanyNotifier notifier) {
+    if (state.groupedCompanies.isEmpty && !state.isLoading) {
+      return SliverToBoxAdapter(
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Table header
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(color: Colors.grey.shade100),
-                  child: Row(
-                    children: [
-                      _tableHeaderCell('SI.NO', width: 60),
-                      _tableHeaderCell('City', flex: 2),
-                      _tableHeaderCell('Date', flex: 2),
-                      _tableHeaderCell('State', flex: 2),
-                      _tableHeaderCell('Country', flex: 2),
-                      _tableHeaderCell('Status', flex: 1),
-                      _tableHeaderCell('Address', flex: 3),
-                    ],
-                  ),
-                ),
-                // Table body
-                if (state.groupedCompanies.isEmpty && !state.isLoading)
-                  Container(
-                    padding: const EdgeInsets.all(32),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      'No record found',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
-                  )
-                else
-                  ...List.generate(state.groupedCompanies.length, (index) {
-                    final group = state.groupedCompanies[index];
-                    final isExpanded = state.expandedGroups.contains(
-                      group.name,
-                    );
-
-                    return _buildGroupSection(
-                      index: index,
-                      group: group,
-                      isExpanded: isExpanded,
-                      notifier: notifier,
-                    );
-                  }),
-                if (state.isLoading && state.groupedCompanies.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-              ],
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(12),
+              bottomRight: Radius.circular(12),
             ),
+          ),
+          alignment: Alignment.center,
+          child: const Text(
+            'No record found',
+            style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
         ),
-        if (state.isLoading && state.groupedCompanies.isNotEmpty)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(12),
+      );
+    }
+
+    return SliverList.builder(
+      itemCount: state.groupedCompanies.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          // Table header
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              border: Border(
+                left: BorderSide(color: Colors.grey.shade200),
+                right: BorderSide(color: Colors.grey.shade200),
+                bottom: BorderSide(color: Colors.grey.shade200),
               ),
-              child: const Center(child: CircularProgressIndicator()),
             ),
+            child: Row(
+              children: [
+                _tableHeaderCell('SI.NO', width: 60),
+                _tableHeaderCell('City', flex: 2),
+                _tableHeaderCell('Date', flex: 2),
+                _tableHeaderCell('State', flex: 2),
+                _tableHeaderCell('Country', flex: 2),
+                _tableHeaderCell('Status', flex: 1),
+                _tableHeaderCell('Address', flex: 3),
+              ],
+            ),
+          );
+        }
+
+        final groupIndex = index - 1;
+        final group = state.groupedCompanies[groupIndex];
+        final isExpanded = state.expandedGroups.contains(group.name);
+        final isLast = groupIndex == state.groupedCompanies.length - 1;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              left: BorderSide(color: Colors.grey.shade200),
+              right: BorderSide(color: Colors.grey.shade200),
+              bottom: isLast
+                  ? BorderSide(color: Colors.grey.shade200)
+                  : BorderSide.none,
+            ),
+            borderRadius: isLast
+                ? const BorderRadius.only(
+                    bottomLeft: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                  )
+                : BorderRadius.zero,
           ),
-      ],
+          child: _buildGroupSection(
+            index: groupIndex,
+            group: group,
+            isExpanded: isExpanded,
+            notifier: notifier,
+          ),
+        );
+      },
     );
   }
 
@@ -390,7 +433,7 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
                       Expanded(
                         flex: 2,
                         child: Text(
-                          addr.city,
+                          addr.city ?? '',
                           style: const TextStyle(fontSize: 12),
                         ),
                       ),
@@ -404,14 +447,14 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
                       Expanded(
                         flex: 2,
                         child: Text(
-                          addr.state,
+                          addr.state ?? '',
                           style: const TextStyle(fontSize: 12),
                         ),
                       ),
                       Expanded(
                         flex: 2,
                         child: Text(
-                          addr.country,
+                          addr.country ?? '',
                           style: const TextStyle(fontSize: 12),
                         ),
                       ),

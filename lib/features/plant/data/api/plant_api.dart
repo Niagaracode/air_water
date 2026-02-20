@@ -70,4 +70,9 @@ class PlantApi {
         )
         .toList();
   }
+
+  Future<Map<String, dynamic>> getPlantWithAddresses(int id) async {
+    final response = await _client.get('/plants/$id/addresses');
+    return Map<String, dynamic>.from(response.data['data']);
+  }
 }

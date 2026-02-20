@@ -16,6 +16,8 @@ class AppTextField extends StatelessWidget {
   final int? maxLines;
   final FocusNode? focusNode;
   final TextInputType? keyboardType;
+  final Widget? prefixIcon;
+  final Color? prefixIconColor;
 
   const AppTextField({
     super.key,
@@ -29,6 +31,8 @@ class AppTextField extends StatelessWidget {
     this.maxLines = 1,
     this.focusNode,
     this.keyboardType,
+    this.prefixIcon,
+    this.prefixIconColor,
     this.onToggle,
     this.onChanged,
     this.onSubmitted,
@@ -50,6 +54,8 @@ class AppTextField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+        prefixIcon: prefixIcon,
+        prefixIconColor: prefixIconColor,
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(

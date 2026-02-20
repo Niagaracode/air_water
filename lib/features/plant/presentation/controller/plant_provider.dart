@@ -84,14 +84,18 @@ class PlantNotifier extends Notifier<PlantState> {
 
   @override
   PlantState build() {
+    ref.keepAlive();
+    // Initial load only. build() is not called again on navigation if keepAlive is active.
     Future.microtask(() => loadGroupedPlants());
     return PlantState(plants: []);
   }
 
-  Future<void> loadGroupedPlants() async {
+  Future<void> loadGroupedPlants({bool isReload = false}) async {
     if (state.isLoading) return;
 
-    state = state.copyWith(isLoading: true, error: null);
+    if (state.groupedPlants.isEmpty || isReload) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
 
     try {
       final repository = ref.read(plantRepositoryProvider);
@@ -255,7 +259,7 @@ class PlantNotifier extends Notifier<PlantState> {
     try {
       final repository = ref.read(plantRepositoryProvider);
       await repository.createPlant(request);
-      await loadGroupedPlants();
+      await loadGroupedPlants(isReload: true);
       state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {
@@ -269,7 +273,7 @@ class PlantNotifier extends Notifier<PlantState> {
     try {
       final repository = ref.read(plantRepositoryProvider);
       await repository.updatePlant(id, request);
-      await loadGroupedPlants();
+      await loadGroupedPlants(isReload: true);
       state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {
@@ -283,7 +287,7 @@ class PlantNotifier extends Notifier<PlantState> {
     try {
       final repository = ref.read(plantRepositoryProvider);
       await repository.deletePlant(id);
-      await loadGroupedPlants();
+      await loadGroupedPlants(isReload: true);
       state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {

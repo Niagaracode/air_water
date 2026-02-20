@@ -14,18 +14,25 @@ class DeviceNarrow extends ConsumerStatefulWidget {
 
 class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => ref.read(deviceProvider.notifier).loadGroupedDevices(),
-    );
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(deviceProvider.notifier).loadMore();
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -45,60 +52,155 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
     final state = ref.watch(deviceProvider);
     final notifier = ref.read(deviceProvider.notifier);
 
+    // Sync controllers
+    if (state.searchDevice != _searchController.text &&
+        state.searchDevice.isEmpty) {
+      _searchController.text = '';
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.all(12),
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                children: [
+                  _buildHeader(notifier),
+                  const SizedBox(height: 12),
+                  if (state.error != null) _buildErrorBanner(state.error!),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            sliver: _buildVirtualizedList(state, notifier),
+          ),
+          if (state.isLoading && state.groupedDevices.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'DEVICE MANAGEMENT',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                    ElevatedButton(
-                      onPressed: () => _showAddModal(),
-                      child: const Text('ADD'),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Please wait loading new record',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 11,
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search By Device ID',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white,
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  onSubmitted: (value) {
-                    notifier.loadGroupedDevices(deviceId: value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                if (state.isLoading && state.groupedDevices.isEmpty)
-                  const Center(child: CircularProgressIndicator())
-                else
-                  ...state.groupedDevices.map(
-                    (group) => _buildGroup(group, state, notifier),
-                  ),
-              ],
+              ),
             ),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeader(DeviceNotifier notifier) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'DEVICE MANAGEMENT',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            ElevatedButton(
+              onPressed: () => _showAddModal(),
+              child: const Text('ADD'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search By Device ID',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: Colors.white,
+                  isDense: true,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onSubmitted: (value) {
+                  notifier.setSearchDevice(value);
+                  notifier.loadGroupedDevices();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: () {
+                _searchController.clear();
+                notifier.clearFilters();
+              },
+              child: const Text('CLEAR'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVirtualizedList(DeviceState state, DeviceNotifier notifier) {
+    if (state.isLoading && state.groupedDevices.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              Text(
+                'Please wait loading new record',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (!state.isLoading && state.groupedDevices.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Center(
+            child: Text(
+              'No Record Found',
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SliverList.builder(
+      itemCount: state.groupedDevices.length,
+      itemBuilder: (context, index) {
+        return _buildGroup(state.groupedDevices[index], state, notifier);
+      },
     );
   }
 
@@ -221,6 +323,36 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
           Text(
             value,
             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(String error) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade100),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red.shade700, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              error,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 11),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close, color: Colors.red.shade700, size: 16),
+            onPressed: () =>
+                ref.read(deviceProvider.notifier).loadGroupedDevices(),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
         ],
       ),

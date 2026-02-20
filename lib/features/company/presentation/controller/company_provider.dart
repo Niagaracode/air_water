@@ -79,15 +79,19 @@ class CompanyNotifier extends Notifier<CompanyState> {
 
   @override
   CompanyState build() {
+    ref.keepAlive();
+    // Initial load only. build() is not called again on navigation if keepAlive is active.
     Future.microtask(() => loadGroupedCompanies());
     return CompanyState();
   }
 
-  Future<void> loadGroupedCompanies() async {
+  Future<void> loadGroupedCompanies({bool isReload = false}) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     _lastRequestTimestamp = timestamp;
 
-    state = state.copyWith(isLoading: true, error: null);
+    if (state.groupedCompanies.isEmpty || isReload) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
 
     try {
       final repository = ref.read(companyRepositoryProvider);
@@ -168,7 +172,7 @@ class CompanyNotifier extends Notifier<CompanyState> {
     } else {
       state = state.copyWith(selectedStatus: status);
     }
-    loadGroupedCompanies();
+    loadGroupedCompanies(isReload: true);
   }
 
   void setDate(String? date) {
@@ -177,7 +181,7 @@ class CompanyNotifier extends Notifier<CompanyState> {
     } else {
       state = state.copyWith(selectedDate: date);
     }
-    loadGroupedCompanies();
+    loadGroupedCompanies(isReload: true);
   }
 
   void toggleGroup(String companyName) {
@@ -196,7 +200,7 @@ class CompanyNotifier extends Notifier<CompanyState> {
     try {
       final repository = ref.read(companyRepositoryProvider);
       await repository.createCompany(request);
-      await loadGroupedCompanies();
+      await loadGroupedCompanies(isReload: true);
       state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {

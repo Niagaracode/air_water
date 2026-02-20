@@ -45,8 +45,9 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
       _status = widget.initialAddress!.status;
 
       final controllers = CompanyAddressControllers();
-      controllers.addressController.text = widget.initialAddress!.addressLine1;
-      controllers.pinCodeController.text = widget.initialAddress!.pincode;
+      controllers.addressController.text =
+          widget.initialAddress!.addressLine1 ?? '';
+      controllers.pinCodeController.text = widget.initialAddress!.pincode ?? '';
       controllers.country = widget.initialAddress!.country;
       controllers.state = widget.initialAddress!.state;
       controllers.city = widget.initialAddress!.city;
@@ -198,17 +199,24 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color:  Theme.of(context).colorScheme.surface,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info, color:  Theme.of(context).colorScheme.surface, size: 20),
+                      Icon(
+                        Icons.info,
+                        color: Theme.of(context).colorScheme.surface,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Enter The Company Name, And Specify Multiple Addresses.',
-                          style: TextStyle(color:  Theme.of(context).colorScheme.surface, fontSize: 13),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.surface,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],

@@ -19,23 +19,18 @@ class TankNarrow extends ConsumerStatefulWidget {
 class _TankNarrowState extends ConsumerState<TankNarrow> {
   final _plantSearchController = TextEditingController();
   final _tankSearchController = TextEditingController();
-  int? _selectedStatus;
+  final _scrollController = ScrollController();
   Timer? _debounce;
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(tankProvider.notifier).loadGroupedTanks());
+    _scrollController.addListener(_onScroll);
   }
 
-  void _onSearchChanged() {
-    if (mounted) {
-      ref
-          .read(tankProvider.notifier)
-          .loadGroupedTanks(
-            plantName: _plantSearchController.text,
-            tankName: _tankSearchController.text,
-            status: _selectedStatus,
-          );
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(tankProvider.notifier).loadMore();
     }
   }
 
@@ -43,6 +38,7 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
   void dispose() {
     _plantSearchController.dispose();
     _tankSearchController.dispose();
+    _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
@@ -51,6 +47,16 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
   Widget build(BuildContext context) {
     final state = ref.watch(tankProvider);
     final notifier = ref.read(tankProvider.notifier);
+
+    // Sync controllers
+    if (state.searchPlant != _plantSearchController.text &&
+        state.searchPlant.isEmpty) {
+      _plantSearchController.text = '';
+    }
+    if (state.searchTank != _tankSearchController.text &&
+        state.searchTank.isEmpty) {
+      _tankSearchController.text = '';
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -65,57 +71,123 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(8),
-        children: [
-          if (state.error != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: _buildErrorBanner(state.error!),
-            ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Column(
-              children: [
-                _buildPlantAutocomplete(),
-                const SizedBox(height: 8),
-                _buildTankAutocomplete(),
-                const SizedBox(height: 8),
-                AppDropdown<int?>(
-                  value: _selectedStatus,
-                  items: const [null, 1, 0],
-                  itemLabel: (v) => v == null
-                      ? 'All Status'
-                      : (v == 1 ? 'Active' : 'Inactive'),
-                  hint: 'Select Status',
-                  onChanged: (v) {
-                    setState(() => _selectedStatus = v);
-                    _onSearchChanged();
-                  },
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _clearFilters,
-                    icon: const Icon(Icons.clear_all),
-                    label: const Text('Clear Filters'),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  if (state.error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: _buildErrorBanner(state.error!),
+                    ),
+                  _buildPlantAutocomplete(notifier),
+                  const SizedBox(height: 8),
+                  _buildTankAutocomplete(notifier),
+                  const SizedBox(height: 8),
+                  AppDropdown<int?>(
+                    value: state.selectedStatus,
+                    items: const [null, 1, 0],
+                    itemLabel: (v) => v == null
+                        ? 'All Status'
+                        : (v == 1 ? 'Active' : 'Inactive'),
+                    hint: 'Select Status',
+                    onChanged: (v) => notifier.setStatus(v),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(),
-          ...state.groupedTanks.map((group) => _buildGroup(group, notifier)),
-          if (state.isLoading)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        _plantSearchController.clear();
+                        _tankSearchController.clear();
+                        notifier.clearFilters();
+                      },
+                      icon: const Icon(Icons.clear_all),
+                      label: const Text('Clear Filters'),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
+          const SliverToBoxAdapter(child: Divider()),
+          SliverPadding(
+            padding: const EdgeInsets.all(8.0),
+            sliver: _buildVirtualizedList(state, notifier),
+          ),
+          if (state.isLoading && state.groupedTanks.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Please wait loading new record',
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
       ),
+    );
+  }
+
+  Widget _buildVirtualizedList(TankState state, TankNotifier notifier) {
+    if (state.isLoading && state.groupedTanks.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              Text(
+                'Please wait loading new record',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (!state.isLoading && state.groupedTanks.isEmpty) {
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Center(
+            child: Text(
+              'No Record Found',
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SliverList.builder(
+      itemCount: state.groupedTanks.length,
+      itemBuilder: (context, index) {
+        return _buildGroup(state.groupedTanks[index], notifier);
+      },
     );
   }
 
@@ -176,6 +248,7 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
         title: Text(tank.tankNumber),
         subtitle: Text(
           '${tank.tankTypeName ?? ''} | ${tank.productName ?? ''} | ${tank.height ?? 0}/${tank.width ?? 0}/${tank.dishHeight ?? 0}',
+          style: const TextStyle(fontSize: 11),
         ),
         trailing: PopupMenuButton(
           itemBuilder: (context) => [
@@ -217,8 +290,9 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
         ],
       ),
     );
-    if (confirmed == true)
+    if (confirmed == true) {
       await ref.read(tankProvider.notifier).deleteTank(tank.tankId);
+    }
   }
 
   Widget _buildErrorBanner(String error) {
@@ -248,35 +322,33 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     );
   }
 
-  void _clearFilters() {
-    _plantSearchController.clear();
-    _tankSearchController.clear();
-    setState(() => _selectedStatus = null);
-    _onSearchChanged();
-  }
-
-  Widget _buildPlantAutocomplete() {
+  Widget _buildPlantAutocomplete(TankNotifier notifier) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return RawAutocomplete<PlantAutocompleteInfo>(
           textEditingController: _plantSearchController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty)
+            if (textEditingValue.text.isEmpty) {
               return const Iterable<PlantAutocompleteInfo>.empty();
-            return await ref
-                .read(tankProvider.notifier)
-                .searchPlants(textEditingValue.text);
+            }
+            return await notifier.searchPlants(textEditingValue.text);
           },
           displayStringForOption: (PlantAutocompleteInfo option) =>
               option.plantName,
-          onSelected: (option) => _onSearchChanged(),
+          onSelected: (option) {
+            notifier.setSearchPlant(option.plantName);
+            notifier.loadGroupedTanks();
+          },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,
               focusNode: focusNode,
               hint: 'Filter By Plant',
-              onSubmitted: (v) => _onSearchChanged(),
+              onSubmitted: (v) {
+                notifier.setSearchPlant(v);
+                notifier.loadGroupedTanks();
+              },
             );
           },
           optionsViewBuilder: (context, onSelected, options) {
@@ -284,8 +356,9 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
               alignment: Alignment.topLeft,
               child: Material(
                 elevation: 4.0,
-                child: SizedBox(
+                child: Container(
                   width: constraints.maxWidth,
+                  constraints: const BoxConstraints(maxHeight: 250),
                   child: ListView.builder(
                     padding: EdgeInsets.zero,
                     shrinkWrap: true,
@@ -307,27 +380,32 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     );
   }
 
-  Widget _buildTankAutocomplete() {
+  Widget _buildTankAutocomplete(TankNotifier notifier) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return RawAutocomplete<String>(
           textEditingController: _tankSearchController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty)
+            if (textEditingValue.text.isEmpty) {
               return const Iterable<String>.empty();
-            return await ref
-                .read(tankProvider.notifier)
-                .getTankNameSuggestions(textEditingValue.text);
+            }
+            return await notifier.getTankNameSuggestions(textEditingValue.text);
           },
           displayStringForOption: (String option) => option,
-          onSelected: (option) => _onSearchChanged(),
+          onSelected: (option) {
+            notifier.setSearchTank(option);
+            notifier.loadGroupedTanks();
+          },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,
               focusNode: focusNode,
               hint: 'Filter By Tank',
-              onSubmitted: (v) => _onSearchChanged(),
+              onSubmitted: (v) {
+                notifier.setSearchTank(v);
+                notifier.loadGroupedTanks();
+              },
             );
           },
           optionsViewBuilder: (context, onSelected, options) {
@@ -335,8 +413,9 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
               alignment: Alignment.topLeft,
               child: Material(
                 elevation: 4.0,
-                child: SizedBox(
+                child: Container(
                   width: constraints.maxWidth,
+                  constraints: const BoxConstraints(maxHeight: 250),
                   child: ListView.builder(
                     padding: EdgeInsets.zero,
                     shrinkWrap: true,

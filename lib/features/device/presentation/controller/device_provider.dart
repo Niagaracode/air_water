@@ -13,6 +13,11 @@ class DeviceState {
   final int page;
   final bool hasMore;
   final Set<String?> expandedGroups;
+  final String searchPlant;
+  final String searchDevice;
+  final int? selectedSiteId;
+  final int? selectedCompanyId;
+  final int totalEntries;
 
   DeviceState({
     required this.groupedDevices,
@@ -22,6 +27,11 @@ class DeviceState {
     this.page = 1,
     this.hasMore = false,
     required this.expandedGroups,
+    this.searchPlant = '',
+    this.searchDevice = '',
+    this.selectedSiteId,
+    this.selectedCompanyId,
+    this.totalEntries = 0,
   });
 
   DeviceState copyWith({
@@ -32,6 +42,11 @@ class DeviceState {
     int? page,
     bool? hasMore,
     Set<String?>? expandedGroups,
+    String? searchPlant,
+    String? searchDevice,
+    int? selectedSiteId,
+    int? selectedCompanyId,
+    int? totalEntries,
   }) {
     return DeviceState(
       groupedDevices: groupedDevices ?? this.groupedDevices,
@@ -41,6 +56,11 @@ class DeviceState {
       page: page ?? this.page,
       hasMore: hasMore ?? this.hasMore,
       expandedGroups: expandedGroups ?? this.expandedGroups,
+      searchPlant: searchPlant ?? this.searchPlant,
+      searchDevice: searchDevice ?? this.searchDevice,
+      selectedSiteId: selectedSiteId ?? this.selectedSiteId,
+      selectedCompanyId: selectedCompanyId ?? this.selectedCompanyId,
+      totalEntries: totalEntries ?? this.totalEntries,
     );
   }
 }
@@ -48,6 +68,9 @@ class DeviceState {
 class DeviceNotifier extends Notifier<DeviceState> {
   @override
   DeviceState build() {
+    ref.keepAlive();
+    // Initial load will be handled asynchronously
+    Future.microtask(() => loadGroupedDevices());
     return DeviceState(
       groupedDevices: [],
       isLoading: false,
@@ -55,23 +78,44 @@ class DeviceNotifier extends Notifier<DeviceState> {
     );
   }
 
-  Future<void> loadGroupedDevices({
-    String? deviceId,
-    String? plantName,
-    String? searchQuery,
-    int? siteId,
-    int? companyId,
-  }) async {
+  void setSearchPlant(String value) {
+    state = state.copyWith(searchPlant: value);
+  }
+
+  void setSearchDevice(String value) {
+    state = state.copyWith(searchDevice: value);
+  }
+
+  void setSite(int? value) {
+    state = state.copyWith(selectedSiteId: value);
+    loadGroupedDevices();
+  }
+
+  void setCompany(int? value) {
+    state = state.copyWith(selectedCompanyId: value);
+    loadGroupedDevices();
+  }
+
+  void clearFilters() {
+    state = state.copyWith(
+      searchPlant: '',
+      searchDevice: '',
+      selectedSiteId: null,
+      selectedCompanyId: null,
+    );
+    loadGroupedDevices();
+  }
+
+  Future<void> loadGroupedDevices() async {
     state = state.copyWith(isLoading: true, page: 1, groupedDevices: []);
     try {
       final repository = ref.read(deviceRepositoryProvider);
       final response = await repository.getDevicesGrouped(
         page: 1,
-        deviceId: deviceId,
-        plantName: plantName,
-        searchQuery: searchQuery,
-        siteId: siteId,
-        companyId: companyId,
+        plantName: state.searchPlant.isEmpty ? null : state.searchPlant,
+        deviceId: state.searchDevice.isEmpty ? null : state.searchDevice,
+        siteId: state.selectedSiteId,
+        companyId: state.selectedCompanyId,
       );
 
       final expandedGroups = <String?>{};
@@ -82,6 +126,7 @@ class DeviceNotifier extends Notifier<DeviceState> {
       state = state.copyWith(
         groupedDevices: response.data,
         isLoading: false,
+        totalEntries: response.pagination.total,
         hasMore: response.pagination.page < response.pagination.totalPages,
         expandedGroups: expandedGroups,
       );
@@ -90,13 +135,7 @@ class DeviceNotifier extends Notifier<DeviceState> {
     }
   }
 
-  Future<void> loadMore({
-    String? deviceId,
-    String? plantName,
-    String? searchQuery,
-    int? siteId,
-    int? companyId,
-  }) async {
+  Future<void> loadMore() async {
     if (state.isLoading || !state.hasMore) return;
 
     final nextPage = state.page + 1;
@@ -106,11 +145,10 @@ class DeviceNotifier extends Notifier<DeviceState> {
       final repository = ref.read(deviceRepositoryProvider);
       final response = await repository.getDevicesGrouped(
         page: nextPage,
-        deviceId: deviceId,
-        plantName: plantName,
-        searchQuery: searchQuery,
-        siteId: siteId,
-        companyId: companyId,
+        plantName: state.searchPlant.isEmpty ? null : state.searchPlant,
+        deviceId: state.searchDevice.isEmpty ? null : state.searchDevice,
+        siteId: state.selectedSiteId,
+        companyId: state.selectedCompanyId,
       );
 
       final updatedGroups = [...state.groupedDevices, ...response.data];
@@ -122,6 +160,7 @@ class DeviceNotifier extends Notifier<DeviceState> {
       state = state.copyWith(
         groupedDevices: updatedGroups,
         isLoading: false,
+        totalEntries: response.pagination.total,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
         expandedGroups: expandedGroups,

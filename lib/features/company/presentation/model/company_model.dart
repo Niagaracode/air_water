@@ -1,23 +1,23 @@
 class CompanyAddress {
-  final String addressLine1;
+  final String? addressLine1;
   final String? addressLine2;
   final String? addressLine3;
-  final String pincode;
-  final String country;
-  final String state;
-  final String city;
+  final String? pincode;
+  final String? country;
+  final String? state;
+  final String? city;
   final int status;
   final int? companyId;
   final String? createdAt;
 
   CompanyAddress({
-    required this.addressLine1,
+    this.addressLine1,
     this.addressLine2,
     this.addressLine3,
-    required this.pincode,
-    required this.country,
-    required this.state,
-    required this.city,
+    this.pincode,
+    this.country,
+    this.state,
+    this.city,
     required this.status,
     this.companyId,
     this.createdAt,
@@ -25,14 +25,14 @@ class CompanyAddress {
 
   factory CompanyAddress.fromJson(Map<String, dynamic> json) {
     return CompanyAddress(
-      addressLine1: json['address_line_1'] as String,
+      addressLine1: json['address_line_1'] as String?,
       addressLine2: json['address_line_2'] as String?,
       addressLine3: json['address_line_3'] as String?,
-      pincode: json['pincode'] as String,
-      country: json['country'] as String,
-      state: json['state'] as String,
-      city: json['city'] as String,
-      status: json['status'] as int,
+      pincode: json['pincode'] as String?,
+      country: json['country'] as String?,
+      state: json['state'] as String?,
+      city: json['city'] as String?,
+      status: (json['status'] as num?)?.toInt() ?? 1,
       companyId: json['company_id'] as int?,
       createdAt: json['created_at'] as String?,
     );
@@ -59,7 +59,7 @@ class CompanyAddress {
       city,
       state,
       country,
-    ].where((p) => p.isNotEmpty).toList();
+    ].where((p) => p != null && p.isNotEmpty).cast<String>().toList();
     return parts.join(', ');
   }
 

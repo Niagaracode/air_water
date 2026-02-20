@@ -6,20 +6,20 @@ class GroupApi {
 
   GroupApi(this._client);
 
-  Future<List<Group>> getGroups({
+  Future<GroupPaginatedResponse> getGroups({
     int? companyId,
     String? name,
     int? status,
+    int page = 1,
+    int limit = 50,
   }) async {
-    final Map<String, dynamic> query = {};
+    final Map<String, dynamic> query = {'page': page, 'limit': limit};
     if (companyId != null) query['company_id'] = companyId;
     if (name != null) query['name'] = name;
     if (status != null) query['status'] = status;
 
     final response = await _client.get('/groups', query: query);
-    return (response.data['data'] as List)
-        .map((i) => Group.fromJson(i as Map<String, dynamic>))
-        .toList();
+    return GroupPaginatedResponse.fromJson(response.data);
   }
 
   Future<Group> getGroupById(int id) async {
@@ -59,5 +59,21 @@ class GroupApi {
 
   Future<void> assignGroupsToUser(int userId, List<int> groupIds) async {
     await _client.post('/groups/user/$userId', data: {'group_ids': groupIds});
+  }
+
+  Future<void> removeUserFromGroup(int groupId, int userId) async {
+    await _client.delete('/groups/$groupId/users/$userId');
+  }
+
+  Future<List<PlantUserCount>> getPlantsWithUserCounts({String? name}) async {
+    final Map<String, dynamic> query = {};
+    if (name != null) query['name'] = name;
+    final response = await _client.get(
+      '/groups/plants/user-counts',
+      query: query,
+    );
+    return (response.data['data'] as List)
+        .map((i) => PlantUserCount.fromJson(i as Map<String, dynamic>))
+        .toList();
   }
 }

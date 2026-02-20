@@ -16,6 +16,15 @@ class UserState {
   final int page;
   final bool hasMore;
   final User? currentUser;
+  final String searchQuery;
+  final String? username;
+  final String? email;
+  final int? roleId;
+  final int? companyId;
+  final int? status;
+  final int? plantId;
+  final int? tankId;
+  final int totalEntries;
 
   UserState({
     required this.users,
@@ -25,6 +34,15 @@ class UserState {
     this.page = 1,
     this.hasMore = false,
     this.currentUser,
+    this.searchQuery = '',
+    this.username,
+    this.email,
+    this.roleId,
+    this.companyId,
+    this.status,
+    this.plantId,
+    this.tankId,
+    this.totalEntries = 0,
   });
 
   UserState copyWith({
@@ -35,6 +53,15 @@ class UserState {
     int? page,
     bool? hasMore,
     User? currentUser,
+    String? searchQuery,
+    String? username,
+    String? email,
+    int? roleId,
+    int? companyId,
+    int? status,
+    int? plantId,
+    int? tankId,
+    int? totalEntries,
   }) {
     return UserState(
       users: users ?? this.users,
@@ -44,6 +71,15 @@ class UserState {
       page: page ?? this.page,
       hasMore: hasMore ?? this.hasMore,
       currentUser: currentUser ?? this.currentUser,
+      searchQuery: searchQuery ?? this.searchQuery,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      roleId: roleId ?? this.roleId,
+      companyId: companyId ?? this.companyId,
+      status: status ?? this.status,
+      plantId: plantId ?? this.plantId,
+      tankId: tankId ?? this.tankId,
+      totalEntries: totalEntries ?? this.totalEntries,
     );
   }
 }
@@ -51,8 +87,12 @@ class UserState {
 class UserNotifier extends Notifier<UserState> {
   @override
   UserState build() {
-    // Load current user when the provider is initialized
-    _loadCurrentUser();
+    ref.keepAlive();
+    // Load current user and initial list
+    Future.microtask(() async {
+      await _loadCurrentUser();
+      await loadUsers();
+    });
     return UserState(users: [], isLoading: false);
   }
 
@@ -62,34 +102,45 @@ class UserNotifier extends Notifier<UserState> {
       final currentUser = await repository.getCurrentUser();
       state = state.copyWith(currentUser: currentUser);
     } catch (e) {
-      // If we can't load current user, continue anyway
       debugPrint('Could not load current user: $e');
     }
   }
 
-  Future<void> loadUsers({
-    String? searchQuery,
-    String? username,
-    String? email,
-    int? roleId,
-    int? companyId,
-    int? status,
-    int? plantId,
-    int? tankId,
-  }) async {
+  void setSearchQuery(String q) => state = state.copyWith(searchQuery: q);
+  void setRoleId(int? id) => state = state.copyWith(roleId: id);
+  void setStatus(int? s) => state = state.copyWith(status: s);
+  void setPlantId(int? id) => state = state.copyWith(plantId: id);
+  void setTankId(int? id) => state = state.copyWith(tankId: id);
+  void setCompanyId(int? id) => state = state.copyWith(companyId: id);
+
+  void clearFilters() {
+    state = state.copyWith(
+      searchQuery: '',
+      username: null,
+      email: null,
+      roleId: null,
+      companyId: null,
+      status: null,
+      plantId: null,
+      tankId: null,
+    );
+    loadUsers();
+  }
+
+  Future<void> loadUsers() async {
     state = state.copyWith(isLoading: true, page: 1, users: []);
     try {
       final repository = ref.read(userRepositoryProvider);
       final response = await repository.searchUsers(
         page: 1,
-        q: searchQuery,
-        username: username,
-        email: email,
-        roleId: roleId,
-        companyId: companyId,
-        status: status,
-        plantId: plantId,
-        tankId: tankId,
+        q: state.searchQuery,
+        username: state.username,
+        email: state.email,
+        roleId: state.roleId,
+        companyId: state.companyId,
+        status: state.status,
+        plantId: state.plantId,
+        tankId: state.tankId,
       );
 
       // Filter out the current logged-in user
@@ -102,6 +153,7 @@ class UserNotifier extends Notifier<UserState> {
       state = state.copyWith(
         users: filteredUsers,
         isLoading: false,
+        totalEntries: response.pagination.total,
         hasMore: response.pagination.page < response.pagination.totalPages,
       );
     } catch (e) {
@@ -109,16 +161,7 @@ class UserNotifier extends Notifier<UserState> {
     }
   }
 
-  Future<void> loadMore({
-    String? searchQuery,
-    String? username,
-    String? email,
-    int? roleId,
-    int? companyId,
-    int? status,
-    int? plantId,
-    int? tankId,
-  }) async {
+  Future<void> loadMore() async {
     if (state.isLoading || !state.hasMore) return;
 
     final nextPage = state.page + 1;
@@ -128,27 +171,24 @@ class UserNotifier extends Notifier<UserState> {
       final repository = ref.read(userRepositoryProvider);
       final response = await repository.searchUsers(
         page: nextPage,
-        q: searchQuery,
-        username: username,
-        email: email,
-        roleId: roleId,
-        companyId: companyId,
-        status: status,
-        plantId: plantId,
-        tankId: tankId,
+        q: state.searchQuery,
+        username: state.username,
+        email: state.email,
+        roleId: state.roleId,
+        companyId: state.companyId,
+        status: state.status,
+        plantId: state.plantId,
+        tankId: state.tankId,
       );
 
-      // Filter out the current logged-in user
       final filteredNewUsers = state.currentUser != null
           ? response.data
                 .where((user) => user.userId != state.currentUser!.userId)
                 .toList()
           : response.data;
 
-      final updatedUsers = [...state.users, ...filteredNewUsers];
-
       state = state.copyWith(
-        users: updatedUsers,
+        users: [...state.users, ...filteredNewUsers],
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
@@ -229,7 +269,7 @@ class UserNotifier extends Notifier<UserState> {
 
   Future<TankGroupedResponse?> getTanksGrouped({
     int page = 1,
-    int limit = 500, // Load many for selection
+    int limit = 500,
     String? plantName,
     String? tankName,
     int? status,

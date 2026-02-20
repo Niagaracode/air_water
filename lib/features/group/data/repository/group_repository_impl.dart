@@ -8,8 +8,20 @@ class GroupRepositoryImpl implements GroupRepository {
   GroupRepositoryImpl(this._api);
 
   @override
-  Future<List<Group>> getGroups({int? companyId, String? name, int? status}) {
-    return _api.getGroups(companyId: companyId, name: name, status: status);
+  Future<GroupPaginatedResponse> getGroups({
+    int? companyId,
+    String? name,
+    int? status,
+    int page = 1,
+    int limit = 50,
+  }) {
+    return _api.getGroups(
+      companyId: companyId,
+      name: name,
+      status: status,
+      page: page,
+      limit: limit,
+    );
   }
 
   @override
@@ -50,5 +62,15 @@ class GroupRepositoryImpl implements GroupRepository {
   @override
   Future<void> assignGroupsToUser(int userId, List<int> groupIds) {
     return _api.assignGroupsToUser(userId, groupIds);
+  }
+
+  @override
+  Future<void> removeUserFromGroup(int groupId, int userId) {
+    return _api.removeUserFromGroup(groupId, userId);
+  }
+
+  @override
+  Future<List<PlantUserCount>> getPlantsWithUserCounts({String? name}) {
+    return _api.getPlantsWithUserCounts(name: name);
   }
 }
