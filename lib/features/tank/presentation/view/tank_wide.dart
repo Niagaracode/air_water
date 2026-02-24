@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 import '../controller/tank_provider.dart';
 import '../widgets/add_tank_modal.dart';
 import '../model/tank_model.dart';
@@ -130,7 +131,14 @@ class _TankWideState extends ConsumerState<TankWide> {
               ElevatedButton.icon(
                 onPressed: () => _showAddDialog(),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('ADD TANK'),
+                label: Text(
+                  'ADD TANK',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ],
           ),
@@ -185,20 +193,12 @@ class _TankWideState extends ConsumerState<TankWide> {
           ),
         ),
         const SizedBox(width: 16),
-        TextButton(
+        AppClearButton(
           onPressed: () {
             _plantSearchController.clear();
             _tankSearchController.clear();
             notifier.clearFilters();
           },
-          child: Text(
-            'CLEAR',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF6B7280),
-            ),
-          ),
         ),
       ],
     );
@@ -357,7 +357,14 @@ class _TankWideState extends ConsumerState<TankWide> {
           SliverToBoxAdapter(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(color: Color(0xFF141E7A)),
+              decoration: const BoxDecoration(
+                color: Color(0xFF141E7A),
+                border: Border(
+                  top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                  left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                  right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                ),
+              ),
               child: Row(
                 children: [
                   AppTableHeaderCell('SI.NO', width: 60),
@@ -402,11 +409,11 @@ class _TankWideState extends ConsumerState<TankWide> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: const BoxDecoration(
-            color: Color(0xFFEEF2FF),
+            color: Color(0xFFEFF6FF),
             border: Border(
-              left: BorderSide(color: Color(0xFFE5E7EB)),
-              right: BorderSide(color: Color(0xFFE5E7EB)),
-              bottom: BorderSide(color: Color(0xFFE5E7EB)),
+              left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+              right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+              bottom: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
             ),
           ),
           child: Row(
@@ -460,8 +467,8 @@ class _TankWideState extends ConsumerState<TankWide> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          left: BorderSide(color: Color(0xFFE5E7EB)),
-          right: BorderSide(color: Color(0xFFE5E7EB)),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
           bottom: BorderSide(color: Color(0xFFF3F4F6)),
         ),
       ),

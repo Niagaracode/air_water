@@ -141,6 +141,76 @@ class AppStatusBadge extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// AppRoleBadge  — pill with role-specific colors
+// ─────────────────────────────────────────────────────────────────────────────
+class AppRoleBadge extends StatelessWidget {
+  final String? roleName;
+
+  const AppRoleBadge({super.key, required this.roleName});
+
+  @override
+  Widget build(BuildContext context) {
+    if (roleName == null || roleName!.isEmpty) return const AppTableCell('—');
+
+    final name = roleName!.trim();
+    final upperName = name.toUpperCase().replaceAll('_', ' ');
+
+    Color bg;
+    Color border;
+    Color text;
+
+    if (upperName.contains('SUPER ADMIN')) {
+      bg = const Color(0xFFF5F3FF);
+      border = const Color(0xFFDDD6FE);
+      text = const Color(0xFF7C3AED);
+    } else if (upperName.contains('COMPANY ADMIN')) {
+      bg = const Color(0xFFEFF6FF);
+      border = const Color(0xFFDBEAFE);
+      text = const Color(0xFF2563EB);
+    } else if (upperName.contains('DISTRIBUTOR')) {
+      bg = const Color(0xFFFFF1F2);
+      border = const Color(0xFFFFE4E6);
+      text = const Color(0xFFE11D48);
+    } else if (upperName.contains('SUPERVISOR')) {
+      bg = const Color(0xFFEEF2FF);
+      border = const Color(0xFFE0E7FF);
+      text = const Color(0xFF4F46E5);
+    } else if (upperName.contains('TECHNICIAN') ||
+        upperName.contains('TECHNICAL')) {
+      bg = const Color(0xFFFFFBEB);
+      border = const Color(0xFFFEF3C7);
+      text = const Color(0xFFD97706);
+    } else if (upperName.contains('CUSTOMER')) {
+      bg = const Color(0xFFF0F9FF);
+      border = const Color(0xFFE0F2FE);
+      text = const Color(0xFF0369A1);
+    } else {
+      bg = const Color(0xFFF8FAFC);
+      border = const Color(0xFFE2E8F0);
+      text = const Color(0xFF475569);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border),
+      ),
+      child: Text(
+        name,
+        style: GoogleFonts.outfit(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: text,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // AppTableActionButton  — boxed 30×30 icon button
 // ─────────────────────────────────────────────────────────────────────────────
 class AppTableActionButton extends StatelessWidget {
@@ -262,9 +332,9 @@ class AppTableBottomCap extends StatelessWidget {
           bottomRight: Radius.circular(16),
         ),
         border: Border(
-          left: BorderSide(color: Color(0xFFE5E7EB)),
-          right: BorderSide(color: Color(0xFFE5E7EB)),
-          bottom: BorderSide(color: Color(0xFFE5E7EB)),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          bottom: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
         ),
       ),
     );
@@ -400,6 +470,11 @@ class AppTable extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Color(0xFF141E7A),
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
       ),
       child: Row(
         children: headers

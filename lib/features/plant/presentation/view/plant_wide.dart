@@ -8,6 +8,7 @@ import 'package:air_water/shared/widgets/app_table.dart';
 import '../controller/plant_provider.dart';
 import '../widgets/add_plant_modal.dart';
 import '../model/plant_model.dart';
+import 'package:air_water/shared/widgets/app_clear_button.dart';
 
 class PlantWide extends ConsumerStatefulWidget {
   const PlantWide({super.key});
@@ -235,6 +236,13 @@ class _PlantWideState extends ConsumerState<PlantWide> {
             },
           ),
         ),
+        const SizedBox(width: 16),
+        AppClearButton(
+          onPressed: () {
+            _plantSearchController.clear();
+            notifier.clearFilters();
+          },
+        ),
         const SizedBox(width: 32),
         ElevatedButton.icon(
           onPressed: () {
@@ -260,7 +268,14 @@ class _PlantWideState extends ConsumerState<PlantWide> {
             );
           },
           icon: const Icon(Icons.add, size: 18),
-          label: const Text('ADD'),
+          label: Text(
+            'ADD PLANT',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
       ],
     );
@@ -314,8 +329,9 @@ class _PlantWideState extends ConsumerState<PlantWide> {
             decoration: const BoxDecoration(
               color: Color(0xFF141E7A),
               border: Border(
-                left: BorderSide(color: Color(0xFF141E7A)),
-                right: BorderSide(color: Color(0xFF141E7A)),
+                top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
               ),
             ),
             child: Row(
@@ -344,10 +360,10 @@ class _PlantWideState extends ConsumerState<PlantWide> {
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border(
-              left: const BorderSide(color: Color(0xFFE5E7EB)),
-              right: const BorderSide(color: Color(0xFFE5E7EB)),
+              left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+              right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
               bottom: isLast
-                  ? const BorderSide(color: Color(0xFFE5E7EB))
+                  ? const BorderSide(color: Color(0xFFD1D5DB), width: 1.5)
                   : BorderSide.none,
             ),
             borderRadius: isLast
@@ -386,8 +402,12 @@ class _PlantWideState extends ConsumerState<PlantWide> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           decoration: const BoxDecoration(
-            color: Color(0xFFEEF2FF),
-            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+            color: Color(0xFFEFF6FF),
+            border: Border(
+              left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+              right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+              bottom: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+            ),
           ),
           child: Row(
             children: [

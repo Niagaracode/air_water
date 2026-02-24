@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../shared/widgets/app_table.dart';
+import '../../../../../shared/widgets/app_clear_button.dart';
 import '../controller/user_provider.dart';
 import '../model/user_model.dart';
 import '../widgets/add_user_modal.dart';
@@ -134,7 +135,14 @@ class _UserWideState extends ConsumerState<UserWide> {
               ElevatedButton.icon(
                 onPressed: () => _showAddModal(),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('ADD USER'),
+                label: Text(
+                  'ADD USER',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ],
           ),
@@ -215,20 +223,12 @@ class _UserWideState extends ConsumerState<UserWide> {
           ),
         ),
         const SizedBox(width: 16),
-        TextButton(
+        AppClearButton(
           onPressed: () {
             _searchController.clear();
             _companySearchController.clear();
             notifier.clearFilters();
           },
-          child: Text(
-            'CLEAR',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF6B7280),
-            ),
-          ),
         ),
       ],
     );
@@ -252,7 +252,14 @@ class _UserWideState extends ConsumerState<UserWide> {
           SliverToBoxAdapter(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(color: Color(0xFF141E7A)),
+              decoration: const BoxDecoration(
+                color: Color(0xFF141E7A),
+                border: Border(
+                  top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                  left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                  right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                ),
+              ),
               child: Row(
                 children: [
                   AppTableHeaderCell('SI.NO', width: 70),
@@ -302,8 +309,8 @@ class _UserWideState extends ConsumerState<UserWide> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          left: BorderSide(color: Color(0xFFE5E7EB)),
-          right: BorderSide(color: Color(0xFFE5E7EB)),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
           bottom: BorderSide(color: Color(0xFFF3F4F6)),
         ),
       ),
@@ -315,7 +322,13 @@ class _UserWideState extends ConsumerState<UserWide> {
           AppTableCell(user.companyName ?? '—', flex: 2),
           AppTableCell(user.mobileNumber ?? '—', flex: 2),
           AppTableCell(user.email ?? '—', flex: 2),
-          AppTableCell(user.roleName ?? '—', flex: 2),
+          Expanded(
+            flex: 2,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: AppRoleBadge(roleName: user.roleName),
+            ),
+          ),
           Expanded(
             flex: 1,
             child: Align(

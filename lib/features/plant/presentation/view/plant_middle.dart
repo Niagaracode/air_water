@@ -7,6 +7,7 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../controller/plant_provider.dart';
 import '../widgets/add_plant_modal.dart';
 import '../model/plant_model.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 
 class PlantMiddle extends ConsumerStatefulWidget {
   const PlantMiddle({super.key});
@@ -397,6 +398,12 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
               }
             },
           ),
+        ),
+        AppClearButton(
+          onPressed: () {
+            _plantSearchController.clear();
+            notifier.clearFilters();
+          },
         ),
         ElevatedButton.icon(
           onPressed: () {

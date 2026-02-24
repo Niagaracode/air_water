@@ -9,6 +9,7 @@ import '../controller/company_provider.dart';
 import '../widgets/add_company_modal.dart';
 import '../model/company_model.dart';
 import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 
 class CompanyWide extends ConsumerStatefulWidget {
   const CompanyWide({super.key});
@@ -225,6 +226,13 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
             },
           ),
         ),
+        const SizedBox(width: 16),
+        AppClearButton(
+          onPressed: () {
+            _searchController.clear();
+            notifier.clearFilters();
+          },
+        ),
         const SizedBox(width: 32),
         ElevatedButton.icon(
           onPressed: () {
@@ -250,7 +258,14 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
             );
           },
           icon: const Icon(Icons.add, size: 18),
-          label: const Text('ADD'),
+          label: Text(
+            'ADD COMPANY',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              letterSpacing: 0.5,
+            ),
+          ),
         ),
       ],
     );
@@ -276,8 +291,9 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
             decoration: const BoxDecoration(
               color: Color(0xFF141E7A),
               border: Border(
-                left: BorderSide(color: Color(0xFF141E7A)),
-                right: BorderSide(color: Color(0xFF141E7A)),
+                top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
               ),
             ),
             child: Row(
@@ -304,10 +320,10 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border(
-              left: BorderSide(color: Colors.grey.shade200),
-              right: BorderSide(color: Colors.grey.shade200),
+              left: BorderSide(color: const Color(0xFFD1D5DB), width: 1.5),
+              right: BorderSide(color: const Color(0xFFD1D5DB), width: 1.5),
               bottom: isLast
-                  ? BorderSide(color: Colors.grey.shade200)
+                  ? const BorderSide(color: Color(0xFFD1D5DB), width: 1.5)
                   : BorderSide.none,
             ),
             borderRadius: isLast
@@ -344,7 +360,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           decoration: const BoxDecoration(
-            color: Color(0xFFEEF2FF),
+            color: Color(0xFFEFF6FF),
             border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
           ),
           child: Row(

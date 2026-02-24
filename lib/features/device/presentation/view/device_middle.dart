@@ -4,6 +4,7 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../controller/device_provider.dart';
 import '../model/device_model.dart';
 import '../widgets/add_device_modal.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 
 class DeviceMiddle extends ConsumerStatefulWidget {
   const DeviceMiddle({super.key});
@@ -149,12 +150,11 @@ class _DeviceMiddleState extends ConsumerState<DeviceMiddle> {
               ),
             ),
             const SizedBox(width: 8),
-            TextButton(
+            AppClearButton(
               onPressed: () {
                 _searchController.clear();
                 notifier.clearFilters();
               },
-              child: const Text('CLEAR'),
             ),
           ],
         ),

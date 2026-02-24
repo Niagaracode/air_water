@@ -8,6 +8,7 @@ import '../widgets/add_company_modal.dart';
 import '../model/company_model.dart';
 import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 
 class CompanyMiddle extends ConsumerStatefulWidget {
   const CompanyMiddle({super.key});
@@ -253,6 +254,12 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
               }
             },
           ),
+        ),
+        AppClearButton(
+          onPressed: () {
+            _searchController.clear();
+            notifier.clearFilters();
+          },
         ),
         ElevatedButton.icon(
           onPressed: () {

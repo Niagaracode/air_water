@@ -348,27 +348,29 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                         ),
                         child: Row(
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'ENTITY STATUS',
-                                  style: GoogleFonts.outfit(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                    color: const Color(0xFF141E7A),
-                                    letterSpacing: 1.1,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'ENTITY STATUS',
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                      color: const Color(0xFF141E7A),
+                                      letterSpacing: 1.1,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Set the visibility and active status of this entity.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: const Color(0xFF6B7280),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Set the visibility and active status of this entity.',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: const Color(0xFF6B7280),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                             const Spacer(),
                             _buildStatusToggle(

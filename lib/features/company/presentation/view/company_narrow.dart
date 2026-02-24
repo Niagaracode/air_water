@@ -8,6 +8,7 @@ import '../widgets/add_company_modal.dart';
 import '../model/company_model.dart';
 import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_loader.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 
 class CompanyNarrow extends ConsumerStatefulWidget {
   const CompanyNarrow({super.key});
@@ -203,6 +204,21 @@ class _CompanyNarrowState extends ConsumerState<CompanyNarrow> {
                 },
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: AppClearButton(
+                onPressed: () {
+                  _searchController.clear();
+                  companyNotifier.clearFilters();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Expanded(child: SizedBox()),
           ],
         ),
         const SizedBox(height: 16),

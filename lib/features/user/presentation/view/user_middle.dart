@@ -4,6 +4,7 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../controller/user_provider.dart';
 import '../model/user_model.dart';
 import '../widgets/add_user_modal.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 
 class UserMiddle extends ConsumerStatefulWidget {
   const UserMiddle({super.key});
@@ -150,12 +151,11 @@ class _UserMiddleState extends ConsumerState<UserMiddle> {
           ),
         ),
         const SizedBox(width: 8),
-        TextButton(
+        AppClearButton(
           onPressed: () {
             _searchController.clear();
             notifier.clearFilters();
           },
-          child: const Text('CLEAR'),
         ),
       ],
     );

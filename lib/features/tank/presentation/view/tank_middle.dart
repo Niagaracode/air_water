@@ -7,6 +7,7 @@ import '../widgets/add_tank_modal.dart';
 import '../model/tank_model.dart';
 import '../../../plant/presentation/model/plant_model.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 import 'dart:async';
 
 class TankMiddle extends ConsumerStatefulWidget {
@@ -132,13 +133,12 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
           children: [
             Expanded(child: _buildTankAutocomplete(notifier)),
             const SizedBox(width: 8),
-            TextButton(
+            AppClearButton(
               onPressed: () {
                 _plantSearchController.clear();
                 _tankSearchController.clear();
                 notifier.clearFilters();
               },
-              child: const Text('CLEAR'),
             ),
           ],
         ),

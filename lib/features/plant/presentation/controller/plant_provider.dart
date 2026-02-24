@@ -160,6 +160,11 @@ class PlantNotifier extends Notifier<PlantState> {
     // Explicit trigger required from UI
   }
 
+  void clearFilters() {
+    state = state.copyWith(searchName: '', clearStatus: true, clearDate: true);
+    loadGroupedPlants(isReload: true);
+  }
+
   Future<List<PlantAutocompleteInfo>> searchPlants(String query) async {
     try {
       final repository = ref.read(plantRepositoryProvider);

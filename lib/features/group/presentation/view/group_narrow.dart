@@ -5,6 +5,7 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/group_provider.dart';
 import '../model/group_model.dart';
 import '../widgets/add_group_modal.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 import 'group_detail.dart';
 
 class GroupNarrow extends ConsumerStatefulWidget {
@@ -134,12 +135,11 @@ class _GroupNarrowState extends ConsumerState<GroupNarrow> {
           ),
         ),
         const SizedBox(width: 8),
-        TextButton(
+        AppClearButton(
           onPressed: () {
             _searchController.clear();
             notifier.clearFilters();
           },
-          child: const Text('CLEAR', style: TextStyle(fontSize: 12)),
         ),
       ],
     );

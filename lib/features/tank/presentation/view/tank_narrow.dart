@@ -4,6 +4,7 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../core/app_theme/app_theme.dart';
 import '../controller/tank_provider.dart';
 import '../widgets/add_tank_modal.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 import '../model/tank_model.dart';
 import '../../../plant/presentation/model/plant_model.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
@@ -98,17 +99,13 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
                     onChanged: (v) => notifier.setStatus(v),
                   ),
                   const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        _plantSearchController.clear();
-                        _tankSearchController.clear();
-                        notifier.clearFilters();
-                      },
-                      icon: const Icon(Icons.clear_all),
-                      label: const Text('Clear Filters'),
-                    ),
+                  AppClearButton(
+                    onPressed: () {
+                      _plantSearchController.clear();
+                      _tankSearchController.clear();
+                      notifier.clearFilters();
+                    },
+                    label: 'CLEAR FILTERS',
                   ),
                 ],
               ),

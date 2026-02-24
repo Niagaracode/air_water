@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/app_theme/app_theme.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/PlantTankDropdownSelector.dart';
 import '../../../user/presentation/model/user_model.dart';
@@ -204,9 +205,22 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(28),
               child: Row(
                 children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.group_add_rounded,
+                      color: const Color(0xFF475569),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,22 +229,28 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                           widget.group == null
                               ? 'CREATE ACCESS GROUP'
                               : 'EDIT ACCESS GROUP',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                          style: GoogleFonts.outfit(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                            color: const Color(0xFF111827),
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Assign a role and select users for this access group.',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        Text(
+                          'Configure role permissions and user assignments for this group.',
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF4B5563),
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close, color: Color(0xFF9CA3AF)),
+                    hoverColor: const Color(0xFFF3F4F6),
                   ),
                 ],
               ),
@@ -244,45 +264,43 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'SELECT ROLE (GROUP NAME)',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.admin_panel_settings_rounded,
+                            size: 18,
+                            color: const Color(0xFF475569),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'SELECT ROLE (GROUP NAME)',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: const Color(0xFF334155),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 8),
                     _isLoadingRoles
                         ? const Center(child: CircularProgressIndicator())
-                        : DropdownButtonFormField<int>(
+                        : AppDropdown<int>(
                             value: _selectedRoleId,
-                            decoration: InputDecoration(
-                              hintText: 'Select a role',
-                              filled: true,
-                              fillColor: Colors.grey.shade50,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
-                                ),
-                              ),
-                            ),
-                            items: _roles.map((role) {
-                              return DropdownMenuItem(
-                                value: role.id,
-                                child: Text(role.name),
-                              );
-                            }).toList(),
+                            hint: 'Select a role',
+                            items: _roles.map((r) => r.id).toList(),
+                            itemLabel: (id) =>
+                                _roles.firstWhere((r) => r.id == id).name,
                             onChanged: (val) {
                               if (val != null) {
                                 setState(() {
@@ -295,17 +313,44 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                           ),
                     const SizedBox(height: 24),
 
-                    const Text(
-                      'PLANT & TANK ACCESS',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.factory_rounded,
+                            size: 18,
+                            color: const Color(0xFF475569),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'PLANT & TANK ACCESS',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: const Color(0xFF334155),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'First select the plants these users will have access to.',
-                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Text(
+                        'First select the plants these users will have access to.',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF6B7280),
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     PlantTankDropdownSelector(
@@ -320,35 +365,61 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                     const SizedBox(height: 24),
 
                     if (_selectedRoleId != null) ...[
-                      Row(
-                        children: [
-                          const Text(
-                            'ASSIGN USERS',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.person_add_rounded,
+                              size: 18,
+                              color: const Color(0xFF475569),
                             ),
-                          ),
-                          const Spacer(),
-                          if (_isLoadingUsers)
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                            const SizedBox(width: 8),
+                            Text(
+                              'ASSIGN USERS',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: const Color(0xFF334155),
+                              ),
                             ),
-                        ],
+                            const Spacer(),
+                            if (_isLoadingUsers)
+                              const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: const Color(0xFF475569),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Container(
                         height: 200,
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade200),
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.grey.shade50.withOpacity(0.5),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          borderRadius: BorderRadius.circular(12),
+                          color: const Color(0xFFF9FAFB),
                         ),
                         child: _roleUsers.isEmpty && !_isLoadingUsers
-                            ? const Center(
-                                child: Text('No users found for this role'),
+                            ? Center(
+                                child: Text(
+                                  'No users found for this role',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF9CA3AF),
+                                    fontSize: 13,
+                                  ),
+                                ),
                               )
                             : ListView.builder(
                                 itemCount: _roleUsers.length,
@@ -358,10 +429,20 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                                     user.userId,
                                   );
                                   return CheckboxListTile(
-                                    title: Text(user.fullName),
+                                    title: Text(
+                                      user.fullName,
+                                      style: GoogleFonts.inter(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        color: const Color(0xFF1F2937),
+                                      ),
+                                    ),
                                     subtitle: Text(
                                       user.username,
-                                      style: const TextStyle(fontSize: 12),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: const Color(0xFF4B5563),
+                                      ),
                                     ),
                                     value: isSelected,
                                     dense: true,
@@ -374,7 +455,11 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                                         }
                                       });
                                     },
-                                    activeColor: primary,
+                                    activeColor: const Color(0xFF475569),
+                                    checkColor: Colors.white,
+                                    checkboxShape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
                                   );
                                 },
                               ),
@@ -382,11 +467,32 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                       const SizedBox(height: 24),
                     ],
 
-                    const Text(
-                      'DESCRIPTION',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.description_rounded,
+                            size: 18,
+                            color: const Color(0xFF475569),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'DESCRIPTION',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: const Color(0xFF334155),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -410,20 +516,36 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('CANCEL'),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 16,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'CANCEL',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   ElevatedButton(
                     onPressed: state.isProcessing ? null : _save,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primary,
+                      backgroundColor: const Color(0xFF141E7A),
                       foregroundColor: Colors.white,
+                      elevation: 0,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
                         vertical: 16,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     child: state.isProcessing
@@ -437,6 +559,10 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                           )
                         : Text(
                             widget.group == null ? 'CREATE' : 'SAVE CHANGES',
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
                           ),
                   ),
                 ],

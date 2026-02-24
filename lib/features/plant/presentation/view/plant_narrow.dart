@@ -7,6 +7,7 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../controller/plant_provider.dart';
 import '../widgets/add_plant_modal.dart';
 import '../model/plant_model.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 
 class PlantNarrow extends ConsumerStatefulWidget {
   const PlantNarrow({super.key});
@@ -198,6 +199,21 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
                 },
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: AppClearButton(
+                onPressed: () {
+                  _plantSearchController.clear();
+                  plantNotifier.clearFilters();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Expanded(child: SizedBox()),
           ],
         ),
         const SizedBox(height: 16),

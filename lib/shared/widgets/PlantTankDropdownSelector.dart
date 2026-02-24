@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:air_water/features/user/presentation/model/user_model.dart';
 import 'package:air_water/features/tank/presentation/model/tank_model.dart';
 import 'package:air_water/features/tank/presentation/controller/tank_provider.dart';
@@ -55,9 +56,12 @@ class _PlantTankDropdownSelectorState extends State<PlantTankDropdownSelector> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_assignments.isEmpty)
-          const Text(
+          Text(
             'No plants or tanks assigned',
-            style: TextStyle(color: Colors.grey, fontSize: 13),
+            style: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 13,
+            ),
           )
         else
           Wrap(
@@ -67,7 +71,11 @@ class _PlantTankDropdownSelectorState extends State<PlantTankDropdownSelector> {
               return Chip(
                 label: Text(
                   assignment.displayText,
-                  style: const TextStyle(fontSize: 12),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF374151),
+                  ),
                 ),
                 backgroundColor: const Color(0xFFF5F6FA),
                 deleteIcon: const Icon(Icons.close, size: 16),
@@ -84,7 +92,10 @@ class _PlantTankDropdownSelectorState extends State<PlantTankDropdownSelector> {
         TextButton.icon(
           onPressed: _showSelectorDialog,
           icon: const Icon(Icons.add, size: 20),
-          label: const Text('Add Plant & Tanks Access'),
+          label: Text(
+            'Add Plant & Tanks Access',
+            style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           style: TextButton.styleFrom(
             foregroundColor: const Color(0xFF1B1B4B),
             padding: EdgeInsets.zero,
@@ -253,7 +264,7 @@ class _PlantTankSelectorDialogState
       child: Container(
         width: 600,
         constraints: const BoxConstraints(maxHeight: 700),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : Column(
@@ -262,29 +273,49 @@ class _PlantTankSelectorDialogState
                   // Header
                   Row(
                     children: [
-                      const Expanded(
-                        child: Text(
-                          'Select Plants & Tanks',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.factory_rounded,
+                          color: Color(0xFF475569),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Select Plants & Tanks',
+                              style: GoogleFonts.outfit(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                                color: const Color(0xFF111827),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Select plants and their tanks that this user can access',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF4B5563),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+                        icon: const Icon(Icons.close, color: Color(0xFF9CA3AF)),
+                        hoverColor: const Color(0xFFF3F4F6),
                       ),
                     ],
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    'Select plants and their tanks that this user can access',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
 
                   const SizedBox(height: 16),
@@ -332,16 +363,45 @@ class _PlantTankSelectorDialogState
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'CANCEL',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF6B7280),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       ElevatedButton(
                         onPressed: _save,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1B1B4B),
+                          backgroundColor: const Color(0xFF141E7A),
                           foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
-                        child: const Text('Save'),
+                        child: Text(
+                          'SAVE',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -354,20 +414,35 @@ class _PlantTankSelectorDialogState
   Widget _buildPlantCard(int plantId, PlantSelection selection) {
     final hasSelection = selection.selectedTankIds.isNotEmpty;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+          collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: const Color(0xFFF8FAFC),
           leading: Icon(
-            Icons.factory,
-            color: hasSelection ? const Color(0xFF1B1B4B) : Colors.grey,
+            Icons.factory_rounded,
+            color: hasSelection
+                ? const Color(0xFF475569)
+                : const Color(0xFF9CA3AF),
           ),
           title: Text(
             selection.plantName,
-            style: TextStyle(
-              fontWeight: hasSelection ? FontWeight.w600 : FontWeight.normal,
-              fontSize: 14,
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              color: const Color(0xFF111827),
             ),
           ),
           subtitle: Text(
@@ -375,8 +450,11 @@ class _PlantTankSelectorDialogState
                 ? 'All tanks selected'
                 : selection.selectedTankIds.isEmpty
                 ? 'No tanks selected'
-                : '${selection.selectedTankIds.length} of ${selection.availableTankIds.length} tanks',
-            style: const TextStyle(fontSize: 12),
+                : '${selection.selectedTankIds.length} of ${selection.availableTankIds.length} tanks connected',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: const Color(0xFF4B5563),
+            ),
           ),
           children: [
             const Divider(height: 1),
@@ -385,9 +463,18 @@ class _PlantTankSelectorDialogState
             CheckboxListTile(
               value: selection.allTanks,
               onChanged: (value) => _togglePlantAllTanks(plantId, value),
-              title: const Text(
+              activeColor: const Color(0xFF475569),
+              checkColor: Colors.white,
+              checkboxShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              title: Text(
                 'All Tanks',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: const Color(0xFF374151),
+                ),
               ),
               dense: true,
             ),
@@ -401,7 +488,18 @@ class _PlantTankSelectorDialogState
               return CheckboxListTile(
                 value: selection.selectedTankIds.contains(tankId),
                 onChanged: (value) => _toggleTank(plantId, tankId),
-                title: Text(tankName, style: const TextStyle(fontSize: 13)),
+                activeColor: const Color(0xFF475569),
+                checkColor: Colors.white,
+                checkboxShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                title: Text(
+                  tankName,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF4B5563),
+                  ),
+                ),
                 dense: true,
               );
             }),

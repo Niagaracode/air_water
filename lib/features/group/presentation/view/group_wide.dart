@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/group_provider.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 import '../model/group_model.dart';
 import '../widgets/add_group_modal.dart';
 
@@ -140,7 +141,14 @@ class _GroupWideState extends ConsumerState<GroupWide> {
               ElevatedButton.icon(
                 onPressed: () => _showAddModal(),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('ADD GROUP'),
+                label: Text(
+                  'ADD GROUP',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ],
           ),
@@ -169,19 +177,11 @@ class _GroupWideState extends ConsumerState<GroupWide> {
                 ),
               ),
               const SizedBox(width: 16),
-              TextButton(
+              AppClearButton(
                 onPressed: () {
                   _searchController.clear();
                   notifier.clearFilters();
                 },
-                child: Text(
-                  'CLEAR',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF6B7280),
-                  ),
-                ),
               ),
             ],
           ),
@@ -219,7 +219,14 @@ class _GroupWideState extends ConsumerState<GroupWide> {
           SliverToBoxAdapter(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(color: Color(0xFF141E7A)),
+              decoration: const BoxDecoration(
+                color: Color(0xFF141E7A),
+                border: Border(
+                  top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                  left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                  right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                ),
+              ),
               child: Row(
                 children: [
                   const AppTableHeaderCell('SI.NO', width: 60),
@@ -255,8 +262,8 @@ class _GroupWideState extends ConsumerState<GroupWide> {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          left: BorderSide(color: Color(0xFFE5E7EB)),
-          right: BorderSide(color: Color(0xFFE5E7EB)),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
           bottom: BorderSide(color: Color(0xFFF3F4F6)),
         ),
       ),
