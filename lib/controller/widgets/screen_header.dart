@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/app_theme/app_theme.dart';
 import '../../features/auth/presentation/controllers/auth_providers.dart';
@@ -10,7 +11,6 @@ class ScreenHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     final userNameAsync = ref.watch(userNameProvider);
 
     return SizedBox(
@@ -18,100 +18,238 @@ class ScreenHeader extends ConsumerWidget {
       width: double.infinity,
       child: Material(
         color: Colors.white,
-        elevation: 2,
-        shadowColor: Colors.black12,
+        elevation: 0,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
+            color: Colors.white,
             border: Border(
-              bottom: BorderSide(
-                color: Colors.grey.shade300,
-                width: 1,
-              ),
+              bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
             ),
           ),
           child: Row(
             children: [
 
+              /// ── Search bar ────────────────────────────────────
               Expanded(
-                child: Container(
-                  height: 48,
-                  constraints: const BoxConstraints(maxWidth: 400),
-                  decoration: BoxDecoration(
-                    color: primary.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      prefixIcon: Icon(Icons.search_rounded),
-                      border: InputBorder.none,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 380),
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: TextField(
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF1A1A2E),
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Search anything...',
+                        hintStyle: GoogleFonts.inter(
+                          color: const Color(0xFF9CA3AF),
+                          fontSize: 13,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.search_rounded,
+                          size: 18,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.only(
+                          right: 12,
+                          top: 10,
+                          bottom: 10,
+                        ),
+                        isDense: true,
+                      ),
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(width: 24),
+              const Spacer(),
 
-              IconButton(
-                onPressed: () {},
-                icon: Badge(
-                  label: const Text('2'),
-                  child: Icon(Icons.notifications_none_rounded,
-                      color: primary),
+              /// ── Notification icon ────────────────────────────
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Badge(
+                  alignment: const AlignmentDirectional(0.6, -0.6),
+                  smallSize: 7,
+                  backgroundColor: Colors.red.shade500,
+                  child: IconButton(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.notifications_none_rounded,
+                      size: 20,
+                      color: Color(0xFF6B7280),
+                    ),
+                    padding: EdgeInsets.zero,
+                    splashRadius: 18,
+                  ),
                 ),
               ),
 
-              const SizedBox(width: 24),
+              const SizedBox(width: 12),
 
+              /// ── User menu ─────────────────────────────────────
               PopupMenuButton<String>(
-                offset: const Offset(0, 50),
+                offset: const Offset(0, 48),
                 elevation: 8,
+                color: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5),
+                  borderRadius: BorderRadius.circular(10),
+                  side: const BorderSide(color: Color(0xFFE5E7EB)),
                 ),
                 onSelected: (value) async {
                   if (value == 'logout') {
-                    await ref.read(authControllerProvider.notifier)
+                    await ref
+                        .read(authControllerProvider.notifier)
                         .logout();
                   }
                 },
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 8, right: 5, top: 3, bottom: 3),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const CircleAvatar(radius: 17),
-                      const SizedBox(width: 12),
+                      userNameAsync.when(
+                        data: (name) => CircleAvatar(
+                          radius: 16,
+                          backgroundColor: primary,
+                          child: Text(
+                            (name ?? 'U').isNotEmpty
+                                ? (name ?? 'U')[0].toUpperCase()
+                                : 'U',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        loading: () => CircleAvatar(
+                          radius: 16,
+                          backgroundColor: primary.withValues(alpha: 0.2),
+                        ),
+                        error: (_, __) => CircleAvatar(
+                          radius: 16,
+                          backgroundColor: primary,
+                          child: Text(
+                            'U',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       userNameAsync.when(
                         data: (name) => Text(
                           name ?? 'User',
-                          style: const TextStyle(
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: const Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        loading: () => Text(
+                          'Loading...',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                        error: (_, __) => Text(
+                          'User',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        loading: () => const Text('Loading...'),
-                        error: (_, __) => const Text('User'),
                       ),
-                      const Icon(Icons.keyboard_arrow_down_rounded),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 18,
+                        color: Color(0xFF9CA3AF),
+                      ),
                     ],
                   ),
                 ),
-                itemBuilder: (context) => const [
+                itemBuilder: (context) => [
                   PopupMenuItem(
                     value: 'profile',
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: ListTile(
-                      leading: Icon(Icons.person_outline),
-                      title: Text('Profile'),
+                      dense: true,
+                      leading: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.person_outline_rounded,
+                          size: 18,
+                          color: Color(0xFF374151),
+                        ),
+                      ),
+                      title: Text(
+                        'Profile',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF1A1A2E),
+                        ),
+                      ),
                     ),
                   ),
-                  PopupMenuDivider(height: 0),
+                  const PopupMenuDivider(height: 4),
                   PopupMenuItem(
                     value: 'logout',
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: ListTile(
-                      leading: Icon(Icons.logout, color: Colors.red),
+                      dense: true,
+                      leading: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.logout_rounded,
+                          size: 18,
+                          color: Colors.red.shade500,
+                        ),
+                      ),
                       title: Text(
                         'Logout',
-                        style: TextStyle(color: Colors.red),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.red.shade600,
+                        ),
                       ),
                     ),
                   ),

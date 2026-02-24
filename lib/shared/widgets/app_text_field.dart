@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -40,6 +41,7 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: deprecated_member_use_from_same_package
     final isObscured = obscure || obscureText;
     return TextField(
       controller: controller,
@@ -51,29 +53,46 @@ class AppTextField extends StatelessWidget {
       keyboardType: keyboardType,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
+      style: GoogleFonts.inter(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: const Color(0xFF111827),
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+        hintStyle: GoogleFonts.inter(
+          color: const Color(0xFF9CA3AF),
+          fontSize: 14,
+        ),
         prefixIcon: prefixIcon,
         prefixIconColor: prefixIconColor,
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
                   isObscured ? Icons.visibility_off : Icons.visibility,
+                  size: 20,
+                  color: const Color(0xFF6B7280),
                 ),
                 onPressed: onToggle,
               )
             : null,
+        filled: true,
+        fillColor: const Color(0xFFF9FAFB),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-            color: Theme.of(context).primaryColor,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF141E7A), width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Color(0xFFF3F4F6)),
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
     );

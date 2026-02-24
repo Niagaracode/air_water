@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:air_water/shared/widgets/app_text_field.dart';
 import 'package:air_water/shared/widgets/app_dropdown.dart';
 import 'package:air_water/shared/widgets/app_date_picker.dart';
-import '../../../../core/app_theme/app_theme.dart';
+import 'package:air_water/shared/widgets/app_table.dart';
 import '../controller/plant_provider.dart';
 import '../widgets/add_plant_modal.dart';
 import '../model/plant_model.dart';
@@ -59,30 +60,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
             sliver: _buildVirtualizedTable(plantState, plantNotifier),
           ),
           if (plantState.isLoading && plantState.groupedPlants.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Please wait loading new record',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const SliverToBoxAdapter(child: AppTableLoadingMore()),
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
       ),
@@ -90,33 +68,61 @@ class _PlantWideState extends ConsumerState<PlantWide> {
   }
 
   Widget _buildHeader(PlantState state, PlantNotifier notifier) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'PLANT MANAGEMENT',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
+    return Container(
+      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PLANT MANAGEMENT',
+            style: GoogleFonts.outfit(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: const Color(0xFF111827),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Centralize Plant Information Including Identification, Locations, And Status Management',
-          style: TextStyle(color: Colors.grey, fontSize: 14),
-        ),
-        const SizedBox(height: 32),
-        _buildFilterRow(notifier),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Text(
-            'Showing  ${state.totalEntries} entries',
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+          const SizedBox(height: 6),
+          Text(
+            'Centralize plant information including identification, locations, and status management.',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 13,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 20),
+          // Filter label
+          Text(
+            'FILTER',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF374151),
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildFilterRow(notifier),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'Showing ${state.totalEntries} entries',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -177,10 +183,16 @@ class _PlantWideState extends ConsumerState<PlantWide> {
                         return ListTile(
                           title: Text(
                             option.plantName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
                           ),
                           subtitle: option.displayName != null
-                              ? Text(option.displayName!)
+                              ? Text(
+                                  option.displayName!,
+                                  style: GoogleFonts.inter(fontSize: 12),
+                                )
                               : null,
                           onTap: () => onSelected(option),
                         );
@@ -256,19 +268,10 @@ class _PlantWideState extends ConsumerState<PlantWide> {
 
   Widget _buildVirtualizedTable(PlantState state, PlantNotifier notifier) {
     if (state.groupedPlants.isEmpty && !state.isLoading) {
-      return SliverToBoxAdapter(
-        child: Container(
-          padding: const EdgeInsets.all(48),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          alignment: Alignment.center,
-          child: const Text(
-            'No record found',
-            style: TextStyle(color: Colors.grey, fontSize: 16),
-          ),
+      return const SliverToBoxAdapter(
+        child: AppTableEmptyState(
+          icon: Icons.park_outlined,
+          title: 'No plants found',
         ),
       );
     }
@@ -277,19 +280,24 @@ class _PlantWideState extends ConsumerState<PlantWide> {
       return SliverToBoxAdapter(
         child: Container(
           padding: const EdgeInsets.all(48.0),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
+              const CircularProgressIndicator(color: Color(0xFF141E7A)),
               const SizedBox(height: 16),
               Text(
-                'Please wait loading new record',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                'Loading records...',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF6B7280),
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
@@ -301,28 +309,26 @@ class _PlantWideState extends ConsumerState<PlantWide> {
       itemCount: state.groupedPlants.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
-          // Table header
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+            decoration: const BoxDecoration(
+              color: Color(0xFF141E7A),
+              border: Border(
+                left: BorderSide(color: Color(0xFF141E7A)),
+                right: BorderSide(color: Color(0xFF141E7A)),
               ),
-              border: Border.all(color: Colors.grey.shade200),
             ),
             child: Row(
               children: [
-                _tableHeaderCell('SI.NO', width: 70),
-                _tableHeaderCell('City', flex: 2),
-                _tableHeaderCell('Date', flex: 2),
-                _tableHeaderCell('Company', flex: 2),
-                _tableHeaderCell('State', flex: 2),
-                _tableHeaderCell('Country', flex: 2),
-                _tableHeaderCell('Status', flex: 2),
-                _tableHeaderCell('Address', flex: 3),
-                _tableHeaderCell('Actions', width: 100),
+                AppTableHeaderCell('SI.NO', width: 70),
+                AppTableHeaderCell('City', flex: 2),
+                AppTableHeaderCell('Date', flex: 2),
+                AppTableHeaderCell('Company', flex: 2),
+                AppTableHeaderCell('State', flex: 2),
+                AppTableHeaderCell('Country', flex: 2),
+                AppTableHeaderCell('Status', flex: 2),
+                AppTableHeaderCell('Address', flex: 3),
+                AppTableHeaderCell('Actions', width: 100),
               ],
             ),
           );
@@ -338,16 +344,16 @@ class _PlantWideState extends ConsumerState<PlantWide> {
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border(
-              left: BorderSide(color: Colors.grey.shade200),
-              right: BorderSide(color: Colors.grey.shade200),
+              left: const BorderSide(color: Color(0xFFE5E7EB)),
+              right: const BorderSide(color: Color(0xFFE5E7EB)),
               bottom: isLast
-                  ? BorderSide(color: Colors.grey.shade200)
+                  ? const BorderSide(color: Color(0xFFE5E7EB))
                   : BorderSide.none,
             ),
             borderRadius: isLast
                 ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
+                    bottomLeft: Radius.circular(16),
+                    bottomRight: Radius.circular(16),
                   )
                 : BorderRadius.zero,
           ),
@@ -364,17 +370,6 @@ class _PlantWideState extends ConsumerState<PlantWide> {
     );
   }
 
-  Widget _tableHeaderCell(String text, {double? width, int? flex}) {
-    final child = Text(
-      text,
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-    );
-    if (width != null) {
-      return SizedBox(width: width, child: child);
-    }
-    return Expanded(flex: flex ?? 1, child: child);
-  }
-
   Widget _buildGroupSection({
     required int index,
     required PlantGroup group,
@@ -385,20 +380,25 @@ class _PlantWideState extends ConsumerState<PlantWide> {
   }) {
     return Column(
       children: [
-        if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
-        // Group header row (plant name row)
+        if (index > 0)
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
+        // Group header row - light blue
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          color: Colors.grey.shade50,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          decoration: const BoxDecoration(
+            color: Color(0xFFEEF2FF),
+            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+          ),
           child: Row(
             children: [
               SizedBox(
                 width: 70,
                 child: Text(
                   (index + 1).toString().padLeft(2, '0'),
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
+                    color: const Color(0xFF374151),
                   ),
                 ),
               ),
@@ -406,141 +406,95 @@ class _PlantWideState extends ConsumerState<PlantWide> {
                 flex: 2,
                 child: Text(
                   group.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
                     fontSize: 13,
+                    color: const Color(0xFF111827),
                   ),
                 ),
               ),
-              const Expanded(flex: 2, child: SizedBox()), // Align with Date
-              const Expanded(flex: 2, child: SizedBox()), // Align with Company
-              const Expanded(flex: 2, child: SizedBox()), // Align with State
-              const Expanded(flex: 2, child: SizedBox()), // Align with Country
-              const Expanded(flex: 2, child: SizedBox()), // Align with Status
-              const Expanded(flex: 3, child: SizedBox()), // Align with Address
+              const Expanded(flex: 2, child: SizedBox()),
+              const Expanded(flex: 2, child: SizedBox()),
+              const Expanded(flex: 2, child: SizedBox()),
+              const Expanded(flex: 2, child: SizedBox()),
+              const Expanded(flex: 2, child: SizedBox()),
+              const Expanded(flex: 3, child: SizedBox()),
             ],
           ),
         ),
-        // Address rows (visible when expanded)
+        // Address rows
         if (isExpanded)
           ...group.addresses.map((addr) {
             return Column(
               children: [
-                Divider(height: 1, color: Colors.grey.shade100),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF3F4F6),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 12,
+                    vertical: 11,
                   ),
                   child: Row(
                     children: [
                       const SizedBox(width: 70),
-                      Expanded(
+                      AppTableCell(addr.city ?? '—', flex: 2),
+                      AppTableCell(
+                        addr.createdAt?.split('T').first ?? '—',
                         flex: 2,
-                        child: Text(
-                          addr.city ?? '',
-                          style: const TextStyle(fontSize: 13),
-                        ),
                       ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.createdAt?.split('T').first ?? '',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                      Expanded(
+                      AppTableCell(
+                        null,
                         flex: 2,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              addr.companyName ?? '',
-                              style: const TextStyle(
+                              addr.companyName ?? '—',
+                              style: GoogleFonts.inter(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
+                                color: const Color(0xFF111827),
                               ),
                             ),
                             Text(
                               addr.companyFullAddress,
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 11,
-                                color: Colors.grey.shade600,
+                                color: const Color(0xFF9CA3AF),
                               ),
                             ),
                           ],
                         ),
                       ),
+                      AppTableCell(addr.state ?? '—', flex: 2),
+                      AppTableCell(addr.country ?? '—', flex: 2),
                       Expanded(
                         flex: 2,
-                        child: Text(
-                          addr.state ?? '',
-                          style: const TextStyle(fontSize: 13),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: AppStatusBadge(status: addr.status),
                         ),
                       ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.country ?? '',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: addr.status == 1
-                                  ? Colors.green
-                                  : Colors.grey,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              addr.statusText,
-                              style: TextStyle(
-                                color: addr.status == 1
-                                    ? Colors.green
-                                    : Colors.grey,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          addr.fullAddress,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
+                      AppTableCell(addr.fullAddress, flex: 3),
                       SizedBox(
                         width: 100,
                         child: Row(
                           children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.blue,
-                                size: 18,
-                              ),
-                              onPressed: () => _showEditModal(group, addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                            AppTableActionButton(
+                              icon: Icons.edit_outlined,
+                              color: const Color(0xFF2563EB),
+                              bg: const Color(0xFFEFF6FF),
+                              onTap: () => _showEditModal(group, addr),
                             ),
                             const SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(
-                                Icons.delete,
-                                color: Colors.red.shade400,
-                                size: 18,
-                              ),
-                              onPressed: () => _showDeleteDialog(addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                            AppTableActionButton(
+                              icon: Icons.delete_outline_rounded,
+                              color: const Color(0xFFDC2626),
+                              bg: const Color(0xFFFEF2F2),
+                              onTap: () => _showDeleteDialog(addr),
                             ),
                           ],
                         ),

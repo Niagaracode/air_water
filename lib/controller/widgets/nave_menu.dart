@@ -21,46 +21,40 @@ class NaveMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = primary;
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeInOut,
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: isSelected
-            ? primaryColor.withOpacity(0.12)
-            : Colors.transparent,
+        color: isSelected ? Colors.white : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
-        hoverColor: primaryColor.withOpacity(0.06),
+        hoverColor: Colors.white.withValues(alpha: 0.08),
+        splashColor: Colors.white.withValues(alpha: 0.12),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            vertical: 6,
-            horizontal: isExpanded ? 12 : 0,
+            vertical: 10,
+            horizontal: isExpanded ? 14 : 0,
           ),
           child: Row(
             mainAxisAlignment: isExpanded
                 ? MainAxisAlignment.start
                 : MainAxisAlignment.center,
             children: [
-
               /// ICON
               Icon(
                 icon,
-                size: 22,
-                color: isSelected
-                    ? primaryColor
-                    : Colors.grey.shade600,
+                size: 20,
+                color: isSelected ? primary : Colors.white.withValues(alpha: 0.75),
               ),
 
               /// SPACE — animate instead of jump
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: isExpanded ? 14 : 0,
+                width: isExpanded ? 12 : 0,
               ),
 
               /// LABEL — smooth fade/size animation
@@ -77,13 +71,11 @@ class NaveMenu extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.fade,
                       style: GoogleFonts.outfit(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: isSelected
-                            ? FontWeight.w600
+                            ? FontWeight.w700
                             : FontWeight.w500,
-                        color: isSelected
-                            ? primaryColor
-                            : Colors.grey.shade800,
+                        color: isSelected ? primary : Colors.white.withValues(alpha: 0.88),
                       ),
                     ),
                   ),

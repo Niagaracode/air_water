@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// A date picker field that shows the calendar as an overlay below the field.
 class AppDatePickerField extends StatefulWidget {
@@ -71,21 +72,28 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
             CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
-              offset: Offset(0, size.height + 4),
+              offset: Offset(0, size.height + 8),
               child: Material(
-                elevation: 8,
+                elevation: 12,
+                shadowColor: Colors.black.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(16),
                 color: Colors.white,
-                child: _DatePickerCalendar(
-                  initialMonth: _currentMonth,
-                  selectedDate: _tempSelected,
-                  firstDate: widget.firstDate,
-                  lastDate: widget.lastDate,
-                  onCancel: _close,
-                  onConfirm: (date) {
-                    widget.onDateChanged(date);
-                    _close();
-                  },
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF3F4F6)),
+                  ),
+                  child: _DatePickerCalendar(
+                    initialMonth: _currentMonth,
+                    selectedDate: _tempSelected,
+                    firstDate: widget.firstDate,
+                    lastDate: widget.lastDate,
+                    onCancel: _close,
+                    onConfirm: (date) {
+                      widget.onDateChanged(date);
+                      _close();
+                    },
+                  ),
                 ),
               ),
             ),
@@ -113,7 +121,7 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
   @override
   Widget build(BuildContext context) {
     final displayText = widget.selectedDate != null
-        ? "${widget.selectedDate!.year}-${widget.selectedDate!.month.toString().padLeft(2, '0')}-${widget.selectedDate!.day.toString().padLeft(2, '0')}"
+        ? DateFormat('yyyy-MM-dd').format(widget.selectedDate!)
         : null;
 
     return CompositedTransformTarget(
@@ -121,21 +129,28 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
       child: GestureDetector(
         onTap: _toggle,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F6FA),
-            borderRadius: BorderRadius.circular(20),
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _isOpen
+                  ? const Color(0xFF141E7A)
+                  : const Color(0xFFE5E7EB),
+              width: _isOpen ? 1.5 : 1.0,
+            ),
           ),
           child: Row(
             children: [
               Expanded(
                 child: Text(
                   displayText ?? widget.hint,
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     color: displayText != null
-                        ? Colors.black
-                        : Colors.grey.shade600,
+                        ? const Color(0xFF111827)
+                        : const Color(0xFF9CA3AF),
                     fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
@@ -146,13 +161,19 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
                   },
                   child: const Padding(
                     padding: EdgeInsets.only(right: 8),
-                    child: Icon(Icons.close, size: 16, color: Colors.grey),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 16,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
                 ),
-              const Icon(
-                Icons.calendar_today,
-                color: Colors.grey,
-                size: 16,
+              Icon(
+                Icons.calendar_today_rounded,
+                color: _isOpen
+                    ? const Color(0xFF141E7A)
+                    : const Color(0xFF6B7280),
+                size: 18,
               ),
             ],
           ),
@@ -210,39 +231,57 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 350,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
+      width: 320,
+      padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildHeader(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           _buildWeekdayLabels(),
           const SizedBox(height: 8),
           _buildDayGrid(),
           const SizedBox(height: 24),
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              TextButton(
-                onPressed: widget.onCancel,
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(color: Colors.grey),
+              Expanded(
+                child: TextButton(
+                  onPressed: widget.onCancel,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF6B7280),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.inter(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: () => widget.onConfirm(_selectedDate),
-                child: const Text(
-                  'OK',
-                  style: TextStyle(
-                    color: Color(0xFF2962FF),
-                    fontWeight: FontWeight.bold,
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => widget.onConfirm(_selectedDate),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF141E7A),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Done',
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
               ),
@@ -258,20 +297,34 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
-          icon: const Icon(Icons.chevron_left, color: Colors.black),
+          icon: const Icon(
+            Icons.chevron_left_rounded,
+            color: Color(0xFF111827),
+          ),
           onPressed: _previousMonth,
+          style: IconButton.styleFrom(
+            backgroundColor: const Color(0xFFF3F4F6),
+            padding: const EdgeInsets.all(8),
+          ),
         ),
         Text(
           DateFormat('MMMM yyyy').format(_currentMonth),
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1B1B4B),
+          style: GoogleFonts.outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF111827),
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.chevron_right, color: Colors.black),
+          icon: const Icon(
+            Icons.chevron_right_rounded,
+            color: Color(0xFF111827),
+          ),
           onPressed: _nextMonth,
+          style: IconButton.styleFrom(
+            backgroundColor: const Color(0xFFF3F4F6),
+            padding: const EdgeInsets.all(8),
+          ),
         ),
       ],
     );
@@ -287,10 +340,10 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
               child: Center(
                 child: Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.grey.shade400,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF9CA3AF),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
                   ),
                 ),
               ),
@@ -315,6 +368,7 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
     final offset = firstWeekday - 1;
     final List<Widget> dayWidgets = [];
 
+    // Prev month days
     final lastDayPrevMonth = DateTime(
       _currentMonth.year,
       _currentMonth.month,
@@ -325,22 +379,30 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
       dayWidgets.add(_buildDayCell(day, isCurrentMonth: false));
     }
 
+    // Current month days
     for (int day = 1; day <= daysInMonth; day++) {
       dayWidgets.add(_buildDayCell(day, isCurrentMonth: true));
     }
 
+    // Next month days
     final totalCells = dayWidgets.length;
     final remaining = (7 - (totalCells % 7)) % 7;
     for (int day = 1; day <= remaining; day++) {
       dayWidgets.add(_buildDayCell(day, isCurrentMonth: false));
     }
 
-    return GridView.count(
-      shrinkWrap: true,
-      crossAxisCount: 7,
-      mainAxisSpacing: 8,
-      crossAxisSpacing: 8,
-      children: dayWidgets,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GridView.count(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          crossAxisCount: 7,
+          mainAxisSpacing: 4,
+          crossAxisSpacing: 4,
+          physics: const NeverScrollableScrollPhysics(),
+          children: dayWidgets,
+        );
+      },
     );
   }
 
@@ -361,45 +423,43 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
         DateTime.now().month == date.month &&
         DateTime.now().day == date.day;
 
+    final bool isDisabled =
+        date.isBefore(widget.firstDate) || date.isAfter(widget.lastDate);
+
     return GestureDetector(
-      onTap: isCurrentMonth
+      onTap: (isCurrentMonth && !isDisabled)
           ? () {
               setState(() {
                 _selectedDate = date;
               });
             }
           : null,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF2962FF) : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? const Color(0xFF141E7A) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isToday && !isSelected
+              ? Border.all(color: const Color(0xFF141E7A), width: 1)
+              : null,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              day.toString(),
-              style: TextStyle(
-                color: isSelected
-                    ? Colors.white
-                    : isCurrentMonth
-                    ? const Color(0xFF1B1B4B)
-                    : Colors.grey.shade300,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontSize: 14,
-              ),
+        child: Center(
+          child: Text(
+            day.toString(),
+            style: GoogleFonts.inter(
+              color: isSelected
+                  ? Colors.white
+                  : isCurrentMonth
+                  ? (isDisabled
+                        ? const Color(0xFFD1D5DB)
+                        : const Color(0xFF111827))
+                  : const Color(0xFFE5E7EB),
+              fontWeight: isSelected || isToday
+                  ? FontWeight.w700
+                  : FontWeight.w500,
+              fontSize: 13,
             ),
-            if (isToday && !isSelected)
-              Container(
-                margin: const EdgeInsets.only(top: 2),
-                width: 4,
-                height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2962FF),
-                  shape: BoxShape.circle,
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );

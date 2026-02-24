@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppAutocomplete<T extends Object> extends StatefulWidget {
   final TextEditingController controller;
@@ -49,23 +50,33 @@ class _AppAutocompleteState<T extends Object>
           return TextField(
             controller: controller,
             focusNode: focusNode,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF111827),
+            ),
             decoration: InputDecoration(
               hintText: widget.hint,
-              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-              enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                borderRadius: BorderRadius.circular(8),
+              hintStyle: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 14,
               ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: Theme.of(context).primaryColor,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
+              filled: true,
+              fillColor: const Color(0xFFF9FAFB),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 12,
+                vertical: 14,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: const BorderSide(
+                  color: Color(0xFF141E7A),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
           );
@@ -74,14 +85,26 @@ class _AppAutocompleteState<T extends Object>
           return Align(
             alignment: Alignment.topLeft,
             child: Material(
-              elevation: 4.0,
-              borderRadius: BorderRadius.circular(8),
+              elevation: 12,
+              shadowColor: Colors.black.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
               child: Container(
-                constraints: BoxConstraints(maxHeight: 250),
+                constraints: const BoxConstraints(maxHeight: 250),
                 width: constraints.maxWidth,
-                child: ListView.builder(
-                  padding: EdgeInsets.zero,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFF3F4F6)),
+                ),
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   shrinkWrap: true,
+                  separatorBuilder: (context, index) => const Divider(
+                    height: 1,
+                    color: Color(0xFFF3F4F6),
+                    indent: 8,
+                    endIndent: 8,
+                  ),
                   itemCount: options.length,
                   itemBuilder: (BuildContext context, int index) {
                     final T option = options.elementAt(index);
@@ -92,7 +115,14 @@ class _AppAutocompleteState<T extends Object>
                           horizontal: 16,
                           vertical: 12,
                         ),
-                        child: Text(widget.displayStringForOption(option)),
+                        child: Text(
+                          widget.displayStringForOption(option),
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: const Color(0xFF374151),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     );
                   },

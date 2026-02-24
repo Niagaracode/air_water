@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_date_picker.dart';
+import '../../../../shared/widgets/app_table.dart';
 import '../controller/company_provider.dart';
 import '../widgets/add_company_modal.dart';
 import '../model/company_model.dart';
-import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_loader.dart';
 
 class CompanyWide extends ConsumerStatefulWidget {
@@ -46,7 +47,6 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     final companyNotifier = ref.read(companyNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       body: Stack(
         children: [
           CustomScrollView(
@@ -64,7 +64,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
               ),
               if (companyState.isLoading &&
                   companyState.groupedCompanies.isNotEmpty)
-                SliverToBoxAdapter(child: _buildBottomLoader()),
+                const SliverToBoxAdapter(child: AppTableLoadingMore()),
               const SliverToBoxAdapter(child: SizedBox(height: 48)),
             ],
           ),
@@ -77,7 +77,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
 
   Widget _buildHeader(CompanyState state, CompanyNotifier notifier) {
     return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 8),
+      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -88,52 +88,34 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Company MANAGEMENT',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
+          Text(
+            'COMPANY MANAGEMENT',
+            style: GoogleFonts.outfit(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: const Color(0xFF111827),
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Centralize Company Information Including Identification, Locations, And Status Management',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+          const SizedBox(height: 6),
+          Text(
+            'Centralize company information including identification, locations, and status management.',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 13,
+            ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           _buildFilterRow(notifier, state),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              'Showing  ${state.totalEntries} entries',
-              style: const TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomLoader() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            'Please wait loading new record',
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
+              'Showing ${state.totalEntries} entries',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 12,
+              ),
             ),
           ),
         ],
@@ -276,21 +258,10 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
 
   Widget _buildVirtualizedTable(CompanyState state, CompanyNotifier notifier) {
     if (state.groupedCompanies.isEmpty && !state.isLoading) {
-      return SliverToBoxAdapter(
-        child: Container(
-          padding: const EdgeInsets.all(48),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(16),
-              bottomRight: Radius.circular(16),
-            ),
-          ),
-          alignment: Alignment.center,
-          child: const Text(
-            'No record found',
-            style: TextStyle(color: Colors.grey, fontSize: 16),
-          ),
+      return const SliverToBoxAdapter(
+        child: AppTableEmptyState(
+          icon: Icons.business_outlined,
+          title: 'No companies found',
         ),
       );
     }
@@ -299,27 +270,26 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
       itemCount: state.groupedCompanies.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
-          // Table header
+          // Table header — navy
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+            decoration: const BoxDecoration(
+              color: Color(0xFF141E7A),
               border: Border(
-                left: BorderSide(color: Colors.grey.shade200),
-                right: BorderSide(color: Colors.grey.shade200),
-                bottom: BorderSide(color: Colors.grey.shade200),
+                left: BorderSide(color: Color(0xFF141E7A)),
+                right: BorderSide(color: Color(0xFF141E7A)),
               ),
             ),
             child: Row(
               children: [
-                _tableHeaderCell('SI.NO', width: 70),
-                _tableHeaderCell('City', flex: 2),
-                _tableHeaderCell('Date', flex: 2),
-                _tableHeaderCell('State', flex: 2),
-                _tableHeaderCell('Country', flex: 2),
-                _tableHeaderCell('Status', flex: 2),
-                _tableHeaderCell('Address', flex: 3),
-                _tableHeaderCell('Actions', width: 100),
+                AppTableHeaderCell('SI.NO', width: 70),
+                AppTableHeaderCell('City', flex: 2),
+                AppTableHeaderCell('Date', flex: 2),
+                AppTableHeaderCell('State', flex: 2),
+                AppTableHeaderCell('Country', flex: 2),
+                AppTableHeaderCell('Status', flex: 2),
+                AppTableHeaderCell('Address', flex: 3),
+                AppTableHeaderCell('Actions', width: 100),
               ],
             ),
           );
@@ -359,17 +329,6 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     );
   }
 
-  Widget _tableHeaderCell(String text, {double? width, int? flex}) {
-    final child = Text(
-      text,
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-    );
-    if (width != null) {
-      return SizedBox(width: width, child: child);
-    }
-    return Expanded(flex: flex ?? 1, child: child);
-  }
-
   Widget _buildGroupSection({
     required int index,
     required CompanyGroup group,
@@ -379,20 +338,25 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
   }) {
     return Column(
       children: [
-        if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
-        // Group header row
+        if (index > 0)
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
+        // Group header row - light blue
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          color: Colors.grey.shade50,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          decoration: const BoxDecoration(
+            color: Color(0xFFEEF2FF),
+            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+          ),
           child: Row(
             children: [
               SizedBox(
                 width: 70,
                 child: Text(
                   (index + 1).toString().padLeft(2, '0'),
-                  style: const TextStyle(
+                  style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                    fontSize: 14,
+                    color: const Color(0xFF374151),
                   ),
                 ),
               ),
@@ -400,17 +364,11 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                 flex: 2,
                 child: Text(
                   group.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: const Color(0xFF111827),
                   ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  group.createdAt?.split('T').first ?? '',
-                  style: const TextStyle(fontSize: 13),
                 ),
               ),
               const Expanded(flex: 2, child: SizedBox()),
@@ -425,98 +383,50 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
           ...group.addresses.map((addr) {
             return Column(
               children: [
-                Divider(height: 1, color: Colors.grey.shade100),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF3F4F6),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 12,
+                    vertical: 11,
                   ),
                   child: Row(
                     children: [
                       const SizedBox(width: 70),
+                      AppTableCell(addr.city ?? '—', flex: 2),
+                      AppTableCell(
+                        addr.createdAt?.split('T').first ?? '—',
+                        flex: 2,
+                      ),
+                      AppTableCell(addr.state ?? '—', flex: 2),
+                      AppTableCell(addr.country ?? '—', flex: 2),
                       Expanded(
                         flex: 2,
-                        child: Text(
-                          addr.city ?? '',
-                          style: const TextStyle(fontSize: 13),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: AppStatusBadge(status: addr.status),
                         ),
                       ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.createdAt?.split('T').first ?? '',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.state ?? '',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.country ?? '',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: addr.status == 1
-                                  ? Colors.green
-                                  : Colors.grey,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              addr.status == 1 ? 'Active' : 'Inactive',
-                              style: TextStyle(
-                                color: addr.status == 1
-                                    ? Colors.green
-                                    : Colors.grey,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          addr.fullAddress,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ),
+                      AppTableCell(addr.fullAddress, flex: 3),
                       SizedBox(
                         width: 100,
                         child: Row(
                           children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.blue,
-                                size: 18,
-                              ),
-                              onPressed: () => _showEditModal(group, addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                            AppTableActionButton(
+                              icon: Icons.edit_outlined,
+                              color: const Color(0xFF2563EB),
+                              bg: const Color(0xFFEFF6FF),
+                              onTap: () => _showEditModal(group, addr),
                             ),
                             const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                                size: 18,
-                              ),
-                              onPressed: () => _confirmDelete(addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                            AppTableActionButton(
+                              icon: Icons.delete_outline_rounded,
+                              color: const Color(0xFFDC2626),
+                              bg: const Color(0xFFFEF2F2),
+                              onTap: () => _confirmDelete(addr),
                             ),
                           ],
                         ),

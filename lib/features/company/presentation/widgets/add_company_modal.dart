@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../model/company_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../../../../shared/widgets/app_radio_button.dart';
 import '../../../../shared/widgets/app_autocomplete.dart';
 import '../../../../shared/widgets/location_picker.dart';
 import '../controller/company_provider.dart';
@@ -158,182 +158,360 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
       child: Material(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          bottomLeft: Radius.circular(16),
+          topLeft: Radius.circular(20),
+          bottomLeft: Radius.circular(20),
         ),
-        child: Container(
+        child: SizedBox(
           width: 600,
           height: MediaQuery.of(context).size.height,
-          padding: const EdgeInsets.all(32),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      widget.initialAddress != null
-                          ? 'EDIT COMPANY'
-                          : 'ADD NEW COMPANY',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Top accent bar
+              Container(
+                height: 4,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF141E7A),
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20)),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 48,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.initialAddress != null
+                                      ? 'Edit Company'
+                                      : 'Register New Company',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF111827),
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Manage corporate entities and their multiple operational addresses.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded, size: 22),
+                            color: const Color(0xFF6B7280),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFF3F4F6),
+                              padding: const EdgeInsets.all(12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: Colors.grey.shade300),
+                      const SizedBox(height: 32),
+                      _buildInfoBar(),
+                      const SizedBox(height: 48),
+
+                      // Company Name
+                      _buildLabelField(
+                        'COMPANY ENTITY NAME',
+                        widget.initialAddress != null
+                            ? TextField(
+                                controller: _nameController,
+                                enabled: false,
+                                decoration: InputDecoration(
+                                  hintText: 'Enter Company name',
+                                  filled: true,
+                                  fillColor: const Color(0xFFF9FAFB),
+                                  border: OutlineInputBorder(
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE5E7EB),
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE5E7EB),
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
+                                ),
+                              )
+                            : AppAutocomplete<String>(
+                                controller: _nameController,
+                                hint: 'e.g. Acme Corp Industries',
+                                displayStringForOption: (option) => option,
+                                optionsBuilder: (textEditingValue) async {
+                                  if (textEditingValue.text.isEmpty) {
+                                    return const Iterable<String>.empty();
+                                  }
+                                  final companies = await ref
+                                      .read(companyRepositoryProvider)
+                                      .getCompanyAutocomplete(
+                                        q: textEditingValue.text,
+                                      );
+                                  return companies.map((e) => e.name).toList();
+                                },
+                              ),
+                      ),
+                      const SizedBox(height: 48),
+
+                      // Location Details section header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on_rounded,
+                                size: 18,
+                                color: Color(0xFF141E7A),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'REGISTERED ADDRESSES',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF141E7A),
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (widget.initialAddress == null)
+                            TextButton.icon(
+                              onPressed: _addAddressRow,
+                              icon: const Icon(
+                                Icons.add_circle_outline_rounded,
+                                size: 16,
+                              ),
+                              label: Text(
+                                'ADD ADDRESS',
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF141E7A),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const Divider(
+                        height: 32,
+                        thickness: 1,
+                        color: Color(0xFFF3F4F6),
+                      ),
+                      const SizedBox(height: 8),
+                      ...List.generate(
+                        _addressRows.length,
+                        (index) => _buildAddressRow(index),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Status Selector
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF3F4F6)),
+                        ),
+                        child: Row(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'ENTITY STATUS',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    color: const Color(0xFF141E7A),
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Set the visibility and active status of this entity.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            _buildStatusToggle(
+                              1,
+                              'Active',
+                              const Color(0xFF10B981),
+                            ),
+                            const SizedBox(width: 12),
+                            _buildStatusToggle(
+                              0,
+                              'Inactive',
+                              const Color(0xFF6B7280),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info,
-                        color: Theme.of(context).colorScheme.surface,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Enter The Company Name, And Specify Multiple Addresses.',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.surface,
-                            fontSize: 13,
+                      const SizedBox(height: 64),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _save,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF141E7A),
+                            foregroundColor: Colors.white,
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            widget.initialAddress != null
+                                ? 'UPDATE COMPANY'
+                                : 'REGISTER COMPANY',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
-                const Text(
-                  'Company Name*',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 8),
-                if (widget.initialAddress != null)
-                  TextField(
-                    controller: _nameController,
-                    enabled: false,
-                    decoration: InputDecoration(
-                      hintText: 'Enter Company name',
-                      hintStyle: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 14,
-                      ),
-                      disabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                  )
-                else
-                  AppAutocomplete<String>(
-                    controller: _nameController,
-                    hint: 'Enter Company name',
-                    displayStringForOption: (option) => option,
-                    optionsBuilder: (textEditingValue) async {
-                      if (textEditingValue.text.isEmpty) {
-                        return const Iterable<String>.empty();
-                      }
-                      final companies = await ref
-                          .read(companyRepositoryProvider)
-                          .getCompanyAutocomplete(q: textEditingValue.text);
-                      return companies.map((e) => e.name).toList();
-                    },
-                  ),
-                const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'LOCATION DETAILS',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.1,
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (widget.initialAddress == null)
-                      ElevatedButton.icon(
-                        onPressed: _addAddressRow,
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('ADD'),
-                      ),
-                  ],
-                ),
-                const Divider(height: 32),
-                ...List.generate(
-                  _addressRows.length,
-                  (index) => _buildAddressRow(index),
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                  'STATUS',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    AppRadioButton<int>(
-                      value: 1,
-                      groupValue: _status,
-                      label: 'ACTIVE',
-                      onChanged: (v) => setState(() => _status = v!),
-                    ),
-                    const SizedBox(width: 32),
-                    AppRadioButton<int>(
-                      value: 0,
-                      groupValue: _status,
-                      label: 'INACTIVE',
-                      onChanged: (v) => setState(() => _status = v!),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 48),
-                Center(
-                  child: SizedBox(
-                    width: 200,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _save,
-                      child: const Text(
-                        'SAVE',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStatusToggle(int value, String label, Color activeColor) {
+    final isSelected = _status == value;
+    return InkWell(
+      onTap: () => setState(() => _status = value),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeColor.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? activeColor : const Color(0xFFE5E7EB),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isSelected ? activeColor : const Color(0xFFD1D5DB),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? activeColor : const Color(0xFF6B7280),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabelField(String label, Widget field) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            color: const Color(0xFF333333),
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 10),
+        field,
+      ],
+    );
+  }
+
+  Widget _buildInfoBar() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F2FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDDE1FF)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: Color(0xFF141E7A),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Specify the primary entity name and associated location addresses.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF141E7A),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -341,88 +519,104 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
   Widget _buildAddressRow(int index) {
     final controllers = _addressRows[index];
 
-    return Column(
-      key: ValueKey(controllers),
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Address 1*',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        key: ValueKey(controllers),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'ADDRESS #${index + 1}',
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF9CA3AF),
+                  letterSpacing: 1.5,
+                ),
+              ),
+              if (_addressRows.length > 1 && widget.initialAddress == null)
+                IconButton(
+                  onPressed: () => _removeAddressRow(index),
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 18,
+                    color: Colors.redAccent,
                   ),
-                  const SizedBox(height: 8),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.red.withValues(alpha: 0.05),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: _buildLabelField(
+                  'STREET ADDRESS',
                   AppTextField(
                     controller: controllers.addressController,
-                    hint: 'Enter Address',
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'PIN code*',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  AppTextField(
-                    controller: controllers.pinCodeController,
-                    hint: 'Enter PIN Code',
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            if (widget.initialAddress == null)
-              IconButton(
-                icon: Icon(Icons.delete_outline, color: Colors.red.shade400),
-                onPressed: () => _removeAddressRow(index),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.shade50,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
+                    hint: 'Address Line 1',
                   ),
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        LocationPicker(
-          currentCountry: controllers.country,
-          currentState: controllers.state,
-          currentCity: controllers.city,
-          onCountryChanged: (value) {
-            setState(() {
-              controllers.country = value;
-              controllers.state = null;
-              controllers.city = null;
-            });
-          },
-          onStateChanged: (value) {
-            setState(() {
-              controllers.state = value;
-              controllers.city = null;
-            });
-          },
-          onCityChanged: (value) {
-            setState(() {
-              controllers.city = value;
-            });
-          },
-        ),
-        if (index != _addressRows.length - 1) const Divider(height: 48),
-        if (index == _addressRows.length - 1) const SizedBox(height: 32),
-      ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildLabelField(
+                  'POSTAL CODE',
+                  AppTextField(
+                    controller: controllers.pinCodeController,
+                    hint: 'PIN Code',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          LocationPicker(
+            key: ValueKey(
+              'loc_${controllers.country}_${controllers.state}_${controllers.city}',
+            ),
+            currentCountry: controllers.country,
+            currentState: controllers.state,
+            currentCity: controllers.city,
+            onCountryChanged: (value) {
+              setState(() {
+                controllers.country = value;
+                controllers.state = null;
+                controllers.city = null;
+              });
+            },
+            onStateChanged: (value) {
+              setState(() {
+                controllers.state = value;
+                controllers.city = null;
+              });
+            },
+            onCityChanged: (value) {
+              setState(() => controllers.city = value);
+            },
+          ),
+        ],
+      ),
     );
   }
 

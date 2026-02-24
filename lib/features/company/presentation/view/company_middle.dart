@@ -46,7 +46,6 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
     final companyNotifier = ref.read(companyNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       body: Stack(
         children: [
           CustomScrollView(

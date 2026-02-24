@@ -34,17 +34,21 @@ class ScreenSidebar extends ConsumerWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeInOut,
-          width: isExpanded ? 250 : 80,
+          width: isExpanded ? 250 : 72,
           child: Material(
-            color: Colors.white,
-            elevation: 2,
+            color: const Color(0xFF141E7A),
+            elevation: 0,
             child: Column(
               children: [
                 SidebarHeader(isExpanded: isExpanded),
-                Divider(height: 0, color: Colors.grey.shade300),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Colors.white.withValues(alpha: 0.10),
+                ),
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     children: [
                       _buildGroup(
                         title: 'MAIN MENU',
@@ -113,19 +117,27 @@ class ScreenSidebar extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        /// Group Title
+        /// Group Title — only when expanded
         if (isExpanded)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.only(
+              left: 20,
+              top: 16,
+              bottom: 4,
+              right: 16,
+            ),
             child: Text(
               title,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withValues(alpha: 0.40),
+                letterSpacing: 1.4,
               ),
             ),
-          ),
+          )
+        else
+          const SizedBox(height: 8),
 
         /// Menu Items
         ...filteredItems.map((item) {
@@ -143,6 +155,7 @@ class ScreenSidebar extends ConsumerWidget {
             },
           );
         }),
+        const SizedBox(height: 4),
       ],
     );
   }

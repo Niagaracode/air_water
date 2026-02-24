@@ -1,5 +1,6 @@
 class AppConfig {
-  static const String apiUrl =
-      'https://cayman-invite-gnu-analyst.trycloudflare.com/api';
+  static const String apiUrl = 'http://localhost:4000/api';
   static const String mqttUrl = 'broker.yourdomain.com';
+  static const String googleMapsApiKey =
+      'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
 }

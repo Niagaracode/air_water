@@ -15,6 +15,8 @@ class Device {
   final String? lastSync;
   final String? category;
   final String? simNumber;
+  final double? latitude;
+  final double? longitude;
   final String? timeZone;
   final int status;
   final String? createdAt;
@@ -35,6 +37,8 @@ class Device {
     this.lastSync,
     this.category,
     this.simNumber,
+    this.latitude,
+    this.longitude,
     this.timeZone,
     required this.status,
     this.createdAt,
@@ -57,6 +61,12 @@ class Device {
       lastSync: json['last_sync'] as String?,
       category: json['category'] as String?,
       simNumber: json['sim_number'] as String?,
+      latitude: json['latitude'] != null
+          ? double.tryParse(json['latitude'].toString())
+          : null,
+      longitude: json['longitude'] != null
+          ? double.tryParse(json['longitude'].toString())
+          : null,
       timeZone: json['time_zone'] as String?,
       status: json['status'] ?? 1,
       createdAt: json['created_at'] as String?,
@@ -161,6 +171,8 @@ class DeviceCreateRequest {
   final String? unitId;
   final String? category;
   final String? simNumber;
+  final double? latitude;
+  final double? longitude;
   final String? timeZone;
   final int? status;
 
@@ -173,6 +185,8 @@ class DeviceCreateRequest {
     this.unitId,
     this.category,
     this.simNumber,
+    this.latitude,
+    this.longitude,
     this.timeZone,
     this.status,
   });
@@ -187,6 +201,8 @@ class DeviceCreateRequest {
       'unit_id': unitId,
       'category': category,
       'sim_number': simNumber,
+      'latitude': latitude,
+      'longitude': longitude,
       'time_zone': timeZone,
       'status': status,
     };
