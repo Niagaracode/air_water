@@ -67,49 +67,29 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     }
 
     return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: _buildHeader(state, notifier),
-            ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: _buildHeader(state, notifier),
           ),
-          if (state.isLoading && state.groupedDevices.isEmpty)
-            SliverToBoxAdapter(
-              child: Container(
-                padding: const EdgeInsets.all(48.0),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(16),
-                    bottomRight: Radius.circular(16),
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(color: Color(0xFF141E7A)),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Loading records...',
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF6B7280),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (state.error != null)
-            SliverToBoxAdapter(child: Center(child: Text(state.error!)))
-          else
-            _buildVirtualizedTable(state, notifier),
+          if (!state.isLoading || state.groupedDevices.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: _buildFixedTableHeader(),
+            ),
+          Expanded(
+            child: state.isLoading && state.groupedDevices.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+                  )
+                : state.error != null
+                ? Center(child: Text(state.error!))
+                : _buildVirtualizedTable(state, notifier),
+          ),
           if (state.isLoading && state.groupedDevices.isNotEmpty)
-            const SliverToBoxAdapter(child: AppTableLoadingMore()),
-          const SliverToBoxAdapter(child: SizedBox(height: 48)),
+            const AppTableLoadingMore(),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -210,9 +190,39 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     );
   }
 
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          const AppTableHeaderCell('SI.NO', width: 70),
+          const AppTableHeaderCell('Date', flex: 2),
+          const AppTableHeaderCell('Device ID', flex: 2),
+          const AppTableHeaderCell('Company', flex: 2),
+          const AppTableHeaderCell('Category', flex: 2),
+          const AppTableHeaderCell('Sim Number', flex: 2),
+          const AppTableHeaderCell('Notes', flex: 3),
+          const AppTableHeaderCell('Tank', flex: 2),
+          const AppTableHeaderCell('Time Zone', flex: 2),
+          const AppTableHeaderCell('Status', flex: 2),
+          const AppTableHeaderCell('Action', width: 100),
+        ],
+      ),
+    );
+  }
+
   Widget _buildVirtualizedTable(DeviceState state, DeviceNotifier notifier) {
     if (state.groupedDevices.isEmpty && !state.isLoading) {
-      return const SliverToBoxAdapter(
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24),
         child: AppTableEmptyState(
           icon: Icons.devices_outlined,
           title: 'No devices found',
@@ -220,40 +230,12 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
       );
     }
 
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      sliver: SliverMainAxisGroup(
-        slivers: [
-          // Table header — navy
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(
-                color: Color(0xFF141E7A),
-                border: Border(
-                  top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                  left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                  right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const AppTableHeaderCell('SI.NO', width: 70),
-                  const AppTableHeaderCell('Date', flex: 2),
-                  const AppTableHeaderCell('Device ID', flex: 2),
-                  const AppTableHeaderCell('Company', flex: 2),
-                  const AppTableHeaderCell('Category', flex: 2),
-                  const AppTableHeaderCell('Sim Number', flex: 2),
-                  const AppTableHeaderCell('Notes', flex: 3),
-                  const AppTableHeaderCell('Tank', flex: 2),
-                  const AppTableHeaderCell('Time Zone', flex: 2),
-                  const AppTableHeaderCell('Status', flex: 2),
-                  const AppTableHeaderCell('Action', width: 100),
-                ],
-              ),
-            ),
-          ),
-          SliverList.builder(
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverList.builder(
             itemCount: state.groupedDevices.length,
             itemBuilder: (context, index) {
               final group = state.groupedDevices[index];
@@ -283,10 +265,10 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                           width: 70,
                           child: Text(
                             (index + 1).toString().padLeft(2, '0'),
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: const Color(0xFF374151),
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1E40AF),
                             ),
                           ),
                         ),
@@ -294,13 +276,39 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                group.siteName,
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                  color: const Color(0xFF111827),
-                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    group.siteName,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF1E40AF),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: const Color(0xFFBFDBFE),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      '${group.devices.length} Devices',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF2563EB),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               if (group.devices.isNotEmpty &&
                                   group.devices.first.siteInformation != null)
@@ -329,10 +337,13 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
               );
             },
           ),
-          if (state.groupedDevices.isNotEmpty)
-            const SliverToBoxAdapter(child: AppTableBottomCap()),
-        ],
-      ),
+        ),
+        if (state.groupedDevices.isNotEmpty)
+          const SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
+          ),
+      ],
     );
   }
 
@@ -349,7 +360,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const SizedBox(width: 70),
+          const AppTableCell(null, width: 70), // SI.NO placeholder space
           AppTableCell(device.createdAt?.split('T')[0] ?? '—', flex: 2),
           AppTableCell(device.deviceId, flex: 2, bold: true),
           AppTableCell(device.companyName ?? '—', flex: 2),
@@ -358,14 +369,16 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
           AppTableCell(device.notes ?? '—', flex: 3),
           AppTableCell(device.tankName ?? '—', flex: 2),
           AppTableCell(device.timeZone ?? '—', flex: 2),
-          Expanded(
+          AppTableCell(
+            null,
             flex: 2,
             child: Align(
               alignment: Alignment.centerLeft,
               child: AppStatusBadge(status: device.status),
             ),
           ),
-          SizedBox(
+          AppTableCell(
+            null,
             width: 100,
             child: Row(
               children: [

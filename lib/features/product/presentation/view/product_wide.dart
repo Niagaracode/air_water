@@ -4,49 +4,90 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../provider/product_provider.dart';
 import '../widgets/product_table.dart';
+import '../../../../shared/widgets/app_table.dart';
 
-class ProductWide extends ConsumerWidget {
+class ProductWide extends ConsumerStatefulWidget {
   const ProductWide({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductWide> createState() => _ProductWideState();
+}
+
+class _ProductWideState extends ConsumerState<ProductWide> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final products = ref.watch(productListProvider);
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: _buildHeader(context),
-            ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: _buildHeader(context),
           ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: products.when(
-                loading: () => const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(48.0),
-                    child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                  ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: _buildFixedTableHeader(),
+          ),
+          Expanded(
+            child: products.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(48.0),
+                  child: CircularProgressIndicator(color: Color(0xFF141E7A)),
                 ),
-                error: (e, _) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40.0),
-                    child: Text(
-                      e.toString(),
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ),
-                data: (list) {
-                  return ProductTable(list);
-                },
               ),
+              error: (e, _) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: Text(
+                    e.toString(),
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              ),
+              data: (list) {
+                return SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: ProductTable(list, showHeader: false),
+                );
+              },
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 48)),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          const AppTableHeaderCell('SI.NO', width: 60),
+          const AppTableHeaderCell('Product Name', flex: 2),
+          const AppTableHeaderCell('Description', flex: 3),
+          const AppTableHeaderCell('SCM / M3', flex: 1),
+          const AppTableHeaderCell('Specific Gravity', flex: 1),
+          const AppTableHeaderCell('Action', width: 80),
         ],
       ),
     );

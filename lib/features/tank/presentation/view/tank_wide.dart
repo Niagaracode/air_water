@@ -46,49 +46,6 @@ class _TankWideState extends ConsumerState<TankWide> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(tankProvider);
-    final notifier = ref.read(tankProvider.notifier);
-
-    if (state.searchPlant != _plantSearchController.text &&
-        state.searchPlant.isEmpty) {
-      _plantSearchController.text = '';
-    }
-    if (state.searchTank != _tankSearchController.text &&
-        state.searchTank.isEmpty) {
-      _tankSearchController.text = '';
-    }
-
-    return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: _buildHeader(state, notifier),
-            ),
-          ),
-          if (state.isLoading && state.groupedTanks.isEmpty)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(48.0),
-                child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                ),
-              ),
-            )
-          else
-            _buildVirtualizedTable(state, notifier),
-          if (state.isLoading && state.groupedTanks.isNotEmpty)
-            const SliverToBoxAdapter(child: AppTableLoadingMore()),
-          const SliverToBoxAdapter(child: SizedBox(height: 48)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeader(TankState state, TankNotifier notifier) {
     return Container(
       padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
@@ -339,9 +296,91 @@ class _TankWideState extends ConsumerState<TankWide> {
     );
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(tankProvider);
+    final notifier = ref.read(tankProvider.notifier);
+
+    if (state.searchPlant != _plantSearchController.text &&
+        state.searchPlant.isEmpty) {
+      _plantSearchController.text = '';
+    }
+    if (state.searchTank != _tankSearchController.text &&
+        state.searchTank.isEmpty) {
+      _tankSearchController.text = '';
+    }
+
+    return Scaffold(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: _buildHeader(state, notifier),
+          ),
+          if (!state.isLoading || state.groupedTanks.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: _buildFixedTableHeader(),
+            ),
+          Expanded(
+            child: state.isLoading && state.groupedTanks.isEmpty
+                ? _buildInitialLoader()
+                : _buildVirtualizedTable(state, notifier),
+          ),
+          if (state.isLoading && state.groupedTanks.isNotEmpty)
+            const AppTableLoadingMore(),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInitialLoader() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(color: Color(0xFF141E7A)),
+          SizedBox(height: 16),
+          Text(
+            'Loading records...',
+            style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          AppTableHeaderCell('SI.NO', width: 60),
+          AppTableHeaderCell('Tank Number', flex: 2),
+          AppTableHeaderCell('Type', flex: 2),
+          AppTableHeaderCell('Product', flex: 2),
+          AppTableHeaderCell('Unit', flex: 1),
+          AppTableHeaderCell('H / W / Dish', flex: 2),
+          AppTableHeaderCell('Status', flex: 1),
+          AppTableHeaderCell('Actions', width: 80),
+        ],
+      ),
+    );
+  }
+
   Widget _buildVirtualizedTable(TankState state, TankNotifier notifier) {
     if (state.groupedTanks.isEmpty) {
-      return const SliverToBoxAdapter(
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24),
         child: AppTableEmptyState(
           icon: Icons.water_outlined,
           title: 'No tanks found',
@@ -349,38 +388,12 @@ class _TankWideState extends ConsumerState<TankWide> {
       );
     }
 
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      sliver: SliverMainAxisGroup(
-        slivers: [
-          // Table header — navy
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(
-                color: Color(0xFF141E7A),
-                border: Border(
-                  top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                  left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                  right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                ),
-              ),
-              child: Row(
-                children: [
-                  AppTableHeaderCell('SI.NO', width: 60),
-
-                  AppTableHeaderCell('Tank Number', flex: 2),
-                  AppTableHeaderCell('Type', flex: 2),
-                  AppTableHeaderCell('Product', flex: 2),
-                  AppTableHeaderCell('Unit', flex: 1),
-                  AppTableHeaderCell('H / W / Dish', flex: 2),
-                  AppTableHeaderCell('Status', flex: 1),
-                  AppTableHeaderCell('Actions', width: 80),
-                ],
-              ),
-            ),
-          ),
-          SliverList.builder(
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverList.builder(
             itemCount: state.groupedTanks.length,
             itemBuilder: (context, index) {
               return _buildGroupSection(
@@ -390,10 +403,13 @@ class _TankWideState extends ConsumerState<TankWide> {
               );
             },
           ),
-          // Bottom cap
-          const SliverToBoxAdapter(child: AppTableBottomCap()),
-        ],
-      ),
+        ),
+        // Bottom cap
+        const SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
+        ),
+      ],
     );
   }
 
@@ -422,10 +438,10 @@ class _TankWideState extends ConsumerState<TankWide> {
                 width: 60,
                 child: Text(
                   (groupIndex + 1).toString().padLeft(2, '0'),
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF374151),
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1E40AF),
                   ),
                 ),
               ),
@@ -433,13 +449,37 @@ class _TankWideState extends ConsumerState<TankWide> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      group.plantName,
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF111827),
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          group.plantName,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF1E40AF),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                          ),
+                          child: Text(
+                            '${group.tanks.length} Tanks',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF2563EB),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     if (group.fullAddress.isNotEmpty)
                       Text(

@@ -13,7 +13,7 @@ import '../../../company/presentation/model/company_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AddPlantModal extends ConsumerStatefulWidget {
-  final PlantGroupAddress? initialPlant;
+  final Plant? initialPlant;
   const AddPlantModal({super.key, this.initialPlant});
 
   @override
@@ -48,29 +48,44 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
   final List<AddressControllers> _addressRows = [AddressControllers()];
   int _status = 1;
   bool _isLoadingCompanies = false;
+  bool _showCompanyDropdown = true;
+  String? _selectedPlantName;
 
   @override
   void initState() {
     super.initState();
     if (widget.initialPlant != null) {
-      _nameController.text = widget.initialPlant!.plantName ?? '';
-      _status = widget.initialPlant!.status ?? 1;
+      _nameController.text = widget.initialPlant!.name;
+      _status = widget.initialPlant!.status;
       _addressRows.first.addressController.text =
           widget.initialPlant!.addressLine1 ?? '';
       _addressRows.first.pinCodeController.text =
           widget.initialPlant!.pincode ?? '';
-      _addressRows.first.country = widget.initialPlant!.country;
-      _addressRows.first.state = widget.initialPlant!.state;
-      _addressRows.first.city = widget.initialPlant!.city;
+      _addressRows.first.country = widget.initialPlant!.countryName;
+      _addressRows.first.state = widget.initialPlant!.stateName;
+      _addressRows.first.city = widget.initialPlant!.cityName;
+      _showCompanyDropdown = false;
+      _selectedPlantName = widget.initialPlant!.name;
     }
+    _nameController.addListener(_onNameChanged);
     Future.microtask(() => _loadInitialData());
+  }
+
+  void _onNameChanged() {
+    if (_selectedPlantName != null &&
+        _nameController.text != _selectedPlantName) {
+      setState(() {
+        _showCompanyDropdown = true;
+        _selectedPlantName = null;
+      });
+    }
   }
 
   Future<void> _loadInitialData() async {
     setState(() => _isLoadingCompanies = true);
     try {
       final repository = ref.read(companyRepositoryProvider);
-      final response = await repository.getGroupedCompanies(limit: 100);
+      final response = await repository.getGroupedCompanies(limit: 1000);
       _companyGroups = response.data;
 
       final roleAsync = ref.read(userRoleProvider);
@@ -195,7 +210,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
     if (widget.initialPlant != null) {
       success = await ref
           .read(plantNotifierProvider.notifier)
-          .updatePlant(widget.initialPlant!.plantId!, request);
+          .updatePlant(widget.initialPlant!.id, request);
     } else {
       success = await ref
           .read(plantNotifierProvider.notifier)
@@ -298,39 +313,78 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                               Expanded(
                                 child: _buildLabelField(
                                   'PLANT IDENTIFIER',
-                                  AppAutocomplete<String>(
+                                  AppAutocomplete<PlantAutocompleteInfo>(
                                     controller: _nameController,
                                     hint: 'e.g. South Plant Unit A',
-                                    displayStringForOption: (option) => option,
+                                    displayStringForOption: (plant) =>
+                                        plant.plantName,
+                                    subtitleBuilder: (plant) =>
+                                        plant.companyName ?? '',
                                     optionsBuilder: (textEditingValue) async {
                                       if (textEditingValue.text.isEmpty) {
-                                        return const Iterable<String>.empty();
+                                        return const Iterable<
+                                          PlantAutocompleteInfo
+                                        >.empty();
                                       }
-                                      final plants = await ref
+                                      return await ref
                                           .read(plantNotifierProvider.notifier)
                                           .searchPlants(textEditingValue.text);
-                                      return plants
-                                          .map((e) => e.plantName)
-                                          .toList();
+                                    },
+                                    onSelected: (plant) {
+                                      setState(() {
+                                        _showCompanyDropdown = false;
+                                        _selectedPlantName = plant.plantName;
+                                        if (_addressRows.isNotEmpty) {
+                                          final row = _addressRows.first;
+
+                                          // Also select the company and registered address if available
+                                          if (plant.companyId != null) {
+                                            final group = _companyGroups
+                                                .where(
+                                                  (g) => g.addresses.any(
+                                                    (a) =>
+                                                        a.companyId ==
+                                                        plant.companyId,
+                                                  ),
+                                                )
+                                                .firstOrNull;
+                                            if (group != null) {
+                                              _selectedGroup = group;
+                                              row.selectedRegisteredAddress =
+                                                  group.addresses
+                                                      .where(
+                                                        (a) =>
+                                                            a.companyId ==
+                                                            plant.companyId,
+                                                      )
+                                                      .firstOrNull;
+                                            }
+                                          }
+                                        }
+                                      });
                                     },
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 32),
                               Expanded(
-                                child: _buildLabelField(
-                                  'OWNING COMPANY',
-                                  _isLoadingCompanies
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                        )
-                                      : AppDropdown<CompanyGroup>(
-                                          value: _selectedGroup,
-                                          items: _companyGroups,
-                                          hint: 'Select Company',
-                                          itemLabel: (g) => g.name,
-                                          onChanged: _onCompanyChanged,
-                                        ),
+                                child: Visibility(
+                                  visible: _showCompanyDropdown,
+                                  maintainState: true,
+                                  child: _buildLabelField(
+                                    'OWNING COMPANY',
+                                    _isLoadingCompanies
+                                        ? const LinearProgressIndicator(
+                                            minHeight: 2,
+                                          )
+                                        : AppDropdown<CompanyGroup>(
+                                            value: _selectedGroup,
+                                            items: _companyGroups,
+                                            hint: 'Select Company',
+                                            itemLabel: (g) => g.name,
+                                            onChanged: _onCompanyChanged,
+                                          ),
+                                  ),
                                 ),
                               ),
                             ],

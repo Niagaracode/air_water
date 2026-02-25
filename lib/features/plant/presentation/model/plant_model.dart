@@ -11,6 +11,15 @@ class Plant {
   final String? stateName;
   final String? cityName;
   final String? createdAt;
+  final String? addressLine1;
+  final String? addressLine2;
+  final String? addressLine3;
+  final String? pincode;
+  final String? companyCountry;
+  final String? companyState;
+  final String? companyCity;
+  final String? companyAddressLine1;
+  final String? companyPincode;
 
   Plant({
     required this.id,
@@ -23,6 +32,15 @@ class Plant {
     this.stateName,
     this.cityName,
     this.createdAt,
+    this.addressLine1,
+    this.addressLine2,
+    this.addressLine3,
+    this.pincode,
+    this.companyCountry,
+    this.companyState,
+    this.companyCity,
+    this.companyAddressLine1,
+    this.companyPincode,
   });
 
   factory Plant.fromJson(Map<String, dynamic> json) {
@@ -37,6 +55,15 @@ class Plant {
       stateName: json['state_name'] as String?,
       cityName: json['city_name'] as String?,
       createdAt: json['created_at'] as String?,
+      addressLine1: json['address_line_1'] as String?,
+      addressLine2: json['address_line_2'] as String?,
+      addressLine3: json['address_line_3'] as String?,
+      pincode: json['pincode'] as String?,
+      companyCountry: json['company_country'] as String?,
+      companyState: json['company_state'] as String?,
+      companyCity: json['company_city'] as String?,
+      companyAddressLine1: json['company_address_line_1'] as String?,
+      companyPincode: json['company_pincode'] as String?,
     );
   }
 
@@ -58,6 +85,36 @@ class Plant {
   String get statusText => status == 1 ? 'Active' : 'Inactive';
 
   String get fullAddress {
+    final parts = [
+      addressLine1,
+      addressLine2,
+      addressLine3,
+    ].where((p) => p != null && p.isNotEmpty).toList();
+    return parts.isNotEmpty ? parts.join(', ') : '';
+  }
+
+  String get companyFullAddress {
+    final locParts = [
+      companyCity,
+      companyState,
+      companyCountry,
+    ].where((p) => p != null && p.isNotEmpty).toList();
+
+    final locString = locParts.join(', ');
+    final pinSuffix = (companyPincode != null && companyPincode!.isNotEmpty)
+        ? ' - $companyPincode'
+        : '';
+
+    final addressLine = companyAddressLine1 ?? '';
+
+    return (addressLine.isNotEmpty && locString.isNotEmpty)
+        ? '$addressLine, $locString$pinSuffix'
+        : (addressLine.isNotEmpty
+              ? '$addressLine$pinSuffix'
+              : '$locString$pinSuffix');
+  }
+
+  String get plantLocation {
     final parts = [
       cityName,
       stateName,
@@ -237,6 +294,29 @@ class PlantGroupAddress {
       addressLine3,
     ].where((p) => p != null && p.isNotEmpty).toList();
     return parts.isNotEmpty ? parts.join(', ') : '';
+  }
+
+  Plant toPlant() {
+    return Plant(
+      id: plantId ?? 0,
+      name: plantName ?? '',
+      status: status ?? 1,
+      companyId: companyId,
+      companyName: companyName,
+      countryName: country,
+      stateName: state,
+      cityName: city,
+      createdAt: createdAt,
+      addressLine1: addressLine1,
+      addressLine2: addressLine2,
+      addressLine3: addressLine3,
+      pincode: pincode,
+      companyCountry: companyCountry,
+      companyState: companyState,
+      companyCity: companyCity,
+      companyAddressLine1: companyAddressLine1,
+      companyPincode: companyPincode,
+    );
   }
 }
 

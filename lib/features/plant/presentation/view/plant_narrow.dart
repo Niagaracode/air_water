@@ -29,7 +29,7 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
-      ref.read(plantNotifierProvider.notifier).loadMoreGrouped();
+      ref.read(plantNotifierProvider.notifier).loadMore();
     }
   }
 
@@ -72,12 +72,9 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                     const SizedBox(width: 8),
-                    Text(
+                    const Text(
                       'Please wait loading new record',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 11,
-                      ),
+                      style: TextStyle(color: Colors.grey, fontSize: 11),
                     ),
                   ],
                 ),
@@ -110,7 +107,7 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
           onSelected: (PlantAutocompleteInfo selection) {
             _plantSearchController.text = selection.plantName;
             plantNotifier.setSearchName(selection.plantName);
-            plantNotifier.loadGroupedPlants();
+            plantNotifier.loadGroupedPlants(isReload: true);
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             if (_plantSearchController.text != controller.text &&
@@ -126,7 +123,7 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
               onSubmitted: (value) {
                 _plantSearchController.text = value;
                 plantNotifier.setSearchName(value);
-                plantNotifier.loadGroupedPlants();
+                plantNotifier.loadGroupedPlants(isReload: true);
               },
             );
           },
@@ -283,14 +280,14 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey.shade200),
           ),
-          child: Column(
+          child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 12),
+              CircularProgressIndicator(),
+              SizedBox(height: 12),
               Text(
                 'Please wait loading new record',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
             ],
           ),
@@ -298,200 +295,202 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
       );
     }
 
+    // Generate linear list of items (headers and rows)
+    final List<dynamic> items = [];
+    for (int i = 0; i < plantState.groupedPlants.length; i++) {
+      final group = plantState.groupedPlants[i];
+      items.add({'type': 'header', 'group': group, 'index': i + 1});
+
+      for (final addr in group.addresses) {
+        items.add({'type': 'row', 'address': addr, 'group': group});
+      }
+    }
+
     return SliverList.builder(
-      itemCount: plantState.groupedPlants.length + 1,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        if (index == 0) {
-          // Table header
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              ),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: const Row(
-              children: [
-                SizedBox(
-                  width: 40,
-                  child: Text(
-                    'SI.NO',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'City',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'Actions',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-                  ),
-                ),
-              ],
-            ),
+        final item = items[index];
+        final isLast = index == items.length - 1;
+
+        if (item['type'] == 'header') {
+          return _buildGroupHeader(
+            plantState,
+            item['group'] as PlantGroup,
+            item['index'] as int,
+            isLast,
+          );
+        } else {
+          return _buildPlantRow(
+            item['address'] as PlantGroupAddress,
+            item['group'] as PlantGroup,
+            isLast,
           );
         }
-
-        final groupIndex = index - 1;
-        final group = plantState.groupedPlants[groupIndex];
-        final orgCode = group.plantOrganizationCode ?? 'unknown_$groupIndex';
-        final isExpanded = plantState.expandedGroups.contains(orgCode);
-        final isLast = groupIndex == plantState.groupedPlants.length - 1;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              left: BorderSide(color: Colors.grey.shade200),
-              right: BorderSide(color: Colors.grey.shade200),
-              bottom: isLast
-                  ? BorderSide(color: Colors.grey.shade200)
-                  : BorderSide.none,
-            ),
-            borderRadius: isLast
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
-                  )
-                : BorderRadius.zero,
-          ),
-          child: _buildGroupSection(
-            index: groupIndex,
-            group: group,
-            orgCode: orgCode,
-            isExpanded: isExpanded,
-            notifier: notifier,
-          ),
-        );
       },
     );
   }
 
-  Widget _buildGroupSection({
-    required int index,
-    required PlantGroup group,
-    required String orgCode,
-    required bool isExpanded,
-    required PlantNotifier notifier,
-  }) {
-    return Column(
-      children: [
-        if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
-        // Group header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          color: Colors.grey.shade50,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 40,
-                child: Text(
-                  (index + 1).toString().padLeft(2, '0'),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
+  Widget _buildGroupHeader(
+    PlantState state,
+    PlantGroup group,
+    int index,
+    bool isLast,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        border: Border(
+          left: BorderSide(color: Colors.grey.shade200),
+          right: BorderSide(color: Colors.grey.shade200),
+          top: index == 1
+              ? BorderSide(color: Colors.grey.shade200)
+              : BorderSide.none,
+          bottom: BorderSide(color: Colors.grey.shade100),
+        ),
+        borderRadius: index == 1
+            ? const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              )
+            : BorderRadius.zero,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 30,
+            child: Text(
+              index.toString().padLeft(2, '0'),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E40AF),
               ),
-              Expanded(
-                child: Text(
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                const SizedBox(width: 4),
+                Text(
                   group.name,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w600,
                     fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E40AF),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        // Address rows
-        if (isExpanded)
-          ...group.addresses.map((addr) {
-            return Column(
-              children: [
-                Divider(height: 1, color: Colors.grey.shade100),
-                Padding(
+                const SizedBox(width: 6),
+                Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                    horizontal: 5,
+                    vertical: 1,
                   ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 40),
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              addr.plantLocation,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            Text(
-                              '${addr.companyName ?? ''} (${addr.companyCity ?? ''}, ${addr.companyCountry ?? ''})',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.blue,
-                                size: 16,
-                              ),
-                              onPressed: () => _showEditModal(group, addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            const SizedBox(width: 4),
-                            IconButton(
-                              icon: Icon(
-                                Icons.delete,
-                                color: Colors.red.shade400,
-                                size: 16,
-                              ),
-                              onPressed: () => _showDeleteDialog(addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Text(
+                    '${group.addresses.length} SITES',
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2563EB),
+                    ),
                   ),
                 ),
               ],
-            );
-          }),
-      ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  void _showEditModal(PlantGroup group, PlantGroupAddress addr) {
+  Widget _buildPlantRow(
+    PlantGroupAddress plant,
+    PlantGroup group,
+    bool isLast,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          left: BorderSide(color: Colors.grey.shade200),
+          right: BorderSide(color: Colors.grey.shade200),
+          bottom: isLast
+              ? BorderSide(color: Colors.grey.shade200)
+              : BorderSide(color: Colors.grey.shade100),
+        ),
+        borderRadius: isLast
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              )
+            : BorderRadius.zero,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            const SizedBox(width: 30),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(plant.city ?? '—', style: const TextStyle(fontSize: 12)),
+                  Text(
+                    '${plant.companyName ?? '—'} (${plant.country ?? '—'})',
+                    style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                  ),
+                  Text(
+                    plant.fullAddress,
+                    style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue, size: 14),
+                    onPressed: () => _showEditModal(plant.toPlant()),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: Icon(
+                      Icons.delete,
+                      color: Colors.red.shade400,
+                      size: 14,
+                    ),
+                    onPressed: () => _showDeleteDialog(plant.toPlant()),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditModal(Plant plant) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: '',
       pageBuilder: (context, anim1, anim2) {
-        return AddPlantModal(initialPlant: addr);
+        return AddPlantModal(initialPlant: plant);
       },
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
@@ -505,13 +504,13 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
     );
   }
 
-  Future<void> _showDeleteDialog(PlantGroupAddress addr) async {
+  Future<void> _showDeleteDialog(Plant plant) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Plant'),
         content: Text(
-          'Are you sure you want to delete "${addr.plantName}" at "${addr.city}"?',
+          'Are you sure you want to delete "${plant.name}" at "${plant.cityName}"?',
         ),
         actions: [
           TextButton(
@@ -527,10 +526,10 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
       ),
     );
 
-    if (confirmed == true && addr.plantId != null) {
+    if (confirmed == true) {
       final success = await ref
           .read(plantNotifierProvider.notifier)
-          .deletePlant(addr.plantId!);
+          .deletePlant(plant.id);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Plant deleted successfully')),

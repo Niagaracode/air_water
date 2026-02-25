@@ -11,9 +11,17 @@ class PlantRepositoryImpl implements PlantRepository {
   Future<PlantResponse> getPlants({
     int page = 1,
     int limit = 10,
-    String? search,
+    String? name,
+    int? status,
+    String? date,
   }) async {
-    return await _api.getPlants(page: page, limit: limit, search: search);
+    return await _api.getPlants(
+      page: page,
+      limit: limit,
+      name: name,
+      status: status,
+      date: date,
+    );
   }
 
   @override

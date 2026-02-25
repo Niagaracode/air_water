@@ -18,7 +18,6 @@ final plantRepositoryProvider = Provider<PlantRepository>(
 class PlantState {
   final List<Plant> plants;
   final List<PlantGroup> groupedPlants;
-  final Set<String> expandedGroups;
   final bool isLoading;
   final bool isProcessing;
   final bool hasMore;
@@ -30,9 +29,8 @@ class PlantState {
   final String? selectedDate;
 
   PlantState({
-    required this.plants,
+    this.plants = const [],
     this.groupedPlants = const [],
-    this.expandedGroups = const {},
     this.isLoading = false,
     this.isProcessing = false,
     this.hasMore = true,
@@ -47,7 +45,6 @@ class PlantState {
   PlantState copyWith({
     List<Plant>? plants,
     List<PlantGroup>? groupedPlants,
-    Set<String>? expandedGroups,
     bool? isLoading,
     bool? isProcessing,
     bool? hasMore,
@@ -63,7 +60,6 @@ class PlantState {
     return PlantState(
       plants: plants ?? this.plants,
       groupedPlants: groupedPlants ?? this.groupedPlants,
-      expandedGroups: expandedGroups ?? this.expandedGroups,
       isLoading: isLoading ?? this.isLoading,
       isProcessing: isProcessing ?? this.isProcessing,
       hasMore: hasMore ?? this.hasMore,
@@ -85,9 +81,8 @@ class PlantNotifier extends Notifier<PlantState> {
   @override
   PlantState build() {
     ref.keepAlive();
-    // Initial load only. build() is not called again on navigation if keepAlive is active.
     Future.microtask(() => loadGroupedPlants());
-    return PlantState(plants: []);
+    return PlantState();
   }
 
   Future<void> loadGroupedPlants({bool isReload = false}) async {
@@ -107,24 +102,19 @@ class PlantNotifier extends Notifier<PlantState> {
         date: state.selectedDate,
       );
 
-      final expandedGroups = response.data
-          .map((g) => g.plantOrganizationCode!)
-          .toSet();
-
       state = state.copyWith(
         groupedPlants: response.data,
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: 1,
         totalEntries: response.pagination.total,
-        expandedGroups: expandedGroups,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> loadMoreGrouped() async {
+  Future<void> loadMore() async {
     if (state.isLoading || !state.hasMore) return;
 
     state = state.copyWith(isLoading: true);
@@ -139,16 +129,12 @@ class PlantNotifier extends Notifier<PlantState> {
         status: state.selectedStatus,
         date: state.selectedDate,
       );
-      final newExpanded = response.data
-          .map((g) => g.plantOrganizationCode!)
-          .toSet();
 
       state = state.copyWith(
         groupedPlants: [...state.groupedPlants, ...response.data],
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
-        expandedGroups: {...state.expandedGroups, ...newExpanded},
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -157,7 +143,6 @@ class PlantNotifier extends Notifier<PlantState> {
 
   void setSearchName(String name) {
     state = state.copyWith(searchName: name);
-    // Explicit trigger required from UI
   }
 
   void clearFilters() {
@@ -189,7 +174,7 @@ class PlantNotifier extends Notifier<PlantState> {
     } else {
       state = state.copyWith(selectedStatus: status);
     }
-    loadGroupedPlants();
+    loadGroupedPlants(isReload: true);
   }
 
   void setDate(String? date) {
@@ -198,65 +183,7 @@ class PlantNotifier extends Notifier<PlantState> {
     } else {
       state = state.copyWith(selectedDate: date);
     }
-    loadGroupedPlants();
-  }
-
-  void toggleGroup(String orgCode) {
-    final expanded = Set<String>.from(state.expandedGroups);
-    if (expanded.contains(orgCode)) {
-      expanded.clear();
-    } else {
-      expanded.clear();
-      expanded.add(orgCode);
-    }
-    state = state.copyWith(expandedGroups: expanded);
-  }
-
-  Future<void> loadPlants({String? search}) async {
-    if (state.isLoading) return;
-
-    state = state.copyWith(isLoading: true, error: null);
-
-    try {
-      final repository = ref.read(plantRepositoryProvider);
-      final response = await repository.getPlants(
-        page: 1,
-        limit: _limit,
-        search: search,
-      );
-      state = state.copyWith(
-        plants: response.data,
-        isLoading: false,
-        hasMore: response.pagination.page < response.pagination.totalPages,
-        page: 1,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
-
-  Future<void> loadMore({String? search}) async {
-    if (state.isLoading || !state.hasMore) return;
-
-    state = state.copyWith(isLoading: true);
-
-    try {
-      final nextPage = state.page + 1;
-      final repository = ref.read(plantRepositoryProvider);
-      final response = await repository.getPlants(
-        page: nextPage,
-        limit: _limit,
-        search: search,
-      );
-      state = state.copyWith(
-        plants: [...state.plants, ...response.data],
-        isLoading: false,
-        hasMore: response.pagination.page < response.pagination.totalPages,
-        page: nextPage,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
+    loadGroupedPlants(isReload: true);
   }
 
   Future<bool> createPlant(PlantCreateRequest request) async {

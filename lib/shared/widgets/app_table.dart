@@ -57,7 +57,7 @@ class AppTableCell extends StatelessWidget {
     Widget content =
         child ??
         Text(
-          text ?? '—',
+          text ?? '',
           style: GoogleFonts.inter(
             fontSize: fontSize ?? 14,
             fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
@@ -150,7 +150,12 @@ class AppRoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (roleName == null || roleName!.isEmpty) return const AppTableCell('—');
+    if (roleName == null || roleName!.isEmpty) {
+      return Text(
+        '—',
+        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6B7280)),
+      );
+    }
 
     final name = roleName!.trim();
     final upperName = name.toUpperCase().replaceAll('_', ' ');

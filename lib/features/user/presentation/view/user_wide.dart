@@ -63,31 +63,29 @@ class _UserWideState extends ConsumerState<UserWide> {
     }
 
     return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: _buildHeader(state, notifier),
-            ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: _buildHeader(state, notifier),
           ),
-          if (state.isLoading && state.users.isEmpty)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(48.0),
-                child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                ),
-              ),
-            )
-          else if (state.error != null)
-            SliverToBoxAdapter(child: Center(child: Text(state.error!)))
-          else
-            _buildVirtualizedTable(state, notifier),
+          if (!state.isLoading || state.users.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: _buildFixedTableHeader(),
+            ),
+          Expanded(
+            child: state.isLoading && state.users.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+                  )
+                : state.error != null
+                ? Center(child: Text(state.error!))
+                : _buildVirtualizedTable(state, notifier),
+          ),
           if (state.isLoading && state.users.isNotEmpty)
-            const SliverToBoxAdapter(child: AppTableLoadingMore()),
-          const SliverToBoxAdapter(child: SizedBox(height: 48)),
+            const AppTableLoadingMore(),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -234,9 +232,36 @@ class _UserWideState extends ConsumerState<UserWide> {
     );
   }
 
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          AppTableHeaderCell('SI.NO', width: 70),
+          AppTableHeaderCell('User Name', flex: 2),
+          AppTableHeaderCell('Company', flex: 2),
+          AppTableHeaderCell('Phone Number', flex: 2),
+          AppTableHeaderCell('Email', flex: 2),
+          AppTableHeaderCell('Role', flex: 2),
+          AppTableHeaderCell('Status', flex: 1),
+          AppTableHeaderCell('Action', width: 100),
+        ],
+      ),
+    );
+  }
+
   Widget _buildVirtualizedTable(UserState state, UserNotifier notifier) {
     if (state.users.isEmpty) {
-      return const SliverToBoxAdapter(
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24),
         child: AppTableEmptyState(
           icon: Icons.people_outline_rounded,
           title: 'No users found',
@@ -244,63 +269,25 @@ class _UserWideState extends ConsumerState<UserWide> {
       );
     }
 
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      sliver: SliverMainAxisGroup(
-        slivers: [
-          // Table header — navy
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(
-                color: Color(0xFF141E7A),
-                border: Border(
-                  top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                  left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                  right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                ),
-              ),
-              child: Row(
-                children: [
-                  AppTableHeaderCell('SI.NO', width: 70),
-                  AppTableHeaderCell('User Name', flex: 2),
-                  AppTableHeaderCell('Company', flex: 2),
-                  AppTableHeaderCell('Phone Number', flex: 2),
-                  AppTableHeaderCell('Email', flex: 2),
-                  AppTableHeaderCell('Role', flex: 2),
-                  AppTableHeaderCell('Status', flex: 1),
-                  AppTableHeaderCell('Action', width: 100),
-                ],
-              ),
-            ),
-          ),
-          SliverList.builder(
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverList.builder(
             itemCount: state.users.length,
             itemBuilder: (context, index) {
               final user = state.users[index];
               return _buildUserRow(user, index, notifier);
             },
           ),
-          // Bottom cap
-          SliverToBoxAdapter(
-            child: Container(
-              height: 12,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
-                border: Border(
-                  left: BorderSide(color: Color(0xFFE5E7EB)),
-                  right: BorderSide(color: Color(0xFFE5E7EB)),
-                  bottom: BorderSide(color: Color(0xFFE5E7EB)),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+        // Bottom cap
+        const SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
+        ),
+      ],
     );
   }
 

@@ -5,8 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 // Features
 import 'package:air_water/features/user/presentation/model/user_model.dart';
 import 'package:air_water/features/user/presentation/controller/user_provider.dart';
-import 'package:air_water/features/group/presentation/model/group_model.dart';
-import 'package:air_water/features/group/presentation/controller/group_provider.dart';
 
 // Shared
 import 'package:air_water/shared/widgets/app_text_field.dart';
@@ -38,10 +36,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   bool _isLoadingRoles = false;
   int _status = 1;
 
-  // Group selection
-  List<Group> _assignedGroups = [];
-  bool _isLoadingGroups = false;
-
   @override
   void initState() {
     super.initState();
@@ -62,7 +56,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           name: widget.user!.companyName!,
         );
       }
-      _loadUserGroups();
     } else {
       _sessionTimeoutController.text = '86400';
     }
@@ -80,25 +73,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           });
         }
       }
-      ref.read(groupProvider.notifier).loadGroups();
     });
 
     _loadRoles();
-  }
-
-  Future<void> _loadUserGroups() async {
-    if (widget.user == null) return;
-    setState(() => _isLoadingGroups = true);
-    try {
-      final groups = await ref
-          .read(groupProvider.notifier)
-          .getGroupsByUserId(widget.user!.userId);
-      setState(() => _assignedGroups = groups);
-    } catch (e) {
-      debugPrint('Error loading user groups: $e');
-    } finally {
-      if (mounted) setState(() => _isLoadingGroups = false);
-    }
   }
 
   Future<void> _loadRoles() async {
@@ -169,35 +146,18 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           : _mobileController.text,
       status: _status,
       sessionTimeout: int.tryParse(_sessionTimeoutController.text) ?? 86400,
-      assignedPlants: [],
-      assignedTanks: [],
     );
 
     final userNotifier = ref.read(userProvider.notifier);
     bool success;
-    int? userId;
 
     if (widget.user != null) {
       success = await userNotifier.updateUser(widget.user!.userId, request);
-      userId = widget.user!.userId;
     } else {
       success = await userNotifier.createUser(request);
       if (success) {
-        final users = ref.read(userProvider).users;
-        final newUser = users
-            .where((u) => u.username == _usernameController.text)
-            .firstOrNull;
-        userId = newUser?.userId;
+        // ... handled inside notifier if needed, or if we need the ID here later
       }
-    }
-
-    if (success && userId != null) {
-      await ref
-          .read(groupProvider.notifier)
-          .assignGroupsToUser(
-            userId,
-            _assignedGroups.map((g) => g.id).toList(),
-          );
     }
 
     if (success && mounted) {
@@ -417,65 +377,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                           ),
                           const SizedBox(height: 48),
 
-                          if (widget.user != null) ...[
-                            // Section: Access Groups
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.group_work_rounded,
-                                      size: 18,
-                                      color: Color(0xFF141E7A),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'ACCESS GROUPS',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF141E7A),
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    final groups = ref
-                                        .read(groupProvider)
-                                        .groups;
-                                    _showGroupSelection(groups);
-                                  },
-                                  icon: const Icon(
-                                    Icons.add_circle_outline_rounded,
-                                    size: 16,
-                                  ),
-                                  label: Text(
-                                    'ASSIGN GROUP',
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF141E7A),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Divider(
-                              height: 32,
-                              thickness: 1,
-                              color: Color(0xFFF3F4F6),
-                            ),
-                            _buildGroupSelection(),
-                            const SizedBox(height: 40),
-                          ],
-
                           // Status Selector
                           Container(
                             padding: const EdgeInsets.all(24),
@@ -670,167 +571,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGroupSelection() {
-    if (_isLoadingGroups) return const LinearProgressIndicator(minHeight: 2);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
-      ),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          if (_assignedGroups.isEmpty)
-            Text(
-              'No groups assigned yet.',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: const Color(0xFF9CA3AF),
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ..._assignedGroups.map(
-            (g) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF141E7A).withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFF141E7A).withValues(alpha: 0.1),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    g.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF141E7A),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  InkWell(
-                    onTap: () => setState(
-                      () => _assignedGroups.removeWhere((x) => x.id == g.id),
-                    ),
-                    child: const Icon(
-                      Icons.close_rounded,
-                      size: 14,
-                      color: Color(0xFF141E7A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showGroupSelection(List<Group> allGroups) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Assign Access Groups',
-                style: GoogleFonts.outfit(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Select the groups this user should belong to.',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: const Color(0xFF6B7280),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Flexible(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: allGroups.length,
-                  separatorBuilder: (context, index) =>
-                      const Divider(height: 1, color: Color(0xFFF3F4F6)),
-                  itemBuilder: (context, i) {
-                    final g = allGroups[i];
-                    final isSelected = _assignedGroups.any((x) => x.id == g.id);
-                    return ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        g.name,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                        ),
-                      ),
-                      trailing: Checkbox(
-                        value: isSelected,
-                        activeColor: const Color(0xFF141E7A),
-                        onChanged: (v) {
-                          setState(() {
-                            if (isSelected) {
-                              _assignedGroups.removeWhere((x) => x.id == g.id);
-                            } else {
-                              _assignedGroups.add(g);
-                            }
-                          });
-                        },
-                      ),
-                      onTap: () {
-                        setState(() {
-                          if (isSelected) {
-                            _assignedGroups.removeWhere((x) => x.id == g.id);
-                          } else {
-                            _assignedGroups.add(g);
-                          }
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF141E7A),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('DONE'),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

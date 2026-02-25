@@ -50,23 +50,36 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     return Scaffold(
       body: Stack(
         children: [
-          CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SliverPadding(
+          Column(
+            children: [
+              Padding(
                 padding: const EdgeInsets.all(24.0),
-                sliver: SliverToBoxAdapter(
-                  child: _buildHeader(companyState, companyNotifier),
+                child: _buildHeader(companyState, companyNotifier),
+              ),
+              if (!companyState.isLoading ||
+                  companyState.groupedCompanies.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: _buildFixedTableHeader(),
+                ),
+              Expanded(
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      sliver: _buildVirtualizedTable(
+                        companyState,
+                        companyNotifier,
+                      ),
+                    ),
+                    if (companyState.isLoading &&
+                        companyState.groupedCompanies.isNotEmpty)
+                      const SliverToBoxAdapter(child: AppTableLoadingMore()),
+                    const SliverToBoxAdapter(child: SizedBox(height: 48)),
+                  ],
                 ),
               ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                sliver: _buildVirtualizedTable(companyState, companyNotifier),
-              ),
-              if (companyState.isLoading &&
-                  companyState.groupedCompanies.isNotEmpty)
-                const SliverToBoxAdapter(child: AppTableLoadingMore()),
-              const SliverToBoxAdapter(child: SizedBox(height: 48)),
             ],
           ),
           if (companyState.isProcessing)
@@ -271,6 +284,32 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     );
   }
 
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          AppTableHeaderCell('SI.NO', width: 70),
+          AppTableHeaderCell('City', flex: 2),
+          AppTableHeaderCell('Date', flex: 2),
+          AppTableHeaderCell('State', flex: 2),
+          AppTableHeaderCell('Country', flex: 2),
+          AppTableHeaderCell('Status', flex: 2),
+          AppTableHeaderCell('Address', flex: 3),
+          AppTableHeaderCell('Actions', width: 100),
+        ],
+      ),
+    );
+  }
+
   Widget _buildVirtualizedTable(CompanyState state, CompanyNotifier notifier) {
     if (state.groupedCompanies.isEmpty && !state.isLoading) {
       return const SliverToBoxAdapter(
@@ -282,39 +321,11 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     }
 
     return SliverList.builder(
-      itemCount: state.groupedCompanies.length + 1,
+      itemCount: state.groupedCompanies.length,
       itemBuilder: (context, index) {
-        if (index == 0) {
-          // Table header — navy
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: const BoxDecoration(
-              color: Color(0xFF141E7A),
-              border: Border(
-                top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-              ),
-            ),
-            child: Row(
-              children: [
-                AppTableHeaderCell('SI.NO', width: 70),
-                AppTableHeaderCell('City', flex: 2),
-                AppTableHeaderCell('Date', flex: 2),
-                AppTableHeaderCell('State', flex: 2),
-                AppTableHeaderCell('Country', flex: 2),
-                AppTableHeaderCell('Status', flex: 2),
-                AppTableHeaderCell('Address', flex: 3),
-                AppTableHeaderCell('Actions', width: 100),
-              ],
-            ),
-          );
-        }
-
-        final groupIndex = index - 1;
-        final group = state.groupedCompanies[groupIndex];
+        final group = state.groupedCompanies[index];
         final isExpanded = state.expandedGroups.contains(group.name);
-        final isLast = groupIndex == state.groupedCompanies.length - 1;
+        final isLast = index == state.groupedCompanies.length - 1;
 
         return Container(
           decoration: BoxDecoration(
@@ -334,7 +345,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                 : BorderRadius.zero,
           ),
           child: _buildGroupSection(
-            index: groupIndex,
+            index: index,
             group: group,
             isExpanded: isExpanded,
             notifier: notifier,

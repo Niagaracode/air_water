@@ -6,6 +6,7 @@ class AppAutocomplete<T extends Object> extends StatefulWidget {
   final String hint;
   final Future<Iterable<T>> Function(TextEditingValue) optionsBuilder;
   final String Function(T) displayStringForOption;
+  final String Function(T)? subtitleBuilder;
   final void Function(T)? onSelected;
 
   const AppAutocomplete({
@@ -14,6 +15,7 @@ class AppAutocomplete<T extends Object> extends StatefulWidget {
     required this.hint,
     required this.optionsBuilder,
     required this.displayStringForOption,
+    this.subtitleBuilder,
     this.onSelected,
   });
 
@@ -115,13 +117,32 @@ class _AppAutocompleteState<T extends Object>
                           horizontal: 16,
                           vertical: 12,
                         ),
-                        child: Text(
-                          widget.displayStringForOption(option),
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: const Color(0xFF374151),
-                            fontWeight: FontWeight.w500,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              widget.displayStringForOption(option),
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                color: const Color(0xFF374151),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (widget.subtitleBuilder != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                widget.subtitleBuilder!(option),
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: const Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     );

@@ -9,14 +9,22 @@ class PlantApi {
   Future<PlantResponse> getPlants({
     int page = 1,
     int limit = 10,
-    String? search,
+    String? name,
+    int? status,
+    String? date,
   }) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
-    if (search != null && search.isNotEmpty) {
-      query['search'] = search;
+    if (name != null && name.isNotEmpty) {
+      query['name'] = name;
+    }
+    if (status != null) {
+      query['status'] = status;
+    }
+    if (date != null && date.isNotEmpty) {
+      query['date'] = date;
     }
 
-    final response = await _client.get('/plants/grouped', query: query);
+    final response = await _client.get('/plants', query: query);
     return PlantResponse.fromJson(Map<String, dynamic>.from(response.data));
   }
 

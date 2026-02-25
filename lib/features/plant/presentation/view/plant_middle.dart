@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:air_water/shared/widgets/app_text_field.dart';
 import 'package:air_water/shared/widgets/app_dropdown.dart';
 import 'package:air_water/shared/widgets/app_date_picker.dart';
-import '../../../../core/app_theme/app_theme.dart';
 import '../controller/plant_provider.dart';
 import '../widgets/add_plant_modal.dart';
 import '../model/plant_model.dart';
@@ -29,7 +28,7 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
-      ref.read(plantNotifierProvider.notifier).loadMoreGrouped();
+      ref.read(plantNotifierProvider.notifier).loadMore();
     }
   }
 
@@ -82,10 +81,10 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                     const SizedBox(width: 8),
-                    Text(
+                    const Text(
                       'Please wait loading new record',
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: Colors.grey,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -120,7 +119,7 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
             style: TextStyle(color: Colors.grey, fontSize: 13),
           ),
           const SizedBox(height: 24),
-          _buildFilters(notifier),
+          _buildFilters(notifier, state),
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
@@ -162,14 +161,14 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.grey.shade200),
           ),
-          child: Column(
+          child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 12),
+              CircularProgressIndicator(),
+              SizedBox(height: 12),
               Text(
                 'Please wait loading new record',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
             ],
           ),
@@ -177,127 +176,322 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
       );
     }
 
+    // Generate linear list of items (headers and rows)
+    final List<dynamic> items = [];
+    for (int i = 0; i < state.groupedPlants.length; i++) {
+      final group = state.groupedPlants[i];
+      items.add({'type': 'header', 'group': group, 'index': i + 1});
+
+      for (final addr in group.addresses) {
+        items.add({'type': 'row', 'address': addr, 'group': group});
+      }
+    }
+
     return SliverList.builder(
-      itemCount: state.groupedPlants.length + 1,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        if (index == 0) {
-          // Table header
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
+        final item = items[index];
+        final isLast = index == items.length - 1;
+
+        if (item['type'] == 'header') {
+          return _buildGroupHeader(
+            state,
+            item['group'] as PlantGroup,
+            item['index'] as int,
+            isLast,
+          );
+        } else {
+          return _buildPlantRow(
+            item['address'] as PlantGroupAddress,
+            item['group'] as PlantGroup,
+            isLast,
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildGroupHeader(
+    PlantState state,
+    PlantGroup group,
+    int index,
+    bool isLast,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        border: Border(
+          left: BorderSide(color: Colors.grey.shade200),
+          right: BorderSide(color: Colors.grey.shade200),
+          top: index == 1
+              ? BorderSide(color: Colors.grey.shade200)
+              : BorderSide.none,
+          bottom: BorderSide(color: Colors.grey.shade100),
+        ),
+        borderRadius: index == 1
+            ? const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
+              )
+            : BorderRadius.zero,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 40,
+            child: Text(
+              index.toString().padLeft(2, '0'),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E40AF),
               ),
-              border: Border.all(color: Colors.grey.shade200),
             ),
-            child: const Row(
+          ),
+          Expanded(
+            child: Row(
               children: [
-                SizedBox(
-                  width: 50,
-                  child: Text(
-                    'SI.NO',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                const SizedBox(width: 4),
+                Text(
+                  group.name,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E40AF),
                   ),
                 ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'City',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Date',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
                   child: Text(
-                    'Company',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'State',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Country',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'Status',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'Address',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    '${group.addresses.length} SITES',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2563EB),
+                    ),
                   ),
                 ),
               ],
             ),
-          );
-        }
+          ),
+        ],
+      ),
+    );
+  }
 
-        final groupIndex = index - 1;
-        final group = state.groupedPlants[groupIndex];
-        final orgCode = group.plantOrganizationCode ?? 'unknown_$groupIndex';
-        final isExpanded = state.expandedGroups.contains(orgCode);
-        final isLast = groupIndex == state.groupedPlants.length - 1;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              left: BorderSide(color: Colors.grey.shade200),
-              right: BorderSide(color: Colors.grey.shade200),
-              bottom: isLast
-                  ? BorderSide(color: Colors.grey.shade200)
-                  : BorderSide.none,
+  Widget _buildPlantRow(
+    PlantGroupAddress plant,
+    PlantGroup group,
+    bool isLast,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          left: BorderSide(color: Colors.grey.shade200),
+          right: BorderSide(color: Colors.grey.shade200),
+          bottom: isLast
+              ? BorderSide(color: Colors.grey.shade200)
+              : BorderSide(color: Colors.grey.shade100),
+        ),
+        borderRadius: isLast
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              )
+            : BorderRadius.zero,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            const SizedBox(width: 40),
+            Expanded(
+              flex: 2,
+              child: Text(
+                plant.city ?? '—',
+                style: const TextStyle(fontSize: 12),
+              ),
             ),
-            borderRadius: isLast
-                ? const BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12),
-                  )
-                : BorderRadius.zero,
-          ),
-          child: _buildGroupSection(
-            index: groupIndex,
-            group: group,
-            orgCode: orgCode,
-            isExpanded: isExpanded,
-            notifier: notifier,
-          ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                plant.createdAt != null
+                    ? (plant.createdAt!.contains('T')
+                          ? plant.createdAt!.split('T').first
+                          : plant.createdAt!)
+                    : '—',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    plant.companyName ?? '—',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                  if (plant.companyFullAddress.isNotEmpty)
+                    Text(
+                      plant.companyFullAddress,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                plant.state ?? '—',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                plant.country ?? '—',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+            Expanded(
+              flex: 1,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    color: plant.status == 1 ? Colors.green : Colors.grey,
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    plant.status == 1 ? 'Active' : 'Inactive',
+                    style: TextStyle(
+                      color: plant.status == 1 ? Colors.green : Colors.grey,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(
+                plant.fullAddress,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 80,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      color: Color(0xFF2563EB),
+                      size: 16,
+                    ),
+                    onPressed: () => _showEditModal(plant.toPlant()),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Color(0xFFDC2626),
+                      size: 16,
+                    ),
+                    onPressed: () => _showDeleteDialog(plant.toPlant()),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditModal(Plant plant) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      pageBuilder: (context, anim1, anim2) =>
+          AddPlantModal(initialPlant: plant),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
+          child: child,
         );
       },
     );
   }
 
-  Widget _buildFilters(PlantNotifier notifier) {
-    final state = ref.watch(plantNotifierProvider);
+  Future<void> _showDeleteDialog(Plant plant) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Plant'),
+        content: Text('Are you sure you want to delete "${plant.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('DELETE'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await ref
+          .read(plantNotifierProvider.notifier)
+          .deletePlant(plant.id);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Plant deleted successfully')),
+        );
+      }
+    }
+  }
+
+  Widget _buildFilters(PlantNotifier notifier, PlantState state) {
     return Wrap(
       spacing: 12,
       runSpacing: 12,
       children: [
         SizedBox(
-          width: 250, // Slightly wider for middle
+          width: 250,
           child: RawAutocomplete<PlantAutocompleteInfo>(
             optionsBuilder: (TextEditingValue textEditingValue) async {
               if (textEditingValue.text.isEmpty) {
@@ -310,7 +504,7 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
             onSelected: (PlantAutocompleteInfo selection) {
               _plantSearchController.text = selection.plantName;
               notifier.setSearchName(selection.plantName);
-              notifier.loadGroupedPlants();
+              notifier.loadGroupedPlants(isReload: true);
             },
             fieldViewBuilder:
                 (context, controller, focusNode, onFieldSubmitted) {
@@ -327,7 +521,7 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
                     onSubmitted: (value) {
                       _plantSearchController.text = value;
                       notifier.setSearchName(value);
-                      notifier.loadGroupedPlants();
+                      notifier.loadGroupedPlants(isReload: true);
                     },
                   );
                 },
@@ -431,162 +625,6 @@ class _PlantMiddleState extends ConsumerState<PlantMiddle> {
           icon: const Icon(Icons.add, size: 16),
           label: const Text('ADD'),
         ),
-      ],
-    );
-  }
-
-  Widget _buildGroupSection({
-    required int index,
-    required PlantGroup group,
-    required String orgCode,
-    required bool isExpanded,
-    required PlantNotifier notifier,
-  }) {
-    return Column(
-      children: [
-        if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
-        // Group header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: Colors.grey.shade50,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 50,
-                child: Text(
-                  (index + 1).toString().padLeft(2, '0'),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  group.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Address rows
-        if (isExpanded)
-          ...group.addresses.map((addr) {
-            return Column(
-              children: [
-                Divider(height: 1, color: Colors.grey.shade100),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 50),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.city ?? '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.createdAt?.split('T').first ?? '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              addr.companyName ?? '',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                            Text(
-                              addr.companyFullAddress,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.state ?? '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.country ?? '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: addr.status == 1
-                                  ? Colors.green
-                                  : Colors.grey,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              addr.statusText,
-                              style: TextStyle(
-                                color: addr.status == 1
-                                    ? Colors.green
-                                    : Colors.grey,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              addr.fullAddress,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            Text(
-                              addr.plantLocation,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          }),
       ],
     );
   }

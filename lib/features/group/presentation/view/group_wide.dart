@@ -61,39 +61,32 @@ class _GroupWideState extends ConsumerState<GroupWide> {
     }
 
     return Scaffold(
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: _buildHeader(state, notifier),
-            ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: _buildHeader(state, notifier),
           ),
-          if (state.isLoading && state.plantUserCounts.isEmpty)
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(48.0),
-                child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                ),
-              ),
-            )
-          else if (state.error != null)
-            SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(40.0),
-                  child: Text(
-                    state.error!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ),
-              ),
-            )
-          else
-            _buildVirtualizedTable(state, notifier),
-          const SliverToBoxAdapter(child: SizedBox(height: 48)),
+          if (!state.isLoading || state.plantUserCounts.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: _buildFixedTableHeader(),
+            ),
+          Expanded(
+            child: state.isLoading && state.plantUserCounts.isEmpty
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+                  )
+                : state.error != null
+                ? Center(
+                    child: Text(
+                      state.error!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  )
+                : _buildVirtualizedTable(state, notifier),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -201,9 +194,34 @@ class _GroupWideState extends ConsumerState<GroupWide> {
     );
   }
 
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          const AppTableHeaderCell('SI.NO', width: 60),
+          const AppTableHeaderCell('Plant Name / Location', flex: 3),
+          const AppTableHeaderCell('Assigned Groups', flex: 3),
+          const AppTableHeaderCell('Tanks', width: 80),
+          const AppTableHeaderCell('Total Users', width: 100),
+          const AppTableHeaderCell('Action', width: 80),
+        ],
+      ),
+    );
+  }
+
   Widget _buildVirtualizedTable(GroupState state, GroupNotifier notifier) {
     if (state.plantUserCounts.isEmpty) {
-      return const SliverToBoxAdapter(
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24),
         child: AppTableEmptyState(
           icon: Icons.group_work_outlined,
           title: 'No groups found',
@@ -211,45 +229,25 @@ class _GroupWideState extends ConsumerState<GroupWide> {
       );
     }
 
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      sliver: SliverMainAxisGroup(
-        slivers: [
-          // Table header — navy
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: const BoxDecoration(
-                color: Color(0xFF141E7A),
-                border: Border(
-                  top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                  left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                  right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const AppTableHeaderCell('SI.NO', width: 60),
-                  const AppTableHeaderCell('Plant Name / Location', flex: 3),
-                  const AppTableHeaderCell('Assigned Groups', flex: 3),
-                  const AppTableHeaderCell('Tanks', width: 80),
-                  const AppTableHeaderCell('Total Users', width: 100),
-                  const AppTableHeaderCell('Action', width: 80),
-                ],
-              ),
-            ),
-          ),
-          SliverList.builder(
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverList.builder(
             itemCount: state.plantUserCounts.length,
             itemBuilder: (context, index) {
               final plant = state.plantUserCounts[index];
               return _buildPlantRow(plant, index, notifier);
             },
           ),
-          // Bottom cap
-          const SliverToBoxAdapter(child: AppTableBottomCap()),
-        ],
-      ),
+        ),
+        // Bottom cap
+        const SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
+        ),
+      ],
     );
   }
 

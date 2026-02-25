@@ -6,27 +6,36 @@ import '../view/product_edit_view.dart';
 
 class ProductTable extends StatelessWidget {
   final List<Product> list;
-  const ProductTable(this.list, {super.key});
+  final bool showHeader;
+  const ProductTable(this.list, {super.key, this.showHeader = true});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         // Table header — navy
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: const BoxDecoration(color: Color(0xFF141E7A)),
-          child: Row(
-            children: [
-              const AppTableHeaderCell('SI.NO', width: 60),
-              const AppTableHeaderCell('Product Name', flex: 2),
-              const AppTableHeaderCell('Description', flex: 3),
-              const AppTableHeaderCell('SCM / M3', flex: 1),
-              const AppTableHeaderCell('Specific Gravity', flex: 1),
-              const AppTableHeaderCell('Action', width: 80),
-            ],
+        if (showHeader)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: const BoxDecoration(
+              color: Color(0xFF141E7A),
+              border: Border(
+                top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+              ),
+            ),
+            child: Row(
+              children: [
+                const AppTableHeaderCell('SI.NO', width: 60),
+                const AppTableHeaderCell('Product Name', flex: 2),
+                const AppTableHeaderCell('Description', flex: 3),
+                const AppTableHeaderCell('SCM / M3', flex: 1),
+                const AppTableHeaderCell('Specific Gravity', flex: 1),
+                const AppTableHeaderCell('Action', width: 80),
+              ],
+            ),
           ),
-        ),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -46,8 +55,8 @@ class ProductTable extends StatelessWidget {
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(
-          left: BorderSide(color: Color(0xFFE5E7EB)),
-          right: BorderSide(color: Color(0xFFE5E7EB)),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
           bottom: BorderSide(color: Color(0xFFF3F4F6)),
         ),
       ),
