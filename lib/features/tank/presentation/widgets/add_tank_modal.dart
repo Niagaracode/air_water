@@ -438,7 +438,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8EAF6),
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Row(

@@ -295,15 +295,15 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info, color: Theme.of(context).colorScheme.surface, size: 20),
+                          Icon(Icons.info, color: Theme.of(context).primaryColor, size: 20),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               widget.initialPlant != null
                                   ? 'Update The Plant Details And Locations.'
                                   : 'Enter The Plant Name And Specify Registered Locations.',
-                              style: const TextStyle(
-                                color: Color(0xFF1B1B4B),
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
                                 fontSize: 13,
                               ),
                             ),

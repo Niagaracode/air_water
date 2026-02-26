@@ -203,12 +203,12 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info, color:  Theme.of(context).colorScheme.surface, size: 20),
+                      Icon(Icons.info, color:  Theme.of(context).primaryColor, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Enter The Company Name, And Specify Multiple Addresses.',
-                          style: TextStyle(color:  Theme.of(context).colorScheme.surface, fontSize: 13),
+                          style: TextStyle(color:  Theme.of(context).primaryColor, fontSize: 13),
                         ),
                       ),
                     ],

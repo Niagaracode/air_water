@@ -12,7 +12,7 @@ class ProductTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.only(left: 25, right: 25, top: 20, bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -32,8 +32,8 @@ class ProductTable extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border.all(
-                  color: Colors.grey.shade300, // outer border
-                  width: 1,
+                  color: Colors.grey.shade200,
+                  width: 2.0,
                 ),
                 borderRadius: BorderRadius.circular(5),
               ),
@@ -44,10 +44,10 @@ class ProductTable extends StatelessWidget {
                 ),
                 child: DataTable2(
                   columnSpacing: 30,
-                  headingRowHeight: 45,
+                  headingRowHeight: 40,
                   dataRowHeight: 50,
 
-                  dividerThickness: 0.5,
+                  dividerThickness: 0.3,
                   border: TableBorder(
                     horizontalInside: BorderSide(
                       color: Colors.grey.shade50,
