@@ -279,3 +279,8 @@ final groupRepositoryProvider = Provider<GroupRepository>((ref) {
 final groupProvider = NotifierProvider<GroupNotifier, GroupState>(
   GroupNotifier.new,
 );
+
+final plantGroupDetailsProvider = FutureProvider.family<PlantGroupDetails, int>((ref, plantId) async {
+  final repository = ref.watch(groupRepositoryProvider);
+  return repository.getPlantGroupDetails(plantId);
+});

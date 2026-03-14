@@ -14,7 +14,7 @@ abstract class UserRepository {
     int? status,
     int? plantId,
     int? tankId,
-    List<int>? excludePlantIds,
+    List<Map<String, dynamic>>? excludeAssignments,
     String? groupName,
   });
 

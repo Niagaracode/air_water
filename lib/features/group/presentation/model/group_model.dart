@@ -198,3 +198,156 @@ class PlantUserCount {
     );
   }
 }
+
+class PlantDetailsDevice {
+  final int id;
+  final String deviceIdentifier;
+  final String macAddress;
+  final int tankId;
+
+  PlantDetailsDevice({
+    required this.id,
+    required this.deviceIdentifier,
+    required this.macAddress,
+    required this.tankId,
+  });
+
+  factory PlantDetailsDevice.fromJson(Map<String, dynamic> json) {
+    return PlantDetailsDevice(
+      id: json['id'] as int,
+      deviceIdentifier: json['device_identifier'] as String,
+      macAddress: json['mac_address'] as String,
+      tankId: json['tank_id'] as int,
+    );
+  }
+}
+
+class PlantDetailsTank {
+  final int id;
+  final String tankNumber;
+  final num? capacity;
+  final String? tankType;
+  final String? product;
+  final List<PlantDetailsDevice> devices;
+
+  PlantDetailsTank({
+    required this.id,
+    required this.tankNumber,
+    this.capacity,
+    this.tankType,
+    this.product,
+    this.devices = const [],
+  });
+
+  factory PlantDetailsTank.fromJson(Map<String, dynamic> json) {
+    return PlantDetailsTank(
+      id: json['id'] as int,
+      tankNumber: json['tank_number'] as String,
+      capacity: json['capacity'] as num?,
+      tankType: json['tank_type'] as String?,
+      product: json['product'] as String?,
+      devices: json['devices'] != null
+          ? (json['devices'] as List)
+              .map((i) => PlantDetailsDevice.fromJson(i as Map<String, dynamic>))
+              .toList()
+          : [],
+    );
+  }
+}
+
+class PlantDetailsUser {
+  final int userId;
+  final String username;
+  final String? firstName;
+  final String? lastName;
+  final String? email;
+  final String? roleName;
+  final int groupId;
+  final String groupName;
+  final bool hasAllTanks;
+  final List<int> tankIds;
+
+  PlantDetailsUser({
+    required this.userId,
+    required this.username,
+    this.firstName,
+    this.lastName,
+    this.email,
+    this.roleName,
+    required this.groupId,
+    required this.groupName,
+    required this.hasAllTanks,
+    this.tankIds = const [],
+  });
+
+  factory PlantDetailsUser.fromJson(Map<String, dynamic> json) {
+    return PlantDetailsUser(
+      userId: json['user_id'] as int,
+      username: json['username'] as String,
+      firstName: json['first_name'] as String?,
+      lastName: json['last_name'] as String?,
+      email: json['email'] as String?,
+      roleName: json['role_name'] as String?,
+      groupId: json['group_id'] as int,
+      groupName: json['group_name'] as String,
+      hasAllTanks: json['has_all_tanks'] == true,
+      tankIds: json['tank_ids'] != null
+          ? (json['tank_ids'] as List).map((e) => e as int).toList()
+          : [],
+    );
+  }
+}
+
+class PlantDetailsInfo {
+  final int id;
+  final String name;
+  final String? plantOrganizationCode;
+  final String? location;
+  final String? companyDetails;
+
+  PlantDetailsInfo({
+    required this.id,
+    required this.name,
+    this.plantOrganizationCode,
+    this.location,
+    this.companyDetails,
+  });
+
+  factory PlantDetailsInfo.fromJson(Map<String, dynamic> json) {
+    return PlantDetailsInfo(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      plantOrganizationCode: json['plant_organization_code'] as String?,
+      location: json['location'] as String?,
+      companyDetails: json['company_details'] as String?,
+    );
+  }
+}
+
+class PlantGroupDetails {
+  final PlantDetailsInfo plant;
+  final List<PlantDetailsTank> tanks;
+  final List<PlantDetailsUser> users;
+
+  PlantGroupDetails({
+    required this.plant,
+    required this.tanks,
+    required this.users,
+  });
+
+  factory PlantGroupDetails.fromJson(Map<String, dynamic> json) {
+    return PlantGroupDetails(
+      plant: PlantDetailsInfo.fromJson(json['plant'] as Map<String, dynamic>),
+      tanks: json['tanks'] != null
+          ? (json['tanks'] as List)
+              .map((i) => PlantDetailsTank.fromJson(i as Map<String, dynamic>))
+              .toList()
+          : [],
+      users: json['users'] != null
+          ? (json['users'] as List)
+              .map((i) => PlantDetailsUser.fromJson(i as Map<String, dynamic>))
+              .toList()
+          : [],
+    );
+  }
+}

@@ -73,4 +73,9 @@ class GroupRepositoryImpl implements GroupRepository {
   Future<List<PlantUserCount>> getPlantsWithUserCounts({String? name}) {
     return _api.getPlantsWithUserCounts(name: name);
   }
+
+  @override
+  Future<PlantGroupDetails> getPlantGroupDetails(int plantId) {
+    return _api.getPlantGroupDetails(plantId);
+  }
 }

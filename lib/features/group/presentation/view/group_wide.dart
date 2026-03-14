@@ -7,6 +7,7 @@ import '../controller/group_provider.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
 import '../model/group_model.dart';
 import '../widgets/add_group_modal.dart';
+import 'plant_group_detail_view.dart';
 
 class GroupWide extends ConsumerStatefulWidget {
   const GroupWide({super.key});
@@ -343,7 +344,16 @@ class _GroupWideState extends ConsumerState<GroupWide> {
                 icon: Icons.visibility_outlined,
                 color: const Color(0xFF16A34A),
                 bg: const Color(0xFFDCFCE7),
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PlantGroupDetailView(
+                        plantId: plant.plantId,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),

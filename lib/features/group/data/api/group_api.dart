@@ -76,4 +76,9 @@ class GroupApi {
         .map((i) => PlantUserCount.fromJson(i as Map<String, dynamic>))
         .toList();
   }
+
+  Future<PlantGroupDetails> getPlantGroupDetails(int plantId) async {
+    final response = await _client.get('/groups/plants/$plantId/details');
+    return PlantGroupDetails.fromJson(response.data['data'] as Map<String, dynamic>);
+  }
 }

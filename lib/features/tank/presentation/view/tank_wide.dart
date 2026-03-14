@@ -48,13 +48,17 @@ class _TankWideState extends ConsumerState<TankWide> {
 
   Widget _buildHeader(TankState state, TankNotifier notifier) {
     return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 24),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +103,7 @@ class _TankWideState extends ConsumerState<TankWide> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Text(
             'FILTER',
             style: GoogleFonts.inter(
@@ -109,13 +113,13 @@ class _TankWideState extends ConsumerState<TankWide> {
               letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           _buildFilterRow(state, notifier),
           if (state.error != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             _buildErrorBanner(state.error!),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
             child: Text(
@@ -126,6 +130,33 @@ class _TankWideState extends ConsumerState<TankWide> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 52,
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          AppTableHeaderCell('SI.NO', width: 60),
+          AppTableHeaderCell('Tank Number', flex: 2),
+          AppTableHeaderCell('Type', flex: 2),
+          AppTableHeaderCell('Product', flex: 2),
+          AppTableHeaderCell('Unit', flex: 1),
+          AppTableHeaderCell('H / W / Dish', flex: 2),
+          AppTableHeaderCell('Status', flex: 1),
+          AppTableHeaderCell('Actions', width: 80),
         ],
       ),
     );
@@ -311,105 +342,77 @@ class _TankWideState extends ConsumerState<TankWide> {
     }
 
     return Scaffold(
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: _buildHeader(state, notifier),
-          ),
-          if (!state.isLoading || state.groupedTanks.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: _buildFixedTableHeader(),
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // 1. Header & Filters
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: _buildHeader(state, notifier),
             ),
-          Expanded(
-            child: state.isLoading && state.groupedTanks.isEmpty
-                ? _buildInitialLoader()
-                : _buildVirtualizedTable(state, notifier),
           ),
+
+          // 2. Fixed Table Header
+          if (state.groupedTanks.isNotEmpty || !state.isLoading)
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _SliverHeaderDelegate(
+                height: 52,
+                child: Container(
+                  color: const Color(0xFFF9FAFB), // Match body bg
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _buildFixedTableHeader(),
+                ),
+              ),
+            ),
+
+          // 3. Virtualized Table Content
+          if (state.isLoading && state.groupedTanks.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: AppTableInitialLoader(),
+            )
+          else if (state.groupedTanks.isEmpty)
+            const SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              sliver: SliverToBoxAdapter(
+                child: AppTableEmptyState(
+                  icon: Icons.water_outlined,
+                  title: 'No tanks found',
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              sliver: SliverList.builder(
+                itemCount: state.groupedTanks.length,
+                itemBuilder: (context, index) {
+                  return _buildGroupSection(
+                    index,
+                    state.groupedTanks[index],
+                    notifier,
+                  );
+                },
+              ),
+            ),
+
+          // 4. Loading More Overlay
           if (state.isLoading && state.groupedTanks.isNotEmpty)
-            const AppTableLoadingMore(),
-          const SizedBox(height: 24),
+            const SliverToBoxAdapter(child: AppTableLoadingMore()),
+
+          // 5. Bottom Cap & Spacing
+          if (state.groupedTanks.isNotEmpty)
+            const SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
+            ),
+
+          const SliverToBoxAdapter(child: SizedBox(height: 48)),
         ],
       ),
-    );
-  }
-
-  Widget _buildInitialLoader() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(color: Color(0xFF141E7A)),
-          SizedBox(height: 16),
-          Text(
-            'Loading records...',
-            style: TextStyle(color: Color(0xFF6B7280), fontSize: 14),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFixedTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        border: Border(
-          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          AppTableHeaderCell('SI.NO', width: 60),
-          AppTableHeaderCell('Tank Number', flex: 2),
-          AppTableHeaderCell('Type', flex: 2),
-          AppTableHeaderCell('Product', flex: 2),
-          AppTableHeaderCell('Unit', flex: 1),
-          AppTableHeaderCell('H / W / Dish', flex: 2),
-          AppTableHeaderCell('Status', flex: 1),
-          AppTableHeaderCell('Actions', width: 80),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVirtualizedTable(TankState state, TankNotifier notifier) {
-    if (state.groupedTanks.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24),
-        child: AppTableEmptyState(
-          icon: Icons.water_outlined,
-          title: 'No tanks found',
-        ),
-      );
-    }
-
-    return CustomScrollView(
-      controller: _scrollController,
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          sliver: SliverList.builder(
-            itemCount: state.groupedTanks.length,
-            itemBuilder: (context, index) {
-              return _buildGroupSection(
-                index,
-                state.groupedTanks[index],
-                notifier,
-              );
-            },
-          ),
-        ),
-        // Bottom cap
-        const SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
-          sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
-        ),
-      ],
     );
   }
 
@@ -712,5 +715,31 @@ class _TankWideState extends ConsumerState<TankWide> {
         );
       }
     }
+  }
+}
+
+class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _SliverHeaderDelegate({required this.child, this.height = 56});
+
+  @override
+  double get minExtent => height;
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(_SliverHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child || oldDelegate.height != height;
   }
 }

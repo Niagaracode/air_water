@@ -1,3 +1,4 @@
+import 'dart:convert';
 import '../../../../core/network/api_client.dart';
 import '../../presentation/model/user_model.dart';
 import '../../../plant/presentation/model/plant_model.dart';
@@ -19,7 +20,7 @@ class UserApi {
     int? status,
     int? plantId,
     int? tankId,
-    List<int>? excludePlantIds,
+    List<Map<String, dynamic>>? excludeAssignments,
     String? groupName,
   }) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
@@ -32,8 +33,8 @@ class UserApi {
     if (status != null) query['status'] = status;
     if (plantId != null) query['plant_id'] = plantId;
     if (tankId != null) query['tank_id'] = tankId;
-    if (excludePlantIds != null && excludePlantIds.isNotEmpty) {
-      query['exclude_plant_ids'] = excludePlantIds;
+    if (excludeAssignments != null && excludeAssignments.isNotEmpty) {
+      query['exclude_assignments'] = jsonEncode(excludeAssignments);
     }
     if (groupName != null) query['group_name'] = groupName;
 

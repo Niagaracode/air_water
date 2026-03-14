@@ -18,4 +18,5 @@ abstract class GroupRepository {
   Future<void> assignGroupsToUser(int userId, List<int> groupIds);
   Future<void> removeUserFromGroup(int groupId, int userId);
   Future<List<PlantUserCount>> getPlantsWithUserCounts({String? name});
+  Future<PlantGroupDetails> getPlantGroupDetails(int plantId);
 }

@@ -94,15 +94,23 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
     }
 
     final role = _roles.firstWhere((r) => r.id == _selectedRoleId);
-    final plantIds = _assignments.map((a) => a.plantId).toList();
+    
+    // Construct structured assignments for precise exclusion
+    final List<Map<String, dynamic>> excludeAssignments = _assignments.map((a) {
+      return {
+        'plant_id': a.plantId,
+        if (a.tankIds != null && a.tankIds!.isNotEmpty) 'tank_ids': a.tankIds,
+        'all_tanks': a.allTanks,
+      };
+    }).toList();
 
-    await _loadUsersForRole(role.id, role.name, plantIds);
+    await _loadUsersForRole(role.id, role.name, excludeAssignments);
   }
 
   Future<void> _loadUsersForRole(
     int roleId,
     String roleName, [
-    List<int>? excludePlantIds,
+    List<Map<String, dynamic>>? excludeAssignments,
   ]) async {
     setState(() {
       _isLoadingUsers = true;
@@ -112,7 +120,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
       final repository = ref.read(userRepositoryProvider);
       final response = await repository.searchUsers(
         roleId: roleId,
-        excludePlantIds: excludePlantIds,
+        excludeAssignments: excludeAssignments,
         groupName: roleName,
         limit: 100,
       );

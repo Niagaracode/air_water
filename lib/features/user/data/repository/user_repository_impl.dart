@@ -21,23 +21,28 @@ class UserRepositoryImpl implements UserRepository {
     int? status,
     int? plantId,
     int? tankId,
-    List<int>? excludePlantIds,
+    List<Map<String, dynamic>>? excludeAssignments,
     String? groupName,
   }) async {
-    return await _api.searchUsers(
-      page: page,
-      limit: limit,
-      q: q,
-      username: username,
-      email: email,
-      roleId: roleId,
-      companyId: companyId,
-      status: status,
-      plantId: plantId,
-      tankId: tankId,
-      excludePlantIds: excludePlantIds,
-      groupName: groupName,
-    );
+    try {
+      final response = await _api.searchUsers(
+        page: page,
+        limit: limit,
+        q: q,
+        username: username,
+        email: email,
+        roleId: roleId,
+        companyId: companyId,
+        status: status,
+        plantId: plantId,
+        tankId: tankId,
+        excludeAssignments: excludeAssignments,
+        groupName: groupName,
+      );
+      return response;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   @override
