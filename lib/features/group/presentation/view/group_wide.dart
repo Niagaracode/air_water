@@ -8,6 +8,7 @@ import '../../../../shared/widgets/app_clear_button.dart';
 import '../model/group_model.dart';
 import '../widgets/add_group_modal.dart';
 import 'plant_group_detail_view.dart';
+import 'package:air_water/features/plant/presentation/model/plant_model.dart';
 
 class GroupWide extends ConsumerStatefulWidget {
   const GroupWide({super.key});
@@ -160,15 +161,7 @@ class _GroupWideState extends ConsumerState<GroupWide> {
           Row(
             children: [
               Expanded(
-                child: AppTextField(
-                  controller: _searchController,
-                  hint: 'Search By Plant Name',
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                  onSubmitted: (v) {
-                    notifier.setSearchQuery(v);
-                    notifier.loadPlantUserCounts();
-                  },
-                ),
+                child: _buildPlantAutocomplete(notifier),
               ),
               const SizedBox(width: 16),
               AppClearButton(
@@ -192,6 +185,77 @@ class _GroupWideState extends ConsumerState<GroupWide> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPlantAutocomplete(GroupNotifier notifier) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return RawAutocomplete<PlantAutocompleteInfo>(
+          textEditingController: _searchController,
+          focusNode: FocusNode(),
+          displayStringForOption: (option) => option.plantName,
+          optionsBuilder: (TextEditingValue textEditingValue) async {
+            if (textEditingValue.text.isEmpty) {
+              return const Iterable<PlantAutocompleteInfo>.empty();
+            }
+            return await notifier.getPlantSuggestions(textEditingValue.text);
+          },
+          onSelected: (option) {
+            notifier.setSearchQuery(option.plantName);
+            notifier.loadPlantUserCounts();
+          },
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            return AppTextField(
+              controller: controller,
+              focusNode: focusNode,
+              hint: 'Search By Plant Name',
+              prefixIcon: const Icon(Icons.search, size: 20),
+              onSubmitted: (v) {
+                notifier.setSearchQuery(v);
+                notifier.loadPlantUserCounts();
+              },
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  width: constraints.maxWidth,
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options.elementAt(index);
+                      return ListTile(
+                        title: Text(
+                          option.plantName,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: option.displayName != null
+                            ? Text(
+                                option.displayName!,
+                                style: GoogleFonts.inter(fontSize: 11),
+                              )
+                            : null,
+                        onTap: () => onSelected(option),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -284,7 +348,21 @@ class _GroupWideState extends ConsumerState<GroupWide> {
                     color: const Color(0xFF111827),
                   ),
                 ),
-                if (plant.location != null)
+                if ((plant.addressLine1 != null && plant.addressLine1!.isNotEmpty) ||
+                    plant.cityName != null || plant.stateName != null || plant.pincode != null)
+                  Text(
+                    [
+                      if (plant.addressLine1 != null && plant.addressLine1!.isNotEmpty) plant.addressLine1!,
+                      if (plant.cityName != null && plant.cityName!.isNotEmpty) plant.cityName!,
+                      if (plant.stateName != null && plant.stateName!.isNotEmpty) plant.stateName!,
+                      if (plant.pincode != null && plant.pincode!.isNotEmpty) plant.pincode!,
+                    ].join(', '),
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF9CA3AF),
+                      fontSize: 11,
+                    ),
+                  )
+                else if (plant.location != null)
                   Text(
                     plant.location!,
                     style: GoogleFonts.inter(

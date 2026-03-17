@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../controller/group_provider.dart';
+import '../model/group_model.dart';
+
 
 class PlantGroupDetailView extends ConsumerWidget {
   final int plantId;
@@ -350,6 +352,25 @@ class PlantGroupDetailView extends ConsumerWidget {
                                 ],
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            Column(
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.link_off,
+                                    size: 20,
+                                    color: Color(0xFFEF4444),
+                                  ),
+                                  tooltip: 'Unassign Tank',
+                                  onPressed: () => _showUnassignDialog(
+                                    context,
+                                    ref,
+                                    u,
+                                    tanks,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       );
@@ -361,6 +382,188 @@ class PlantGroupDetailView extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _showUnassignDialog(
+    BuildContext context,
+    WidgetRef ref,
+    PlantDetailsUser user,
+    List<PlantDetailsTank> plantTanks,
+  ) async {
+    int? selectedTankId;
+
+    if (user.hasAllTanks) {
+      // If "All Tanks", they have access to everything. Unassigning ANY tank 
+      // means removing them from the "All Tanks" group.
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            'Unassign from All Tanks',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            '${user.username} has access via an "All Tanks" assignment. '
+            'Unassigning will remove them from the group granting access to ALL tanks in this plant. '
+            'Continue?',
+            style: GoogleFonts.inter(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('REMOVE ALL ACCESS'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true) {
+        // Technically they are unassigning "All Tanks", so we pick any tank ID 
+        // to represent the "All Tanks" group removal (backend logic covers this)
+        final firstTank = plantTanks.isNotEmpty ? plantTanks.first : null;
+        if (firstTank != null) {
+          await _performUnassign(context, ref, user.userId, firstTank.id);
+        }
+      }
+
+      return;
+    }
+
+    // Filter tanks that this user actually has access to
+    final userTanks = plantTanks.where((t) => user.tankIds.contains(t.id)).toList();
+
+    if (userTanks.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No specific tanks to unassign.')),
+      );
+      return;
+    }
+
+    if (userTanks.length == 1) {
+      selectedTankId = userTanks.first.id;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            'Confirm Unassignment',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'Remove access to tank ${userTanks.first.tankNumber} for ${user.username}?',
+            style: GoogleFonts.inter(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('UNASSIGN'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true) {
+        await _performUnassign(context, ref, user.userId, selectedTankId);
+      }
+
+
+
+
+    } else {
+      // Multiple tanks - show selection
+      await showDialog(
+        context: context,
+        builder: (context) => StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            title: Text(
+              'Select Tank to Unassign',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Choose which tank access to remove for ${user.username}:',
+                  style: GoogleFonts.inter(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  decoration: const InputDecoration(
+                    labelText: 'Select Tank',
+                    border: OutlineInputBorder(),
+                  ),
+                  value: selectedTankId,
+                  items: userTanks.map((t) {
+                    return DropdownMenuItem<int>(
+                      value: t.id,
+                      child: Text('Tank ${t.tankNumber} - ${t.product ?? 'N/A'}'),
+                    );
+                  }).toList(),
+
+                  onChanged: (val) => setState(() => selectedTankId = val),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('CANCEL'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: selectedTankId == null
+                    ? null
+                    : () => Navigator.pop(context, true),
+                child: const Text('UNASSIGN'),
+              ),
+            ],
+          ),
+        ),
+      ).then((confirmed) async {
+        if (confirmed == true && selectedTankId != null) {
+          await _performUnassign(context, ref, user.userId, selectedTankId!);
+        }
+
+
+
+      });
+    }
+  }
+
+  Future<void> _performUnassign(
+    BuildContext context,
+    WidgetRef ref,
+    int userId,
+    int tankId,
+  ) async {
+    final scaffold = ScaffoldMessenger.of(context);
+    final success = await ref
+        .read(groupProvider.notifier)
+        .unassignUserFromTank(userId, plantId, tankId);
+
+    if (success) {
+      scaffold.showSnackBar(
+        const SnackBar(
+          content: Text('Tank unassigned successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      scaffold.showSnackBar(
+        const SnackBar(
+          content: Text('Failed to unassign tank'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildSectionHeader(String title, IconData icon) {

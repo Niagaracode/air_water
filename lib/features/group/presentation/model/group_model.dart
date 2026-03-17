@@ -167,6 +167,10 @@ class PlantUserCount {
   final String plantName;
   final String? plantOrganizationCode;
   final String? location;
+  final String? addressLine1;
+  final String? cityName;
+  final String? stateName;
+  final String? pincode;
   final int userCount;
   final int groupCount;
   final int tankCount;
@@ -177,6 +181,10 @@ class PlantUserCount {
     required this.plantName,
     this.plantOrganizationCode,
     this.location,
+    this.addressLine1,
+    this.cityName,
+    this.stateName,
+    this.pincode,
     required this.userCount,
     required this.groupCount,
     required this.tankCount,
@@ -189,6 +197,10 @@ class PlantUserCount {
       plantName: json['plant_name'] as String,
       plantOrganizationCode: json['plant_organization_code'] as String?,
       location: json['location'] as String?,
+      addressLine1: json['address_line_1'] as String?,
+      cityName: json['city_name'] as String?,
+      stateName: json['state_name'] as String?,
+      pincode: json['pincode'] as String?,
       userCount: json['user_count'] ?? 0,
       groupCount: json['group_count'] ?? 0,
       tankCount: json['tank_count'] ?? 0,

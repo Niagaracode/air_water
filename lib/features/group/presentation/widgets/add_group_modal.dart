@@ -120,7 +120,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
       final repository = ref.read(userRepositoryProvider);
       final response = await repository.searchUsers(
         roleId: roleId,
-        excludeAssignments: excludeAssignments,
+        excludeAssignments: null,
         groupName: roleName,
         limit: 100,
       );

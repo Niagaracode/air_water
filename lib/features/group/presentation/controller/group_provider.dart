@@ -4,6 +4,7 @@ import '../../data/api/group_api.dart';
 import '../../data/repository/group_repository_impl.dart';
 import '../../domain/repository/group_repository.dart';
 import '../model/group_model.dart';
+import '../../../plant/presentation/model/plant_model.dart';
 
 class GroupState {
   final List<Group> groups;
@@ -172,7 +173,9 @@ class GroupNotifier extends Notifier<GroupState> {
       await repository.createGroup(request);
       state = state.copyWith(isProcessing: false);
       await loadGroups();
+      await loadPlantUserCounts();
       return true;
+
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
@@ -186,7 +189,9 @@ class GroupNotifier extends Notifier<GroupState> {
       await repository.updateGroup(id, data);
       state = state.copyWith(isProcessing: false);
       await loadGroups();
+      await loadPlantUserCounts();
       return true;
+
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
@@ -200,7 +205,9 @@ class GroupNotifier extends Notifier<GroupState> {
       await repository.deleteGroup(id);
       state = state.copyWith(isProcessing: false);
       await loadGroups();
+      await loadPlantUserCounts();
       return true;
+
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
@@ -214,7 +221,9 @@ class GroupNotifier extends Notifier<GroupState> {
       await repository.assignUsersToGroup(groupId, userIds);
       state = state.copyWith(isProcessing: false);
       await loadGroups();
+      await loadPlantUserCounts();
       return true;
+
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
@@ -245,7 +254,9 @@ class GroupNotifier extends Notifier<GroupState> {
       final repository = ref.read(groupRepositoryProvider);
       await repository.assignGroupsToUser(userId, groupIds);
       state = state.copyWith(isProcessing: false);
+      await loadPlantUserCounts();
       return true;
+
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
@@ -258,13 +269,42 @@ class GroupNotifier extends Notifier<GroupState> {
       final repository = ref.read(groupRepositoryProvider);
       await repository.removeUserFromGroup(groupId, userId);
       state = state.copyWith(isProcessing: false);
+      await loadPlantUserCounts();
       return true;
+
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<List<PlantAutocompleteInfo>> getPlantSuggestions(String query) async {
+    try {
+      final repository = ref.read(groupRepositoryProvider);
+      return await repository.getPlantSuggestions(query);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> unassignUserFromTank(int userId, int plantId, int tankId) async {
+    state = state.copyWith(isProcessing: true, error: null);
+    try {
+      final repository = ref.read(groupRepositoryProvider);
+      await repository.unassignUserFromTank(userId, plantId, tankId);
+      state = state.copyWith(isProcessing: false);
+      // Refresh details
+      ref.invalidate(plantGroupDetailsProvider(plantId));
+      await loadPlantUserCounts();
+      return true;
+
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
     }
   }
 }
+
 
 final groupApiProvider = Provider<GroupApi>((ref) {
   final client = ref.watch(apiClientProvider);

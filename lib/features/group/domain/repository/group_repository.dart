@@ -1,4 +1,5 @@
 import '../../presentation/model/group_model.dart';
+import '../../../plant/presentation/model/plant_model.dart';
 
 abstract class GroupRepository {
   Future<GroupPaginatedResponse> getGroups({
@@ -19,4 +20,7 @@ abstract class GroupRepository {
   Future<void> removeUserFromGroup(int groupId, int userId);
   Future<List<PlantUserCount>> getPlantsWithUserCounts({String? name});
   Future<PlantGroupDetails> getPlantGroupDetails(int plantId);
+  Future<List<PlantAutocompleteInfo>> getPlantSuggestions(String query);
+  Future<void> unassignUserFromTank(int userId, int plantId, int tankId);
 }
+

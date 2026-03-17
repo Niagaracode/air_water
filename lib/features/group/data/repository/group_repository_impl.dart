@@ -1,6 +1,7 @@
 import '../../domain/repository/group_repository.dart';
 import '../api/group_api.dart';
 import '../../presentation/model/group_model.dart';
+import '../../../plant/presentation/model/plant_model.dart';
 
 class GroupRepositoryImpl implements GroupRepository {
   final GroupApi _api;
@@ -78,4 +79,15 @@ class GroupRepositoryImpl implements GroupRepository {
   Future<PlantGroupDetails> getPlantGroupDetails(int plantId) {
     return _api.getPlantGroupDetails(plantId);
   }
+
+  @override
+  Future<List<PlantAutocompleteInfo>> getPlantSuggestions(String query) {
+    return _api.getPlantSuggestions(query);
+  }
+
+  @override
+  Future<void> unassignUserFromTank(int userId, int plantId, int tankId) {
+    return _api.unassignUserFromTank(userId, plantId, tankId);
+  }
 }
+

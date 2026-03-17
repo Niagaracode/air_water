@@ -1,5 +1,6 @@
 import '../../../../core/network/api_client.dart';
 import '../../presentation/model/group_model.dart';
+import '../../../plant/presentation/model/plant_model.dart';
 
 class GroupApi {
   final ApiClient _client;
@@ -77,8 +78,24 @@ class GroupApi {
         .toList();
   }
 
+  Future<List<PlantAutocompleteInfo>> getPlantSuggestions(String query) async {
+    final Map<String, dynamic> qParams = {'q': query};
+    final response = await _client.get(
+      '/plants/autocomplete',
+      query: qParams,
+    );
+    return (response.data['data'] as List)
+        .map((i) => PlantAutocompleteInfo.fromJson(i as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<PlantGroupDetails> getPlantGroupDetails(int plantId) async {
     final response = await _client.get('/groups/plants/$plantId/details');
     return PlantGroupDetails.fromJson(response.data['data'] as Map<String, dynamic>);
   }
+
+  Future<void> unassignUserFromTank(int userId, int plantId, int tankId) async {
+    await _client.delete('/groups/unassign-tank/$userId/$plantId/$tankId');
+  }
 }
+

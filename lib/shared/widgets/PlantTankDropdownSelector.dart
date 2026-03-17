@@ -179,6 +179,7 @@ class _PlantTankSelectorDialogState
         _plantSelections[plantId] = PlantSelection(
           plantId: plantId,
           plantName: plantName,
+          fullAddress: group.fullAddress,
           allTanks: existing.allTanks,
           selectedTankIds: Set.from(existing.tankIds ?? []),
           availableTankIds: availableTankIds,
@@ -437,13 +438,26 @@ class _PlantTankSelectorDialogState
                 ? const Color(0xFF475569)
                 : const Color(0xFF9CA3AF),
           ),
-          title: Text(
-            selection.plantName,
-            style: GoogleFonts.outfit(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: const Color(0xFF111827),
-            ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                selection.plantName,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: const Color(0xFF111827),
+                ),
+              ),
+              if (selection.fullAddress.isNotEmpty)
+                Text(
+                  selection.fullAddress,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: const Color(0xFF9CA3AF),
+                  ),
+                ),
+            ],
           ),
           subtitle: Text(
             selection.allTanks
@@ -514,6 +528,7 @@ class _PlantTankSelectorDialogState
 class PlantSelection {
   final int plantId;
   final String plantName;
+  final String fullAddress;
   bool allTanks;
   Set<int> selectedTankIds;
   final List<int> availableTankIds;
@@ -522,6 +537,7 @@ class PlantSelection {
   PlantSelection({
     required this.plantId,
     required this.plantName,
+    required this.fullAddress,
     required this.allTanks,
     required this.selectedTankIds,
     required this.availableTankIds,
