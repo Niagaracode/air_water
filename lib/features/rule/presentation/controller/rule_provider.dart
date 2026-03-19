@@ -6,7 +6,7 @@ import '../../data/repository/rule_repository_impl.dart';
 import '../../../../core/network/api_client.dart';
 
 class RuleState {
-  final List<Rule> rules;
+  final List<RuleGroup> groupedRules;
   final bool isLoading;
   final bool isProcessing;
   final String? error;
@@ -15,21 +15,25 @@ class RuleState {
   final int totalEntries;
   final String searchName;
   final String? parameterType;
+  final int? selectedPlantId;
+  final int? selectedStatus;
 
   RuleState({
-    this.rules = const [],
+    this.groupedRules = const [],
     this.isLoading = false,
     this.isProcessing = false,
     this.error,
     this.page = 1,
-    this.hasMore = false,
+    this.hasMore = true,
     this.totalEntries = 0,
     this.searchName = '',
     this.parameterType,
+    this.selectedPlantId,
+    this.selectedStatus,
   });
 
   RuleState copyWith({
-    List<Rule>? rules,
+    List<RuleGroup>? groupedRules,
     bool? isLoading,
     bool? isProcessing,
     String? error,
@@ -38,9 +42,14 @@ class RuleState {
     int? totalEntries,
     String? searchName,
     String? parameterType,
+    int? selectedPlantId,
+    int? selectedStatus,
+    bool clearParameterType = false,
+    bool clearPlantId = false,
+    bool clearStatus = false,
   }) {
     return RuleState(
-      rules: rules ?? this.rules,
+      groupedRules: groupedRules ?? this.groupedRules,
       isLoading: isLoading ?? this.isLoading,
       isProcessing: isProcessing ?? this.isProcessing,
       error: error ?? this.error,
@@ -48,7 +57,9 @@ class RuleState {
       hasMore: hasMore ?? this.hasMore,
       totalEntries: totalEntries ?? this.totalEntries,
       searchName: searchName ?? this.searchName,
-      parameterType: parameterType ?? this.parameterType,
+      parameterType: clearParameterType ? null : (parameterType ?? this.parameterType),
+      selectedPlantId: clearPlantId ? null : (selectedPlantId ?? this.selectedPlantId),
+      selectedStatus: clearStatus ? null : (selectedStatus ?? this.selectedStatus),
     );
   }
 }
@@ -68,23 +79,25 @@ class RuleNotifier extends Notifier<RuleState> {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     _lastRequestTimestamp = timestamp;
 
-    if (state.rules.isEmpty || isReload) {
-      state = state.copyWith(isLoading: true, page: 1, rules: []);
+    if (state.groupedRules.isEmpty || isReload) {
+      state = state.copyWith(isLoading: true, page: 1, groupedRules: []);
     }
 
     try {
       final repository = ref.read(ruleRepositoryProvider);
-      final response = await repository.getRules(
+      final response = await repository.getRulesGrouped(
         page: 1,
         limit: _limit,
         name: state.searchName,
         parameterType: state.parameterType,
+        plantId: state.selectedPlantId,
+        isActive: state.selectedStatus,
       );
 
       if (timestamp != _lastRequestTimestamp) return;
 
       state = state.copyWith(
-        rules: response.data,
+        groupedRules: response.data,
         isLoading: false,
         totalEntries: response.pagination.total,
         hasMore: response.pagination.page < response.pagination.totalPages,
@@ -107,17 +120,21 @@ class RuleNotifier extends Notifier<RuleState> {
     try {
       final nextPage = state.page + 1;
       final repository = ref.read(ruleRepositoryProvider);
-      final response = await repository.getRules(
+      final response = await repository.getRulesGrouped(
         page: nextPage,
         limit: _limit,
         name: state.searchName,
         parameterType: state.parameterType,
+        plantId: state.selectedPlantId,
+        isActive: state.selectedStatus,
       );
 
       if (timestamp != _lastRequestTimestamp) return;
 
+      final updatedGroups = [...state.groupedRules, ...response.data];
+
       state = state.copyWith(
-        rules: [...state.rules, ...response.data],
+        groupedRules: updatedGroups,
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
@@ -137,8 +154,23 @@ class RuleNotifier extends Notifier<RuleState> {
     loadRules(isReload: true);
   }
 
+  void setPlantId(int? plantId) {
+    state = state.copyWith(selectedPlantId: plantId);
+    loadRules(isReload: true);
+  }
+
+  void setSelectedStatus(int? status) {
+    state = state.copyWith(selectedStatus: status);
+    loadRules(isReload: true);
+  }
+
   void clearFilters() {
-    state = state.copyWith(searchName: '', parameterType: null);
+    state = state.copyWith(
+      searchName: '',
+      clearParameterType: true,
+      clearPlantId: true,
+      clearStatus: true,
+    );
     loadRules(isReload: true);
   }
 

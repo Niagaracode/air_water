@@ -34,6 +34,38 @@ class RuleApi {
     );
   }
 
+  Future<RuleGroupResponse> getRulesGrouped({
+    int page = 1,
+    int limit = 10,
+    String? name,
+    String? parameterType,
+    int? isActive,
+    int? companyId,
+    int? plantId,
+  }) async {
+    final Map<String, dynamic> query = {'page': page, 'limit': limit};
+    if (name != null && name.isNotEmpty) {
+      query['name'] = name;
+    }
+    if (parameterType != null && parameterType.isNotEmpty) {
+      query['parameter_type'] = parameterType;
+    }
+    if (isActive != null) {
+      query['is_active'] = isActive;
+    }
+    if (companyId != null) {
+      query['company_id'] = companyId;
+    }
+    if (plantId != null) {
+      query['plant_id'] = plantId;
+    }
+
+    final response = await _client.get('/rules/grouped', query: query);
+    return RuleGroupResponse.fromJson(
+      Map<String, dynamic>.from(response.data),
+    );
+  }
+
   Future<List<RuleAutocompleteInfo>> searchRules({
     String? q,
   }) async {

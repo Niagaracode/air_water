@@ -27,6 +27,27 @@ class RuleRepositoryImpl implements RuleRepository {
   }
 
   @override
+  Future<RuleGroupResponse> getRulesGrouped({
+    int page = 1,
+    int limit = 10,
+    String? name,
+    String? parameterType,
+    int? isActive,
+    int? companyId,
+    int? plantId,
+  }) {
+    return _api.getRulesGrouped(
+      page: page,
+      limit: limit,
+      name: name,
+      parameterType: parameterType,
+      isActive: isActive,
+      companyId: companyId,
+      plantId: plantId,
+    );
+  }
+
+  @override
   Future<List<RuleAutocompleteInfo>> searchRules({String? q}) {
     return _api.searchRules(q: q);
   }

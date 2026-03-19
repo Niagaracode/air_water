@@ -21,21 +21,44 @@ class AddRuleModal extends ConsumerStatefulWidget {
   ConsumerState<AddRuleModal> createState() => _AddRuleModalState();
 }
 
+class RuleRowData {
+  String parameterType;
+  String conditionType;
+  final TextEditingController threshold1Controller;
+  final TextEditingController threshold2Controller;
+  final TextEditingController statusLabelController;
+  String importance;
+  MessageTemplate? selectedTemplate;
+
+  RuleRowData({
+    this.parameterType = 'LEVEL',
+    this.conditionType = '>',
+    String threshold1 = '',
+    String threshold2 = '',
+    String statusLabel = '',
+    this.importance = 'Critical',
+    this.selectedTemplate,
+  }) : threshold1Controller = TextEditingController(text: threshold1),
+       threshold2Controller = TextEditingController(text: threshold2),
+       statusLabelController = TextEditingController(text: statusLabel);
+
+  void dispose() {
+    threshold1Controller.dispose();
+    threshold2Controller.dispose();
+    statusLabelController.dispose();
+  }
+}
+
 class _AddRuleModalState extends ConsumerState<AddRuleModal> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _threshold1Controller = TextEditingController();
-  final _threshold2Controller = TextEditingController();
-  final _statusLabelController = TextEditingController();
 
   CompanyGroup? _selectedCompanyGroup;
   Plant? _selectedPlant;
-  MessageTemplate? _selectedTemplate;
-  String _parameterType = 'LEVEL';
-  String _conditionType = '>';
-  String _importance = 'Critical';
   int _isActive = 1;
+
+  final List<RuleRowData> _rows = [];
 
   List<CompanyGroup> _companyGroups = [];
   List<Plant> _plants = [];
@@ -45,18 +68,27 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
   @override
   void initState() {
     super.initState();
+
     if (widget.initialRule != null) {
       final r = widget.initialRule!;
       _nameController.text = r.name;
       _descriptionController.text = r.description ?? '';
-      _threshold1Controller.text = r.threshold1?.toString() ?? '';
-      _threshold2Controller.text = r.threshold2?.toString() ?? '';
-      _statusLabelController.text = r.statusLabel ?? '';
-      _parameterType = r.parameterType ?? 'LEVEL';
-      _conditionType = r.conditionType ?? '>';
-      _importance = r.importance ?? 'Critical';
       _isActive = r.isActive;
+
+      _rows.add(
+        RuleRowData(
+          parameterType: r.parameterType ?? 'LEVEL',
+          conditionType: r.conditionType ?? '>',
+          threshold1: r.threshold1?.toString() ?? '',
+          threshold2: r.threshold2?.toString() ?? '',
+          statusLabel: r.statusLabel ?? '',
+          importance: r.importance ?? 'Critical',
+        ),
+      );
+    } else {
+      _rows.add(RuleRowData());
     }
+
     Future.microtask(() => _loadData());
   }
 
@@ -67,7 +99,9 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
       final plantRepo = ref.read(plantRepositoryProvider);
       final templateRepo = ref.read(messageTemplateRepositoryProvider);
 
-      final companiesResponse = await companyRepo.getGroupedCompanies(limit: 1000);
+      final companiesResponse = await companyRepo.getGroupedCompanies(
+        limit: 1000,
+      );
       final plantsResponse = await plantRepo.getPlants(limit: 1000);
       final activeTemplates = await templateRepo.getActiveTemplates();
 
@@ -78,15 +112,20 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
 
         if (widget.initialRule != null) {
           final r = widget.initialRule!;
-          // Find selected company group
-          _selectedCompanyGroup = _companyGroups.where((g) => g.addresses.any((a) => a.companyId == r.companyId)).firstOrNull;
-          // Find selected plant
+          _selectedCompanyGroup = _companyGroups
+              .where((g) => g.addresses.any((a) => a.companyId == r.companyId))
+              .firstOrNull;
+
           if (r.plantId != null) {
-            _selectedPlant = _plants.where((p) => p.id == r.plantId).firstOrNull;
+            _selectedPlant = _plants
+                .where((p) => p.id == r.plantId)
+                .firstOrNull;
           }
-          // Find selected template
-          if (r.messageTemplateId != null) {
-            _selectedTemplate = _templates.where((t) => t.id == r.messageTemplateId).firstOrNull;
+
+          if (r.messageTemplateId != null && _rows.isNotEmpty) {
+            _rows[0].selectedTemplate = _templates
+                .where((t) => t.id == r.messageTemplateId)
+                .firstOrNull;
           }
         }
       });
@@ -98,45 +137,64 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
   }
 
   Future<void> _save() async {
-    if (_nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter Rule Name')));
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter Rule Name')));
       return;
     }
     if (_selectedCompanyGroup == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a Company')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a Company')));
       return;
     }
 
     final companyId = _selectedCompanyGroup!.addresses.first.companyId;
-
-    final data = {
-      'name': _nameController.text,
-      'description': _descriptionController.text.isEmpty ? null : _descriptionController.text,
-      'company_id': companyId,
-      'plant_id': _selectedPlant?.id,
-      'parameter_type': _parameterType,
-      'condition_type': _conditionType,
-      'threshold_1': double.tryParse(_threshold1Controller.text),
-      'threshold_2': double.tryParse(_threshold2Controller.text),
-      'importance': _importance,
-      'status_label': _statusLabelController.text.isEmpty ? null : _statusLabelController.text,
-      'message_template_id': _selectedTemplate?.id,
-      'is_active': _isActive,
-      'status': 1,
-    };
-
     final notifier = ref.read(ruleProvider.notifier);
-    bool success;
-    if (widget.initialRule != null) {
-      success = await notifier.updateRule(widget.initialRule!.id, data);
-    } else {
-      success = await notifier.createRule(data);
+    bool allSuccess = true;
+
+    for (var i = 0; i < _rows.length; i++) {
+      final row = _rows[i];
+
+      final data = {
+        'name': _nameController.text.trim(),
+        'description': _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        'company_id': companyId,
+        'plant_id': _selectedPlant?.id,
+        'parameter_type': row.parameterType,
+        'condition_type': row.conditionType,
+        'threshold_1': double.tryParse(row.threshold1Controller.text.trim()),
+        'threshold_2': double.tryParse(row.threshold2Controller.text.trim()),
+        'importance': row.importance,
+        'status_label': row.statusLabelController.text.trim().isEmpty
+            ? null
+            : row.statusLabelController.text.trim(),
+        'message_template_id': row.selectedTemplate?.id,
+        'is_active': _isActive,
+        'status': 1,
+      };
+
+      bool success;
+      if (widget.initialRule != null && i == 0) {
+        success = await notifier.updateRule(widget.initialRule!.id, data);
+      } else {
+        success = await notifier.createRule(data);
+      }
+
+      if (!success) allSuccess = false;
     }
 
-    if (success && mounted) {
+    if (allSuccess && mounted) {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.initialRule != null ? 'Rule updated' : 'Rule created')),
+        SnackBar(
+          content: Text(
+            widget.initialRule != null ? 'Rule updated' : 'Rule(s) created',
+          ),
+        ),
       );
     }
   }
@@ -145,15 +203,24 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
   Widget build(BuildContext context) {
     List<Plant> filteredPlants = [];
     if (_selectedCompanyGroup != null) {
-      final companyIds = _selectedCompanyGroup!.addresses.map((a) => a.companyId).toList();
-      filteredPlants = _plants.where((p) => companyIds.contains(p.companyId)).toList();
+      final companyIds = _selectedCompanyGroup!.addresses
+          .map((a) => a.companyId)
+          .toList();
+      filteredPlants = _plants
+          .where((p) => companyIds.contains(p.companyId))
+          .toList();
     }
+
+    final bool isEditMode = widget.initialRule != null;
 
     return Align(
       alignment: Alignment.centerRight,
       child: Material(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), bottomLeft: Radius.circular(20)),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          bottomLeft: Radius.circular(20),
+        ),
         child: SizedBox(
           width: 750,
           height: MediaQuery.of(context).size.height,
@@ -168,20 +235,26 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
                 ),
               ),
               Expanded(
-                child: _isLoadingData && widget.initialRule != null
+                child: _isLoadingData && isEditMode
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 40,
+                          vertical: 32,
+                        ), // ← reduced top/bottom padding
                         child: Form(
                           key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    widget.initialRule != null ? 'Edit Rule Configuration' : 'Create New Rule',
+                                    isEditMode
+                                        ? 'Edit Rule Configuration'
+                                        : 'Create New Rule',
                                     style: GoogleFonts.outfit(
                                       fontSize: 28,
                                       fontWeight: FontWeight.w700,
@@ -189,16 +262,20 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
                                     ),
                                   ),
                                   IconButton(
-                                    onPressed: () => Navigator.of(context).pop(),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
                                     icon: const Icon(Icons.close_rounded),
                                     style: IconButton.styleFrom(
                                       backgroundColor: const Color(0xFFF3F4F6),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 24),
+
                               _buildLabelField(
                                 'RULE NAME',
                                 AppTextField(
@@ -206,7 +283,8 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
                                   hint: 'e.g. Critical Tank Level Low',
                                 ),
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 20),
+
                               Row(
                                 children: [
                                   Expanded(
@@ -216,13 +294,11 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
                                         value: _selectedCompanyGroup,
                                         items: _companyGroups,
                                         hint: 'Select Company',
-                                        itemLabel: (g) => g.name,
-                                        onChanged: (g) {
-                                          setState(() {
-                                            _selectedCompanyGroup = g;
-                                            _selectedPlant = null;
-                                          });
-                                        },
+                                        itemLabel: (cg) => cg.name,
+                                        onChanged: (cg) => setState(() {
+                                          _selectedCompanyGroup = cg;
+                                          _selectedPlant = null;
+                                        }),
                                       ),
                                     ),
                                   ),
@@ -235,136 +311,261 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
                                         items: filteredPlants,
                                         hint: 'Select Plant',
                                         itemLabel: (p) => p.name,
-                                        onChanged: (p) => setState(() => _selectedPlant = p),
+                                        onChanged: (p) =>
+                                            setState(() => _selectedPlant = p),
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 40),
-                              Text(
-                                'CONDITION CONFIGURATION',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                              const Divider(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: _buildLabelField(
-                                      'PARAMETER TYPE',
-                                      AppDropdown<String>(
-                                        value: _parameterType,
-                                        items: const ['LEVEL', 'BATTERY', 'PRESSURE', 'TEMPERATURE', 'FLOW', 'TAG', 'OTHER'],
-                                        hint: 'Select Param',
-                                        itemLabel: (v) => v,
-                                        onChanged: (v) => setState(() => _parameterType = v!),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    flex: 2,
-                                    child: _buildLabelField(
-                                      'CONDITION',
-                                      AppDropdown<String>(
-                                        value: _conditionType,
-                                        items: const ['<', '>', '<=', '>=', '==', '!=', 'BETWEEN'],
-                                        hint: 'Select Type',
-                                        itemLabel: (v) => v,
-                                        onChanged: (v) => setState(() => _conditionType = v!),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    flex: 4,
-                                    child: _buildLabelField(
-                                      'STATUS LABEL (UI DISPLAY)',
-                                      AppTextField(
-                                        controller: _statusLabelController,
-                                        hint: 'e.g. LOW LEVEL',
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+
                               const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildLabelField(
-                                      _conditionType == 'BETWEEN' ? 'MIN THRESHOLD' : 'THRESHOLD VALUE',
-                                      AppTextField(
-                                        controller: _threshold1Controller,
-                                        hint: 'Value',
-                                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_conditionType == 'BETWEEN') ...[
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: _buildLabelField(
-                                        'MAX THRESHOLD',
-                                        AppTextField(
-                                          controller: _threshold2Controller,
-                                          hint: 'Value',
-                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              const Divider(),
+
+                              // ── Configuration Sets ───────────────────────────────────────
+                              ...List.generate(_rows.length, (index) {
+                                final row = _rows[index];
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(
+                                      height: 20,
+                                    ), // ← reduced from 32
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          'Configuration Set ${index + 1}',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF141E7A),
+                                          ),
                                         ),
-                                      ),
+                                        if (!isEditMode && _rows.length > 1)
+                                          TextButton.icon(
+                                            onPressed: () {
+                                              setState(() {
+                                                row.dispose();
+                                                _rows.removeAt(index);
+                                              });
+                                            },
+                                            icon: const Icon(
+                                              Icons.remove_circle_outline,
+                                              size: 18,
+                                              color: Colors.red,
+                                            ),
+                                            label: Text(
+                                              'Remove',
+                                              style: GoogleFonts.inter(
+                                                color: Colors.red,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
+                                    const SizedBox(
+                                      height: 12,
+                                    ), // ← reduced from 16
+
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 3,
+                                          child: _buildLabelField(
+                                            'PARAMETER TYPE',
+                                            AppDropdown<String>(
+                                              value: row.parameterType,
+                                              items: const [
+                                                'LEVEL',
+                                                'BATTERY',
+                                                'PRESSURE',
+                                                'TEMPERATURE',
+                                                'FLOW',
+
+                                                'OTHER',
+                                              ],
+                                              hint: 'Select Param',
+                                              itemLabel: (v) => v,
+                                              onChanged: (v) => setState(
+                                                () => row.parameterType = v!,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          flex: 2,
+                                          child: _buildLabelField(
+                                            'CONDITION',
+                                            AppDropdown<String>(
+                                              value: row.conditionType,
+                                              items: const [
+                                                '<',
+                                                '>',
+                                                '<=',
+                                                '>=',
+                                                '==',
+                                                '!=',
+                                                'BETWEEN',
+                                              ],
+                                              hint: 'Select Type',
+                                              itemLabel: (v) => v,
+                                              onChanged: (v) => setState(
+                                                () => row.conditionType = v!,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          flex: 4,
+                                          child: _buildLabelField(
+                                            'STATUS LABEL (UI DISPLAY)',
+                                            AppTextField(
+                                              controller:
+                                                  row.statusLabelController,
+                                              hint: 'e.g. LOW LEVEL',
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    const SizedBox(
+                                      height: 16,
+                                    ), // ← reduced from 24
+
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildLabelField(
+                                            row.conditionType == 'BETWEEN'
+                                                ? 'MIN THRESHOLD'
+                                                : 'THRESHOLD VALUE',
+                                            AppTextField(
+                                              controller:
+                                                  row.threshold1Controller,
+                                              hint: 'Value',
+                                              keyboardType:
+                                                  const TextInputType.numberWithOptions(
+                                                    decimal: true,
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                        if (row.conditionType == 'BETWEEN') ...[
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: _buildLabelField(
+                                              'MAX THRESHOLD',
+                                              AppTextField(
+                                                controller:
+                                                    row.threshold2Controller,
+                                                hint: 'Value',
+                                                keyboardType:
+                                                    const TextInputType.numberWithOptions(
+                                                      decimal: true,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+
+                                    const SizedBox(
+                                      height: 20,
+                                    ), // ← reduced from 32
+
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 1,
+                                          child: _buildLabelField(
+                                            'IMPORTANCE',
+                                            AppDropdown<String>(
+                                              value: row.importance,
+                                              items: const [
+                                                'Critical',
+                                                'Warning',
+                                                'Urgent',
+                                                'Info',
+                                              ],
+                                              hint: 'Select Importance',
+                                              itemLabel: (v) => v,
+                                              onChanged: (v) => setState(
+                                                () => row.importance = v!,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 24),
+                                        Expanded(
+                                          flex: 2,
+                                          child: _buildLabelField(
+                                            'MESSAGE TEMPLATE TO TRIGGER',
+                                            AppDropdown<MessageTemplate>(
+                                              value: row.selectedTemplate,
+                                              items: _templates,
+                                              hint: 'Select Template',
+                                              itemLabel: (t) => t.name,
+                                              onChanged: (t) => setState(
+                                                () => row.selectedTemplate = t,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    if (index < _rows.length - 1)
+                                      const Divider(
+                                        height: 32,
+                                      ), // ← reduced from 48
                                   ],
-                                ],
-                              ),
-                              const SizedBox(height: 40),
-                              Text(
-                                'ALARM & NOTIFICATION',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                              const Divider(height: 24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildLabelField(
-                                      'IMPORTANCE',
-                                      AppDropdown<String>(
-                                        value: _importance,
-                                        items: const ['Critical', 'Warning', 'Urgent', 'Info'],
-                                        hint: 'Select Importance',
-                                        itemLabel: (v) => v,
-                                        onChanged: (v) => setState(() => _importance = v!),
-                                      ),
+                                );
+                              }),
+
+                              const SizedBox(height: 24), // ← reduced from 40
+                              // Only show "Add another" button in create mode
+                              if (!isEditMode)
+                                OutlinedButton.icon(
+                                  onPressed: () =>
+                                      setState(() => _rows.add(RuleRowData())),
+                                  icon: const Icon(
+                                    Icons.add_circle_outline,
+                                    color: Color(0xFF141E7A),
+                                  ),
+                                  label: Text(
+                                    'ADD ANOTHER CONFIGURATION',
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF141E7A),
                                     ),
                                   ),
-                                  const SizedBox(width: 24),
-                                  const Expanded(child: SizedBox()), // Placeholder for removed status label
-                                ],
-                              ),
-                              const SizedBox(height: 24),
-                              _buildLabelField(
-                                'MESSAGE TEMPLATE TO TRIGGER',
-                                AppDropdown<MessageTemplate>(
-                                  value: _selectedTemplate,
-                                  items: _templates,
-                                  hint: 'Select Template',
-                                  itemLabel: (t) => t.name,
-                                  onChanged: (t) => setState(() => _selectedTemplate = t),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                      color: Color(0xFF141E7A),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                      horizontal: 20,
+                                    ), // slightly tighter
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 32),
+
+                              const SizedBox(height: 32), // ← reduced from 48
+
                               _buildStatusSection(),
-                              const SizedBox(height: 48),
+
+                              const SizedBox(height: 32), // ← reduced from 48
+
                               SizedBox(
                                 width: double.infinity,
                                 height: 56,
@@ -372,15 +573,22 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
                                   onPressed: _save,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF141E7A),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
                                   ),
                                   child: Text(
-                                    widget.initialRule != null ? 'UPDATE RULE' : 'CREATE RULE',
-                                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white),
+                                    isEditMode ? 'UPDATE RULE' : 'CREATE RULE',
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                    ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 48),
+
+                              const SizedBox(height: 32), // bottom padding
                             ],
                           ),
                         ),
@@ -406,7 +614,9 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
             letterSpacing: 1.2,
           ),
         ),
-        const Divider(height: 24),
+        const SizedBox(height: 12), // ← reduced
+        const Divider(height: 1, thickness: 1),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -440,7 +650,7 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
             letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8), // ← reduced from 10
         field,
       ],
     );
@@ -450,9 +660,9 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
-    _threshold1Controller.dispose();
-    _threshold2Controller.dispose();
-    _statusLabelController.dispose();
+    for (var row in _rows) {
+      row.dispose();
+    }
     super.dispose();
   }
 }

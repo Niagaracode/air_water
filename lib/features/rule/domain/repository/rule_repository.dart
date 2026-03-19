@@ -10,6 +10,16 @@ abstract class RuleRepository {
     int? companyId,
   });
 
+  Future<RuleGroupResponse> getRulesGrouped({
+    int page = 1,
+    int limit = 10,
+    String? name,
+    String? parameterType,
+    int? isActive,
+    int? companyId,
+    int? plantId,
+  });
+
   Future<List<RuleAutocompleteInfo>> searchRules({
     String? q,
   });
