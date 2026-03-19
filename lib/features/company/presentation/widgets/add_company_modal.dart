@@ -238,46 +238,46 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                         'COMPANY ENTITY NAME',
                         widget.initialAddress != null
                             ? TextField(
-                                controller: _nameController,
-                                enabled: false,
-                                decoration: InputDecoration(
-                                  hintText: 'Enter Company name',
-                                  filled: true,
-                                  fillColor: const Color(0xFFF9FAFB),
-                                  border: OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE5E7EB),
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFE5E7EB),
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 16,
-                                  ),
-                                ),
-                              )
-                            : AppAutocomplete<String>(
-                                controller: _nameController,
-                                hint: 'e.g. Acme Corp Industries',
-                                displayStringForOption: (option) => option,
-                                optionsBuilder: (textEditingValue) async {
-                                  if (textEditingValue.text.isEmpty) {
-                                    return const Iterable<String>.empty();
-                                  }
-                                  final companies = await ref
-                                      .read(companyRepositoryProvider)
-                                      .getCompanyAutocomplete(
-                                        q: textEditingValue.text,
-                                      );
-                                  return companies.map((e) => e.name).toList();
-                                },
+                          controller: _nameController,
+                          enabled: false,
+                          decoration: InputDecoration(
+                            hintText: 'Enter Company name',
+                            filled: true,
+                            fillColor: const Color(0xFFF9FAFB),
+                            border: OutlineInputBorder(
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
                               ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE5E7EB),
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                          ),
+                        )
+                            : AppAutocomplete<String>(
+                          controller: _nameController,
+                          hint: 'e.g. Acme Corp Industries',
+                          displayStringForOption: (option) => option,
+                          optionsBuilder: (textEditingValue) async {
+                            if (textEditingValue.text.isEmpty) {
+                              return const Iterable<String>.empty();
+                            }
+                            final companies = await ref
+                                .read(companyRepositoryProvider)
+                                .getCompanyAutocomplete(
+                              q: textEditingValue.text,
+                            );
+                            return companies.map((e) => e.name).toList();
+                          },
+                        ),
                       ),
                       const SizedBox(height: 48),
 
@@ -334,7 +334,7 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                       const SizedBox(height: 8),
                       ...List.generate(
                         _addressRows.length,
-                        (index) => _buildAddressRow(index),
+                            (index) => _buildAddressRow(index),
                       ),
                       const SizedBox(height: 40),
 
@@ -522,78 +522,78 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
     final controllers = _addressRows[index];
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        key: ValueKey(controllers),
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        margin: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF3F4F6)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          key: ValueKey(controllers),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'ADDRESS #${index + 1}',
-                style: GoogleFonts.outfit(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF9CA3AF),
-                  letterSpacing: 1.5,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'ADDRESS #${index + 1}',
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF9CA3AF),
+                letterSpacing: 1.5,
+              ),
+            ),
+            if (_addressRows.length > 1 && widget.initialAddress == null)
+              IconButton(
+                onPressed: () => _removeAddressRow(index),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: Colors.redAccent,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.withValues(alpha: 0.05),
+                  padding: const EdgeInsets.all(8),
                 ),
               ),
-              if (_addressRows.length > 1 && widget.initialAddress == null)
-                IconButton(
-                  onPressed: () => _removeAddressRow(index),
-                  icon: const Icon(
-                    Icons.delete_outline_rounded,
-                    size: 18,
-                    color: Colors.redAccent,
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.red.withValues(alpha: 0.05),
-                    padding: const EdgeInsets.all(8),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _buildLabelField(
-                  'STREET ADDRESS',
-                  AppTextField(
-                    controller: controllers.addressController,
-                    hint: 'Address Line 1',
-                  ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: _buildLabelField(
+                'STREET ADDRESS',
+                AppTextField(
+                  controller: controllers.addressController,
+                  hint: 'Address Line 1',
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildLabelField(
-                  'POSTAL CODE',
-                  AppTextField(
-                    controller: controllers.pinCodeController,
-                    hint: 'PIN Code',
-                  ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildLabelField(
+                'POSTAL CODE',
+                AppTextField(
+                  controller: controllers.pinCodeController,
+                  hint: 'PIN Code',
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          LocationPicker(
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        LocationPicker(
             key: ValueKey(
               'loc_${controllers.country}_${controllers.state}_${controllers.city}',
             ),
@@ -607,18 +607,18 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                 controllers.city = null;
               });
             },
-            onStateChanged: (value) {
-              setState(() {
-                controllers.state = value;
-                controllers.city = null;
-              });
-            },
-            onCityChanged: (value) {
-              setState(() => controllers.city = value);
-            },
-          ),
-        ],
-      ),
+          onStateChanged: (value) {
+            setState(() {
+              controllers.state = value;
+              controllers.city = null;
+            });
+          },
+          onCityChanged: (value) {
+            setState(() => controllers.city = value);
+          },
+        ),
+          ],
+        ),
     );
   }
 

@@ -66,11 +66,11 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
         _dropdownData = data;
         if (widget.device != null) {
           _selectedCategory = (data['categories'] as List).firstWhere(
-            (c) => c['id'] == widget.device!.category,
+                (c) => c['id'] == widget.device!.category,
             orElse: () => null,
           );
           _selectedUnit = (data['units'] as List).firstWhere(
-            (u) => u['id'].toString() == widget.device!.unitId,
+                (u) => u['id'].toString() == widget.device!.unitId,
             orElse: () => null,
           );
         }
@@ -141,8 +141,8 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
 
     final success = widget.device != null
         ? await ref
-              .read(deviceProvider.notifier)
-              .updateDevice(widget.device!.id, request)
+        .read(deviceProvider.notifier)
+        .updateDevice(widget.device!.id, request)
         : await ref.read(deviceProvider.notifier).createDevice(request);
 
     if (success && mounted) {
@@ -155,385 +155,384 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     final deviceState = ref.watch(deviceProvider);
 
     return Align(
-      alignment: Alignment.centerRight,
-      child: Material(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          bottomLeft: Radius.circular(20),
-        ),
-        child: SizedBox(
-          width: 600,
-          height: MediaQuery.of(context).size.height,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top accent bar
-              Container(
-                height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF141E7A),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20)),
-                ),
-              ),
-              Expanded(
-                child: Stack(
+        alignment: Alignment.centerRight,
+        child: Material(
+            color: Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              bottomLeft: Radius.circular(20),
+            ),
+            child: SizedBox(
+                width: 600,
+                height: MediaQuery.of(context).size.height,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 48,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  // Top accent bar
+                  Container(
+                  height: 4,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF141E7A),
+                    borderRadius: BorderRadius.only(topLeft: Radius.circular(20)),
+                  ),
+                ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                  SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 48,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header with close button
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Header with close button
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      widget.device != null
-                                          ? 'Edit Device'
-                                          : 'Create New Device',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF111827),
-                                        letterSpacing: -0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Configure device settings and network association.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        color: const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                icon: const Icon(Icons.close_rounded, size: 22),
-                                color: const Color(0xFF6B7280),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF3F4F6),
-                                  padding: const EdgeInsets.all(12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
-                          _buildInfoBar(),
-                          const SizedBox(height: 48),
-
-                          _buildLabelField(
-                            'DEVICE IDENTIFIER',
-                            AppAutocomplete<String>(
-                              controller: _deviceIdController,
-                              hint: 'Enter Unique Device ID',
-                              optionsBuilder: (textEditingValue) async {
-                                if (textEditingValue.text.isEmpty) {
-                                  return const Iterable<String>.empty();
-                                }
-                                return await ref
-                                    .read(deviceProvider.notifier)
-                                    .getDeviceNameSuggestions(
-                                      textEditingValue.text,
-                                    );
-                              },
-                              displayStringForOption: (option) => option,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  'CATEGORY',
-                                  _isLoadingDropdowns
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                        )
-                                      : AppDropdown<dynamic>(
-                                          value: _selectedCategory,
-                                          items:
-                                              _dropdownData?['categories'] ??
-                                              [],
-                                          itemLabel: (v) => v['name'],
-                                          hint: 'Select Category',
-                                          onChanged: (v) => setState(
-                                            () => _selectedCategory = v,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(width: 32),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'MEASUREMENT UNIT',
-                                  _isLoadingDropdowns
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                        )
-                                      : AppDropdown<dynamic>(
-                                          value: _selectedUnit,
-                                          items: _dropdownData?['units'] ?? [],
-                                          itemLabel: (u) => u['name'],
-                                          hint: 'Select Unit',
-                                          onChanged: (v) =>
-                                              setState(() => _selectedUnit = v),
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
-                          _buildLabelField(
-                            'PLANT ASSOCIATION',
-                            _buildPlantAutocomplete(),
-                          ),
-                          const SizedBox(height: 32),
-                          _buildLabelField(
-                            'ASSIGNED TANK',
-                            _buildTankAutocomplete(),
-                          ),
-                          const SizedBox(height: 40),
-
-                          // Section: Network & Location
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.hub_rounded,
-                                size: 18,
-                                color: Color(0xFF141E7A),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'NETWORK & LOCATION',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Divider(
-                            height: 32,
-                            thickness: 1,
-                            color: Color(0xFFF3F4F6),
-                          ),
-
-                          _buildLabelField(
-                            'SIM CARD NUMBER',
-                            AppTextField(
-                              controller: _simNumberController,
-                              hint: 'Enter ICCID / Sim Number',
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _selectedPlant == null
-                                      ? null
-                                      : _pickLocation,
-                                  icon: const Icon(
-                                    Icons.location_on_rounded,
-                                    size: 18,
-                                  ),
-                                  label: Text(
-                                    _latitude != null
-                                        ? 'Location Set (${_latitude!.toStringAsFixed(4)})'
-                                        : 'Map Location',
-                                    style: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    side: BorderSide(
-                                      color: _latitude != null
-                                          ? const Color(0xFF141E7A)
-                                          : const Color(0xFFD1D5DB),
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (_latitude != null) ...[
-                                const SizedBox(width: 12),
-                                IconButton(
-                                  onPressed: () => setState(() {
-                                    _latitude = null;
-                                    _longitude = null;
-                                  }),
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          _buildLabelField(
-                            'TIME ZONE REGION',
-                            _buildTimeZoneAutocomplete(),
-                          ),
-                          const SizedBox(height: 40),
-
-                          // Section: Additional Info
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.note_alt_rounded,
-                                size: 18,
-                                color: Color(0xFF141E7A),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'ADDITIONAL INFORMATION',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Divider(
-                            height: 32,
-                            thickness: 1,
-                            color: Color(0xFFF3F4F6),
-                          ),
-
-                          _buildLabelField(
-                            'CONFIGURATION NOTES',
-                            AppTextField(
-                              controller: _notesController,
-                              hint: 'Enter technical notes...',
-                              maxLines: 3,
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-
-                          // Status Selector
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFFF3F4F6),
-                              ),
-                            ),
-                            child: Row(
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'DEVICE STATUS',
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 12,
-                                        color: const Color(0xFF141E7A),
-                                        letterSpacing: 1.1,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Enable or disable this device.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  widget.device != null
+                                      ? 'Edit Device'
+                                      : 'Create New Device',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF111827),
+                                    letterSpacing: -0.5,
+                                  ),
                                 ),
-                                const Spacer(),
-                                _buildStatusToggle(
-                                  1,
-                                  'Active',
-                                  const Color(0xFF10B981),
-                                ),
-                                const SizedBox(width: 12),
-                                _buildStatusToggle(
-                                  0,
-                                  'Inactive',
-                                  const Color(0xFF6B7280),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Configure device settings and network association.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    color: const Color(0xFF6B7280),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 64),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: deviceState.isProcessing
-                                  ? null
-                                  : _save,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF141E7A),
-                                foregroundColor: Colors.white,
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded, size: 22),
+                            color: const Color(0xFF6B7280),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFF3F4F6),
+                              padding: const EdgeInsets.all(12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: deviceState.isProcessing
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : Text(
-                                      widget.device != null
-                                          ? 'UPDATE DEVICE'
-                                          : 'REGISTER DEVICE',
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16,
-                                      ),
-                                    ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    if (deviceState.isProcessing)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black26,
-                          child: const Center(
-                            child: CircularProgressIndicator(),
+                      const SizedBox(height: 32),
+                      _buildInfoBar(),
+                      const SizedBox(height: 48),
+
+                      _buildLabelField(
+                        'DEVICE IDENTIFIER',
+                        AppAutocomplete<String>(
+                          controller: _deviceIdController,
+                          hint: 'Enter Unique Device ID',
+                          optionsBuilder: (textEditingValue) async {
+                            if (textEditingValue.text.isEmpty) {
+                              return const Iterable<String>.empty();
+                            }
+                            return await ref
+                                .read(deviceProvider.notifier)
+                                .getDeviceNameSuggestions(
+                              textEditingValue.text,
+                            );
+                          },
+                          displayStringForOption: (option) => option,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildLabelField(
+                              'CATEGORY',
+                              _isLoadingDropdowns
+                                  ? const LinearProgressIndicator(
+                                minHeight: 2,
+                              )
+                                  : AppDropdown<dynamic>(
+                                value: _selectedCategory,
+                                items:
+                                _dropdownData?['categories'] ??
+                                    [],
+                                itemLabel: (v) => v['name'],
+                                hint: 'Select Category',
+                                onChanged: (v) => setState(
+                                      () => _selectedCategory = v,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 32),
+                          Expanded(
+                            child: _buildLabelField(
+                              'MEASUREMENT UNIT',
+                              _isLoadingDropdowns
+                                  ? const LinearProgressIndicator(
+                                minHeight: 2,
+                              )
+                                  : AppDropdown<dynamic>(
+                                value: _selectedUnit,
+                                items: _dropdownData?['units'] ?? [],
+                                itemLabel: (u) => u['name'],
+                                hint: 'Select Unit',
+                                onChanged: (v) =>
+                                    setState(() => _selectedUnit = v),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      _buildLabelField(
+                        'PLANT ASSOCIATION',
+                        _buildPlantAutocomplete(),
+                      ),
+                      const SizedBox(height: 32),
+                      _buildLabelField(
+                        'ASSIGNED TANK',
+                        _buildTankAutocomplete(),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Section: Network & Location
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.hub_rounded,
+                            size: 18,
+                            color: Color(0xFF141E7A),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'NETWORK & LOCATION',
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF141E7A),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(
+                        height: 32,
+                        thickness: 1,
+                        color: Color(0xFFF3F4F6),
+                      ),
+
+                      _buildLabelField(
+                        'SIM CARD NUMBER',
+                        AppTextField(
+                          controller: _simNumberController,
+                          hint: 'Enter ICCID / Sim Number',
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _selectedPlant == null
+                                  ? null
+                                  : _pickLocation,
+                              icon: const Icon(
+                                Icons.location_on_rounded,
+                                size: 18,
+                              ),
+                              label: Text(
+                                _latitude != null
+                                    ? 'Location Set (${_latitude!.toStringAsFixed(4)})'
+                                    : 'Map Location',
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                side: BorderSide(
+                                  color: _latitude != null
+                                      ? const Color(0xFF141E7A)
+                                      : const Color(0xFFD1D5DB),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (_latitude != null) ...[
+                            const SizedBox(width: 12),
+                            IconButton(
+                              onPressed: () => setState(() {
+                                _latitude = null;
+                                _longitude = null;
+                              }),
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _buildLabelField(
+                        'TIME ZONE REGION',
+                        _buildTimeZoneAutocomplete(),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Section: Additional Info
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.note_alt_rounded,
+                            size: 18,
+                            color: Color(0xFF141E7A),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'ADDITIONAL INFORMATION',
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF141E7A),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(
+                        height: 32,
+                        thickness: 1,
+                        color: Color(0xFFF3F4F6),
+                      ),
+
+                      _buildLabelField(
+                        'CONFIGURATION NOTES',
+                        AppTextField(
+                          controller: _notesController,
+                          hint: 'Enter technical notes...',
+                          maxLines: 3,
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Status Selector
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: const Color(0xFFF3F4F6),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'DEVICE STATUS',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    color: const Color(0xFF141E7A),
+                                    letterSpacing: 1.1,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Enable or disable this device.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            _buildStatusToggle(
+                              1,
+                              'Active',
+                              const Color(0xFF10B981),
+                            ),
+                            const SizedBox(width: 12),
+                            _buildStatusToggle(
+                              0,
+                              'Inactive',
+                              const Color(0xFF6B7280),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 64),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: deviceState.isProcessing
+                              ? null
+                              : _save,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF141E7A),
+                            foregroundColor: Colors.white,
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: deviceState.isProcessing
+                              ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                              : Text(
+                            widget.device != null
+                                ? 'UPDATE DEVICE'
+                                : 'REGISTER DEVICE',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+                if (deviceState.isProcessing)
+            Positioned.fill(  child: Container(
+              color: Colors.black26,
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            ),
+                    ],
+                  ),
+                ),
                   ],
                 ),
-              ),
-            ],
-          ),
+            ),
         ),
-      ),
     );
   }
 
@@ -624,12 +623,12 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
             return await ref
                 .read(deviceProvider.notifier)
                 .searchTanks(
-                  textEditingValue.text,
-                  plantId: _selectedPlant?.plantId ?? widget.device?.siteId,
-                );
+              textEditingValue.text,
+              plantId: _selectedPlant?.plantId ?? widget.device?.siteId,
+            );
           },
           displayStringForOption: (Map<String, dynamic> option) =>
-              option['tank_number'],
+          option['tank_number'],
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,
@@ -646,36 +645,36 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                   width: constraints.maxWidth,
                   child: options.isEmpty
                       ? const Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text(
-                            'No search found',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 13,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        )
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      'No search found',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  )
                       : ListView.builder(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          itemCount: options.length,
-                          itemBuilder: (context, index) {
-                            final option = options.elementAt(index);
-                            return ListTile(
-                              title: Text(
-                                option['tank_number'],
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              onTap: () {
-                                onSelected(option);
-                                setState(
-                                  () => _selectedTankId = option['tank_id'],
-                                );
-                              },
-                            );
-                          },
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options.elementAt(index);
+                      return ListTile(
+                        title: Text(
+                          option['tank_number'],
+                          style: const TextStyle(fontSize: 13),
                         ),
+                        onTap: () {
+                          onSelected(option);
+                          setState(
+                                () => _selectedTankId = option['tank_id'],
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ),
               ),
             );
@@ -700,7 +699,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                 .searchPlants(textEditingValue.text);
           },
           displayStringForOption: (PlantAutocompleteInfo option) =>
-              option.displayName ?? option.plantName,
+          option.displayName ?? option.plantName,
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,

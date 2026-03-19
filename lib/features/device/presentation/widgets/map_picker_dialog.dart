@@ -90,41 +90,41 @@ class _MapPickerDialogState extends State<MapPickerDialog> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : Stack(
-                      children: [
-                        GoogleMap(
-                          initialCameraPosition: CameraPosition(
-                            target: _selectedLocation!,
-                            zoom: 15,
-                          ),
-                          onTap: _onMapTap,
-                          markers: _selectedLocation != null
-                              ? {
-                                  Marker(
-                                    markerId: const MarkerId('selected'),
-                                    position: _selectedLocation!,
-                                  ),
-                                }
-                              : {},
-                        ),
-                        if (widget.initialAddress != null)
-                          Positioned(
-                            top: 16,
-                            left: 16,
-                            right: 16,
-                            child: Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  'Plant Address: ${widget.initialAddress}',
-                                  style: const TextStyle(fontSize: 12),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
+                children: [
+                  GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target: _selectedLocation!,
+                      zoom: 15,
                     ),
+                    onTap: _onMapTap,
+                    markers: _selectedLocation != null
+                        ? {
+                      Marker(
+                        markerId: const MarkerId('selected'),
+                        position: _selectedLocation!,
+                      ),
+                    }
+                        : {},
+                  ),
+                  if (widget.initialAddress != null)
+                    Positioned(
+                      top: 16,
+                      left: 16,
+                      right: 16,
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            'Plant Address: ${widget.initialAddress}',
+                            style: const TextStyle(fontSize: 12),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
