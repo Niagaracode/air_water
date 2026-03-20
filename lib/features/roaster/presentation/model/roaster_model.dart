@@ -1,138 +1,150 @@
-class Roaster {
+class Roster {
   final int id;
-  final String name;
-  final String? serialNumber;
-  final String? model;
-  final double? capacity;
+  final String description;
+  final int enabled;
   final int companyId;
-  final int? plantId;
-  final int? tankId;
-  final int status;
-  final String? companyName;
-  final String? plantName;
-  final String? tankNumber;
+  final int activeContacts;
+  final int dataChannels;
+  final String? roleNames;
+  final String? parameterNames;
+  final String? messageTemplateNames;
 
-  Roaster({
+  Roster({
     required this.id,
-    required this.name,
-    this.serialNumber,
-    this.model,
-    this.capacity,
+    required this.description,
+    required this.enabled,
     required this.companyId,
-    this.plantId,
-    this.tankId,
-    this.status = 1,
-    this.companyName,
-    this.plantName,
-    this.tankNumber,
+    this.activeContacts = 0,
+    this.dataChannels = 0,
+    this.roleNames,
+    this.parameterNames,
+    this.messageTemplateNames,
   });
 
-  factory Roaster.fromJson(Map<String, dynamic> json) {
-    return Roaster(
+  factory Roster.fromJson(Map<String, dynamic> json) {
+    return Roster(
       id: json['id'] as int,
-      name: json['name'] as String,
-      serialNumber: json['serial_number'] as String?,
-      model: json['model'] as String?,
-      capacity: json['capacity'] != null ? (json['capacity'] as num).toDouble() : null,
+      description: json['description'] as String,
+      enabled: json['enabled'] as int? ?? 1,
       companyId: json['company_id'] as int,
-      plantId: json['plant_id'] as int?,
-      tankId: json['tank_id'] as int?,
-      status: json['status'] as int? ?? 1,
-      companyName: json['company_name'] as String?,
-      plantName: json['plant_name'] as String?,
-      tankNumber: json['tank_number'] as String?,
+      activeContacts: json['active_contacts'] as int? ?? 0,
+      dataChannels: json['data_channels'] as int? ?? 0,
+      roleNames: json['role_names'] as String?,
+      parameterNames: json['parameter_names'] as String?,
+      messageTemplateNames: json['message_template_names'] as String?,
     );
   }
 }
 
-class RoasterParameterAssignment {
+class RosterMember {
   final int? id;
-  final int roasterId;
-  final int? roleId;
-  final int? userId;
-  final String parameterName;
-  final String? roleName;
+  final int rosterId;
+  final int? userId; // Nullable if role-based
+  final int? roleId; // Add this
+  final String? parameterName; // Add this
+  final int enabled;
+  final int emailNotif;
+  final int emailToPhone;
+  final int pushNotif;
+  final int? messageTemplateId;
+  
+  // Joined fields
+  final String? firstName;
+  final String? lastName;
   final String? username;
+  final String? roleName; // For display
+  final String? companyName;
+  final String? messageTemplateName;
+  final String? email; // Add this
 
-  RoasterParameterAssignment({
+  RosterMember({
     this.id,
-    required this.roasterId,
-    this.roleId,
+    required this.rosterId,
     this.userId,
-    required this.parameterName,
-    this.roleName,
+    this.roleId,
+    this.parameterName,
+    this.enabled = 1,
+    this.emailNotif = 0,
+    this.emailToPhone = 0,
+    this.pushNotif = 0,
+    this.messageTemplateId,
+    this.firstName,
+    this.lastName,
     this.username,
+    this.roleName,
+    this.companyName,
+    this.messageTemplateName,
+    this.email,
   });
 
-  factory RoasterParameterAssignment.fromJson(Map<String, dynamic> json) {
-    return RoasterParameterAssignment(
+  factory RosterMember.fromJson(Map<String, dynamic> json) {
+    return RosterMember(
       id: json['id'] as int?,
-      roasterId: json['roaster_id'] as int,
-      roleId: json['role_id'] as int?,
+      rosterId: json['roster_id'] as int,
       userId: json['user_id'] as int?,
-      parameterName: json['parameter_name'] as String,
-      roleName: json['role_name'] as String?,
+      roleId: json['role_id'] as int?,
+      parameterName: json['parameter_name'] as String?,
+      enabled: json['enabled'] as int? ?? 1,
+      emailNotif: json['email_notif'] as int? ?? 0,
+      emailToPhone: json['email_to_phone'] as int? ?? 0,
+      pushNotif: json['push_notif'] as int? ?? 0,
+      messageTemplateId: json['message_template_id'] as int?,
+      firstName: json['first_name'] as String?,
+      lastName: json['last_name'] as String?,
       username: json['username'] as String?,
+      roleName: json['role_name'] as String?,
+      companyName: json['company_name'] as String?,
+      messageTemplateName: json['message_template_name'] as String?,
+      email: json['email'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       if (id != null) 'id': id,
-      'roaster_id': roasterId,
-      'role_id': roleId,
-      'user_id': userId,
-      'parameter_name': parameterName,
+      'roster_id': rosterId,
+      if (userId != null) 'user_id': userId,
+      if (roleId != null) 'role_id': roleId,
+      if (parameterName != null) 'parameter_name': parameterName,
+      'enabled': enabled,
+      'email_notif': emailNotif,
+      'email_to_phone': emailToPhone,
+      'push_notif': pushNotif,
+      'message_template_id': messageTemplateId,
+      if (email != null) 'email': email,
     };
   }
 }
 
-class RoasterWithAssignments {
-  final Roaster roaster;
-  final List<RoasterParameterAssignment> assignments;
+class RosterResponse {
+  final List<Roster> data;
+  final RosterPagination pagination;
 
-  RoasterWithAssignments({required this.roaster, required this.assignments});
+  RosterResponse({required this.data, required this.pagination});
 
-  factory RoasterWithAssignments.fromJson(Map<String, dynamic> json) {
-    return RoasterWithAssignments(
-      roaster: Roaster.fromJson(json),
-      assignments: (json['assignments'] as List?)
-              ?.map((e) => RoasterParameterAssignment.fromJson(e))
-              .toList() ??
-          [],
+  factory RosterResponse.fromJson(Map<String, dynamic> json) {
+    return RosterResponse(
+      data: (json['data'] as List).map((i) => Roster.fromJson(i)).toList(),
+      pagination: RosterPagination.fromJson(json['pagination']),
     );
   }
 }
 
-class RoasterResponse {
-  final List<Roaster> data;
-  final RoasterPagination pagination;
-
-  RoasterResponse({required this.data, required this.pagination});
-
-  factory RoasterResponse.fromJson(Map<String, dynamic> json) {
-    return RoasterResponse(
-      data: (json['data'] as List).map((i) => Roaster.fromJson(i)).toList(),
-      pagination: RoasterPagination.fromJson(json['pagination']),
-    );
-  }
-}
-
-class RoasterPagination {
+class RosterPagination {
   final int total;
   final int page;
   final int limit;
   final int totalPages;
 
-  RoasterPagination({
+  RosterPagination({
     required this.total,
     required this.page,
     required this.limit,
     required this.totalPages,
   });
 
-  factory RoasterPagination.fromJson(Map<String, dynamic> json) {
-    return RoasterPagination(
+  factory RosterPagination.fromJson(Map<String, dynamic> json) {
+    return RosterPagination(
       total: json['total'] as int,
       page: json['page'] as int,
       limit: json['limit'] as int,

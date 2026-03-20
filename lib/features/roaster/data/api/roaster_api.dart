@@ -1,52 +1,56 @@
-import 'package:air_water/core/network/api_client.dart';
-import 'package:air_water/features/roaster/presentation/model/roaster_model.dart';
+import '../../../../core/network/api_client.dart';
+import '../../presentation/model/roaster_model.dart';
 
 class RosterApi {
   final ApiClient _client;
-
   RosterApi(this._client);
 
-  Future<RoasterResponse> getRoasters({
-    int page = 1,
-    int limit = 10,
-    String? name,
-    int? plantId,
-  }) async {
-    final query = {
-      'page': page.toString(),
-      'limit': limit.toString(),
-      if (name != null && name.isNotEmpty) 'name': name,
-      if (plantId != null) 'plant_id': plantId.toString(),
-    };
-
-    final response = await _client.get('/api/roster', query: query);
-    return RoasterResponse.fromJson(response.data);
+  Future<RosterResponse> getRosters({int page = 1, int limit = 10, String? search}) async {
+    final response = await _client.get(
+      '/roster',
+      query: {
+        'page': page,
+        'limit': limit,
+        if (search != null && search.isNotEmpty) 'search': search,
+      },
+    );
+    return RosterResponse.fromJson(response.data);
   }
 
-  Future<RoasterWithAssignments> getRoasterById(int id) async {
-    final response = await _client.get('/api/roster/$id');
-    return RoasterWithAssignments.fromJson(response.data['data']);
+  Future<Map<String, dynamic>> getRosterById(int id) async {
+    final response = await _client.get('/roster/$id');
+    return response.data['data'] as Map<String, dynamic>;
   }
 
-  Future<void> createRoaster(Map<String, dynamic> data) async {
-    await _client.post('/api/roster', data: data);
+  Future<void> createRoster(Map<String, dynamic> data) async {
+    await _client.post('/roster', data: data);
   }
 
-  Future<void> updateRoaster(int id, Map<String, dynamic> data) async {
-    await _client.put('/api/roster/$id', data: data);
+  Future<void> updateRoster(int id, Map<String, dynamic> data) async {
+    await _client.put('/roster/$id', data: data);
   }
 
-  Future<void> deleteRoaster(int id) async {
-    await _client.delete('/api/roster/$id');
+  Future<void> deleteRoster(int id) async {
+    await _client.delete('/roster/$id');
   }
 
-  Future<void> assignParameters({
-    required int roasterId,
-    required List<Map<String, dynamic>> assignments,
-  }) async {
-    await _client.post('/api/roster/assign-parameters', data: {
-      'roaster_id': roasterId,
-      'assignments': assignments,
-    });
+  // Member Management
+  Future<void> addMember(Map<String, dynamic> data) async {
+    await _client.post('/roster/members', data: data);
+  }
+
+  Future<void> updateMember(int memberId, Map<String, dynamic> data) async {
+    await _client.put('/roster/members/$memberId', data: data);
+  }
+
+  Future<void> removeMember(int memberId) async {
+    await _client.delete('/roster/members/$memberId');
+  }
+
+  Future<List<RosterMember>> getRosterMembers(int rosterId) async {
+    final response = await _client.get('/roster/$rosterId/members');
+    return (response.data['data'] as List)
+        .map((i) => RosterMember.fromJson(i as Map<String, dynamic>))
+        .toList();
   }
 }

@@ -1,179 +1,299 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:air_water/features/company/presentation/model/company_model.dart';
-import 'package:air_water/features/company/presentation/controller/company_provider.dart';
-import 'package:air_water/features/plant/presentation/model/plant_model.dart';
-import 'package:air_water/features/plant/presentation/controller/plant_provider.dart';
-import 'package:air_water/features/tank/presentation/model/tank_model.dart';
-import 'package:air_water/features/tank/presentation/controller/tank_provider.dart';
-import 'package:air_water/features/roaster/presentation/model/roaster_model.dart';
-import 'package:air_water/features/roaster/presentation/controller/roaster_provider.dart';
-import 'package:air_water/shared/widgets/app_text_field.dart';
-import 'package:air_water/shared/widgets/app_dropdown.dart';
-import 'package:air_water/shared/widgets/app_loader.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../controller/roaster_provider.dart';
+import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_dropdown.dart';
+import '../../../user/presentation/controller/user_provider.dart';
+import '../../../user/presentation/model/user_model.dart';
+import '../../../message_template/presentation/controller/message_template_provider.dart';
+import '../../../message_template/presentation/model/message_template_model.dart';
+import '../../../rule/presentation/controller/rule_provider.dart';
+import '../../../../shared/widgets/app_multi_select_dropdown.dart';
 
-class AddRoasterModal extends ConsumerStatefulWidget {
-  final Roaster? initialRoaster;
-  const AddRoasterModal({super.key, this.initialRoaster});
+class AddRosterModal extends ConsumerStatefulWidget {
+  const AddRosterModal({super.key});
 
   @override
-  ConsumerState<AddRoasterModal> createState() => _AddRoasterModalState();
+  ConsumerState<AddRosterModal> createState() => _AddRosterModalState();
 }
 
-class _AddRoasterModalState extends ConsumerState<AddRoasterModal> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _serialController = TextEditingController();
-  final _modelController = TextEditingController();
-  final _capacityController = TextEditingController();
+class _AddRosterModalState extends ConsumerState<AddRosterModal> {
+  final _descriptionController = TextEditingController();
+  bool _enabled = true;
+  bool _isLoadingData = false;
 
-  CompanyGroup? _selectedCompany;
-  Plant? _selectedPlant;
-  Tank? _selectedTank;
-  int _status = 1;
+  List<Role> _roles = [];
+  List<MessageTemplate> _templates = [];
+  List<Map<String, dynamic>> _allowedTemplates = [];
+
+  List<Role> _selectedRoles = [];
+  MessageTemplate? _selectedTemplate;
+  String _selectedParameter = 'LEVEL';
+
+  final List<String> _parameters = [
+    'LEVEL',
+    'BATTERY',
+    'PRESSURE',
+    'TEMPERATURE',
+    'FLOW',
+    'OTHER'
+  ];
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialRoaster != null) {
-      _nameController.text = widget.initialRoaster!.name;
-      _serialController.text = widget.initialRoaster!.serialNumber ?? '';
-      _modelController.text = widget.initialRoaster!.model ?? '';
-      _capacityController.text = widget.initialRoaster!.capacity?.toString() ?? '';
-      _status = widget.initialRoaster!.status;
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoadingData = true);
+    try {
+      final userNotifier = ref.read(userProvider.notifier);
+      final templateRepo = ref.read(messageTemplateRepositoryProvider);
+      final ruleRepo = ref.read(ruleRepositoryProvider);
+
+      final roles = await userNotifier.getRoles();
+      final templates = await templateRepo.getActiveTemplates();
+      final allowed = await ruleRepo.getTemplatesByParameter(_selectedParameter);
+
+      if (mounted) {
+        setState(() {
+          _roles = roles;
+          _templates = templates;
+          _allowedTemplates = allowed;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading initial data: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingData = false);
+    }
+  }
+
+  Future<void> _updateAllowedTemplates(String parameter) async {
+    try {
+      final ruleRepo = ref.read(ruleRepositoryProvider);
+      final allowed = await ruleRepo.getTemplatesByParameter(parameter);
+      
+      if (mounted) {
+        setState(() {
+          _allowedTemplates = allowed;
+          if (_selectedTemplate != null && !allowed.any((t) => t['id'] == _selectedTemplate!.id)) {
+            _selectedTemplate = null;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error updating allowed templates: $e');
     }
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _serialController.dispose();
-    _modelController.dispose();
-    _capacityController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedCompany == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a Company')));
+    if (_descriptionController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a description')),
+      );
       return;
     }
 
-    final data = {
-      'name': _nameController.text.trim(),
-      'serial_number': _serialController.text.trim(),
-      'model': _modelController.text.trim(),
-      'capacity': double.tryParse(_capacityController.text.trim()),
-      'company_id': _selectedCompany!.addresses.first.companyId,
-      'plant_id': _selectedPlant?.id,
-      'tank_id': _selectedTank?.tankId,
-      'status': _status,
+    final Map<String, dynamic> data = {
+      'description': _descriptionController.text.trim(),
+      'enabled': _enabled ? 1 : 0,
     };
 
-    final success = widget.initialRoaster != null
-        ? await ref.read(roasterNotifierProvider.notifier).updateRoaster(widget.initialRoaster!.id, data)
-        : await ref.read(roasterNotifierProvider.notifier).createRoaster(data);
+    if (_selectedRoles.isNotEmpty) {
+      data['members'] = _selectedRoles.map((role) => {
+        'role_id': role.id,
+        'parameter_name': _selectedParameter,
+        'message_template_id': _selectedTemplate?.id,
+        'enabled': 1,
+      }).toList();
+    }
 
-    if (success && mounted) Navigator.pop(context);
+    final success = await ref.read(roasterNotifierProvider.notifier).createRoster(data);
+
+    if (success && mounted) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Roster created successfully')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(roasterNotifierProvider);
-    final companies = ref.watch(companyNotifierProvider).groupedCompanies;
-    final plants = ref.watch(plantNotifierProvider).plants;
-    final groupedTanks = ref.watch(tankProvider).groupedTanks;
-    final allTanks = groupedTanks.expand((g) => g.tanks).toList();
-
-    List<Plant> filteredPlants = _selectedCompany == null 
-        ? [] 
-        : plants.where((p) => _selectedCompany!.addresses.any((a) => a.companyId == p.companyId)).toList();
-    
-    List<Tank> filteredTanks = _selectedPlant == null
-        ? []
-        : allTanks.where((t) => t.plantId == _selectedPlant!.id).toList();
-
     return Align(
       alignment: Alignment.centerRight,
       child: Material(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), bottomLeft: Radius.circular(24)),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+        ),
         child: SizedBox(
           width: 600,
+          height: MediaQuery.of(context).size.height,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildHeader(),
-              Expanded(
-                child: Stack(
-                  children: [
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(40),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSectionTitle('BASIC INFORMATION'),
-                            const SizedBox(height: 24),
-                            _buildLabelField('ROASTER NAME', AppTextField(controller: _nameController, hint: 'e.g. Batch Master 5000')),
-                            const SizedBox(height: 24),
-                            Row(
-                              children: [
-                                Expanded(child: _buildLabelField('MODEL', AppTextField(controller: _modelController, hint: 'e.g. Ghibli R-15'))),
-                                const SizedBox(width: 24),
-                                Expanded(child: _buildLabelField('SERIAL NUMBER', AppTextField(controller: _serialController, hint: 'e.g. SN-9981'))),
-                              ],
-                            ),
-                            const SizedBox(height: 48),
-                            _buildSectionTitle('ASSET MAPPING'),
-                            const SizedBox(height: 24),
-                            _buildLabelField('COMPANY', AppDropdown<CompanyGroup>(
-                              value: _selectedCompany,
-                              items: companies,
-                              itemLabel: (cg) => cg.name,
-                              hint: 'Select Company',
-                              onChanged: (cg) => setState(() {
-                                _selectedCompany = cg;
-                                _selectedPlant = null;
-                                _selectedTank = null;
-                              }),
-                            )),
-                            const SizedBox(height: 24),
-                            Row(
-                              children: [
-                                Expanded(child: _buildLabelField('PLANT', AppDropdown<Plant>(
-                                  value: _selectedPlant,
-                                  items: filteredPlants,
-                                  itemLabel: (p) => p.name,
-                                  hint: 'Select Plant',
-                                  onChanged: (p) => setState(() {
-                                    _selectedPlant = p;
-                                    _selectedTank = null;
-                                  }),
-                                ))),
-                                const SizedBox(width: 24),
-                                Expanded(child: _buildLabelField('TANK', AppDropdown<Tank>(
-                                  value: _selectedTank,
-                                  items: filteredTanks,
-                                  itemLabel: (t) => t.tankNumber,
-                                  hint: 'Select Tank',
-                                  onChanged: (t) => setState(() => _selectedTank = t),
-                                ))),
-                              ],
-                            ),
-                            const SizedBox(height: 48),
-                            _buildStatusSection(),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (state.isProcessing) const AppLoader(message: 'Saving Roaster...'),
-                  ],
+              Container(
+                height: 4,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF141E7A),
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(16)),
                 ),
               ),
-              _buildFooter(),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Create New Roster',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF111827),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Define a new notification team with roles.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFF3F4F6),
+                              padding: const EdgeInsets.all(12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      _buildInfoBar(),
+                      const SizedBox(height: 32),
+                      if (_isLoadingData)
+                        const Center(child: LinearProgressIndicator())
+                      else
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildLabel('DESCRIPTION'),
+                                const SizedBox(height: 12),
+                                AppTextField(
+                                  controller: _descriptionController,
+                                  hint: 'e.g. Battery Maintenance Team',
+                                ),
+                                const SizedBox(height: 24),
+                                _buildLabel('SELECT ROLES'),
+                                const SizedBox(height: 12),
+                                AppMultiSelectDropdown<Role>(
+                                  selectedItems: _selectedRoles,
+                                  items: _roles,
+                                  hint: 'Select Multiple Roles',
+                                  itemLabel: (r) => r.name,
+                                  onChanged: (list) => setState(() => _selectedRoles = list),
+                                ),
+                                const SizedBox(height: 24),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          _buildLabel('PARAMETER'),
+                                          const SizedBox(height: 12),
+                                          AppDropdown<String>(
+                                            value: _selectedParameter,
+                                            items: _parameters,
+                                            hint: 'Select Parameter',
+                                            itemLabel: (p) => p,
+                                            onChanged: (v) {
+                                              if (v != null) {
+                                                setState(() => _selectedParameter = v);
+                                                _updateAllowedTemplates(v);
+                                              }
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 24),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          _buildLabel('MESSAGE TEMPLATE'),
+                                          const SizedBox(height: 12),
+                                          AppDropdown<MessageTemplate>(
+                                            value: _selectedTemplate,
+                                            items: _templates.where((t) => _allowedTemplates.any((at) => at['id'] == t.id)).toList(),
+                                            hint: 'Select Template',
+                                            itemLabel: (t) => t.name,
+                                            onChanged: (v) => setState(() => _selectedTemplate = v),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 32),
+                                _buildStatusToggle(),
+                                const SizedBox(height: 48),
+                              ],
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _save,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1E293B),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: Text(
+                            'CREATE ROSTER',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -181,79 +301,76 @@ class _AddRoasterModalState extends ConsumerState<AddRoasterModal> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: GoogleFonts.outfit(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: const Color(0xFF334155),
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildInfoBar() {
     return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9)))),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFEF3C7)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.initialRoaster == null ? 'Create Roaster' : 'Edit Roaster', style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.w700)),
-              Text('Map machine hardware to plant assets.', style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF64748B))),
-            ],
-          ),
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close_rounded),
-            style: IconButton.styleFrom(backgroundColor: const Color(0xFFF1F5F9)),
+          const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF92400E)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Specify the details of the team to begin adding contacts and configuring notification rules later.',
+              style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF92400E)),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(title, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF141E7A), letterSpacing: 1.2));
-  }
-
-  Widget _buildLabelField(String label, Widget field) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF475569))),
-        const SizedBox(height: 8),
-        field,
-      ],
-    );
-  }
-
-  Widget _buildStatusSection() {
+  Widget _buildStatusToggle() {
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+      ),
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('RECORD STATUS', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700)),
-                Text('Active roasters are visible to users.', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B))),
+                Text(
+                  'INITIAL STATUS',
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    color: const Color(0xFF64748B),
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                Text(
+                  'The team will be active immediately.',
+                  style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                ),
               ],
             ),
           ),
-          Switch(value: _status == 1, onChanged: (v) => setState(() => _status = v ? 1 : 0), activeThumbColor: const Color(0xFF141E7A)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: Color(0xFFF1F5F9)))),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
-          const SizedBox(width: 16),
-          ElevatedButton(
-            onPressed: _save,
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF141E7A), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
-            child: Text(widget.initialRoaster == null ? 'CREATE MACHINE' : 'UPDATE MACHINE'),
+          Switch(
+            value: _enabled,
+            onChanged: (v) => setState(() => _enabled = v),
+            activeThumbColor: Colors.white,
+            activeTrackColor: const Color(0xFF141E7A),
           ),
         ],
       ),

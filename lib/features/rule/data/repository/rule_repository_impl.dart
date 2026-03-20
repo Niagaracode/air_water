@@ -71,4 +71,9 @@ class RuleRepositoryImpl implements RuleRepository {
   Future<Rule?> getRuleById(int id) {
     return _api.getRuleById(id);
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> getTemplatesByParameter(String parameter) {
+    return _api.getTemplatesByParameter(parameter);
+  }
 }

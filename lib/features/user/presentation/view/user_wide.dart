@@ -132,6 +132,7 @@ class _UserWideState extends ConsumerState<UserWide> {
               ),
               ElevatedButton.icon(
                 onPressed: () => _showAddModal(),
+                style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
                   'ADD USER',

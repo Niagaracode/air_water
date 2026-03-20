@@ -621,7 +621,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: _isDragging
-                  ? const Color(0xFF141E7A).withOpacity(0.05)
+                  ? const Color(0xFF141E7A).withValues(alpha: 0.05)
                   : Colors.grey.shade50,
             ),
             child: _previewBytes != null

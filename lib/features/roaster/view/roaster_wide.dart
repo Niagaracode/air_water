@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:air_water/features/roaster/presentation/controller/roaster_provider.dart';
 import 'package:air_water/features/roaster/presentation/model/roaster_model.dart';
+import 'package:air_water/features/roaster/view/roster_edit_view.dart';
 import 'package:air_water/features/roaster/presentation/widgets/add_roaster_modal.dart';
-import 'package:air_water/features/roaster/presentation/widgets/manage_parameters_modal.dart';
+import '../../../../shared/widgets/app_table.dart';
+import '../../../../shared/widgets/app_clear_button.dart';
 
 class RoasterWide extends ConsumerStatefulWidget {
   const RoasterWide({super.key});
@@ -14,218 +16,325 @@ class RoasterWide extends ConsumerStatefulWidget {
 }
 
 class _RoasterWideState extends ConsumerState<RoasterWide> {
-  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _filterController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(roasterNotifierProvider.notifier).loadMore();
+    }
+  }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _filterController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _showAddModal([Roaster? roaster]) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: '',
-      pageBuilder: (context, anim1, anim2) => AddRoasterModal(initialRoaster: roaster),
-      transitionBuilder: (context, anim1, anim2, child) {
-        return SlideTransition(
-          position: Tween(begin: const Offset(1, 0), end: const Offset(0, 0)).animate(anim1),
-          child: child,
-        );
-      },
-      transitionDuration: const Duration(milliseconds: 300),
-    );
+  void _navigateToEdit(int id) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => RosterEditView(rosterId: id)),
+    ).then((_) {
+      if (!mounted) return;
+      ref.read(roasterNotifierProvider.notifier).loadRosters(isReload: true);
+    });
   }
 
-  void _showManageParameters(Roaster roaster) {
+  void _showAddRoster() {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: '',
-      pageBuilder: (context, anim1, anim2) => ManageParametersModal(roaster: roaster),
+      barrierLabel: 'AddRoster',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => const AddRosterModal(),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
-          position: Tween(begin: const Offset(1, 0), end: const Offset(0, 0)).animate(anim1),
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
           child: child,
         );
       },
-      transitionDuration: const Duration(milliseconds: 300),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(roasterNotifierProvider);
+    final notifier = ref.read(roasterNotifierProvider.notifier);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeader(),
-          _buildFilters(),
-          Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _buildTable(state.roasters),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: _buildHeader(state, notifier),
           ),
+          if (!state.isLoading || state.rosters.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: _buildFixedTableHeader(),
+            ),
+          Expanded(
+            child: state.isLoading && state.rosters.isEmpty
+                ? const AppTableInitialLoader()
+                : state.error != null
+                    ? Center(child: Text(state.error!))
+                    : _buildVirtualizedTable(state, notifier),
+          ),
+          if (state.isLoading && state.rosters.isNotEmpty)
+            const AppTableLoadingMore(),
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(RoasterState state, RoasterNotifier notifier) {
     return Container(
       padding: const EdgeInsets.all(32),
-      decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0)))),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('ROASTER MANAGEMENT', style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.w700, color: const Color(0xFF141E7A))),
-              Text('Manage machine hardware and assign parameter permissions.', style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF64748B))),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ROASTER MANAGEMENT',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Centralize notification teams, members, and status management.',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+              ElevatedButton.icon(
+                onPressed: _showAddRoster,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF141E7A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'ADD ROSTER',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
             ],
           ),
-          ElevatedButton.icon(
-            onPressed: () => _showAddModal(),
-            icon: const Icon(Icons.add, size: 20),
-            label: const Text('CREATE ROASTER'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF141E7A),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          const SizedBox(height: 32),
+          Text(
+            'FILTER',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF374151),
+              letterSpacing: 1.0,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilters() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: TextField(
-              controller: _searchController,
-              onChanged: (v) => ref.read(roasterNotifierProvider.notifier).setSearchName(v),
-              decoration: InputDecoration(
-                hintText: 'Search by machine name or serial...',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          const SizedBox(height: 12),
+          _buildFilterRow(state, notifier),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              'Showing ${state.rosters.length} of ${state.totalEntries} entries',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 12,
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          // Placeholder for more filters like Plant Autocomplete if needed
         ],
       ),
     );
   }
 
-  Widget _buildTable(List<Roaster> roasters) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE2E8F0))),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildTableHeader(),
-          Expanded(
-            child: ListView.separated(
-              itemCount: roasters.length,
-              separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
-              itemBuilder: (context, index) => _buildTableRow(roasters[index]),
+  Widget _buildFilterRow(RoasterState state, RoasterNotifier notifier) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 4,
+          child: TextField(
+            controller: _filterController,
+            style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF1A1A2E)),
+            decoration: InputDecoration(
+              hintText: 'Search By Name',
+              hintStyle: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 14),
+              prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF6B7280)),
+              enabledBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Color(0xFF141E7A), width: 2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
+            onSubmitted: (v) {
+              notifier.setSearchName(v);
+              notifier.loadRosters(isReload: true);
+            },
           ),
+        ),
+        const SizedBox(width: 16),
+        AppClearButton(
+          onPressed: () {
+            _filterController.clear();
+            notifier.setSearchName('');
+            notifier.loadRosters(isReload: true);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
+      ),
+      child: const Row(
+        children: [
+          AppTableHeaderCell('SI.NO', width: 60),
+          AppTableHeaderCell('Roaster Name', flex: 3),
+          AppTableHeaderCell('Description', flex: 3),
+          AppTableHeaderCell('Role', flex: 2),
+          AppTableHeaderCell('Parameter', flex: 2),
+          AppTableHeaderCell('Template', flex: 2),
+          AppTableHeaderCell('Contacts', flex: 1),
+          AppTableHeaderCell('Status', flex: 1),
+          AppTableHeaderCell('Action', width: 100),
         ],
       ),
     );
   }
 
-  Widget _buildTableHeader() {
+  Widget _buildVirtualizedTable(RoasterState state, RoasterNotifier notifier) {
+    if (state.rosters.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24),
+        child: AppTableEmptyState(
+          icon: Icons.assignment_outlined,
+          title: 'No rosters found',
+        ),
+      );
+    }
+
+    return CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverList.builder(
+            itemCount: state.rosters.length,
+            itemBuilder: (context, index) {
+              final roster = state.rosters[index];
+              return _buildRosterRow(roster, index, notifier);
+            },
+          ),
+        ),
+        const SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRosterRow(Roster roster, int index, RoasterNotifier notifier) {
     return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(color: Color(0xFFF8FAFC), borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          bottom: BorderSide(color: Color(0xFFF3F4F6)),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Expanded(flex: 2, child: _buildHeaderText('MACHINE NAME')),
-          Expanded(flex: 2, child: _buildHeaderText('SERIAL/MODEL')),
-          Expanded(flex: 2, child: _buildHeaderText('COMPANY / PLANT')),
-          Expanded(flex: 1, child: _buildHeaderText('TANK')),
-          Expanded(flex: 1, child: _buildHeaderText('STATUS')),
-          const SizedBox(width: 200, child: Center(child: Text('ACTIONS', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11, letterSpacing: 1.2)))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderText(String text) {
-    return Text(text, style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF64748B), letterSpacing: 1.2));
-  }
-
-  Widget _buildTableRow(Roaster roaster) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        children: [
-          Expanded(flex: 2, child: Text(roaster.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)))),
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(roaster.serialNumber ?? 'N/A', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF1E293B))),
-                if (roaster.model != null) Text(roaster.model!, style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(roaster.companyName ?? '-', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF1E293B))),
-                if (roaster.plantName != null) Text(roaster.plantName!, style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
-              ],
-            ),
-          ),
-          Expanded(flex: 1, child: Text(roaster.tankNumber ?? '-', style: GoogleFonts.inter(fontSize: 13))),
+          AppTableCell((index + 1).toString().padLeft(2, '0'), width: 60),
+          _buildClickableCell(roster.description, flex: 3, bold: true, onTap: () => _navigateToEdit(roster.id)),
+          _buildClickableCell(roster.description, flex: 3, onTap: () => _navigateToEdit(roster.id)),
+          _buildClickableCell(roster.roleNames ?? '-', flex: 2, onTap: () => _navigateToEdit(roster.id)),
+          _buildClickableCell(roster.parameterNames ?? '-', flex: 2, onTap: () => _navigateToEdit(roster.id)),
+          _buildClickableCell(roster.messageTemplateNames ?? '-', flex: 2, onTap: () => _navigateToEdit(roster.id)),
+          AppTableCell(roster.activeContacts.toString().padLeft(2, '0'), flex: 1),
           Expanded(
             flex: 1,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: roaster.status == 1 ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                roaster.status == 1 ? 'Active' : 'Inactive',
-                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: roaster.status == 1 ? const Color(0xFF059669) : const Color(0xFFDC2626)),
-              ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: AppStatusBadge(status: roster.enabled),
             ),
           ),
           SizedBox(
-            width: 200,
+            width: 100,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildActionIcon(Icons.edit_outlined, 'Edit', () => _showAddModal(roaster)),
+                AppTableActionButton(
+                  icon: Icons.edit_outlined,
+                  color: const Color(0xFF2563EB),
+                  bg: const Color(0xFFEFF6FF),
+                  onTap: () => _navigateToEdit(roster.id),
+                ),
                 const SizedBox(width: 8),
-                _buildActionIcon(Icons.settings_input_component, 'Params', () => _showManageParameters(roaster)),
-                const SizedBox(width: 8),
-                _buildActionIcon(Icons.delete_outline, 'Delete', () async {
-                  final confirmed = await _showDeleteConfirm();
-                  if (confirmed) ref.read(roasterNotifierProvider.notifier).deleteRoaster(roaster.id);
-                }, color: Colors.red),
+                AppTableActionButton(
+                  icon: Icons.delete_outline_rounded,
+                  color: const Color(0xFFDC2626),
+                  bg: const Color(0xFFFEF2F2),
+                  onTap: () => _confirmDelete(roster, notifier),
+                ),
               ],
             ),
           ),
@@ -234,33 +343,49 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     );
   }
 
-  Widget _buildActionIcon(IconData icon, String tooltip, VoidCallback onTap, {Color? color}) {
-    return Tooltip(
-      message: tooltip,
+  Widget _buildClickableCell(String text, {required int flex, bool bold = false, required VoidCallback onTap}) {
+    return Expanded(
+      flex: flex,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: (color ?? const Color(0xFF141E7A)).withOpacity(0.05), borderRadius: BorderRadius.circular(8)),
-          child: Icon(icon, size: 20, color: color ?? const Color(0xFF141E7A)),
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+              color: const Color(0xFF2563EB), // Primary blue to indicate link
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Future<bool> _showDeleteConfirm() async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete Roaster?'),
-            content: const Text('This will remove the machine machine and all its parameter assignments.'),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
-              ElevatedButton(onPressed: () => Navigator.pop(context, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text('DELETE')),
-            ],
+  Future<void> _confirmDelete(Roster roster, RoasterNotifier notifier) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Roster'),
+        content: const Text('Are you sure you want to delete this roster?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
           ),
-        ) ??
-        false;
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await notifier.deleteRoaster(roster.id);
+    }
   }
 }

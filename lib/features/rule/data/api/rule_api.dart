@@ -98,4 +98,13 @@ class RuleApi {
     }
     return null;
   }
+
+  Future<List<Map<String, dynamic>>> getTemplatesByParameter(String parameter) async {
+    final response = await _client.get(
+      '/rules-templates/by-parameter',
+      query: {'parameterType': parameter},
+    );
+    final List data = response.data['data'] ?? [];
+    return data.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
 }

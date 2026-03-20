@@ -91,6 +91,7 @@ class _TankWideState extends ConsumerState<TankWide> {
               ),
               ElevatedButton.icon(
                 onPressed: () => _showAddDialog(),
+                style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
                   'ADD TANK',

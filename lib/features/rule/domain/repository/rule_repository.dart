@@ -31,4 +31,5 @@ abstract class RuleRepository {
   Future<void> deleteRule(int id);
 
   Future<Rule?> getRuleById(int id);
+  Future<List<Map<String, dynamic>>> getTemplatesByParameter(String parameter);
 }

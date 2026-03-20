@@ -7,6 +7,7 @@ class AppDropdown<T> extends StatelessWidget {
   final String hint;
   final String Function(T) itemLabel;
   final ValueChanged<T?>? onChanged;
+  final bool enabled;
 
   const AppDropdown({
     super.key,
@@ -15,6 +16,7 @@ class AppDropdown<T> extends StatelessWidget {
     required this.hint,
     required this.itemLabel,
     this.onChanged,
+    this.enabled = true,
   });
 
   @override
@@ -22,7 +24,7 @@ class AppDropdown<T> extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: enabled ? const Color(0xFFF9FAFB) : const Color(0xFFF3F4F6),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
@@ -32,16 +34,16 @@ class AppDropdown<T> extends StatelessWidget {
           hint: Text(
             hint,
             style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
+              color: enabled ? const Color(0xFF9CA3AF) : const Color(0xFFD1D5DB),
               fontSize: 14,
             ),
           ),
-          icon: const Icon(
+          icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: Color(0xFF6B7280),
+            color: enabled ? const Color(0xFF6B7280) : const Color(0xFFD1D5DB),
             size: 20,
           ),
-          onChanged: onChanged,
+          onChanged: enabled ? onChanged : null,
           dropdownColor: Colors.white,
           borderRadius: BorderRadius.circular(12),
           items: items.map((T item) {

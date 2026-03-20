@@ -270,6 +270,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
               },
             );
           },
+          style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
           icon: const Icon(Icons.add, size: 18),
           label: Text(
             'ADD COMPANY',

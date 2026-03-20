@@ -3,154 +3,142 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:air_water/features/roaster/presentation/controller/roaster_provider.dart';
 import 'package:air_water/features/roaster/presentation/model/roaster_model.dart';
-import 'package:air_water/features/roaster/presentation/widgets/add_roaster_modal.dart';
-import 'package:air_water/features/roaster/presentation/widgets/manage_parameters_modal.dart';
+import 'package:air_water/features/roaster/view/roster_edit_view.dart';
 
-class RoasterNarrow extends ConsumerStatefulWidget {
+class RoasterNarrow extends ConsumerWidget {
   const RoasterNarrow({super.key});
 
   @override
-  ConsumerState<RoasterNarrow> createState() => _RoasterNarrowState();
-}
-
-class _RoasterNarrowState extends ConsumerState<RoasterNarrow> {
-  void _showAddModal([Roaster? roaster]) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
-        ),
-        child: AddRoasterModal(initialRoaster: roaster),
-      ),
-    );
-  }
-
-  void _showManageParameters(Roaster roaster) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
-        ),
-        child: ManageParametersModal(roaster: roaster),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(roasterNotifierProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('Roasters', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        title: Text(
+          'Roster',
+          style: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF334155),
+          ),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            onPressed: () => ref.read(roasterNotifierProvider.notifier).loadRoasters(isReload: true),
-            icon: const Icon(Icons.refresh, color: Color(0xFF141E7A)),
+            icon: const Icon(Icons.refresh, color: Color(0xFFFBBF24)),
+            onPressed: () => ref.read(roasterNotifierProvider.notifier).loadRosters(isReload: true),
           ),
         ],
       ),
-      body: state.isLoading && state.roasters.isEmpty
+      body: state.isLoading && state.rosters.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: state.roasters.length,
-              itemBuilder: (context, index) => _buildRoasterCard(state.roasters[index]),
+              itemCount: state.rosters.length,
+              itemBuilder: (context, index) {
+                final roster = state.rosters[index];
+                return _buildRosterCard(context, roster);
+              },
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddModal(),
-        backgroundColor: const Color(0xFF141E7A),
-        child: const Icon(Icons.add, color: Colors.white),
+        onPressed: () {
+          // Add Roster logic
+        },
+        backgroundColor: const Color(0xFFFBBF24),
+        child: const Icon(Icons.add, color: Color(0xFF1E293B)),
       ),
     );
   }
 
-  Widget _buildRoasterCard(Roaster roaster) {
+  Widget _buildRosterCard(BuildContext context, Roster roster) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(roaster.name, style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16)),
-                ),
-                _buildStatusBadge(roaster.status),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text('SN: ${roaster.serialNumber ?? 'N/A'}', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B))),
-            const Divider(height: 24),
-            _buildInfoRow(Icons.business, roaster.companyName ?? '-'),
-            const SizedBox(height: 8),
-            _buildInfoRow(Icons.factory_outlined, roaster.plantName ?? '-'),
-            const SizedBox(height: 8),
-            _buildInfoRow(Icons.storage_outlined, 'Tank: ${roaster.tankNumber ?? '-'}'),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _showAddModal(roaster),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('Edit'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 0,
+      color: Colors.white,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => RosterEditView(rosterId: roster.id)),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      roster.description,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1E293B),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _showManageParameters(roaster),
-                    icon: const Icon(Icons.settings_input_component, size: 18, color: Colors.white),
-                    label: const Text('Params'),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF141E7A), foregroundColor: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ],
+                  _buildStatusChip(roster.enabled == 1),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                   _buildInfoItem('Active Contacts', roster.activeContacts.toString()),
+                   const SizedBox(width: 24),
+                   _buildInfoItem('Data Channels', roster.dataChannels.toString()),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatusBadge(int status) {
+  Widget _buildStatusChip(bool enabled) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: status == 1 ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
-        borderRadius: BorderRadius.circular(12),
+        color: enabled ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
-        status == 1 ? 'Active' : 'Inactive',
-        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: status == 1 ? const Color(0xFF059669) : const Color(0xFFDC2626)),
+        enabled ? 'Enabled' : 'Disabled',
+        style: TextStyle(
+          fontSize: 12,
+          color: enabled ? const Color(0xFF166534) : const Color(0xFF991B1B),
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
+  Widget _buildInfoItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: const Color(0xFF64748B)),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF475569)))),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: const Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF334155),
+          ),
+        ),
       ],
     );
   }

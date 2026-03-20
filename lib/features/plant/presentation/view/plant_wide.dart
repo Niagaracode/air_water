@@ -269,6 +269,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
               },
             );
           },
+          style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
           icon: const Icon(Icons.add, size: 18),
           label: Text(
             'ADD PLANT',
