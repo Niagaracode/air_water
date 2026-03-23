@@ -205,14 +205,32 @@ class RoasterNotifier extends Notifier<RoasterState> {
     }
   }
 
-  Future<List<RosterMember>> getRosterMembers(int rosterId) async {
+  Future<List<RosterMember>> getRosterMembers(
+    int rosterId, {
+    String? q,
+    int? roleId,
+    int? status,
+  }) async {
     try {
-       final repository = ref.read(roasterRepositoryProvider);
-       return await repository.getRosterMembers(rosterId);
+      final repository = ref.read(roasterRepositoryProvider);
+      return await repository.getRosterMembers(
+        rosterId,
+        q: q,
+        roleId: roleId,
+        status: status,
+      );
     } catch (e) {
       return [];
     }
   }
+
+
+
+
+
+
+
+
 }
 
 final roasterNotifierProvider = NotifierProvider<RoasterNotifier, RoasterState>(

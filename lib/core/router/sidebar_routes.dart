@@ -11,4 +11,6 @@ const Map<String, String> menuRoutes = {
   'Message Template': '/message-template',
   'Roaster': '/roaster',
   'Report': '/report',
+  'Asset Summary': '/asset-summary',
+  'Schedule': '/asset-schedule',
 };

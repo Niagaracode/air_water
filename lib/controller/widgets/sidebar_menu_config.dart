@@ -9,6 +9,28 @@ const mainMenu = [
     icon: Icons.home_rounded,
     allowedRoles: UserRole.values, // all roles
   ),
+  SidebarMenuItem(
+    key: 'Asset Summary',
+    label: 'Asset Summary',
+    icon: Icons.inventory_2_outlined,
+    allowedRoles: [
+      UserRole.distributor,
+      UserRole.supervisor,
+      UserRole.technician,
+      UserRole.customer,
+    ],
+  ),
+  SidebarMenuItem(
+    key: 'Schedule',
+    label: 'Schedule',
+    icon: Icons.calendar_month_outlined,
+    allowedRoles: [
+      UserRole.distributor,
+      UserRole.supervisor,
+      UserRole.technician,
+      UserRole.customer,
+    ],
+  ),
 ];
 
 const configurationMenu = [
@@ -16,7 +38,7 @@ const configurationMenu = [
     key: 'Company',
     label: 'Company',
     icon: Icons.business_rounded,
-    allowedRoles: [UserRole.superAdmin], // 👈 only super admin
+    allowedRoles: [UserRole.superAdmin],
   ),
   SidebarMenuItem(
     key: 'Plant',

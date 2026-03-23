@@ -114,7 +114,12 @@ class _GroupMiddleState extends ConsumerState<GroupMiddle> {
         ),
         ElevatedButton(
           onPressed: () => _showAddModal(),
-          child: const Text('ADD'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF141E7A),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          child: const Text('ADD GROUP'),
         ),
       ],
     );

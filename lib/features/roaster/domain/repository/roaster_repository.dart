@@ -12,7 +12,17 @@ abstract class RoasterRepository {
   Future<void> removeMember(int memberId);
 
   Future<Roster> getRosterById(int id);
-  Future<List<RosterMember>> getRosterMembers(int rosterId);
+  Future<List<RosterMember>> getRosterMembers(
+    int rosterId, {
+    String? q,
+    int? roleId,
+    int? status,
+  });
+
+
+
+
+
 
   // Legacy
   Future<void> manageAssignments(int roasterId, List<dynamic> assignments);

@@ -11,6 +11,8 @@ class Rule {
 
   final int? plantId;
   final String? plantName;
+  final int? tankId;
+  final String? tankNumber;
   final String? plantAddressLine1;
   final String? plantCity;
   final String? plantState;
@@ -32,6 +34,7 @@ class Rule {
   final int? updatedBy;
   final String? createdByUsername;
   final String? updatedByUsername;
+  final String? rosterName;
 
   Rule({
     required this.id,
@@ -45,6 +48,8 @@ class Rule {
     this.companyPincode,
     this.plantId,
     this.plantName,
+    this.tankId,
+    this.tankNumber,
     this.plantAddressLine1,
     this.plantCity,
     this.plantState,
@@ -65,6 +70,7 @@ class Rule {
     this.updatedBy,
     this.createdByUsername,
     this.updatedByUsername,
+    this.rosterName,
   });
 
   factory Rule.fromJson(Map<String, dynamic> json) {
@@ -95,6 +101,8 @@ class Rule {
       companyPincode: json['company_pincode'] as String?,
       plantId: json['plant_id'] != null ? toInt(json['plant_id']) : null,
       plantName: json['plant_name'] as String?,
+      tankId: json['tank_id'] != null ? toInt(json['tank_id']) : null,
+      tankNumber: json['tank_number'] as String?,
       plantAddressLine1: json['plant_address_line_1'] as String?,
       plantCity: json['plant_city'] as String?,
       plantState: json['plant_state'] as String?,
@@ -125,6 +133,7 @@ class Rule {
       updatedBy: json['updated_by'] != null ? toInt(json['updated_by']) : null,
       createdByUsername: json['created_by_username'] as String?,
       updatedByUsername: json['updated_by_username'] as String?,
+      rosterName: json['roster_name'] as String?,
     );
   }
 
@@ -135,6 +144,7 @@ class Rule {
       'description': description,
       'company_id': companyId,
       'plant_id': plantId,
+      'tank_id': tankId,
       'parameter_type': parameterType,
       'condition_type': conditionType,
       'threshold_1': threshold1,

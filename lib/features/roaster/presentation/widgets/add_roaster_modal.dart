@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controller/roaster_provider.dart';
+import '../model/roaster_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../user/presentation/controller/user_provider.dart';
@@ -12,7 +13,9 @@ import '../../../rule/presentation/controller/rule_provider.dart';
 import '../../../../shared/widgets/app_multi_select_dropdown.dart';
 
 class AddRosterModal extends ConsumerStatefulWidget {
-  const AddRosterModal({super.key});
+  final Roster? roster;
+  final List<RosterMember>? templateMembers;
+  const AddRosterModal({super.key, this.roster, this.templateMembers});
 
   @override
   ConsumerState<AddRosterModal> createState() => _AddRosterModalState();
@@ -40,9 +43,14 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     'OTHER'
   ];
 
+
   @override
   void initState() {
     super.initState();
+    if (widget.roster != null) {
+      _descriptionController.text = widget.roster!.description;
+      _enabled = widget.roster!.enabled == 1;
+    }
     _loadInitialData();
   }
 
@@ -62,6 +70,14 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
           _roles = roles;
           _templates = templates;
           _allowedTemplates = allowed;
+
+          if (widget.templateMembers != null) {
+            final roleIds = widget.templateMembers!.map((m) => m.roleId).toSet();
+            _selectedRoles = _roles.where((r) => roleIds.contains(r.id)).toList();
+            
+            final templateId = widget.templateMembers!.first.messageTemplateId;
+            _selectedTemplate = _templates.where((t) => t.id == templateId).firstOrNull;
+          }
         });
       }
     } catch (e) {
@@ -109,20 +125,23 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     };
 
     if (_selectedRoles.isNotEmpty) {
-      data['members'] = _selectedRoles.map((role) => {
-        'role_id': role.id,
-        'parameter_name': _selectedParameter,
-        'message_template_id': _selectedTemplate?.id,
-        'enabled': 1,
-      }).toList();
+      data['role_ids'] = _selectedRoles.map((role) => role.id).toList();
+    }
+    data['parameter_name'] = _selectedParameter;
+    data['message_template_id'] = _selectedTemplate?.id;
+
+
+    bool success;
+    if (widget.roster != null) {
+      success = await ref.read(roasterNotifierProvider.notifier).updateRoster(widget.roster!.id, data);
+    } else {
+      success = await ref.read(roasterNotifierProvider.notifier).createRoster(data);
     }
 
-    final success = await ref.read(roasterNotifierProvider.notifier).createRoster(data);
-
     if (success && mounted) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Roster created successfully')),
+        SnackBar(content: Text('Roster ${widget.roster != null ? 'updated' : 'created'} successfully')),
       );
     }
   }
@@ -143,13 +162,6 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF141E7A),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(16)),
-                ),
-              ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
@@ -164,7 +176,7 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Create New Roster',
+                                  widget.roster != null ? 'Edit Roster' : 'Create New Roster',
                                   style: GoogleFonts.outfit(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w700,
@@ -277,12 +289,13 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                         child: ElevatedButton(
                           onPressed: _save,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1E293B),
+                            backgroundColor: const Color(0xFF141E7A),
                             foregroundColor: Colors.white,
+                            elevation: 4,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: Text(
-                            'CREATE ROSTER',
+                            widget.roster != null ? 'UPDATE ROSTER' : 'CREATE ROSTER',
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
@@ -307,7 +320,7 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
       style: GoogleFonts.outfit(
         fontSize: 12,
         fontWeight: FontWeight.w700,
-        color: const Color(0xFF334155),
+        color: const Color(0xFF333333),
         letterSpacing: 0.5,
       ),
     );

@@ -1,12 +1,13 @@
+import 'package:air_water/controller/widgets/tablet_screen_shell.dart';
 import 'package:flutter/material.dart';
 
 class CustomerTablet extends StatelessWidget {
-  const CustomerTablet({super.key});
+  final Widget child;
+
+  const CustomerTablet({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Customer - Tablet')),
-    );
+    return TabletScreenShell(child: child);
   }
 }

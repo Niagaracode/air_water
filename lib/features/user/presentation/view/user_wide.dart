@@ -69,22 +69,39 @@ class _UserWideState extends ConsumerState<UserWide> {
             padding: const EdgeInsets.all(24),
             child: _buildHeader(state, notifier),
           ),
-          if (!state.isLoading || state.users.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: _buildFixedTableHeader(),
-            ),
           Expanded(
-            child: state.isLoading && state.users.isEmpty
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                  )
-                : state.error != null
-                ? Center(child: Text(state.error!))
-                : _buildVirtualizedTable(state, notifier),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = constraints.maxWidth > 1000 ? constraints.maxWidth : 1000.0;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Column(
+                      children: [
+                        if (!state.isLoading || state.users.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: _buildFixedTableHeader(),
+                          ),
+                        Expanded(
+                          child: state.isLoading && state.users.isEmpty
+                              ? const Center(
+                                  child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+                                )
+                              : state.error != null
+                              ? Center(child: Text(state.error!))
+                              : _buildVirtualizedTable(state, notifier),
+                        ),
+                        if (state.isLoading && state.users.isNotEmpty)
+                          const AppTableLoadingMore(),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-          if (state.isLoading && state.users.isNotEmpty)
-            const AppTableLoadingMore(),
           const SizedBox(height: 24),
         ],
       ),

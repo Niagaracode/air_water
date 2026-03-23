@@ -48,6 +48,38 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     });
   }
 
+  void _showRosterEditor(Roster roster) async {
+    final notifier = ref.read(roasterNotifierProvider.notifier);
+    
+    // Show a minimal loading state if needed, but for now just fetch
+    final members = await notifier.getRosterMembers(roster.id);
+    final templateMembers = members.where((m) => m.userId == null).toList();
+
+    if (!mounted) return;
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'EditRoster',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) => AddRosterModal(roster: roster, templateMembers: templateMembers),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
+          child: child,
+        );
+      },
+    ).then((result) {
+      if (result == true) {
+        ref.read(roasterNotifierProvider.notifier).loadRosters(isReload: true);
+      }
+    });
+  }
+
   void _showAddRoster() {
     showGeneralDialog(
       context: context,
@@ -65,7 +97,11 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
           child: child,
         );
       },
-    );
+    ).then((result) {
+      if (result == true) {
+        ref.read(roasterNotifierProvider.notifier).loadRosters(isReload: true);
+      }
+    });
   }
 
   @override
@@ -246,8 +282,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       child: const Row(
         children: [
           AppTableHeaderCell('SI.NO', width: 60),
-          AppTableHeaderCell('Roaster Name', flex: 3),
-          AppTableHeaderCell('Description', flex: 3),
+          AppTableHeaderCell('Description', flex: 4),
           AppTableHeaderCell('Role', flex: 2),
           AppTableHeaderCell('Parameter', flex: 2),
           AppTableHeaderCell('Template', flex: 2),
@@ -305,11 +340,10 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       child: Row(
         children: [
           AppTableCell((index + 1).toString().padLeft(2, '0'), width: 60),
-          _buildClickableCell(roster.description, flex: 3, bold: true, onTap: () => _navigateToEdit(roster.id)),
-          _buildClickableCell(roster.description, flex: 3, onTap: () => _navigateToEdit(roster.id)),
-          _buildClickableCell(roster.roleNames ?? '-', flex: 2, onTap: () => _navigateToEdit(roster.id)),
-          _buildClickableCell(roster.parameterNames ?? '-', flex: 2, onTap: () => _navigateToEdit(roster.id)),
-          _buildClickableCell(roster.messageTemplateNames ?? '-', flex: 2, onTap: () => _navigateToEdit(roster.id)),
+          _buildClickableCell(roster.description, flex: 4, color: const Color(0xFF2563EB), onTap: () => _navigateToEdit(roster.id)),
+          _buildClickableCell(roster.roleNames ?? '-', flex: 2, color: const Color(0xFF1F2937), onTap: () => _showRosterEditor(roster)),
+          _buildClickableCell(roster.parameterNames ?? '-', flex: 2, color: const Color(0xFF1F2937), onTap: () => _showRosterEditor(roster)),
+          _buildClickableCell(roster.messageTemplateNames ?? '-', flex: 2, color: const Color(0xFF1F2937), onTap: () => _showRosterEditor(roster)),
           AppTableCell(roster.activeContacts.toString().padLeft(2, '0'), flex: 1),
           Expanded(
             flex: 1,
@@ -326,7 +360,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                   icon: Icons.edit_outlined,
                   color: const Color(0xFF2563EB),
                   bg: const Color(0xFFEFF6FF),
-                  onTap: () => _navigateToEdit(roster.id),
+                  onTap: () => _showRosterEditor(roster),
                 ),
                 const SizedBox(width: 8),
                 AppTableActionButton(
@@ -343,7 +377,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     );
   }
 
-  Widget _buildClickableCell(String text, {required int flex, bool bold = false, required VoidCallback onTap}) {
+  Widget _buildClickableCell(String text, {required int flex, bool bold = false, Color color = const Color(0xFF2563EB), required VoidCallback onTap}) {
     return Expanded(
       flex: flex,
       child: InkWell(
@@ -358,7 +392,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-              color: const Color(0xFF2563EB), // Primary blue to indicate link
+              color: color,
             ),
           ),
         ),

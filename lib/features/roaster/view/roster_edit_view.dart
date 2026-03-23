@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:air_water/features/roaster/presentation/model/roaster_model.dart';
 import 'package:air_water/features/roaster/presentation/controller/roaster_provider.dart';
-import 'package:air_water/features/roaster/presentation/widgets/roster_user_editor.dart';
+import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_dropdown.dart';
+import '../../user/presentation/model/user_model.dart';
+import '../../user/presentation/controller/user_provider.dart';
 
 class RosterEditView extends ConsumerStatefulWidget {
   final int rosterId;
@@ -17,6 +20,14 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
   Roster? _roster;
   List<RosterMember> _members = [];
   bool _isLoading = true;
+  List<Role> _roles = [];
+
+  final _searchController = TextEditingController();
+  final _focusNode = FocusNode();
+
+  String _searchQuery = '';
+  int? _selectedFilterRoleId;
+  int? _selectedFilterStatus; // null: All, 1: Active, 0: Inactive
 
   @override
   void initState() {
@@ -27,7 +38,13 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     _roster = await ref.read(roasterNotifierProvider.notifier).getRosterDetail(widget.rosterId);
-    _members = await ref.read(roasterNotifierProvider.notifier).getRosterMembers(widget.rosterId);
+    _members = await ref.read(roasterNotifierProvider.notifier).getRosterMembers(
+      widget.rosterId,
+      q: _searchQuery,
+      roleId: _selectedFilterRoleId,
+      status: _selectedFilterStatus,
+    );
+    _roles = await ref.read(userProvider.notifier).getRoles();
     setState(() => _isLoading = false);
   }
 
@@ -36,9 +53,9 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
       context: context,
       barrierDismissible: true,
       barrierLabel: '',
-      pageBuilder: (context, anim1, anim2) => Align(
+      pageBuilder: (context, anim2, anim3) => Align(
         alignment: Alignment.centerRight,
-        child: RosterUserEditor(rosterId: widget.rosterId, member: member),
+        child: _RosterUserEditor(roster: _roster!, member: member),
       ),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
@@ -84,8 +101,9 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
           children: [
             _buildSummaryHeader(),
             const SizedBox(height: 32),
-            _buildItemCount(_members.length),
-            _buildMembersTable(),
+            _buildFilterBar(),
+            const SizedBox(height: 32),
+            _buildMembersTable(_members),
           ],
         ),
       ),
@@ -116,23 +134,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
             label: 'STATUS',
             child: Row(
               children: [
-                Switch(
-                  value: _roster!.enabled == 1,
-                  onChanged: (v) {},
-                  activeTrackColor: const Color(0xFF141E7A),
-                  activeColor: Colors.white,
-                ),
-                Expanded(
-                  child: Text(
-                    _roster!.enabled == 1 ? 'Enabled' : 'Disabled',
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: _roster!.enabled == 1 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
-                    ),
-                  ),
-                ),
+                _buildStatusBadge(_roster!.enabled == 1, 'Enabled', 'Disabled'),
               ],
             ),
           ),
@@ -181,7 +183,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: const Color(0xFF0F172A).withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -218,18 +220,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
     );
   }
 
-
-  Widget _buildItemCount(int total) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Text(
-        '$total items',
-        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8)),
-      ),
-    );
-  }
-
-  Widget _buildMembersTable() {
+  Widget _buildMembersTable(List<RosterMember> members) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -237,7 +228,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            color: const Color(0xFF0F172A).withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -249,7 +240,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
-              width: 1200,
+              width: 1300,
               child: Column(
                 children: [
                   _buildTableHeader(),
@@ -257,15 +248,18 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
                   ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _members.length,
+                    itemCount: members.length,
                     separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    itemBuilder: (context, index) => _buildTableRow(_members[index]),
+                    itemBuilder: (context, index) => _buildTableRow(members[index]),
                   ),
                 ],
               ),
             ),
           ),
-          _buildAddContactButton(),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: _buildAddContactButton(),
+          ),
         ],
       ),
     );
@@ -274,16 +268,22 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
   Widget _buildTableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      color: const Color(0xFFF8FAFC),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+        ),
+      ),
       child: Row(
         children: [
-          Expanded(flex: 3, child: _buildHeaderText('CONTACT PERSON')),
-          Expanded(flex: 2, child: _buildHeaderText('COMPANY')),
-          Expanded(flex: 2, child: _buildHeaderText('ENABLED')),
-          Expanded(flex: 2, child: _buildHeaderText('NOTIFICATION')),
-          Expanded(flex: 2, child: _buildHeaderText('E2P')),
-          Expanded(flex: 3, child: _buildHeaderText('MESSAGE TEMPLATE')),
-          const SizedBox(width: 80, child: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B)))),
+          Expanded(flex: 35, child: _buildHeaderText('CONTACT PERSON')),
+          Expanded(flex: 15, child: _buildHeaderText('COMPANY')),
+          Expanded(flex: 15, child: _buildHeaderText('ROLE')),
+          Expanded(flex: 12, child: _buildHeaderText('ENABLED')),
+          Expanded(flex: 12, child: _buildHeaderText('NOTIFICATION')),
+          Expanded(flex: 12, child: _buildHeaderText('E2P')),
+          Expanded(flex: 30, child: _buildHeaderText('ACTIONS')),
         ],
       ),
     );
@@ -292,10 +292,12 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
   Widget _buildHeaderText(String text) {
     return Text(
       text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
       style: GoogleFonts.outfit(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: const Color(0xFF64748B),
+        color: Colors.white,
         letterSpacing: 1,
       ),
     );
@@ -305,14 +307,16 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            flex: 3,
+            flex: 35,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${member.firstName} ${member.lastName}',
+                  member.displayName,
                   style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
                 ),
                 Text(
@@ -323,37 +327,48 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 15,
             child: Text(
-              member.companyName ?? '',
+              member.companyName ?? '-',
               style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF475569)),
             ),
           ),
           Expanded(
-            flex: 2,
-            child: _buildStatusBadge(member.enabled == 1, 'Active', 'Inactive'),
-          ),
-          Expanded(
-            flex: 2,
-            child: _buildStatusBadge(member.emailNotif == 1, 'Email On', 'Email Off'),
-          ),
-          Expanded(
-            flex: 2,
-            child: _buildStatusBadge(member.emailToPhone == 1, 'E2P On', 'E2P Off'),
-          ),
-          Expanded(
-            flex: 3,
+            flex: 15,
             child: Text(
-              member.messageTemplateName ?? '-',
+              member.roleName ?? '-',
               style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF475569)),
             ),
           ),
-          SizedBox(
-            width: 80,
-            child: IconButton(
-              icon: const Icon(Icons.edit_note_rounded, color: Color(0xFF141E7A), size: 22),
-              onPressed: () => _showUserEditor(member),
-              tooltip: 'Edit Member',
+          Expanded(
+            flex: 12,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _buildStatusBadge(member.enabled == 1, 'Active', 'Inactive'),
+            ),
+          ),
+          Expanded(
+            flex: 12,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _buildStatusBadge(member.emailNotif == 1, 'Email On', 'Email Off'),
+            ),
+          ),
+          Expanded(
+            flex: 12,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _buildStatusBadge(member.emailToPhone == 1, 'E2P On', 'E2P Off'),
+            ),
+          ),
+          Expanded(
+            flex: 30,
+            child: Row(
+              children: [
+                _buildActionIcon(Icons.edit_outlined, const Color(0xFF2563EB), const Color(0xFFEFF6FF), () => _showUserEditor(member)),
+                const SizedBox(width: 8),
+                _buildActionIcon(Icons.delete_outline_rounded, const Color(0xFFDC2626), const Color(0xFFFEF2F2), () => _confirmDelete(member)),
+              ],
             ),
           ),
         ],
@@ -367,7 +382,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
       decoration: BoxDecoration(
         color: isActive ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isActive ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFEF4444).withValues(alpha: 0.2)),
+        border: Border.all(color: isActive ? const Color(0xFF10B981).withOpacity(0.2) : const Color(0xFFEF4444).withOpacity(0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -394,20 +409,576 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
     );
   }
 
-  Widget _buildAddContactButton() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: ElevatedButton.icon(
-        onPressed: () => _showUserEditor(),
-        icon: const Icon(Icons.person_add_rounded, size: 18),
-        label: const Text('Add New Contact'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF141E7A),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  Widget _buildActionIcon(IconData icon, Color color, Color bgColor, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8),
         ),
+        child: Icon(icon, size: 18, color: color),
+      ),
+    );
+  }
+
+  void _confirmDelete(RosterMember member) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remove Contact', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        content: Text('Are you sure you want to remove ${member.displayName} from this roster?', style: GoogleFonts.inter()),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: const Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Remove', style: GoogleFonts.inter(color: const Color(0xFFDC2626), fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && member.id != null) {
+      final success = await ref.read(roasterNotifierProvider.notifier).removeMember(member.id!);
+      if (success) {
+        _loadData();
+      }
+    }
+  }
+
+  Widget _buildAddContactButton() {
+    return ElevatedButton.icon(
+      onPressed: () => _showUserEditor(),
+      icon: const Icon(Icons.person_add_rounded, size: 16),
+      label: Text(
+        'Add New Contact',
+        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF141E7A),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  Widget _buildFilterBar() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return RawAutocomplete<String>(
+                  textEditingController: _searchController,
+                  focusNode: _focusNode,
+                  optionsBuilder: (TextEditingValue textEditingValue) async {
+                    if (textEditingValue.text.isEmpty) {
+                      return const Iterable<String>.empty();
+                    }
+                    return await ref.read(userProvider.notifier).getUserNameSuggestions(textEditingValue.text);
+                  },
+                  onSelected: (option) {
+                    setState(() => _searchQuery = option);
+                    _loadData();
+                  },
+                  fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                    return AppTextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      hint: 'Search Username...',
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      onSubmitted: (v) {
+                        setState(() => _searchQuery = v);
+                        _loadData();
+                      },
+                      suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              controller.clear();
+                              setState(() => _searchQuery = '');
+                              _loadData();
+                            },
+                          )
+                        : null,
+                    );
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4.0,
+                        borderRadius: BorderRadius.circular(8),
+                        child: SizedBox(
+                          width: constraints.maxWidth,
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            itemBuilder: (context, index) {
+                              final option = options.elementAt(index);
+                              return ListTile(
+                                title: Text(
+                                  option,
+                                  style: GoogleFonts.inter(fontSize: 13),
+                                ),
+                                onTap: () => onSelected(option),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: AppDropdown<Role>(
+              items: _roles,
+              value: _roles.where((r) => r.id == _selectedFilterRoleId).firstOrNull,
+              hint: 'Filter by Role',
+              itemLabel: (r) => r.name,
+              onChanged: (v) {
+                setState(() => _selectedFilterRoleId = v?.id);
+                _loadData();
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: AppDropdown<Map<String, dynamic>>(
+              items: const [
+                {'label': 'Active', 'value': 1},
+                {'label': 'Inactive', 'value': 0},
+              ],
+              value: _selectedFilterStatus == null
+                ? null
+                : [{'label': 'Active', 'value': 1}, {'label': 'Inactive', 'value': 0}].firstWhere((s) => s['value'] == _selectedFilterStatus),
+              hint: 'Filter by Status',
+              itemLabel: (s) => s['label'] as String,
+              onChanged: (v) {
+                setState(() => _selectedFilterStatus = v?['value']);
+                _loadData();
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _searchController.clear();
+                _searchQuery = '';
+                _selectedFilterRoleId = null;
+                _selectedFilterStatus = null;
+              });
+              _loadData();
+            },
+            icon: const Icon(Icons.filter_list_off_rounded),
+            tooltip: 'Clear Filters',
+            color: const Color(0xFF64748B),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+}
+
+class _RosterUserEditor extends ConsumerStatefulWidget {
+  final Roster roster;
+  final RosterMember? member;
+  const _RosterUserEditor({required this.roster, this.member});
+
+  @override
+  ConsumerState<_RosterUserEditor> createState() => _RosterUserEditorState();
+}
+
+class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
+  Role? _selectedRole;
+  User? _selectedUser;
+  bool _enabled = true;
+  bool _emailEnabled = false;
+  bool _emailToPhoneEnabled = false;
+  bool _pushEnabled = false;
+  bool _isLoading = false;
+
+  List<Role> _roles = [];
+  List<User> _allUsers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.member != null) {
+      _enabled = widget.member!.enabled == 1;
+      _emailEnabled = widget.member!.emailNotif == 1;
+      _emailToPhoneEnabled = widget.member!.emailToPhone == 1;
+      _pushEnabled = widget.member!.pushNotif == 1;
+    }
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final userNotifier = ref.read(userProvider.notifier);
+      final roles = await userNotifier.getRoles();
+      await userNotifier.loadUsers();
+      final users = ref.read(userProvider).users;
+      await ref.read(roasterNotifierProvider.notifier).getRosterMembers(widget.roster.id);
+
+      if (mounted) {
+        setState(() {
+          final assignedRoleIds = widget.roster.roleIds;
+          _roles = roles.where((r) => assignedRoleIds.contains(r.id)).toList();
+          _allUsers = users;
+          
+          if (widget.member != null) {
+            _selectedRole = _roles.where((r) => r.id == widget.member!.roleId).firstOrNull;
+            _selectedUser = _allUsers.where((u) => u.userId == widget.member!.userId).firstOrNull;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading data: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _save() async {
+    if (_selectedUser == null || _selectedRole == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select both a Role and a Username'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    final data = {
+      'roster_id': widget.roster.id,
+      'user_id': _selectedUser!.userId,
+      'role_id': _selectedRole?.id,
+      'enabled': _enabled ? 1 : 0,
+      'email_notif': _emailEnabled ? 1 : 0,
+      'email_to_phone': _emailToPhoneEnabled ? 1 : 0,
+      'push_notif': _pushEnabled ? 1 : 0,
+    };
+ 
+    bool success;
+    if (widget.member != null) {
+      success = await ref.read(roasterNotifierProvider.notifier).updateMember(widget.member!.id!, data);
+    } else {
+      success = await ref.read(roasterNotifierProvider.notifier).addMember(data);
+    }
+
+    if (success && mounted) {
+      Navigator.pop(context, true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Material(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          bottomLeft: Radius.circular(20),
+        ),
+        child: SizedBox(
+          width: 600,
+          height: MediaQuery.of(context).size.height,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildInfoBar(),
+                            const SizedBox(height: 48),
+                            _buildUserInformationSection(),
+                            const SizedBox(height: 48),
+                            _buildEmailSection(),
+                            const SizedBox(height: 48),
+                            _buildPushSection(),
+                            const SizedBox(height: 64),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _save,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF141E7A),
+                                  foregroundColor: Colors.white,
+                                  elevation: 4,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: Text(
+                                  widget.member != null ? 'SAVE CHANGES' : 'ADD CONTACT',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(40, 48, 40, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.member != null ? 'Edit Contact' : 'Add New Contact',
+                  style: GoogleFonts.outfit(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF111827),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Configure notification preferences for this roster member.',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: const Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close_rounded, size: 22),
+            color: const Color(0xFF6B7280),
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFF3F4F6),
+              padding: const EdgeInsets.all(12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserInformationSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(Icons.person_outline_rounded, 'USER INFORMATION'),
+        const Divider(height: 32, thickness: 1, color: Color(0xFFF3F4F6)),
+        Row(
+          children: [
+            Expanded(
+              child: _buildLabelField(
+                'ROLE',
+                AppDropdown<Role>(
+                  value: _selectedRole,
+                  items: _roles,
+                  hint: 'Select Role...',
+                  itemLabel: (r) => r.name,
+                  onChanged: (v) {
+                    setState(() {
+                      _selectedRole = v;
+                      _selectedUser = null;
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(width: 24),
+            Expanded(
+              child: _buildLabelField(
+                'USERNAME',
+                AppDropdown<User>(
+                  value: _selectedUser,
+                  items: _selectedRole == null ? [] : _allUsers.where((u) => u.roleId == _selectedRole!.id).toList(),
+                  hint: 'Select User...',
+                  itemLabel: (u) => u.username,
+                  onChanged: (v) => setState(() => _selectedUser = v),
+                  enabled: _selectedRole != null,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        _buildStatusSelector('MEMBER STATUS', 'Operational status of this contact.', _enabled, (v) => setState(() => _enabled = v)),
+      ],
+    );
+  }
+
+  Widget _buildEmailSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(Icons.email_outlined, 'EMAIL PREFERENCES'),
+        const Divider(height: 32, thickness: 1, color: Color(0xFFF3F4F6)),
+        _buildStatusSelector('EMAIL NOTIFICATIONS', 'Toggle automatic email alerts.', _emailEnabled, (v) => setState(() => _emailEnabled = v)),
+        const SizedBox(height: 24),
+        _buildStatusSelector('EMAIL TO PHONE', 'Forward email alerts to phone.', _emailToPhoneEnabled, (v) => setState(() => _emailToPhoneEnabled = v)),
+      ],
+    );
+  }
+
+  Widget _buildPushSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(Icons.notifications_active_outlined, 'PUSH NOTIFICATIONS'),
+        const Divider(height: 32, thickness: 1, color: Color(0xFFF3F4F6)),
+        _buildStatusSelector('MOBILE PUSH', 'Toggle real-time app notifications.', _pushEnabled, (v) => setState(() => _pushEnabled = v)),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(IconData icon, String title) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF141E7A)),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF141E7A),
+            letterSpacing: 1.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLabelField(String label, Widget field) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            color: const Color(0xFF333333),
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 10),
+        field,
+      ],
+    );
+  }
+
+  Widget _buildInfoBar() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F2FF),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDDE1FF)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF141E7A)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Members with enabled notifications will receive alerts based on their assigned role and message template.',
+              style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF141E7A), fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusSelector(String title, String subtitle, bool value, Function(bool) onChanged) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 12, color: const Color(0xFF141E7A), letterSpacing: 1.1),
+                ),
+                const SizedBox(height: 4),
+                Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280))),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: Colors.white,
+            activeTrackColor: const Color(0xFF141E7A),
+          ),
+        ],
       ),
     );
   }

@@ -54,7 +54,23 @@ class RoasterRepositoryImpl implements RoasterRepository {
   }
 
   @override
-  Future<List<RosterMember>> getRosterMembers(int rosterId) {
-    return _api.getRosterMembers(rosterId);
+  Future<List<RosterMember>> getRosterMembers(
+    int rosterId, {
+    String? q,
+    int? roleId,
+    int? status,
+  }) {
+    return _api.getRosterMembers(
+      rosterId,
+      q: q,
+      roleId: roleId,
+      status: status,
+    );
   }
+
+
+
+
+
+
 }

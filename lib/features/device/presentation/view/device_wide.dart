@@ -73,22 +73,39 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             padding: const EdgeInsets.all(24),
             child: _buildHeader(state, notifier),
           ),
-          if (!state.isLoading || state.groupedDevices.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: _buildFixedTableHeader(),
-            ),
           Expanded(
-            child: state.isLoading && state.groupedDevices.isEmpty
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                  )
-                : state.error != null
-                ? Center(child: Text(state.error!))
-                : _buildVirtualizedTable(state, notifier),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = constraints.maxWidth > 1400 ? constraints.maxWidth : 1400.0;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Column(
+                      children: [
+                        if (!state.isLoading || state.groupedDevices.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: _buildFixedTableHeader(),
+                          ),
+                        Expanded(
+                          child: state.isLoading && state.groupedDevices.isEmpty
+                              ? const Center(
+                                  child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+                                )
+                              : state.error != null
+                              ? Center(child: Text(state.error!))
+                              : _buildVirtualizedTable(state, notifier),
+                        ),
+                        if (state.isLoading && state.groupedDevices.isNotEmpty)
+                          const AppTableLoadingMore(),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-          if (state.isLoading && state.groupedDevices.isNotEmpty)
-            const AppTableLoadingMore(),
           const SizedBox(height: 24),
         ],
       ),

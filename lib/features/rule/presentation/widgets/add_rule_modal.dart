@@ -11,6 +11,8 @@ import '../../../plant/presentation/model/plant_model.dart';
 import '../../../plant/presentation/controller/plant_provider.dart';
 import '../../../message_template/presentation/model/message_template_model.dart';
 import '../../../message_template/presentation/controller/message_template_provider.dart';
+import '../../../tank/presentation/model/tank_model.dart';
+import '../../../tank/presentation/controller/tank_provider.dart';
 
 class AddRuleModal extends ConsumerStatefulWidget {
   final Rule? initialRule;
@@ -56,12 +58,14 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
 
   CompanyGroup? _selectedCompanyGroup;
   Plant? _selectedPlant;
+  Tank? _selectedTank;
   int _isActive = 1;
 
   final List<RuleRowData> _rows = [];
 
   List<CompanyGroup> _companyGroups = [];
   List<Plant> _plants = [];
+  List<Tank> _tanks = [];
   List<MessageTemplate> _templates = [];
   bool _isLoadingData = false;
 
@@ -98,16 +102,17 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
       final companyRepo = ref.read(companyRepositoryProvider);
       final plantRepo = ref.read(plantRepositoryProvider);
       final templateRepo = ref.read(messageTemplateRepositoryProvider);
+      final tankRepo = ref.read(tankRepositoryProvider);
 
-      final companiesResponse = await companyRepo.getGroupedCompanies(
-        limit: 1000,
-      );
+      final companiesResponse = await companyRepo.getGroupedCompanies(limit: 1000);
       final plantsResponse = await plantRepo.getPlants(limit: 1000);
+      final tanksResponse = await tankRepo.getTanks();
       final activeTemplates = await templateRepo.getActiveTemplates();
 
       setState(() {
         _companyGroups = companiesResponse.data;
         _plants = plantsResponse.data;
+        _tanks = tanksResponse;
         _templates = activeTemplates;
 
         if (widget.initialRule != null) {
@@ -117,9 +122,11 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
               .firstOrNull;
 
           if (r.plantId != null) {
-            _selectedPlant = _plants
-                .where((p) => p.id == r.plantId)
-                .firstOrNull;
+            _selectedPlant = _plants.where((p) => p.id == r.plantId).firstOrNull;
+            
+            if (r.tankId != null) {
+              _selectedTank = _tanks.where((t) => t.tankId == r.tankId).firstOrNull;
+            }
           }
 
           if (r.messageTemplateId != null && _rows.isNotEmpty) {
@@ -164,6 +171,7 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
             : _descriptionController.text.trim(),
         'company_id': companyId,
         'plant_id': _selectedPlant?.id,
+        'tank_id': _selectedTank?.tankId,
         'parameter_type': row.parameterType,
         'condition_type': row.conditionType,
         'threshold_1': double.tryParse(row.threshold1Controller.text.trim()),
@@ -298,6 +306,7 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
                                         onChanged: (cg) => setState(() {
                                           _selectedCompanyGroup = cg;
                                           _selectedPlant = null;
+                                          _selectedTank = null;
                                         }),
                                       ),
                                     ),
@@ -311,11 +320,42 @@ class _AddRuleModalState extends ConsumerState<AddRuleModal> {
                                         items: filteredPlants,
                                         hint: 'Select Plant',
                                         itemLabel: (p) => p.name,
-                                        onChanged: (p) =>
-                                            setState(() => _selectedPlant = p),
+                                        onChanged: (p) => setState(() {
+                                          _selectedPlant = p;
+                                          _selectedTank = null;
+                                        }),
                                       ),
                                     ),
                                   ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildLabelField(
+                                      'TANK (OPTIONAL)',
+                                      AppDropdown<Tank>(
+                                        value: _selectedTank,
+                                        items: _selectedPlant == null
+                                            ? []
+                                            : _tanks
+                                                .where((t) =>
+                                                    t.plantId == _selectedPlant!.id)
+                                                .toList(),
+                                        hint: _selectedPlant == null
+                                            ? 'Select Plant First'
+                                            : 'Select Tank',
+                                        itemLabel: (t) => t.tankNumber,
+                                        onChanged: _selectedPlant == null
+                                            ? null
+                                            : (t) => setState(
+                                                () => _selectedTank = t),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 24),
+                                  const Spacer(),
                                 ],
                               ),
 

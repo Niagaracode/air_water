@@ -13,6 +13,8 @@ class RuleApi {
     String? parameterType,
     int? isActive,
     int? companyId,
+    int? tankId,
+    int? plantId,
   }) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
     if (name != null && name.isNotEmpty) {
@@ -26,6 +28,12 @@ class RuleApi {
     }
     if (companyId != null) {
       query['company_id'] = companyId;
+    }
+    if (tankId != null) {
+      query['tank_id'] = tankId;
+    }
+    if (plantId != null) {
+      query['plant_id'] = plantId;
     }
 
     final response = await _client.get('/rules', query: query);

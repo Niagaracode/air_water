@@ -9,6 +9,7 @@ import '../controller/tank_provider.dart';
 import '../widgets/add_tank_modal.dart';
 import '../model/tank_model.dart';
 import '../../../plant/presentation/model/plant_model.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:async';
 
 class TankWide extends ConsumerStatefulWidget {
@@ -157,7 +158,7 @@ class _TankWideState extends ConsumerState<TankWide> {
           AppTableHeaderCell('Unit', flex: 1),
           AppTableHeaderCell('H / W / Dish', flex: 2),
           AppTableHeaderCell('Status', flex: 1),
-          AppTableHeaderCell('Actions', width: 80),
+          AppTableHeaderCell('Actions', width: 120),
         ],
       ),
     );
@@ -344,8 +345,15 @@ class _TankWideState extends ConsumerState<TankWide> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      body: CustomScrollView(
-        controller: _scrollController,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final tableWidth = constraints.maxWidth > 1000 ? constraints.maxWidth : 1000.0;
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: CustomScrollView(
+                controller: _scrollController,
         slivers: [
           // 1. Header & Filters
           SliverToBoxAdapter(
@@ -413,6 +421,10 @@ class _TankWideState extends ConsumerState<TankWide> {
 
           const SliverToBoxAdapter(child: SizedBox(height: 48)),
         ],
+      ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -540,12 +552,15 @@ class _TankWideState extends ConsumerState<TankWide> {
                   _noImageBox(),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    tank.tankNumber,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF111827),
+                  child: InkWell(
+                    onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
+                    child: Text(
+                      tank.tankNumber,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF2563EB),
+                      ),
                     ),
                   ),
                 ),
@@ -567,9 +582,16 @@ class _TankWideState extends ConsumerState<TankWide> {
             ),
           ),
           SizedBox(
-            width: 80,
+            width: 120,
             child: Row(
               children: [
+                AppTableActionButton(
+                  icon: Icons.visibility_outlined,
+                  color: const Color(0xFF141E7A),
+                  bg: const Color(0xFFF0FDF4),
+                  onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
+                ),
+                const SizedBox(width: 6),
                 AppTableActionButton(
                   icon: Icons.edit_outlined,
                   color: const Color(0xFF2563EB),

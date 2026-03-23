@@ -56,28 +56,44 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                 padding: const EdgeInsets.all(24.0),
                 child: _buildHeader(companyState, companyNotifier),
               ),
-              if (!companyState.isLoading ||
-                  companyState.groupedCompanies.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: _buildFixedTableHeader(),
-                ),
               Expanded(
-                child: CustomScrollView(
-                  controller: _scrollController,
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      sliver: _buildVirtualizedTable(
-                        companyState,
-                        companyNotifier,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final tableWidth = constraints.maxWidth > 1000 ? constraints.maxWidth : 1000.0;
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: tableWidth,
+                        child: Column(
+                          children: [
+                            if (!companyState.isLoading || companyState.groupedCompanies.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                child: _buildFixedTableHeader(),
+                              ),
+                            Expanded(
+                              child: CustomScrollView(
+                                controller: _scrollController,
+                                slivers: [
+                                  SliverPadding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                                    sliver: _buildVirtualizedTable(
+                                      companyState,
+                                      companyNotifier,
+                                    ),
+                                  ),
+                                  if (companyState.isLoading &&
+                                      companyState.groupedCompanies.isNotEmpty)
+                                    const SliverToBoxAdapter(child: AppTableLoadingMore()),
+                                  const SliverToBoxAdapter(child: SizedBox(height: 48)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    if (companyState.isLoading &&
-                        companyState.groupedCompanies.isNotEmpty)
-                      const SliverToBoxAdapter(child: AppTableLoadingMore()),
-                    const SliverToBoxAdapter(child: SizedBox(height: 48)),
-                  ],
+                    );
+                  },
                 ),
               ),
             ],

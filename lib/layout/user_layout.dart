@@ -118,16 +118,16 @@ class CustomerLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildNarrow(BuildContext context) {
-    return const CustomerMobile();
+    return CustomerMobile(child: child);
   }
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const CustomerTablet();
+    return CustomerTablet(child: child);
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const CustomerDesktop();
+    return CustomerDesktop(child: child);
   }
 }

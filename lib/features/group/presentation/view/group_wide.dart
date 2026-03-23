@@ -69,24 +69,41 @@ class _GroupWideState extends ConsumerState<GroupWide> {
             padding: const EdgeInsets.all(24),
             child: _buildHeader(state, notifier),
           ),
-          if (!state.isLoading || state.plantUserCounts.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: _buildFixedTableHeader(),
-            ),
           Expanded(
-            child: state.isLoading && state.plantUserCounts.isEmpty
-                ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                  )
-                : state.error != null
-                ? Center(
-                    child: Text(
-                      state.error!,
-                      style: const TextStyle(color: Colors.red),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = constraints.maxWidth > 1000 ? constraints.maxWidth : 1000.0;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Column(
+                      children: [
+                        if (!state.isLoading || state.plantUserCounts.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: _buildFixedTableHeader(),
+                          ),
+                        Expanded(
+                          child: state.isLoading && state.plantUserCounts.isEmpty
+                              ? const Center(
+                                  child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+                                )
+                              : state.error != null
+                              ? Center(
+                                  child: Text(
+                                    state.error!,
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                )
+                              : _buildVirtualizedTable(state, notifier),
+                        ),
+                      ],
                     ),
-                  )
-                : _buildVirtualizedTable(state, notifier),
+                  ),
+                );
+              },
+            ),
           ),
           const SizedBox(height: 24),
         ],
@@ -135,6 +152,13 @@ class _GroupWideState extends ConsumerState<GroupWide> {
               ),
               ElevatedButton.icon(
                 onPressed: () => _showAddModal(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF141E7A),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
                   'ADD GROUP',

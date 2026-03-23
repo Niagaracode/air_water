@@ -114,6 +114,12 @@ class _GroupNarrowState extends ConsumerState<GroupNarrow> {
         ),
         ElevatedButton(
           onPressed: () => _showAddModal(),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF141E7A),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          ),
           child: const Text('ADD'),
         ),
       ],

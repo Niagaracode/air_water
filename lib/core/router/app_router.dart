@@ -6,6 +6,8 @@ import 'package:air_water/features/reports/report_layout.dart';
 import 'package:air_water/features/roaster/roaster_layout.dart';
 import 'package:air_water/features/rule/rule_layout.dart';
 import 'package:air_water/features/user/user_layout.dart';
+import 'package:air_water/features/asset_summary/asset_summary_layout.dart';
+import 'package:air_water/features/asset_schedule/asset_schedule_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +19,8 @@ import '../../features/device/device_layout.dart';
 import '../../features/plant/plant_layout.dart';
 import '../../controller/screen_controller.dart';
 import '../../features/tank/tank_layout.dart';
+import '../../features/tank/presentation/view/tank_details_view.dart';
+import '../../features/tank/presentation/model/tank_model.dart';
 import 'router_refresh_notifier.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -81,6 +85,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/tank',
             builder: (_, __) => const TankLayout(),
+            routes: [
+              GoRoute(
+                path: 'details/:id',
+                builder: (context, state) {
+                  final id = int.parse(state.pathParameters['id']!);
+                  final tank = state.extra as Tank?;
+                  return TankDetailsView(tankId: id, tank: tank);
+                },
+              ),
+            ],
           ),
           GoRoute(
             path: '/device',
@@ -113,6 +127,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/report',
             builder: (_, __) => const ReportLayout(),
+          ),
+          GoRoute(
+            path: '/asset-summary',
+            builder: (_, __) => const AssetSummaryLayout(),
+          ),
+          GoRoute(
+            path: '/asset-schedule',
+            builder: (_, __) => const AssetScheduleLayout(),
           ),
         ],
       ),

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Roster {
   final int id;
   final String description;
@@ -8,6 +10,7 @@ class Roster {
   final String? roleNames;
   final String? parameterNames;
   final String? messageTemplateNames;
+  final List<int> roleIds;
 
   Roster({
     required this.id,
@@ -19,6 +22,7 @@ class Roster {
     this.roleNames,
     this.parameterNames,
     this.messageTemplateNames,
+    this.roleIds = const [],
   });
 
   factory Roster.fromJson(Map<String, dynamic> json) {
@@ -32,7 +36,24 @@ class Roster {
       roleNames: json['role_names'] as String?,
       parameterNames: json['parameter_names'] as String?,
       messageTemplateNames: json['message_template_names'] as String?,
+      roleIds: _parseRoleIds(json['role_ids']),
     );
+  }
+
+  static List<int> _parseRoleIds(dynamic roleIds) {
+    if (roleIds == null) return [];
+    if (roleIds is List) return roleIds.map((e) => int.tryParse(e.toString()) ?? 0).where((e) => e != 0).toList();
+    if (roleIds is String) {
+      if (roleIds.isEmpty) return [];
+      try {
+        final decoded = jsonDecode(roleIds);
+        if (decoded is List) return decoded.map((e) => int.tryParse(e.toString()) ?? 0).where((e) => e != 0).toList();
+      } catch (_) {
+        // Handle comma separated if not JSON
+        return roleIds.split(',').map((e) => int.tryParse(e.trim()) ?? 0).where((e) => e != 0).toList();
+      }
+    }
+    return [];
   }
 }
 
@@ -56,6 +77,14 @@ class RosterMember {
   final String? companyName;
   final String? messageTemplateName;
   final String? email; // Add this
+
+  String get displayName {
+    final f = (firstName == null || firstName == 'null') ? '' : firstName!;
+    final l = (lastName == null || lastName == 'null') ? '' : lastName!;
+    final full = '$f $l'.trim();
+    if (full.isEmpty) return username ?? 'Unknown Member';
+    return full;
+  }
 
   RosterMember({
     this.id,

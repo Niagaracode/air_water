@@ -47,10 +47,23 @@ class RosterApi {
     await _client.delete('/roster/members/$memberId');
   }
 
-  Future<List<RosterMember>> getRosterMembers(int rosterId) async {
-    final response = await _client.get('/roster/$rosterId/members');
+  Future<List<RosterMember>> getRosterMembers(
+    int rosterId, {
+    String? q,
+    int? roleId,
+    int? status,
+  }) async {
+    final response = await _client.get(
+      '/roster/$rosterId/members',
+      query: {
+        if (q != null && q.isNotEmpty) 'q': q,
+        if (roleId != null) 'roleId': roleId,
+        if (status != null) 'status': status,
+      },
+    );
     return (response.data['data'] as List)
         .map((i) => RosterMember.fromJson(i as Map<String, dynamic>))
         .toList();
   }
+
 }

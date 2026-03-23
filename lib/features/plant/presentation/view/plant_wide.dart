@@ -53,18 +53,35 @@ class _PlantWideState extends ConsumerState<PlantWide> {
             padding: const EdgeInsets.all(24.0),
             child: _buildHeader(plantState, plantNotifier),
           ),
-          if (!plantState.isLoading || plantState.groupedPlants.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: _buildFixedTableHeader(),
-            ),
           Expanded(
-            child: plantState.isLoading && plantState.groupedPlants.isEmpty
-                ? const AppTableInitialLoader()
-                : _buildVirtualizedTable(plantState, plantNotifier),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = constraints.maxWidth > 1200 ? constraints.maxWidth : 1200.0;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Column(
+                      children: [
+                        if (!plantState.isLoading || plantState.groupedPlants.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            child: _buildFixedTableHeader(),
+                          ),
+                        Expanded(
+                          child: plantState.isLoading && plantState.groupedPlants.isEmpty
+                              ? const AppTableInitialLoader()
+                              : _buildVirtualizedTable(plantState, plantNotifier),
+                        ),
+                        if (plantState.isLoading && plantState.groupedPlants.isNotEmpty)
+                          const AppTableLoadingMore(),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
-          if (plantState.isLoading && plantState.groupedPlants.isNotEmpty)
-            const AppTableLoadingMore(),
           const SizedBox(height: 24),
         ],
       ),

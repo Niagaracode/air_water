@@ -19,6 +19,7 @@ class AppTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final Widget? prefixIcon;
   final Color? prefixIconColor;
+  final Widget? suffixIcon;
 
   const AppTextField({
     super.key,
@@ -34,6 +35,7 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.prefixIcon,
     this.prefixIconColor,
+    this.suffixIcon,
     this.onToggle,
     this.onChanged,
     this.onSubmitted,
@@ -66,7 +68,7 @@ class AppTextField extends StatelessWidget {
         ),
         prefixIcon: prefixIcon,
         prefixIconColor: prefixIconColor,
-        suffixIcon: isPassword
+        suffixIcon: suffixIcon ?? (isPassword
             ? IconButton(
                 icon: Icon(
                   isObscured ? Icons.visibility_off : Icons.visibility,
@@ -75,7 +77,7 @@ class AppTextField extends StatelessWidget {
                 ),
                 onPressed: onToggle,
               )
-            : null,
+            : null),
         filled: true,
         fillColor: const Color(0xFFF9FAFB),
         contentPadding: const EdgeInsets.symmetric(
