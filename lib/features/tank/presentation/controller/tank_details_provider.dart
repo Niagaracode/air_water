@@ -76,12 +76,23 @@ class TankDetailsNotifier extends Notifier<TankDetailsState> {
         ),
       ];
 
+      // Mock Chart Data
+      final chartData = [
+        {'time': '00:00', 'value': 85.0},
+        {'time': '04:00', 'value': 82.0},
+        {'time': '08:00', 'value': 78.0},
+        {'time': '12:00', 'value': 72.0},
+        {'time': '16:00', 'value': 68.0},
+        {'time': '20:00', 'value': 65.0},
+      ];
+
       state = state.copyWith(
         isLoading: false,
         dataChannels: dataChannels,
         events: events,
         readings: readings,
         forecasts: forecasts,
+        chartData: chartData,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());

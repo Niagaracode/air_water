@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import '../../../tank/data/api/tank_api.dart';
+import '../../../setting/data/api/setting_api.dart';
 import '../../../../core/network/api_client.dart';
 import '../model/asset_schedule_model.dart';
 
@@ -52,56 +53,95 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
 
   Future<void> loadData({bool refresh = false}) async {
     if (refresh) {
-      state = state.copyWith(page: 1, schedules: [], isLoading: true, error: null);
+      state =
+          state.copyWith(page: 1, schedules: [], isLoading: true, error: null);
     } else {
       state = state.copyWith(isLoading: true, error: null);
     }
 
     try {
-      final tankApi = TankApi(ref.read(apiClientProvider));
+      final apiClient = ref.read(apiClientProvider);
+      final tankApi = TankApi(apiClient);
+      final settingApi = SettingApi(apiClient);
+
+      // Fetch grouped tanks
       final response = await tankApi.getTanksGrouped(
         page: state.page,
         limit: 20,
       );
 
+      // Fetch all active settings to map them to tanks/parameters
+      final settingsResponse = await settingApi.getSettings(limit: 1000, isActive: 1);
+      final allSettings = settingsResponse.data;
+
       final List<AssetScheduleModel> newSchedules = [];
       final random = Random();
       final now = DateTime.now();
 
+      final parameters = [
+        {'name': 'Level', 'unit': '% Full'},
+        {'name': 'Pressure', 'unit': 'Psi'},
+        {'name': 'Battery', 'unit': 'V'},
+      ];
+
       for (final tankGroup in response.data) {
         for (final tank in tankGroup.tanks) {
-          // Mock data for demonstration as in reference image
-          final currentLevel = 20.0 + random.nextInt(60);
-          final depletionRate = 2.0 + random.nextDouble() * 5.0;
-          final daysToRunout = (currentLevel / depletionRate).floor();
-          
-          final runoutDate = now.add(Duration(days: daysToRunout, hours: random.nextInt(24)));
-          final nextRefill = daysToRunout > 2 
-              ? now.add(Duration(days: max(1, daysToRunout - 2), hours: 9))
-              : null;
+          // Filter settings for this specific tank or its plant
+          final tankSettings = allSettings
+              .where((r) =>
+                  r.tankId == tank.tankId ||
+                  (r.tankId == null && r.plantId == tank.plantId))
+              .toList();
 
-          final forecasts = List.generate(10, (index) {
-            final date = now.add(Duration(days: index));
-            final val = currentLevel + (index * random.nextDouble() * 10) % 100;
-            return AssetScheduleForecast(
-              date: date,
-              value: val,
-              status: val < 20 ? 'critical' : (val < 40 ? 'warning' : 'normal'),
-            );
-          });
+          for (var param in parameters) {
+            final paramName = param['name'] as String;
+            final paramUnit = param['unit'] as String;
 
-          newSchedules.add(AssetScheduleModel(
-            plantId: tank.plantId ?? 0,
-            plantName: tankGroup.plantName,
-            tankId: tank.tankId,
-            tankNumber: tank.tankNumber,
-            item: 'Level',
-            siteLocation: '${tankGroup.city ?? "Unknown"}, ${tankGroup.state ?? ""}',
-            runoutDate: runoutDate,
-            nextScheduledRefill: nextRefill,
-            unit: '% Full',
-            forecast: forecasts,
-          ));
+            // Check if there's a setting for this parameter
+            final setting = tankSettings
+                .where((r) =>
+                    r.parameterType?.toLowerCase() == paramName.toLowerCase())
+                .firstOrNull;
+
+            // Display if it's 'Level' (default) or if it has an active setting
+            if (paramName == 'Level' || setting != null) {
+              final currentLevel = 20.0 + random.nextInt(60);
+              final depletionRate = 2.0 + random.nextDouble() * 5.0;
+              final daysToRunout = (currentLevel / depletionRate).floor();
+
+              final runoutDate = now.add(
+                  Duration(days: daysToRunout, hours: random.nextInt(24)));
+              final nextRefill = daysToRunout > 2
+                  ? now.add(Duration(days: max(1, daysToRunout - 2), hours: 9))
+                  : null;
+
+              final forecasts = List.generate(10, (index) {
+                final date = now.add(Duration(days: index));
+                final val =
+                    currentLevel + (index * random.nextDouble() * 10) % 100;
+                return AssetScheduleForecast(
+                  date: date,
+                  value: val,
+                  status:
+                      val < 20 ? 'critical' : (val < 40 ? 'warning' : 'normal'),
+                );
+              });
+
+              newSchedules.add(AssetScheduleModel(
+                plantId: tank.plantId ?? 0,
+                plantName: tankGroup.plantName,
+                tankId: tank.tankId,
+                tankNumber: tank.tankNumber,
+                item: paramName,
+                siteLocation:
+                    '${tankGroup.city ?? "Unknown"}, ${tankGroup.state ?? ""}',
+                runoutDate: runoutDate,
+                nextScheduledRefill: nextRefill,
+                unit: paramUnit,
+                forecast: forecasts,
+              ));
+            }
+          }
         }
       }
 
@@ -124,6 +164,7 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
   }
 }
 
-final assetScheduleProvider = NotifierProvider<AssetScheduleNotifier, AssetScheduleState>(
+final assetScheduleProvider =
+    NotifierProvider<AssetScheduleNotifier, AssetScheduleState>(
   AssetScheduleNotifier.new,
 );

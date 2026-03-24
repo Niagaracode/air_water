@@ -97,9 +97,38 @@ const eventsMenu = [
     key: 'Rule',
     label: 'Rule',
     icon: Icons.gavel_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    allowedRoles: [
+      UserRole.superAdmin, 
+      UserRole.companyAdmin,
+    ],
   ),
-
+  SidebarMenuItem(
+    key: 'Alarm',
+    label: 'Alarm',
+    icon: Icons.notifications_active_outlined,
+    allowedRoles: [
+      UserRole.distributor,
+      UserRole.supervisor,
+      UserRole.technician,
+      UserRole.customer,
+    ],
+  ),
+  SidebarMenuItem(
+    key: 'Event',
+    label: 'Event',
+    icon: Icons.event_note_rounded,
+    allowedRoles: [
+      UserRole.customer,
+    ],
+  ),
+  SidebarMenuItem(
+    key: 'Setting',
+    label: 'Setting',
+    icon: Icons.settings_rounded,
+    allowedRoles: [
+      UserRole.customer,
+    ],
+  ),
   SidebarMenuItem(
     key: 'Roaster',
     label: 'Roaster',
@@ -110,6 +139,10 @@ const eventsMenu = [
     key: 'Report',
     label: 'Report',
     icon: Icons.assessment_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    allowedRoles: [
+      UserRole.superAdmin, 
+      UserRole.companyAdmin,
+      UserRole.customer,
+    ],
   ),
 ];

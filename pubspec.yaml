@@ -53,6 +53,7 @@ dependencies:
   data_table_2: ^2.7.2
   google_maps_flutter: ^2.7.0
   geocoding: ^3.0.0
+  fl_chart: ^1.2.0
 
 dev_dependencies:
   flutter_test:

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../tank/presentation/model/tank_model.dart';
 import '../../../tank/data/api/tank_api.dart';
-import '../../../rule/data/api/rule_api.dart';
-import '../../../rule/presentation/model/rule_model.dart';
+import '../../../setting/data/api/setting_api.dart';
+import '../../../setting/presentation/model/setting_model.dart';
 import '../../../../core/network/api_client.dart';
 import '../model/asset_summary_model.dart';
 
@@ -72,23 +72,23 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
         tankName: state.tankFilter,
       );
 
-      final ruleApi = RuleApi(ref.read(apiClientProvider));
+      final settingApi = SettingApi(ref.read(apiClientProvider));
 
-      // Fetch all active rules to map them to tanks
-      final rulesResponse = await ruleApi.getRules(limit: 1000, isActive: 1);
-      final allRules = rulesResponse.data;
+      // Fetch all active settings to map them to tanks
+      final settingsResponse = await settingApi.getSettings(limit: 1000, isActive: 1);
+      final allSettings = settingsResponse.data;
 
       final List<AssetSummaryGroup> newGroups = [];
       for (final tankGroup in response.data) {
         for (final tank in tankGroup.tanks) {
           final deviceId = 'E10038${tank.tankId.toString().padLeft(2, '0')}';
           
-          // Filter rules for this specific tank or its plant (if tank_id is null)
-          final tankRules = allRules.where((r) => 
+          // Filter settings for this specific tank or its plant (if tank_id is null)
+          final tankSettings = allSettings.where((r) => 
             r.tankId == tank.tankId || (r.tankId == null && r.plantId == tank.plantId)
           ).toList();
 
-          var readings = _generateReadingsWithRules(tank, deviceId, tankRules);
+          var readings = _generateReadingsWithSettings(tank, deviceId, tankSettings);
           
           if (state.importanceFilter != null) {
             readings = readings.where((r) => 
@@ -98,6 +98,7 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
 
           if (readings.isNotEmpty) {
             newGroups.add(AssetSummaryGroup(
+              tankId: tank.tankId,
               plantName: tankGroup.plantName,
               tankNumber: tank.tankNumber,
               deviceId: deviceId,
@@ -117,7 +118,7 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
     }
   }
 
-  List<AssetSummaryReading> _generateReadingsWithRules(Tank tank, String deviceId, List<Rule> rules) {
+  List<AssetSummaryReading> _generateReadingsWithSettings(Tank tank, String deviceId, List<Setting> settings) {
     final now = DateTime.now();
     final List<AssetSummaryReading> result = [];
 
@@ -129,21 +130,21 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
 
     for (var param in parameters) {
       final name = param['name'] as String;
-      final rule = rules.where((r) => r.parameterType?.toLowerCase() == name.toLowerCase()).firstOrNull;
+      final setting = settings.where((r) => r.parameterType?.toLowerCase() == name.toLowerCase()).firstOrNull;
       
-      if (rule != null) {
+      if (setting != null) {
         final unit = param['unit'] as String;
         final u = ' $unit';
 
         String alarmLevelsText = '';
-        if (rule.conditionType == 'BETWEEN') {
-          alarmLevelsText = 'L1: ${rule.threshold1}$u, L2: ${rule.threshold2}$u';
-        } else if (rule.conditionType == 'LESS THAN' || rule.conditionType == '<') {
-          alarmLevelsText = 'L1: ${rule.threshold1}$u';
-        } else if (rule.conditionType == 'GREATER THAN' || rule.conditionType == '>') {
-          alarmLevelsText = 'H1: ${rule.threshold1}$u';
+        if (setting.conditionType == 'BETWEEN') {
+          alarmLevelsText = 'L1: ${setting.threshold1}$u, L2: ${setting.threshold2}$u';
+        } else if (setting.conditionType == 'LESS THAN' || setting.conditionType == '<') {
+          alarmLevelsText = 'L1: ${setting.threshold1}$u';
+        } else if (setting.conditionType == 'GREATER THAN' || setting.conditionType == '>') {
+          alarmLevelsText = 'H1: ${setting.threshold1}$u';
         } else {
-          alarmLevelsText = '${rule.conditionType} ${rule.threshold1}$u';
+          alarmLevelsText = '${setting.conditionType} ${setting.threshold1}$u';
         }
 
         result.add(AssetSummaryReading(
@@ -153,10 +154,10 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
               ? '3.6 V' 
               : '${(40 + (tank.tankId % 50)).toStringAsFixed(2)} $unit',
           product: tank.productName ?? 'Oxygen',
-          importance: rule.importance ?? 'Medium',
+          importance: setting.importance ?? 'Medium',
           alarmLevels: alarmLevelsText,
           deliverable: name == 'Level' ? 'Yes' : 'NA',
-          rosterName: rule.rosterName,
+          rosterName: setting.rosterName,
         ));
       }
     }

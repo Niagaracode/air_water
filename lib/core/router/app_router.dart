@@ -4,10 +4,14 @@ import 'package:air_water/features/message_template/message_template_layout.dart
 import 'package:air_water/features/product/product_layout.dart';
 import 'package:air_water/features/reports/report_layout.dart';
 import 'package:air_water/features/roaster/roaster_layout.dart';
-import 'package:air_water/features/rule/rule_layout.dart';
 import 'package:air_water/features/user/user_layout.dart';
 import 'package:air_water/features/asset_summary/asset_summary_layout.dart';
 import 'package:air_water/features/asset_schedule/asset_schedule_layout.dart';
+import 'package:air_water/features/profile/profile_layout.dart';
+import 'package:air_water/features/alarm/alarm_layout.dart';
+import 'package:air_water/features/events/event_layout.dart';
+import 'package:air_water/features/setting/setting_layout.dart';
+import 'package:air_water/features/user/presentation/controller/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -44,9 +48,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return location == '/login' ? null : '/login';
       }
 
-      if (status == AppStartupState.authenticated &&
-          (location == '/login' || location == '/loading')) {
-        return '/dashboard';
+      if (status == AppStartupState.authenticated) {
+        if (location == '/login' || location == '/loading') {
+          return '/dashboard';
+        }
+
+        // Role-based redirection: Prevent Customers (roleId 6) from accessing /profile
+        final userState = ref.watch(userProvider);
+        if (userState.currentUser != null &&
+            location == '/profile' &&
+            userState.currentUser!.roleId == 6) {
+          return '/dashboard';
+        }
       }
 
       return null;
@@ -114,7 +127,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/rule',
-            builder: (_, __) => const RuleLayout(),
+            builder: (_, __) => const SettingLayout(),
           ),
           GoRoute(
             path: '/message-template',
@@ -135,6 +148,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/asset-schedule',
             builder: (_, __) => const AssetScheduleLayout(),
+          ),
+          GoRoute(
+            path: '/profile',
+            builder: (_, __) => const ProfileLayout(),
+          ),
+          GoRoute(
+            path: '/alarm',
+            builder: (_, __) => const AlarmLayout(),
+          ),
+          GoRoute(
+            path: '/event',
+            builder: (_, __) => const EventLayout(),
+          ),
+          GoRoute(
+            path: '/setting',
+            builder: (_, __) => const SettingLayout(),
           ),
         ],
       ),

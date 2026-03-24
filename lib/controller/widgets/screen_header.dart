@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/app_theme/app_theme.dart';
 import '../../features/auth/presentation/controllers/auth_providers.dart';
 
+
+import '../../core/user_config/user_role.dart';
+import '../../core/user_config/user_role_provider.dart';
 
 class ScreenHeader extends ConsumerWidget {
   const ScreenHeader({super.key});
@@ -12,6 +16,13 @@ class ScreenHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userNameAsync = ref.watch(userNameProvider);
+    final roleAsync = ref.watch(userRoleProvider);
+    
+    final isCustomer = roleAsync.when(
+      data: (role) => role == UserRole.customer,
+      loading: () => false,
+      error: (_, __) => false,
+    );
 
     return SizedBox(
       height: 64,
@@ -114,6 +125,8 @@ class ScreenHeader extends ConsumerWidget {
                     await ref
                         .read(authControllerProvider.notifier)
                         .logout();
+                  } else if (value == 'profile') {
+                    context.go('/profile');
                   }
                 },
                 child: Container(
@@ -196,35 +209,37 @@ class ScreenHeader extends ConsumerWidget {
                   ),
                 ),
                 itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'profile',
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: ListTile(
-                      dense: true,
-                      leading: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(8),
+                  if (!isCustomer) ...[
+                    PopupMenuItem(
+                      value: 'profile',
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: ListTile(
+                        dense: true,
+                        leading: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.person_outline_rounded,
+                            size: 18,
+                            color: Color(0xFF374151),
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.person_outline_rounded,
-                          size: 18,
-                          color: Color(0xFF374151),
-                        ),
-                      ),
-                      title: Text(
-                        'Profile',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF1A1A2E),
+                        title: Text(
+                          'Profile',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF1A1A2E),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const PopupMenuDivider(height: 4),
+                    const PopupMenuDivider(height: 4),
+                  ],
                   PopupMenuItem(
                     value: 'logout',
                     padding: const EdgeInsets.symmetric(horizontal: 8),

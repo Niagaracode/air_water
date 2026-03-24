@@ -194,7 +194,6 @@ class AppRoleBadge extends StatelessWidget {
       border = const Color(0xFFE2E8F0);
       text = const Color(0xFF475569);
     }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -209,6 +208,71 @@ class AppRoleBadge extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: text,
           letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AppImportanceBadge  — pill with importance-specific colors
+// ─────────────────────────────────────────────────────────────────────────────
+class AppImportanceBadge extends StatelessWidget {
+  final String? importance;
+
+  const AppImportanceBadge({super.key, required this.importance});
+
+  @override
+  Widget build(BuildContext context) {
+    if (importance == null || importance!.isEmpty) {
+      return Text(
+        '—',
+        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6B7280)),
+      );
+    }
+
+    final val = importance!.trim().toLowerCase();
+    
+    Color bg;
+    Color border;
+    Color text;
+
+    if (val.contains('critical')) {
+      bg = const Color(0xFFFEF2F2);
+      border = const Color(0xFFFECACA);
+      text = const Color(0xFFDC2626);
+    } else if (val.contains('urgent')) {
+      bg = const Color(0xFFF5F3FF);
+      border = const Color(0xFFDDD6FE);
+      text = const Color(0xFF7C3AED);
+    } else if (val.contains('warning')) {
+      bg = const Color(0xFFFFFBEB);
+      border = const Color(0xFFFEF3C7);
+      text = const Color(0xFFD97706);
+    } else if (val.contains('info')) {
+      bg = const Color(0xFFEFF6FF);
+      border = const Color(0xFFDBEAFE);
+      text = const Color(0xFF2563EB);
+    } else {
+      bg = const Color(0xFFF9FAFB);
+      border = const Color(0xFFE5E7EB);
+      text = const Color(0xFF4B5563);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border),
+      ),
+      child: Text(
+        importance!.toUpperCase(),
+        style: GoogleFonts.outfit(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: text,
+          letterSpacing: 0.5,
         ),
       ),
     );

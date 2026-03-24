@@ -9,7 +9,7 @@ import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
 import '../../../message_template/presentation/controller/message_template_provider.dart';
 import '../../../message_template/presentation/model/message_template_model.dart';
-import '../../../rule/presentation/controller/rule_provider.dart';
+import '../../../setting/presentation/controller/setting_provider.dart';
 import '../../../../shared/widgets/app_multi_select_dropdown.dart';
 
 class AddRosterModal extends ConsumerStatefulWidget {
@@ -59,11 +59,11 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     try {
       final userNotifier = ref.read(userProvider.notifier);
       final templateRepo = ref.read(messageTemplateRepositoryProvider);
-      final ruleRepo = ref.read(ruleRepositoryProvider);
+      final settingRepo = ref.read(settingRepositoryProvider);
 
       final roles = await userNotifier.getRoles();
       final templates = await templateRepo.getActiveTemplates();
-      final allowed = await ruleRepo.getTemplatesByParameter(_selectedParameter);
+      final allowed = await settingRepo.getTemplatesByParameter(_selectedParameter);
 
       if (mounted) {
         setState(() {
@@ -89,8 +89,8 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
 
   Future<void> _updateAllowedTemplates(String parameter) async {
     try {
-      final ruleRepo = ref.read(ruleRepositoryProvider);
-      final allowed = await ruleRepo.getTemplatesByParameter(parameter);
+      final settingRepo = ref.read(settingRepositoryProvider);
+      final allowed = await settingRepo.getTemplatesByParameter(parameter);
       
       if (mounted) {
         setState(() {

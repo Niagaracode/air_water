@@ -11,6 +11,7 @@ import '../../../../shared/widgets/app_details_header.dart';
 import '../../../../shared/widgets/app_metric_card.dart';
 import '../../../../shared/widgets/app_asset_info_grid.dart';
 import '../../../../shared/widgets/app_table_filter_popup.dart';
+import '../widgets/tank_level_chart.dart';
 
 class TankDetailsView extends ConsumerStatefulWidget {
   final int tankId;
@@ -180,7 +181,10 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
               color: const Color(0xFFF9FAFB),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Center(child: Text('Chart Placeholder')),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16.0, right: 16.0),
+              child: TankLevelChart(data: state.chartData),
+            ),
           ),
         ],
       ),

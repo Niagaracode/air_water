@@ -4,6 +4,7 @@ import '../../data/api/company_api.dart';
 import '../../domain/repository/company_repository.dart';
 import '../../data/repository/company_repository_impl.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../user/presentation/controller/user_provider.dart';
 
 final companyApiProvider = Provider(
   (ref) => CompanyApi(ref.read(apiClientProvider)),
@@ -80,9 +81,38 @@ class CompanyNotifier extends Notifier<CompanyState> {
   @override
   CompanyState build() {
     ref.keepAlive();
-    // Initial load only. build() is not called again on navigation if keepAlive is active.
+    
+    // Listen to user changes to trigger reload when current user data (and companyId) becomes available
+    ref.listen(userProvider, (previous, next) {
+      if (previous?.currentUser == null && next.currentUser != null) {
+        loadGroupedCompanies(isReload: true);
+      }
+    });
+
+    // Initial load
     Future.microtask(() => loadGroupedCompanies());
     return CompanyState();
+  }
+
+  List<CompanyGroup> _filterCompanies(List<CompanyGroup> companies) {
+    final userState = ref.read(userProvider);
+    final currentUser = userState.currentUser;
+    
+    if (currentUser == null) return companies;
+    
+    final roleName = currentUser.roleName?.toLowerCase() ?? '';
+    // Check if the user is a super_admin or company_admin
+    final isAdmin = roleName.contains('admin');
+    
+    if (isAdmin && currentUser.companyId != null) {
+      // Exclude groups where any address matches the current user's companyId
+      return companies.where((group) {
+        final groupCompanyIds = group.addresses.map((a) => a.companyId).toSet();
+        return !groupCompanyIds.contains(currentUser.companyId);
+      }).toList();
+    }
+    
+    return companies;
   }
 
   Future<void> loadGroupedCompanies({bool isReload = false}) async {
@@ -106,15 +136,18 @@ class CompanyNotifier extends Notifier<CompanyState> {
       // Verify that this is still the latest request
       if (timestamp != _lastRequestTimestamp) return;
 
-      final updatedGroupedCompanies = response.data;
+      final updatedGroupedCompanies = _filterCompanies(response.data);
       final expandedGroups = updatedGroupedCompanies.map((g) => g.name).toSet();
+      
+      // Calculate how many were filtered to adjust total count if needed
+      final filteredOutCount = response.data.length - updatedGroupedCompanies.length;
 
       state = state.copyWith(
         groupedCompanies: updatedGroupedCompanies,
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: 1,
-        totalEntries: response.pagination.total,
+        totalEntries: response.pagination.total - filteredOutCount,
         expandedGroups: expandedGroups,
       );
     } catch (e) {
@@ -138,13 +171,16 @@ class CompanyNotifier extends Notifier<CompanyState> {
         status: state.selectedStatus,
         date: state.selectedDate,
       );
-      final newExpanded = response.data.map((g) => g.name).toSet();
+      
+      final filteredNew = _filterCompanies(response.data);
+      final newExpanded = filteredNew.map((g) => g.name).toSet();
 
       state = state.copyWith(
-        groupedCompanies: [...state.groupedCompanies, ...response.data],
+        groupedCompanies: [...state.groupedCompanies, ...filteredNew],
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
+        totalEntries: state.totalEntries + filteredNew.length,
         expandedGroups: {...state.expandedGroups, ...newExpanded},
       );
     } catch (e) {
@@ -228,19 +264,22 @@ class CompanyNotifier extends Notifier<CompanyState> {
         date: state.selectedDate,
       );
 
+      final filtered = _filterCompanies(response.data);
+      final filteredOutCount = response.data.length - filtered.length;
+
       // Keep expanded groups that still exist in the new data
-      final newNames = response.data.map((g) => g.name).toSet();
+      final newNames = filtered.map((g) => g.name).toSet();
       final preserved = currentExpanded.intersection(newNames);
-      if (preserved.isEmpty && response.data.isNotEmpty) {
-        preserved.add(response.data.first.name);
+      if (preserved.isEmpty && filtered.isNotEmpty) {
+        preserved.add(filtered.first.name);
       }
 
       state = state.copyWith(
-        groupedCompanies: response.data,
+        groupedCompanies: filtered,
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: 1,
-        totalEntries: response.pagination.total,
+        totalEntries: response.pagination.total - filteredOutCount,
         expandedGroups: preserved,
       );
     } catch (e) {

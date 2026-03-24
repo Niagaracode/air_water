@@ -13,4 +13,8 @@ const Map<String, String> menuRoutes = {
   'Report': '/report',
   'Asset Summary': '/asset-summary',
   'Schedule': '/asset-schedule',
+  'Profile': '/profile',
+  'Alarm': '/alarm',
+  'Event': '/event',
+  'Setting': '/setting',
 };

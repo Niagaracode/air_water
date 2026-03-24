@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../controller/asset_summary_provider.dart';
 import '../model/asset_summary_model.dart';
 import '../../../../shared/widgets/app_table.dart';
@@ -124,12 +125,15 @@ class AssetSummaryProTable extends ConsumerWidget {
                     children: [
                       const Icon(Icons.factory_outlined, size: 16, color: Color(0xFF1E40AF)),
                       const SizedBox(width: 8),
-                      Text(
-                        '${group.plantName} - ${group.tankNumber}',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF1E40AF),
+                      InkWell(
+                        onTap: () => context.push('/tank/details/${group.tankId}'),
+                        child: Text(
+                          '${group.plantName} - ${group.tankNumber}',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF1E40AF),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),

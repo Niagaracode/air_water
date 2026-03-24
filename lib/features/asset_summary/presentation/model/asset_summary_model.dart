@@ -21,12 +21,14 @@ class AssetSummaryReading {
 }
 
 class AssetSummaryGroup {
+  final int tankId;
   final String plantName;
   final String tankNumber;
   final String deviceId;
   final List<AssetSummaryReading> readings;
 
   AssetSummaryGroup({
+    required this.tankId,
     required this.plantName,
     required this.tankNumber,
     required this.deviceId,
