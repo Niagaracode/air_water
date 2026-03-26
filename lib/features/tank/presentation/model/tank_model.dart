@@ -23,6 +23,9 @@ class Tank {
   final double? dishHeight;
   final int? companyId;
   final String? companyName;
+  final String? deviceId;
+  final String? simNumber;
+  final String? timeZone;
   final int status;
   final String? createdAt;
 
@@ -46,6 +49,9 @@ class Tank {
     this.dishHeight,
     this.companyId,
     this.companyName,
+    this.deviceId,
+    this.simNumber,
+    this.timeZone,
     required this.status,
     this.tankName,
     this.createdAt,
@@ -76,6 +82,9 @@ class Tank {
       dishHeight: _toDouble(json['dish_height']),
       companyId: _toInt(json['company_id']),
       companyName: json['company_name'] as String?,
+      deviceId: json['device_id'] as String?,
+      simNumber: json['sim_number'] as String?,
+      timeZone: json['time_zone'] as String?,
       status: json['status'] ?? 1,
       tankName: json['tank_name'] as String?,
       createdAt: json['created_at'] as String?,

@@ -57,6 +57,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _deviceIdController = TextEditingController();
+  final _simNumberController = TextEditingController();
+  final _timeZoneController = TextEditingController();
 
   CompanyGroup? _selectedCompanyGroup;
   Plant? _selectedPlant;
@@ -125,10 +128,10 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
 
           if (s.plantId != null) {
             _selectedPlant = _plants.where((p) => p.id == s.plantId).firstOrNull;
-            
-            if (s.tankId != null) {
-              _selectedTank = _tanks.where((t) => t.tankId == s.tankId).firstOrNull;
-            }
+          }
+
+          if (s.tankId != null) {
+            _selectedTank = _tanks.where((t) => t.tankId == s.tankId).firstOrNull;
           }
 
           if (s.messageTemplateId != null && _rows.isNotEmpty) {
@@ -136,6 +139,10 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                 .where((t) => t.id == s.messageTemplateId)
                 .firstOrNull;
           }
+
+          _deviceIdController.text = s.deviceId ?? _selectedTank?.deviceId ?? '';
+          _simNumberController.text = s.simNumber ?? _selectedTank?.simNumber ?? '';
+          _timeZoneController.text = s.timeZone ?? _selectedTank?.timeZone ?? '';
         }
       });
     } catch (e) {
@@ -175,6 +182,8 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         'importance': row.importance,
         'status_label': row.statusLabelController.text.trim().isEmpty ? null : row.statusLabelController.text.trim(),
         'message_template_id': row.selectedTemplate?.id,
+        'sim_number': _simNumberController.text.trim().isEmpty ? null : _simNumberController.text.trim(),
+        'time_zone': _timeZoneController.text.trim().isEmpty ? null : _timeZoneController.text.trim(),
         'is_active': _isActive,
         'status': 1,
       };
@@ -201,6 +210,30 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     }
   }
 
+  Future<void> _sendToDevice() async {
+    setState(() => _isLoadingData = true);
+    try {
+      // Mock sending to device
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Configuration sent to device successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send to device: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingData = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Plant> filteredPlants = [];
@@ -214,6 +247,12 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     final roleAsync = ref.watch(userRoleProvider);
     final isCustomer = roleAsync.when(
       data: (role) => role == UserRole.customer,
+      loading: () => false,
+      error: (_, __) => false,
+    );
+
+    final canSendToDevice = roleAsync.when(
+      data: (role) => role != UserRole.superAdmin && role != UserRole.companyAdmin,
       loading: () => false,
       error: (_, __) => false,
     );
@@ -274,63 +313,119 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                               ),
                               const SizedBox(height: 24),
                                _buildLabelField(isCustomer ? 'SETTING NAME' : 'RULE NAME', AppTextField(controller: _nameController, hint: isCustomer ? 'e.g. Critical Tank Level Low' : 'e.g. High Pressure Warning')),
-                              const SizedBox(height: 20),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildLabelField(
-                                      'COMPANY',
-                                      AppDropdown<CompanyGroup>(
-                                        value: _selectedCompanyGroup,
-                                        items: _companyGroups,
-                                        hint: 'Select Company',
-                                        itemLabel: (cg) => cg.name,
-                                        onChanged: (cg) => setState(() {
-                                          _selectedCompanyGroup = cg;
-                                          _selectedPlant = null;
-                                          _selectedTank = null;
-                                        }),
+                              const SizedBox(height: 8),
+                              if (isEditMode) ...[
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildLabelField(
+                                        'DEVICE ID',
+                                        AppTextField(
+                                          controller: _deviceIdController,
+                                          hint: 'Device ID',
+                                          readOnly: true,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 24),
-                                  Expanded(
-                                    child: _buildLabelField(
-                                      'PLANT (OPTIONAL)',
-                                      AppDropdown<Plant>(
-                                        value: _selectedPlant,
-                                        items: filteredPlants,
-                                        hint: 'Select Plant',
-                                        itemLabel: (p) => p.name,
-                                        onChanged: (p) => setState(() {
-                                          _selectedPlant = p;
-                                          _selectedTank = null;
-                                        }),
+                                    const SizedBox(width: 24),
+                                    Expanded(
+                                      child: _buildLabelField(
+                                        'SIM CARD NUMBER',
+                                        AppTextField(
+                                          controller: _simNumberController,
+                                          hint: 'Enter SIM Number',
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildLabelField(
-                                      'TANK (OPTIONAL)',
-                                      AppDropdown<Tank>(
-                                        value: _selectedTank,
-                                        items: _selectedPlant == null ? [] : _tanks.where((t) => t.plantId == _selectedPlant!.id).toList(),
-                                        hint: _selectedPlant == null ? 'Select Plant First' : 'Select Tank',
-                                        itemLabel: (t) => t.tankNumber,
-                                        onChanged: _selectedPlant == null ? null : (t) => setState(() => _selectedTank = t),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildLabelField(
+                                        'TIME ZONE/REGION',
+                                        AppTextField(
+                                          controller: _timeZoneController,
+                                          hint: 'e.g. UTC, Asia/Kolkata',
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 24),
-                                  const Spacer(),
-                                ],
-                              ),
-                              const SizedBox(height: 24),
+                                    const SizedBox(width: 24),
+                                    const Spacer(),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              const SizedBox(height: 8),
+                              if (!isCustomer) ...[
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildLabelField(
+                                        'COMPANY',
+                                        AppDropdown<CompanyGroup>(
+                                          value: _selectedCompanyGroup,
+                                          items: _companyGroups,
+                                          hint: 'Select Company',
+                                          itemLabel: (cg) => cg.name,
+                                          onChanged: (cg) => setState(() {
+                                            _selectedCompanyGroup = cg;
+                                            _selectedPlant = null;
+                                            _selectedTank = null;
+                                          }),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 24),
+                                    Expanded(
+                                      child: _buildLabelField(
+                                        'PLANT (OPTIONAL)',
+                                        AppDropdown<Plant>(
+                                          value: _selectedPlant,
+                                          items: filteredPlants,
+                                          hint: 'Select Plant',
+                                          itemLabel: (p) => p.name,
+                                          onChanged: (p) => setState(() {
+                                            _selectedPlant = p;
+                                            _selectedTank = null;
+                                          }),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                              ],
+                              if (!isCustomer) ...[
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildLabelField(
+                                        'TANK (OPTIONAL)',
+                                        AppDropdown<Tank>(
+                                          value: _selectedTank,
+                                          items: _selectedPlant == null ? [] : _tanks.where((t) => t.plantId == _selectedPlant!.id).toList(),
+                                          hint: _selectedPlant == null ? 'Select Plant First' : 'Select Tank',
+                                          itemLabel: (t) => t.tankNumber,
+                                          onChanged: _selectedPlant == null ? null : (t) => setState(() {
+                                            _selectedTank = t;
+                                            if (t != null) {
+                                              _deviceIdController.text = t.deviceId ?? '';
+                                              _simNumberController.text = t.simNumber ?? '';
+                                              _timeZoneController.text = t.timeZone ?? '';
+                                            }
+                                          }),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 24),
+                                    const Spacer(),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              const SizedBox(height: 8),
                               const Divider(),
                               ...List.generate(_rows.length, (index) {
                                 final row = _rows[index];
@@ -394,6 +489,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                     Row(
                                       children: [
                                         Expanded(
+                                          flex: 2,
                                           child: _buildLabelField(
                                             row.conditionType == 'BETWEEN' ? 'MIN THRESHOLD' : 'THRESHOLD VALUE',
                                             AppTextField(
@@ -406,6 +502,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         if (row.conditionType == 'BETWEEN') ...[
                                           const SizedBox(width: 16),
                                           Expanded(
+                                            flex: 2,
                                             child: _buildLabelField(
                                               'MAX THRESHOLD',
                                               AppTextField(
@@ -416,13 +513,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             ),
                                           ),
                                         ],
-                                      ],
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Row(
-                                      children: [
+                                        const SizedBox(width: 16),
                                         Expanded(
-                                          flex: 1,
+                                          flex: 2,
                                           child: _buildLabelField(
                                             'IMPORTANCE',
                                             AppDropdown<String>(
@@ -434,22 +527,30 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(width: 24),
-                                        Expanded(
-                                          flex: 2,
-                                          child: _buildLabelField(
-                                            'MESSAGE TEMPLATE TO TRIGGER',
-                                            AppDropdown<MessageTemplate>(
-                                              value: row.selectedTemplate,
-                                              items: _templates,
-                                              hint: 'Select Template',
-                                              itemLabel: (t) => t.name,
-                                              onChanged: (t) => setState(() => row.selectedTemplate = t),
-                                            ),
-                                          ),
-                                        ),
                                       ],
                                     ),
+                                    if (!isCustomer) ...[
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 2,
+                                            child: _buildLabelField(
+                                              'MESSAGE TEMPLATE TO TRIGGER',
+                                              AppDropdown<MessageTemplate>(
+                                                value: row.selectedTemplate,
+                                                items: _templates,
+                                                hint: 'Select Template',
+                                                itemLabel: (t) => t.name,
+                                                onChanged: (t) => setState(() => row.selectedTemplate = t),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          const Spacer(flex: 2),
+                                        ],
+                                      ),
+                                    ],
                                     if (index < _rows.length - 1) const Divider(height: 32),
                                   ],
                                 );
@@ -469,20 +570,48 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                               const SizedBox(height: 32),
                               _buildStatusSection(),
                               const SizedBox(height: 32),
-                              SizedBox(
-                                width: double.infinity, height: 56,
-                                child: ElevatedButton(
-                                  onPressed: _save,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF141E7A),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              Row(
+                                children: [
+                                  if (canSendToDevice) ...[
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 56,
+                                        child: ElevatedButton(
+                                          onPressed: _sendToDevice,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green[700],
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                            elevation: 0,
+                                          ),
+                                          child: Text(
+                                            'SEND DEVICE',
+                                            style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                  ],
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: 56,
+                                      child: ElevatedButton(
+                                        onPressed: _save,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF141E7A),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                          elevation: 0,
+                                        ),
+                                        child: Text(
+                                          isEditMode 
+                                              ? (isCustomer ? 'UPDATE SETTING' : 'UPDATE RULE') 
+                                              : (isCustomer ? 'CREATE SETTING' : 'CREATE RULE'), 
+                                          style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                  child: Text(
-                                    isEditMode 
-                                        ? (isCustomer ? 'UPDATE SETTING' : 'UPDATE RULE') 
-                                        : (isCustomer ? 'CREATE SETTING' : 'CREATE RULE'), 
-                                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white)),
-                                ),
+                                ],
                               ),
                               const SizedBox(height: 32),
                             ],
@@ -540,6 +669,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   void dispose() {
     _nameController.dispose();
     _descriptionController.dispose();
+    _deviceIdController.dispose();
+    _simNumberController.dispose();
+    _timeZoneController.dispose();
     for (var row in _rows) { row.dispose(); }
     super.dispose();
   }

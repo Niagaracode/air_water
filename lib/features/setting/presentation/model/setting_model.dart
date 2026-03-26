@@ -14,6 +14,8 @@ class Setting {
   final int? tankId;
   final String? tankNumber;
   final String? deviceId;
+  final String? simNumber;
+  final String? timeZone;
   final String? plantAddressLine1;
   final String? plantCity;
   final String? plantState;
@@ -54,6 +56,8 @@ class Setting {
     this.tankId,
     this.tankNumber,
     this.deviceId,
+    this.simNumber,
+    this.timeZone,
     this.plantAddressLine1,
     this.plantCity,
     this.plantState,
@@ -110,6 +114,8 @@ class Setting {
       tankId: json['tank_id'] != null ? toInt(json['tank_id']) : null,
       tankNumber: json['tank_number'] as String?,
       deviceId: json['device_id'] as String?,
+      simNumber: json['sim_number'] as String?,
+      timeZone: json['time_zone'] as String?,
       plantAddressLine1: json['plant_address_line_1'] as String?,
       plantCity: json['plant_city'] as String?,
       plantState: json['plant_state'] as String?,
@@ -152,6 +158,8 @@ class Setting {
       'company_id': companyId,
       'plant_id': plantId,
       'tank_id': tankId,
+      'sim_number': simNumber,
+      'time_zone': timeZone,
       'parameter_type': parameterType,
       'condition_type': conditionType,
       'threshold_1': threshold1,

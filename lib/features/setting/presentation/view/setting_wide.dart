@@ -25,6 +25,16 @@ class _SettingWideState extends ConsumerState<SettingWide> {
   final _scrollController = ScrollController();
   final _settingSearchController = TextEditingController();
 
+  Color _getStatusLabelColor(String? importance) {
+    if (importance == null) return const Color(0xFF6B7280);
+    final val = importance.trim().toLowerCase();
+    if (val.contains('critical')) return const Color(0xFFDC2626);
+    if (val.contains('urgent')) return const Color(0xFF7C3AED);
+    if (val.contains('warning')) return const Color(0xFFD97706);
+    if (val.contains('info')) return const Color(0xFF2563EB);
+    return const Color(0xFF6B7280);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -328,7 +338,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             AppTableHeaderCell('Tank Number', flex: 2),
             AppTableHeaderCell('Device ID', flex: 2),
             AppTableHeaderCell('Parameter', flex: 2),
-            AppTableHeaderCell('Live Data', flex: 2),
+            AppTableHeaderCell('Condition', flex: 2),
           ] else ...[
             AppTableHeaderCell('Rule Name', flex: 2),
             AppTableHeaderCell('Plant', flex: 2),
@@ -337,10 +347,8 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             AppTableHeaderCell('Condition', flex: 2),
             AppTableHeaderCell('Importance', flex: 2),
           ],
-          if (!isCustomer) ...[
-            AppTableHeaderCell('Status', flex: 2),
-            AppTableHeaderCell('Action', width: 100),
-          ],
+          if (!isCustomer) AppTableHeaderCell('Status', flex: 2),
+          AppTableHeaderCell('Action', width: 100),
         ],
       ),
     );
@@ -478,11 +486,36 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             AppTableCell(setting.deviceId ?? '—', flex: 2),
             AppTableCell(setting.parameterType?.toUpperCase() ?? '—', flex: 2),
             AppTableCell(
-              setting.currentValue != null 
-                  ? '${setting.currentValue!.toStringAsFixed(1)}${setting.currentValueUnit ?? ''}' 
-                  : '—', 
+              null,
               flex: 2,
-              color: const Color(0xFF2563EB),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    conditionText,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  if (setting.statusLabel != null && setting.statusLabel!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        setting.statusLabel!.toUpperCase(),
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _getStatusLabelColor(setting.importance),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ] else ...[
             AppTableCell(setting.name, flex: 2, bold: true),
@@ -499,10 +532,10 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                 children: [
                   Text(
                     conditionText,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.outfit(
                       fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: const Color(0xFF374151),
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
                     ),
                   ),
                   if (setting.statusLabel != null && setting.statusLabel!.isNotEmpty)
@@ -511,9 +544,9 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                       child: Text(
                         setting.statusLabel!.toUpperCase(),
                         style: GoogleFonts.outfit(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF6B7280),
+                          color: _getStatusLabelColor(setting.importance),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -527,7 +560,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
               child: AppImportanceBadge(importance: setting.importance),
             ),
           ],
-          if (!isCustomer) ...[
+          if (!isCustomer)
             Expanded(
               flex: 2,
               child: Align(
@@ -535,20 +568,19 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                 child: AppStatusBadge(status: setting.isActive),
               ),
             ),
-            SizedBox(
-              width: 100,
-              child: Row(
-                children: [
-                  AppTableActionButton(
-                    icon: Icons.tune_rounded,
-                    color: const Color(0xFF2563EB),
-                    bg: const Color(0xFFEFF6FF),
-                    onTap: () => _showEditModal(context, setting),
-                  ),
-                ],
-              ),
+          SizedBox(
+            width: 100,
+            child: Row(
+              children: [
+                AppTableActionButton(
+                  icon: Icons.tune_rounded,
+                  color: const Color(0xFF2563EB),
+                  bg: const Color(0xFFEFF6FF),
+                  onTap: () => _showEditModal(context, setting),
+                ),
+              ],
             ),
-          ],
+          ),
         ],
       ),
     );

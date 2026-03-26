@@ -4,7 +4,7 @@ class Roster {
   final int id;
   final String description;
   final int enabled;
-  final int companyId;
+  final int? companyId;
   final int activeContacts;
   final int dataChannels;
   final String? roleNames;
@@ -16,7 +16,7 @@ class Roster {
     required this.id,
     required this.description,
     required this.enabled,
-    required this.companyId,
+    this.companyId,
     this.activeContacts = 0,
     this.dataChannels = 0,
     this.roleNames,
@@ -30,7 +30,7 @@ class Roster {
       id: json['id'] as int,
       description: json['description'] as String,
       enabled: json['enabled'] as int? ?? 1,
-      companyId: json['company_id'] as int,
+      companyId: json['company_id'] as int?,
       activeContacts: json['active_contacts'] as int? ?? 0,
       dataChannels: json['data_channels'] as int? ?? 0,
       roleNames: json['role_names'] as String?,

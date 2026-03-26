@@ -28,14 +28,15 @@ import '../../features/tank/presentation/model/tank_model.dart';
 import 'router_refresh_notifier.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final refresh = ref.watch(routerRefreshProvider);
+  final refresh = ref.read(routerRefreshProvider);
 
   return GoRouter(
     initialLocation: '/loading',
     refreshListenable: refresh,
 
     redirect: (context, state) {
-      final startup = ref.watch(appStartupProvider);
+      final startup = ref.read(appStartupProvider);
+      final userState = ref.read(userProvider);
       final location = state.matchedLocation;
 
       if (startup.isLoading) {
@@ -54,7 +55,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
 
         // Role-based redirection: Prevent Customers (roleId 6) from accessing /profile
-        final userState = ref.watch(userProvider);
         if (userState.currentUser != null &&
             location == '/profile' &&
             userState.currentUser!.roleId == 6) {
