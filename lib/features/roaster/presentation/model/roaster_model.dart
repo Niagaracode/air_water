@@ -153,8 +153,8 @@ class RosterResponse {
 
   factory RosterResponse.fromJson(Map<String, dynamic> json) {
     return RosterResponse(
-      data: (json['data'] as List).map((i) => Roster.fromJson(i)).toList(),
-      pagination: RosterPagination.fromJson(json['pagination']),
+      data: (json['data'] as List? ?? []).map((i) => Roster.fromJson(i as Map<String, dynamic>)).toList(),
+      pagination: RosterPagination.fromJson(json['pagination'] as Map<String, dynamic>? ?? {}),
     );
   }
 }
@@ -174,10 +174,10 @@ class RosterPagination {
 
   factory RosterPagination.fromJson(Map<String, dynamic> json) {
     return RosterPagination(
-      total: json['total'] as int,
-      page: json['page'] as int,
-      limit: json['limit'] as int,
-      totalPages: json['totalPages'] as int,
+      total: json['total'] as int? ?? 0,
+      page: json['page'] as int? ?? 1,
+      limit: json['limit'] as int? ?? 10,
+      totalPages: json['totalPages'] as int? ?? 1,
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,6 +16,10 @@ import '../../../message_template/presentation/model/message_template_model.dart
 import '../../../message_template/presentation/controller/message_template_provider.dart';
 import '../../../tank/presentation/model/tank_model.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
+import '../../../product/data/product_model.dart';
+import '../../../product/provider/product_provider.dart';
+import '../../../../core/network/api_client.dart';
+import 'package:intl/intl.dart';
 
 class AddSettingModal extends ConsumerStatefulWidget {
   final Setting? initialSetting;
@@ -64,6 +69,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   CompanyGroup? _selectedCompanyGroup;
   Plant? _selectedPlant;
   Tank? _selectedTank;
+  Product? _selectedProduct;
   int _isActive = 1;
 
   final List<SettingRowData> _rows = [];
@@ -71,6 +77,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   List<CompanyGroup> _companyGroups = [];
   List<Plant> _plants = [];
   List<Tank> _tanks = [];
+  List<Product> _products = [];
   List<MessageTemplate> _templates = [];
   bool _isLoadingData = false;
 
@@ -113,12 +120,14 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final plantsResponse = await plantRepo.getPlants(limit: 1000);
       final tanksResponse = await tankRepo.getTanks();
       final activeTemplates = await templateRepo.getActiveTemplates();
+      final products = await ref.read(productListProvider.future);
 
       setState(() {
         _companyGroups = companiesResponse.data;
         _plants = plantsResponse.data;
         _tanks = tanksResponse;
         _templates = activeTemplates;
+        _products = products;
 
         if (widget.initialSetting != null) {
           final s = widget.initialSetting!;
@@ -132,6 +141,12 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
 
           if (s.tankId != null) {
             _selectedTank = _tanks.where((t) => t.tankId == s.tankId).firstOrNull;
+          }
+
+          if (s.productId != null) {
+            _selectedProduct = _products.where((p) => p.id == s.productId).firstOrNull;
+          } else if (_selectedTank?.productId != null && _selectedTank?.productId != 0) {
+            _selectedProduct = _products.where((p) => p.id == _selectedTank!.productId).firstOrNull;
           }
 
           if (s.messageTemplateId != null && _rows.isNotEmpty) {
@@ -162,6 +177,20 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       return;
     }
 
+    final userRole = ref.read(userRoleProvider).asData?.value;
+    final isSuperOrCompany = userRole == UserRole.superAdmin || userRole == UserRole.companyAdmin;
+
+    if (isSuperOrCompany) {
+      if (_selectedPlant == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plant is required')));
+        return;
+      }
+      if (_selectedTank == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tank is required')));
+        return;
+      }
+    }
+
     final companyId = _selectedCompanyGroup!.addresses.first.companyId;
     final notifier = ref.read(settingProvider.notifier);
     bool allSuccess = true;
@@ -175,6 +204,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         'company_id': companyId,
         'plant_id': _selectedPlant?.id,
         'tank_id': _selectedTank?.tankId,
+        'product_id': _selectedProduct?.id,
         'parameter_type': row.parameterType,
         'condition_type': row.conditionType,
         'threshold_1': double.tryParse(row.threshold1Controller.text.trim()),
@@ -210,23 +240,74 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     }
   }
 
+  String _generateSmsTimestamp() {
+    final now = DateTime.now();
+    // Format: DT,YY/MM/DD/HH/MM/SS,
+    final formatter = DateFormat('yy/MM/dd/HH/mm/ss');
+    return 'DT,${formatter.format(now)},';
+  }
+
   Future<void> _sendToDevice() async {
+    final userRole = ref.read(userRoleProvider).asData?.value;
+    final isSuperOrCompany = userRole == UserRole.superAdmin || userRole == UserRole.companyAdmin;
+    
+    if (isSuperOrCompany) {
+      if (_selectedPlant == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plant is required')));
+        return;
+      }
+      if (_selectedTank == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tank is required')));
+        return;
+      }
+    }
+    final deviceId = _deviceIdController.text.trim();
+    if (deviceId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Device ID is required to send configuration')),
+      );
+      return;
+    }
+
     setState(() => _isLoadingData = true);
     try {
-      // Mock sending to device
-      await Future.delayed(const Duration(seconds: 1));
+      final apiClient = ref.read(apiClientProvider);
+      final sms = _generateSmsTimestamp();
+      
+      debugPrint('Sending Command via Backend: deviceId=$deviceId, payload=$sms');
+      
+      final response = await apiClient.post(
+        '/mqtt/send-command',
+        data: {
+          'deviceId': deviceId,
+          'sms': sms,
+        },
+      );
+      
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Configuration sent to device successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Configuration sent to device successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to send command: ${response.data['message'] ?? 'Unknown error'}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send to device: $e')),
+          SnackBar(
+            content: Text('Error sending to device: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -247,6 +328,12 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     final roleAsync = ref.watch(userRoleProvider);
     final isCustomer = roleAsync.when(
       data: (role) => role == UserRole.customer,
+      loading: () => false,
+      error: (_, __) => false,
+    );
+
+    final isSuperOrCompanyAdmin = roleAsync.when(
+      data: (role) => role == UserRole.superAdmin || role == UserRole.companyAdmin,
       loading: () => false,
       error: (_, __) => false,
     );
@@ -315,44 +402,76 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                _buildLabelField(isCustomer ? 'SETTING NAME' : 'RULE NAME', AppTextField(controller: _nameController, hint: isCustomer ? 'e.g. Critical Tank Level Low' : 'e.g. High Pressure Warning')),
                               const SizedBox(height: 8),
                               if (isEditMode) ...[
+                                if (!isSuperOrCompanyAdmin) ...[
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildLabelField(
+                                          'DEVICE ID',
+                                          AppTextField(
+                                            controller: _deviceIdController,
+                                            hint: 'Device ID',
+                                            readOnly: true,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 24),
+                                      Expanded(
+                                        child: _buildLabelField(
+                                          'SIM CARD NUMBER',
+                                          AppTextField(
+                                            controller: _simNumberController,
+                                            hint: 'Enter SIM Number',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
                                 Row(
                                   children: [
-                                    Expanded(
-                                      child: _buildLabelField(
-                                        'DEVICE ID',
-                                        AppTextField(
-                                          controller: _deviceIdController,
-                                          hint: 'Device ID',
-                                          readOnly: true,
+                                    if (!isSuperOrCompanyAdmin) ...[
+                                      Expanded(
+                                        child: _buildLabelField(
+                                          'TIME ZONE/REGION',
+                                          AppTextField(
+                                            controller: _timeZoneController,
+                                            hint: 'e.g. UTC, Asia/Kolkata',
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 24),
+                                      const SizedBox(width: 24),
+                                    ],
                                     Expanded(
                                       child: _buildLabelField(
-                                        'SIM CARD NUMBER',
-                                        AppTextField(
-                                          controller: _simNumberController,
-                                          hint: 'Enter SIM Number',
-                                        ),
+                                        isSuperOrCompanyAdmin ? 'TANK' : 'TANK (OPTIONAL)',
+                                        isCustomer 
+                                          ? AppTextField(
+                                              readOnly: true,
+                                              controller: TextEditingController(text: _selectedTank?.tankNumber ?? 'N/A'),
+                                              hint: 'Tank Name',
+                                            )
+                                          : AppDropdown<Tank>(
+                                              value: _selectedTank,
+                                              items: _selectedPlant == null ? [] : _tanks.where((t) => t.plantId == _selectedPlant!.id).toList(),
+                                              hint: _selectedPlant == null ? 'Select Plant First' : 'Select Tank',
+                                              itemLabel: (t) => t.tankNumber,
+                                              onChanged: _selectedPlant == null ? null : (t) => setState(() {
+                                                _selectedTank = t;
+                                                if (t != null) {
+                                                  _deviceIdController.text = t.deviceId ?? '';
+                                                  _simNumberController.text = t.simNumber ?? '';
+                                                  _timeZoneController.text = t.timeZone ?? '';
+                                                  if (t.productId != null && t.productId != 0) {
+                                                    _selectedProduct = _products.where((p) => p.id == t.productId).firstOrNull;
+                                                  }
+                                                }
+                                              }),
+                                            ),
                                       ),
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildLabelField(
-                                        'TIME ZONE/REGION',
-                                        AppTextField(
-                                          controller: _timeZoneController,
-                                          hint: 'e.g. UTC, Asia/Kolkata',
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 24),
-                                    const Spacer(),
+                                    if (isSuperOrCompanyAdmin) const Spacer(),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
@@ -380,7 +499,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                     const SizedBox(width: 24),
                                     Expanded(
                                       child: _buildLabelField(
-                                        'PLANT (OPTIONAL)',
+                                        isSuperOrCompanyAdmin ? 'PLANT' : 'PLANT (OPTIONAL)',
                                         AppDropdown<Plant>(
                                           value: _selectedPlant,
                                           items: filteredPlants,
@@ -397,12 +516,12 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                 ),
                                 const SizedBox(height: 20),
                               ],
-                              if (!isCustomer) ...[
+                              if (!isCustomer && !isEditMode) ...[
                                 Row(
                                   children: [
                                     Expanded(
                                       child: _buildLabelField(
-                                        'TANK (OPTIONAL)',
+                                        isSuperOrCompanyAdmin ? 'TANK' : 'TANK (OPTIONAL)',
                                         AppDropdown<Tank>(
                                           value: _selectedTank,
                                           items: _selectedPlant == null ? [] : _tanks.where((t) => t.plantId == _selectedPlant!.id).toList(),
@@ -414,6 +533,11 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               _deviceIdController.text = t.deviceId ?? '';
                                               _simNumberController.text = t.simNumber ?? '';
                                               _timeZoneController.text = t.timeZone ?? '';
+                                              
+                                              // Auto-populate product if tank has one
+                                              if (t.productId != null && t.productId != 0) {
+                                                _selectedProduct = _products.where((p) => p.id == t.productId).firstOrNull;
+                                              }
                                             }
                                           }),
                                         ),
@@ -423,6 +547,67 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                     const Spacer(),
                                   ],
                                 ),
+                                const SizedBox(height: 16),
+                              ],
+                              
+                              if (!isSuperOrCompanyAdmin && !(isCustomer && !isEditMode)) ...[
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: _buildLabelField(
+                                        'PRODUCT NAME',
+                                        isCustomer 
+                                          ? AppTextField(
+                                              readOnly: true,
+                                              controller: TextEditingController(text: _selectedProduct?.name ?? 'N/A'),
+                                              hint: 'Product Name',
+                                            )
+                                          : AppDropdown<Product>(
+                                              value: _selectedProduct,
+                                              items: _products,
+                                              hint: 'Select Product',
+                                              itemLabel: (p) => p.name,
+                                              onChanged: (p) => setState(() => _selectedProduct = p),
+                                            ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _buildLabelField(
+                                        'SCM / M3',
+                                        AppTextField(
+                                          readOnly: true,
+                                          controller: TextEditingController(text: _selectedProduct?.scmM3.toString() ?? '0.0'),
+                                          hint: 'SCM / M3',
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _buildLabelField(
+                                        'SPECIFIC GRAVITY',
+                                        AppTextField(
+                                          readOnly: true,
+                                          controller: TextEditingController(text: _selectedProduct?.specificGravity.toString() ?? '0.0'),
+                                          hint: 'Specific Gravity',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (_selectedProduct != null) ...[
+                                  const SizedBox(height: 16),
+                                  _buildLabelField(
+                                    'PRODUCT DESCRIPTION',
+                                    AppTextField(
+                                      readOnly: true,
+                                      controller: TextEditingController(text: _selectedProduct!.description),
+                                      hint: 'No description available',
+                                      maxLines: 2,
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 8),
                               ],
                               const SizedBox(height: 8),
@@ -625,6 +810,8 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       ),
     );
   }
+
+
 
   Widget _buildStatusSection() {
     return Column(
