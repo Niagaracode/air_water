@@ -203,11 +203,11 @@ class TankGroupedResponse {
 
   factory TankGroupedResponse.fromJson(Map<String, dynamic> json) {
     return TankGroupedResponse(
-      data: (json['data'] as List)
+      data: (json['data'] as List? ?? [])
           .map((i) => TankGroup.fromJson(i as Map<String, dynamic>))
           .toList(),
       pagination: Pagination.fromJson(
-        json['pagination'] as Map<String, dynamic>,
+        json['pagination'] as Map<String, dynamic>? ?? {},
       ),
     );
   }

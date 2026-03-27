@@ -132,11 +132,11 @@ class PlantResponse {
 
   factory PlantResponse.fromJson(Map<String, dynamic> json) {
     return PlantResponse(
-      data: (json['data'] as List)
+      data: (json['data'] as List? ?? [])
           .map((i) => Plant.fromJson(i as Map<String, dynamic>))
           .toList(),
       pagination: Pagination.fromJson(
-        json['pagination'] as Map<String, dynamic>,
+        json['pagination'] as Map<String, dynamic>? ?? {},
       ),
     );
   }
@@ -157,10 +157,10 @@ class Pagination {
 
   factory Pagination.fromJson(Map<String, dynamic> json) {
     return Pagination(
-      total: json['total'] as int,
-      page: json['page'] as int,
-      limit: json['limit'] as int,
-      totalPages: json['totalPages'] as int,
+      total: json['total'] as int? ?? 0,
+      page: json['page'] as int? ?? 1,
+      limit: json['limit'] as int? ?? 10,
+      totalPages: json['totalPages'] as int? ?? 1,
     );
   }
 }
@@ -353,11 +353,11 @@ class PlantGroupedResponse {
 
   factory PlantGroupedResponse.fromJson(Map<String, dynamic> json) {
     return PlantGroupedResponse(
-      data: (json['data'] as List)
+      data: (json['data'] as List? ?? [])
           .map((i) => PlantGroup.fromJson(i as Map<String, dynamic>))
           .toList(),
       pagination: Pagination.fromJson(
-        json['pagination'] as Map<String, dynamic>,
+        json['pagination'] as Map<String, dynamic>? ?? {},
       ),
     );
   }

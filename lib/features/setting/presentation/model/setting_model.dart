@@ -29,6 +29,8 @@ class Setting {
   final String? statusLabel;
   final int? messageTemplateId;
   final String? templateName;
+  final int? productId;
+  final String? productName;
   final int isActive;
   final int status;
   final String? createdAt;
@@ -70,6 +72,8 @@ class Setting {
     this.statusLabel,
     this.messageTemplateId,
     this.templateName,
+    this.productId,
+    this.productName,
     required this.isActive,
     required this.status,
     this.createdAt,
@@ -130,6 +134,8 @@ class Setting {
           ? toInt(json['message_template_id'])
           : null,
       templateName: json['template_name'] as String?,
+      productId: json['product_id'] != null ? toInt(json['product_id']) : null,
+      productName: json['product_name'] as String?,
       isActive:
           (json['is_active'] as num?)?.toInt() ??
           (json['is_active'] is String
@@ -167,6 +173,7 @@ class Setting {
       'importance': importance,
       'status_label': statusLabel,
       'message_template_id': messageTemplateId,
+      'product_id': productId,
       'is_active': isActive,
       'status': status,
     };

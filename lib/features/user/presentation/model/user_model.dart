@@ -112,11 +112,11 @@ class UserSearchResponse {
 
   factory UserSearchResponse.fromJson(Map<String, dynamic> json) {
     return UserSearchResponse(
-      data: (json['data'] as List)
+      data: (json['data'] as List? ?? [])
           .map((i) => User.fromJson(i as Map<String, dynamic>))
           .toList(),
       pagination: Pagination.fromJson(
-        json['pagination'] as Map<String, dynamic>,
+        json['pagination'] as Map<String, dynamic>? ?? {},
       ),
     );
   }
@@ -137,10 +137,10 @@ class Pagination {
 
   factory Pagination.fromJson(Map<String, dynamic> json) {
     return Pagination(
-      total: json['total'] as int,
-      page: json['page'] as int,
-      limit: json['limit'] as int,
-      totalPages: json['totalPages'] as int,
+      total: json['total'] as int? ?? 0,
+      page: json['page'] as int? ?? 1,
+      limit: json['limit'] as int? ?? 10,
+      totalPages: json['totalPages'] as int? ?? 1,
     );
   }
 }
