@@ -9,14 +9,11 @@ class ReportLayout extends PageLayoutBuilder {
   const ReportLayout({super.key});
 
   @override
-  Widget buildNarrow(BuildContext context) =>
-      const ReportNarrow();
+  Widget buildNarrow(BuildContext context) => const ReportNarrow();
 
   @override
-  Widget buildMiddle(BuildContext context) =>
-      const ReportMiddle();
+  Widget buildMiddle(BuildContext context) => const ReportMiddle();
 
   @override
-  Widget buildWide(BuildContext context) =>
-      const ReportWide();
+  Widget buildWide(BuildContext context) => const ReportWide();
 }
