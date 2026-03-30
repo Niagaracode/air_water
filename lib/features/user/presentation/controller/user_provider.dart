@@ -143,10 +143,15 @@ class UserNotifier extends Notifier<UserState> {
         tankId: state.tankId,
       );
 
-      // Filter out the current logged-in user
+      // Filter out the current logged-in user (unless they are a SuperAdmin)
       final filteredUsers = state.currentUser != null
           ? response.data
-                .where((user) => user.userId != state.currentUser!.userId)
+                .where((user) {
+                  // If current user is SuperAdmin (roleId 1), show everyone
+                  if (state.currentUser!.roleId == 1) return true;
+                  // Otherwise, hide themselves
+                  return user.userId != state.currentUser!.userId;
+                })
                 .toList()
           : response.data;
 
@@ -183,7 +188,12 @@ class UserNotifier extends Notifier<UserState> {
 
       final filteredNewUsers = state.currentUser != null
           ? response.data
-                .where((user) => user.userId != state.currentUser!.userId)
+                .where((user) {
+                  // If current user is SuperAdmin (roleId 1), show everyone
+                  if (state.currentUser!.roleId == 1) return true;
+                  // Otherwise, hide themselves
+                  return user.userId != state.currentUser!.userId;
+                })
                 .toList()
           : response.data;
 

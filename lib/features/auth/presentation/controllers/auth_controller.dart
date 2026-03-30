@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app_startup/app_startup.dart';
 import '../../../../core/user_config/user_role_provider.dart';
 import '../../domain/repository/auth_repository.dart';
+import '../../../user/presentation/controller/user_provider.dart';
 import 'auth_providers.dart';
 
 class AuthController extends AsyncNotifier<void> {
@@ -24,6 +25,7 @@ class AuthController extends AsyncNotifier<void> {
 
       ref.invalidate(userNameProvider);
       ref.invalidate(userRoleProvider);
+      ref.invalidate(userProvider);
 
     });
   }
@@ -34,6 +36,7 @@ class AuthController extends AsyncNotifier<void> {
     /// clear cached providers
     ref.invalidate(userRoleProvider);
     ref.invalidate(userNameProvider);
+    ref.invalidate(userProvider);
 
     ref.read(appStartupProvider.notifier)
         .setUnauthenticated();

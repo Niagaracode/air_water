@@ -19,7 +19,6 @@ import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../product/data/product_model.dart';
 import '../../../product/provider/product_provider.dart';
 import '../../../../core/network/api_client.dart';
-import 'package:intl/intl.dart';
 
 class AddSettingModal extends ConsumerStatefulWidget {
   final Setting? initialSetting;
@@ -167,14 +166,18 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     }
   }
 
-  Future<void> _save() async {
+  Future<bool> _save({bool silent = false}) async {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter Setting Name')));
-      return;
+      if (!silent) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter Setting Name')));
+      }
+      return false;
     }
     if (_selectedCompanyGroup == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a Company')));
-      return;
+      if (!silent) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a Company')));
+      }
+      return false;
     }
 
     final userRole = ref.read(userRoleProvider).asData?.value;
@@ -182,12 +185,16 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
 
     if (isSuperOrCompany) {
       if (_selectedPlant == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plant is required')));
-        return;
+        if (!silent) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Plant is required')));
+        }
+        return false;
       }
       if (_selectedTank == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tank is required')));
-        return;
+        if (!silent) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tank is required')));
+        }
+        return false;
       }
     }
 
@@ -229,23 +236,21 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     }
 
     if (allSuccess && mounted) {
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.initialSetting != null ? 'Setting updated' : 'Setting(s) created',
+      if (!silent) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.initialSetting != null ? 'Setting updated' : 'Setting(s) created',
+            ),
           ),
-        ),
-      );
+        );
+      }
+      return true;
     }
+    return false;
   }
 
-  String _generateSmsTimestamp() {
-    final now = DateTime.now();
-    // Format: DT,YY/MM/DD/HH/MM/SS,
-    final formatter = DateFormat('yy/MM/dd/HH/mm/ss');
-    return 'DT,${formatter.format(now)},';
-  }
 
   Future<void> _sendToDevice() async {
     final userRole = ref.read(userRoleProvider).asData?.value;
@@ -272,26 +277,60 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     setState(() => _isLoadingData = true);
     try {
       final apiClient = ref.read(apiClientProvider);
-      final sms = _generateSmsTimestamp();
       
-      debugPrint('Sending Command via Backend: deviceId=$deviceId, payload=$sms');
+      // Construct complex command string
+      final productName = _selectedProduct?.name ?? 'N/A';
+      final scmM3 = _selectedProduct?.scmM3.toString() ?? '0.0';
+      final specificGravity = _selectedProduct?.specificGravity.toString() ?? '0.0';
+      
+      // Configuration Set 1 (index 0)
+      final row1 = _rows.isNotEmpty ? _rows[0] : null;
+      final param1 = row1?.parameterType ?? 'N/A';
+      final cond1 = row1?.conditionType ?? 'N/A';
+      final thresh1 = row1?.threshold1Controller.text.trim() ?? '0';
+      final thresh2 = row1?.threshold2Controller.text.trim() ?? '0';
+      final importance1 = row1?.importance ?? 'N/A';
+      
+      final simNumber = _simNumberController.text.trim().isEmpty ? 'N/A' : _simNumberController.text.trim();
+      
+      // Unique parameters from all rows
+      final allParams = _rows.map((r) => r.parameterType).toSet().join('/');
+      
+      final payload = '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$importance1,$deviceId,$simNumber,$allParams';
+      
+      debugPrint('Sending Advanced Command via Backend: deviceId=$deviceId, payload=$payload');
       
       final response = await apiClient.post(
         '/mqtt/send-command',
         data: {
           'deviceId': deviceId,
-          'sms': sms,
+          'sms': payload,
         },
       );
       
       if (mounted) {
         if (response.statusCode == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Configuration sent to device successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          // Automated Trigger of _save after successful Send Device
+          final saveSuccess = await _save(silent: true);
+          
+          if (mounted) {
+            if (saveSuccess) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Configuration sent and setting updated successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Configuration sent but failed to update setting in database'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -339,10 +378,13 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     );
 
     final canSendToDevice = roleAsync.when(
-      data: (role) => role != UserRole.superAdmin && role != UserRole.companyAdmin,
+      data: (role) => role == UserRole.customer, 
       loading: () => false,
       error: (_, __) => false,
     );
+    
+    // For customers, the blue button will be renamed to "SEND DEVICE" and will do both actions.
+    // The separate green button will be hidden for customers to avoid confusion.
 
     return Align(
       alignment: Alignment.centerRight,
@@ -757,7 +799,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                               const SizedBox(height: 32),
                               Row(
                                 children: [
-                                  if (canSendToDevice) ...[
+                                  if (canSendToDevice && !isEditMode) ...[
                                     Expanded(
                                       child: SizedBox(
                                         height: 56,
@@ -781,7 +823,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                     child: SizedBox(
                                       height: 56,
                                       child: ElevatedButton(
-                                        onPressed: _save,
+                                        onPressed: (isCustomer && canSendToDevice && isEditMode) ? _sendToDevice : _save,
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color(0xFF141E7A),
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -789,7 +831,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         ),
                                         child: Text(
                                           isEditMode 
-                                              ? (isCustomer ? 'UPDATE SETTING' : 'UPDATE RULE') 
+                                              ? (isCustomer ? 'SEND DEVICE' : 'UPDATE RULE') 
                                               : (isCustomer ? 'CREATE SETTING' : 'CREATE RULE'), 
                                           style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white),
                                         ),
