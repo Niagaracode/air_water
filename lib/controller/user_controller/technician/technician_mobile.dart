@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:air_water/controller/widgets/mobile_screen_shell.dart';
 
 class TechnicianMobile extends StatelessWidget {
-  const TechnicianMobile({super.key});
+  final Widget child;
+
+  const TechnicianMobile({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Technician - Mobile')),
-    );
+    return MobileScreenShell(child: child);
   }
 }

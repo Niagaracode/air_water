@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../controller/widgets/desktop_screen_shell.dart';
+
 class TechnicianDesktop extends StatelessWidget {
-  const TechnicianDesktop({super.key});
+  final Widget child;
+
+  const TechnicianDesktop({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Technician - Desktop')),
-    );
+    return DesktopScreenShell(child: child);
   }
 }

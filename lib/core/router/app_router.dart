@@ -12,6 +12,8 @@ import 'package:air_water/features/alarm/alarm_layout.dart';
 import 'package:air_water/features/events/event_layout.dart';
 import 'package:air_water/features/setting/setting_layout.dart';
 import 'package:air_water/features/user/presentation/controller/user_provider.dart';
+import 'package:air_water/core/user_config/user_role.dart';
+import 'package:air_water/core/user_config/user_role_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -54,11 +56,44 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return '/dashboard';
         }
 
-        // Role-based redirection: Prevent Customers (roleId 6) from accessing /profile
-        if (userState.currentUser != null &&
-            location == '/profile' &&
-            userState.currentUser!.roleId == 6) {
-          return '/dashboard';
+        final currentUser = userState.currentUser;
+        final roleFromStorage = ref.read(userRoleProvider).value;
+
+        // Combine routes to restrict for non-admin roles
+        final restrictedRoutes = [
+          '/company', '/user', '/group', '/product', '/device',
+          '/message-template', '/roaster', '/setting', '/rule'
+        ];
+
+        // 1. Immediate redirection based on Storage-based Role (Eliminates "one second flash")
+        if (roleFromStorage != null) {
+          if (roleFromStorage == UserRole.customer) {
+             if (location == '/profile' || restrictedRoutes.contains(location)) {
+               return '/dashboard';
+             }
+          }
+          if (roleFromStorage == UserRole.technician) {
+            if (restrictedRoutes.contains(location)) {
+              return '/dashboard';
+            }
+          }
+        }
+
+        // 2. Fallback redirection based on Profile-based RoleId (Ensures sync with Backend)
+        if (currentUser != null) {
+          final roleId = currentUser.roleId;
+
+          if (roleId == 6) { // Customer
+            if (location == '/profile' || restrictedRoutes.contains(location)) {
+              return '/dashboard';
+            }
+          }
+
+          if (roleId == 5) { // Technician
+            if (restrictedRoutes.contains(location)) {
+              return '/dashboard';
+            }
+          }
         }
       }
 

@@ -3,6 +3,7 @@ import '../../../tank/presentation/model/tank_model.dart';
 import '../../../tank/data/api/tank_api.dart';
 import '../../../setting/data/api/setting_api.dart';
 import '../../../setting/presentation/model/setting_model.dart';
+import '../../../user/presentation/controller/user_provider.dart';
 import '../../../../core/network/api_client.dart';
 import '../model/asset_summary_model.dart';
 
@@ -78,15 +79,60 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
       final settingsResponse = await settingApi.getSettings(limit: 1000, isActive: 1);
       final allSettings = settingsResponse.data;
 
+      final userState = ref.read(userProvider);
+      final currentUser = userState.currentUser;
+      final isTechnician = currentUser?.roleId == 5;
+      
+      // Collect all rosters the technician belongs to
+      final userRosters = currentUser?.rosters ?? [];
+      final primaryRoster = currentUser?.messageCategoryName;
+      final Set<String> authorizedRosters = {
+        ...userRosters.map((e) => e.toLowerCase()),
+        if (primaryRoster != null) primaryRoster.toLowerCase(),
+      };
+
+      // Logic for Technicians: Derive authorized assets from Rules linked to their Rosters
+      Set<int> authorizedPlantIds = {};
+      Set<int> authorizedTankIds = {};
+      
+      if (isTechnician) {
+        // Option 1: Direct Assignments (if any)
+        authorizedPlantIds.addAll(
+          currentUser?.assignedPlants?.expand((ap) => ap.plantIds).toSet() ?? {}
+        );
+        
+        // Option 2: Rules matching any of the technician's rosters/teams
+        if (authorizedRosters.isNotEmpty) {
+          final rosterRules = allSettings.where((s) => 
+            s.rosterName != null && authorizedRosters.contains(s.rosterName!.toLowerCase())
+          );
+          
+          authorizedPlantIds.addAll(rosterRules.where((s) => s.plantId != null).map((s) => s.plantId!));
+          authorizedTankIds.addAll(rosterRules.where((s) => s.tankId != null).map((s) => s.tankId!));
+        }
+      }
+
       final List<AssetSummaryGroup> newGroups = [];
       for (final tankGroup in response.data) {
+        // If technician, skip if the plant is not in authorized list
+        if (isTechnician && !authorizedPlantIds.contains(tankGroup.plantId)) {
+          continue;
+        }
+
         for (final tank in tankGroup.tanks) {
           final deviceId = 'E10038${tank.tankId.toString().padLeft(2, '0')}';
           
           // Filter settings for this specific tank or its plant (if tank_id is null)
-          final tankSettings = allSettings.where((r) => 
+          var tankSettings = allSettings.where((r) => 
             r.tankId == tank.tankId || (r.tankId == null && r.plantId == tank.plantId)
           ).toList();
+
+          // If technician, further filter settings by roster/message category
+          if (isTechnician && authorizedRosters.isNotEmpty) {
+            tankSettings = tankSettings.where((s) => 
+              s.rosterName != null && authorizedRosters.contains(s.rosterName!.toLowerCase())
+            ).toList();
+          }
 
           var readings = _generateReadingsWithSettings(tank, deviceId, tankSettings);
           

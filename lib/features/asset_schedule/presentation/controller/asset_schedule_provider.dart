@@ -3,6 +3,7 @@ import 'dart:math';
 import '../../../tank/data/api/tank_api.dart';
 import '../../../setting/data/api/setting_api.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../user/presentation/controller/user_provider.dart';
 import '../model/asset_schedule_model.dart';
 
 class AssetScheduleState {
@@ -70,6 +71,10 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
         limit: 20,
       );
 
+      final user = ref.read(userProvider).currentUser;
+      final userRosters = user?.rosters ?? [];
+      final bool isTechnician = user?.roleId == 5;
+
       // Fetch all active settings to map them to tanks/parameters
       final settingsResponse = await settingApi.getSettings(limit: 1000, isActive: 1);
       final allSettings = settingsResponse.data;
@@ -103,8 +108,19 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
                     r.parameterType?.toLowerCase() == paramName.toLowerCase())
                 .firstOrNull;
 
-            // Display if it's 'Level' (default) or if it has an active setting
-            if (paramName == 'Level' || setting != null) {
+            // Authorization logic
+            bool isAuthorized = false;
+            if (isTechnician) {
+              // Technician: Must have a setting AND that setting must belong to one of the user's rosters
+              isAuthorized = setting != null &&
+                  userRosters.any(
+                      (ur) => setting.rosterName?.toLowerCase() == ur.toLowerCase());
+            } else {
+              // Admin/Customer: Level by default, or if has a setting
+              isAuthorized = paramName == 'Level' || setting != null;
+            }
+
+            if (isAuthorized) {
               final currentLevel = 20.0 + random.nextInt(60);
               final depletionRate = 2.0 + random.nextDouble() * 5.0;
               final daysToRunout = (currentLevel / depletionRate).floor();

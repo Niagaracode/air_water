@@ -118,6 +118,7 @@ const eventsMenu = [
     label: 'Event',
     icon: Icons.event_note_rounded,
     allowedRoles: [
+      UserRole.technician,
       UserRole.customer,
     ],
   ),
@@ -142,6 +143,7 @@ const eventsMenu = [
     allowedRoles: [
       UserRole.superAdmin, 
       UserRole.companyAdmin,
+      UserRole.technician,
       UserRole.customer,
     ],
   ),

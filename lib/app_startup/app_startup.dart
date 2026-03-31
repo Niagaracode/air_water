@@ -17,8 +17,9 @@ class AppStartupNotifier extends AsyncNotifier<AppStartupState> {
     final storage = ref.read(secureStorageProvider);
 
     final token = await storage.readToken();
+    final role = await storage.readRole();
 
-    if (token != null && token.isNotEmpty) {
+    if (token != null && token.isNotEmpty && role != null && role.isNotEmpty) {
       return AppStartupState.authenticated;
     }
 

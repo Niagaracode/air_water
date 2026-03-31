@@ -99,17 +99,17 @@ class TechnicianLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildNarrow(BuildContext context) {
-    return const TechnicianMobile();
+    return TechnicianMobile(child: child);
   }
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return const TechnicianTablet();
+    return TechnicianTablet(child: child);
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return const TechnicianDesktop();
+    return TechnicianDesktop(child: child);
   }
 }
 
