@@ -25,6 +25,7 @@ class Setting {
   final String? conditionType;
   final double? threshold1;
   final double? threshold2;
+  final double? threshold3;
   final String? importance;
   final String? statusLabel;
   final int? messageTemplateId;
@@ -68,6 +69,7 @@ class Setting {
     this.conditionType,
     this.threshold1,
     this.threshold2,
+    this.threshold3,
     this.importance,
     this.statusLabel,
     this.messageTemplateId,
@@ -128,6 +130,7 @@ class Setting {
       conditionType: json['condition_type'] as String?,
       threshold1: toDouble(json['threshold_1']),
       threshold2: toDouble(json['threshold_2']),
+      threshold3: toDouble(json['threshold_3']),
       importance: json['importance'] as String?,
       statusLabel: json['status_label'] as String?,
       messageTemplateId: json['message_template_id'] != null
@@ -170,6 +173,7 @@ class Setting {
       'condition_type': conditionType,
       'threshold_1': threshold1,
       'threshold_2': threshold2,
+      'threshold_3': threshold3,
       'importance': importance,
       'status_label': statusLabel,
       'message_template_id': messageTemplateId,

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/tank_details_model.dart';
+import 'tank_provider.dart';
 
 class TankDetailsNotifier extends Notifier<TankDetailsState> {
   @override
@@ -10,9 +11,14 @@ class TankDetailsNotifier extends Notifier<TankDetailsState> {
   Future<void> loadData(int tankId) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // Mocking data simulation
-      await Future.delayed(const Duration(milliseconds: 800));
+      final repository = ref.read(tankRepositoryProvider);
+      
+      // Fetch the actual tank record from the API
+      final tank = await repository.getTankById(tankId);
 
+      // Mocking remaining data simulation (Channels, Events, etc.)
+      await Future.delayed(const Duration(milliseconds: 300));
+      
       final now = DateTime.now();
 
       // Mock Data Channels
@@ -25,7 +31,7 @@ class TankDetailsNotifier extends Notifier<TankDetailsState> {
           status: 'Normal',
           percentFull: 65,
           trend: 'Down',
-          deviceName: 'E1003871',
+          deviceName: tank.deviceId ?? '—',
           ruleName: 'Low Level Alert',
         ),
         DataChannel(
@@ -36,7 +42,7 @@ class TankDetailsNotifier extends Notifier<TankDetailsState> {
           status: 'Normal',
           percentFull: 80,
           trend: 'Stable',
-          deviceName: 'E1003871',
+          deviceName: tank.deviceId ?? '—',
           ruleName: 'High Pressure Alert',
         ),
       ];
@@ -88,6 +94,7 @@ class TankDetailsNotifier extends Notifier<TankDetailsState> {
 
       state = state.copyWith(
         isLoading: false,
+        tank: tank,
         dataChannels: dataChannels,
         events: events,
         readings: readings,

@@ -18,6 +18,7 @@ abstract class TankRepository {
   Future<List<String>> getTankNameSuggestions({String? q});
   Future<List<TankProduct>> getProducts();
   Future<List<Tank>> getTanks({int? plantId});
+  Future<Tank> getTankById(int id);
 }
 
 class TankRepositoryImpl implements TankRepository {
@@ -74,6 +75,7 @@ class TankRepositoryImpl implements TankRepository {
     return _api.getTankNameSuggestions(q: q);
   }
 
+  @override
   Future<List<TankProduct>> getProducts() {
     return _api.getProducts();
   }
@@ -81,5 +83,10 @@ class TankRepositoryImpl implements TankRepository {
   @override
   Future<List<Tank>> getTanks({int? plantId}) {
     return _api.getTanks(plantId: plantId);
+  }
+
+  @override
+  Future<Tank> getTankById(int id) {
+    return _api.getTankById(id);
   }
 }

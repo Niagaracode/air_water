@@ -1,3 +1,5 @@
+import 'tank_model.dart';
+
 class TankEvent {
   final String id;
   final String title;
@@ -109,6 +111,7 @@ class DataChannel {
 class TankDetailsState {
   final bool isLoading;
   final String? error;
+  final Tank? tank;
   final List<TankEvent> events;
   final List<TankReading> readings;
   final List<TankForecast> forecasts;
@@ -118,6 +121,7 @@ class TankDetailsState {
   const TankDetailsState({
     this.isLoading = false,
     this.error,
+    this.tank,
     this.events = const [],
     this.readings = const [],
     this.forecasts = const [],
@@ -128,6 +132,7 @@ class TankDetailsState {
   TankDetailsState copyWith({
     bool? isLoading,
     String? error,
+    Tank? tank,
     List<TankEvent>? events,
     List<TankReading>? readings,
     List<TankForecast>? forecasts,
@@ -137,6 +142,7 @@ class TankDetailsState {
     return TankDetailsState(
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
+      tank: tank ?? this.tank,
       events: events ?? this.events,
       readings: readings ?? this.readings,
       forecasts: forecasts ?? this.forecasts,

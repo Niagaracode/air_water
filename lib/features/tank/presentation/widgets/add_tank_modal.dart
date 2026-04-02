@@ -25,6 +25,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   final _heightController = TextEditingController();
   final _widthController = TextEditingController();
   final _dishHeightController = TextEditingController();
+  final _tonnesController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _plantAutocompleteController = TextEditingController();
 
@@ -50,6 +51,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       _widthController.text = widget.initialTank!.width?.toString() ?? '';
       _dishHeightController.text =
           widget.initialTank!.dishHeight?.toString() ?? '';
+      _tonnesController.text = widget.initialTank!.tonnes?.toString() ?? '';
       _descriptionController.text = widget.initialTank!.description ?? '';
       _plantAutocompleteController.text = widget.initialTank!.plantName ?? '';
       _status = widget.initialTank!.status;
@@ -86,6 +88,14 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           _selectedProduct = foundProducts.isNotEmpty
               ? foundProducts.first
               : null;
+        } else {
+          // Default to first item for new tanks to show dimensions immediately
+          if ((data['tank_types'] as List).isNotEmpty) {
+            _selectedTankType = (data['tank_types'] as List).first;
+          }
+          if ((data['units'] as List).isNotEmpty) {
+            _selectedUnit = (data['units'] as List).first;
+          }
         }
       });
     } catch (e) {
@@ -133,11 +143,62 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
+    double? h = double.tryParse(_heightController.text);
+    double? w = double.tryParse(_widthController.text);
+    double? dh = double.tryParse(_dishHeightController.text);
+
+    String typeName = _selectedTankType?['name'] ?? '';
+    double? canLength, diameter, length, dishDepth, dishHeight, height, width, depth, coneLength;
+
+    switch (typeName) {
+      case 'Horizontal with 2:1 Ellipsoidal Ends':
+      case 'Horizontal with Hemispherical Ends':
+      case 'None':
+      case 'Spherical':
+      case 'Vertical with 2:1 Ellipsoidal Ends':
+      case 'Vertical with Flat Ends':
+      case 'Vertical with Hemispherical Ends':
+        canLength = h;
+        diameter = w;
+        break;
+      case 'Horizontal with Flat Ends':
+        length = h;
+        diameter = w;
+        break;
+      case 'Horizontal with Variable Dished Ends':
+      case 'Vertical with Variable Dished Ends':
+        canLength = h;
+        diameter = w;
+        dishDepth = dh;
+        break;
+      case 'Rectangular':
+        height = h;
+        width = w;
+        depth = dh;
+        break;
+      case 'Vertical with Conical Bottom End':
+        canLength = h;
+        diameter = w;
+        coneLength = dh;
+        break;
+      default:
+        height = h;
+        width = w;
+        dishHeight = dh;
+    }
+
     final request = TankCreateRequest(
       tankNumber: _tankNumberController.text,
-      height: double.tryParse(_heightController.text),
-      width: double.tryParse(_widthController.text),
-      dishHeight: double.tryParse(_dishHeightController.text),
+      height: height,
+      width: width,
+      dishHeight: dishHeight,
+      canLength: canLength,
+      diameter: diameter,
+      length: length,
+      dishDepth: dishDepth,
+      depth: depth,
+      coneLength: coneLength,
+      tonnes: double.tryParse(_tonnesController.text),
       description: _descriptionController.text,
       plantId: _selectedPlant?.plantId ?? widget.initialTank?.plantId,
       unitId: _selectedUnit?['id'],
@@ -335,43 +396,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                               const SizedBox(width: 40),
                               Expanded(
                                 child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
-                                        Expanded(
-                                          child: _buildLabelField(
-                                            'HEIGHT',
-                                            AppTextField(
-                                              controller: _heightController,
-                                              hint: '0.00',
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 24),
-                                        Expanded(
-                                          child: _buildLabelField(
-                                            'WIDTH',
-                                            AppTextField(
-                                              controller: _widthController,
-                                              hint: '0.00',
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 24),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildLabelField(
-                                            'DISH HEIGHT',
-                                            AppTextField(
-                                              controller: _dishHeightController,
-                                              hint: '0.00',
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 24),
                                         Expanded(
                                           child: _buildLabelField(
                                             'TANK TYPE',
@@ -396,6 +424,60 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                         ),
                                       ],
                                     ),
+                                    const SizedBox(height: 32),
+                                    if (_selectedTankType != null) ...[
+                                      Builder(
+                                        builder: (context) {
+                                          final fields = _getDimensionFields(_selectedTankType['name']);
+                                          return Row(
+                                            children: [
+                                              Expanded(
+                                                child: _buildLabelField(
+                                                  fields[0],
+                                                  AppTextField(
+                                                    controller: _heightController,
+                                                    hint: '0.00',
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              Expanded(
+                                                child: _buildLabelField(
+                                                  fields[1],
+                                                  AppTextField(
+                                                    controller: _widthController,
+                                                    hint: '0.00',
+                                                  ),
+                                                ),
+                                              ),
+                                              if (fields.length > 2) ...[
+                                                const SizedBox(width: 16),
+                                                Expanded(
+                                                  child: _buildLabelField(
+                                                    fields[2],
+                                                    AppTextField(
+                                                      controller: _dishHeightController,
+                                                      hint: '0.00',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ] else ...[
+                                      Center(
+                                        child: Text(
+                                          'Select Tank Type to Enter Dimensions',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 14,
+                                            color: const Color(0xFF6B7280),
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
                               ),
@@ -427,20 +509,39 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                             thickness: 1,
                             color: Color(0xFFF3F4F6),
                           ),
-                          _buildLabelField(
-                            'ASSIGNED PRODUCT',
-                            _isLoadingDropdowns
-                                ? const LinearProgressIndicator(minHeight: 2)
-                                : AppDropdown<dynamic>(
-                                    value: _selectedProduct,
-                                    items: _products,
-                                    itemLabel: (p) => p is TankProduct
-                                        ? p.productName
-                                        : p['product_name'],
-                                    hint: 'Select Product',
-                                    onChanged: (v) =>
-                                        setState(() => _selectedProduct = v),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildLabelField(
+                                  'ASSIGNED PRODUCT',
+                                  _isLoadingDropdowns
+                                      ? const LinearProgressIndicator(
+                                          minHeight: 2,
+                                        )
+                                      : AppDropdown<dynamic>(
+                                          value: _selectedProduct,
+                                          items: _products,
+                                          itemLabel: (p) => p is TankProduct
+                                              ? p.productName
+                                              : p['product_name'],
+                                          hint: 'Select Product',
+                                          onChanged: (v) => setState(
+                                            () => _selectedProduct = v,
+                                          ),
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(width: 32),
+                              Expanded(
+                                child: _buildLabelField(
+                                  'TOTAL TONNES',
+                                  AppTextField(
+                                    controller: _tonnesController,
+                                    hint: '0.00',
                                   ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 32),
                           _buildLabelField(
@@ -578,12 +679,17 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
-            color: Color(0xFF333333),
+        SizedBox(
+          height: 35,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Color(0xFF333333),
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(height: 8),
@@ -846,6 +952,39 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
         );
       },
     );
+  }
+
+  List<String> _getDimensionFields(String? typeName) {
+    if (typeName == null) return ['Field 1', 'Field 2'];
+
+    switch (typeName) {
+      case 'Horizontal with 2:1 Ellipsoidal Ends':
+        return ['Can Length (L)', 'Diameter (D)'];
+      case 'Horizontal with Flat Ends':
+        return ['Length (L)', 'Diameter (D)'];
+      case 'Horizontal with Hemispherical Ends':
+        return ['Can Length (L)', 'Diameter (D)'];
+      case 'Horizontal with Variable Dished Ends':
+        return ['Can Length (L)', 'Diameter (D)', 'Dish Depth (DL)'];
+      case 'None':
+        return ['Can Length (L)', 'Diameter (D)'];
+      case 'Rectangular':
+        return ['Height (H)', 'Width (W)', 'Depth (D)'];
+      case 'Spherical':
+        return ['Can Length (L)', 'Diameter (D)'];
+      case 'Vertical with 2:1 Ellipsoidal Ends':
+        return ['Can Length (L)', 'Diameter (D)'];
+      case 'Vertical with Conical Bottom End':
+        return ['Can Length (L)', 'Diameter (D)', 'Cone Length (CL)'];
+      case 'Vertical with Flat Ends':
+        return ['Can Length (L)', 'Diameter (D)'];
+      case 'Vertical with Hemispherical Ends':
+        return ['Can Length (L)', 'Diameter (D)'];
+      case 'Vertical with Variable Dished Ends':
+        return ['Can Length (L)', 'Diameter (D)', 'Dish Depth (DL)'];
+      default:
+        return ['HEIGHT', 'WIDTH', 'DISH HEIGHT'];
+    }
   }
 
   @override

@@ -34,6 +34,7 @@ class SettingRowData {
   String conditionType;
   final TextEditingController threshold1Controller;
   final TextEditingController threshold2Controller;
+  final TextEditingController threshold3Controller;
   final TextEditingController statusLabelController;
   String importance;
   MessageTemplate? selectedTemplate;
@@ -43,16 +44,19 @@ class SettingRowData {
     this.conditionType = '>',
     String threshold1 = '',
     String threshold2 = '',
+    String threshold3 = '',
     String statusLabel = '',
     this.importance = 'Critical',
     this.selectedTemplate,
   }) : threshold1Controller = TextEditingController(text: threshold1),
        threshold2Controller = TextEditingController(text: threshold2),
+       threshold3Controller = TextEditingController(text: threshold3),
        statusLabelController = TextEditingController(text: statusLabel);
 
   void dispose() {
     threshold1Controller.dispose();
     threshold2Controller.dispose();
+    threshold3Controller.dispose();
     statusLabelController.dispose();
   }
 }
@@ -96,6 +100,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
           conditionType: s.conditionType ?? '>',
           threshold1: s.threshold1?.toString() ?? '',
           threshold2: s.threshold2?.toString() ?? '',
+          threshold3: s.threshold3?.toString() ?? '',
           statusLabel: s.statusLabel ?? '',
           importance: s.importance ?? 'Critical',
         ),
@@ -216,6 +221,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         'condition_type': row.conditionType,
         'threshold_1': double.tryParse(row.threshold1Controller.text.trim()),
         'threshold_2': double.tryParse(row.threshold2Controller.text.trim()),
+        'threshold_3': double.tryParse(row.threshold3Controller.text.trim()),
         'importance': row.importance,
         'status_label': row.statusLabelController.text.trim().isEmpty ? null : row.statusLabelController.text.trim(),
         'message_template_id': row.selectedTemplate?.id,
@@ -289,6 +295,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final cond1 = row1?.conditionType ?? 'N/A';
       final thresh1 = row1?.threshold1Controller.text.trim() ?? '0';
       final thresh2 = row1?.threshold2Controller.text.trim() ?? '0';
+      final thresh3 = row1?.threshold3Controller.text.trim() ?? '0';
       final importance1 = row1?.importance ?? 'N/A';
       
       final simNumber = _simNumberController.text.trim().isEmpty ? 'N/A' : _simNumberController.text.trim();
@@ -296,7 +303,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       // Unique parameters from all rows
       final allParams = _rows.map((r) => r.parameterType).toSet().join('/');
       
-      final payload = '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$importance1,$deviceId,$simNumber,$allParams';
+      final payload = '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$thresh3,$importance1,$deviceId,$simNumber,$allParams';
       
       debugPrint('Sending Advanced Command via Backend: deviceId=$deviceId, payload=$payload');
       
@@ -684,32 +691,34 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             'PARAMETER TYPE',
                                             AppDropdown<String>(
                                               value: row.parameterType,
-                                              items: const ['LEVEL', 'BATTERY', 'PRESSURE', 'TEMPERATURE', 'FLOW', 'OTHER'],
+                                              items: const ['LEVEL', 'BATTERY', 'PRESSURE', 'TEMPERATURE', 'FLOW', 'Cal Tank', 'Cal Kilo Liter', 'Sensor Rating', 'setbar', 'setcalbar', 'm Factor', 'Data Interval', 'Chart Data', 'OTHER'],
                                               hint: 'Select Param',
                                               itemLabel: (v) => v,
                                               onChanged: (v) => setState(() => row.parameterType = v!),
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          flex: 2,
-                                          child: _buildLabelField(
-                                            'CONDITION',
-                                            AppDropdown<String>(
-                                              value: row.conditionType,
-                                              items: const ['<', '>', '<=', '>=', '==', '!=', 'BETWEEN'],
-                                              hint: 'Select Type',
-                                              itemLabel: (v) => v,
-                                              onChanged: (v) => setState(() => row.conditionType = v!),
+                                        if (row.parameterType != 'Cal Tank' && row.parameterType != 'Cal Kilo Liter' && row.parameterType != 'setbar' && row.parameterType != 'setcalbar' && row.parameterType != 'Sensor Rating' && row.parameterType != 'm Factor' && row.parameterType != 'Data Interval' && row.parameterType != 'Chart Data') ...[
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            flex: 2,
+                                            child: _buildLabelField(
+                                              'CONDITION',
+                                              AppDropdown<String>(
+                                                value: row.conditionType,
+                                                items: const ['<', '>', '<=', '>=', '==', '!=', 'BETWEEN'],
+                                                hint: 'Select Type',
+                                                itemLabel: (v) => v,
+                                                onChanged: (v) => setState(() => row.conditionType = v!),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          flex: 4,
-                                          child: _buildLabelField('STATUS LABEL (UI DISPLAY)', AppTextField(controller: row.statusLabelController, hint: 'e.g. LOW LEVEL')),
-                                        ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            flex: 4,
+                                            child: _buildLabelField('STATUS LABEL (UI DISPLAY)', AppTextField(controller: row.statusLabelController, hint: 'e.g. LOW LEVEL')),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                     const SizedBox(height: 16),
@@ -718,7 +727,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         Expanded(
                                           flex: 2,
                                           child: _buildLabelField(
-                                            row.conditionType == 'BETWEEN' ? 'MIN THRESHOLD' : 'THRESHOLD VALUE',
+                                            (row.parameterType == 'Cal Tank' || row.parameterType == 'Cal Kilo Liter' || row.parameterType == 'Sensor Rating' || row.parameterType == 'm Factor' || row.parameterType == 'Data Interval' || row.parameterType == 'setbar' || row.parameterType == 'setcalbar' || row.parameterType == 'Chart Data')
+                                                ? 'FIELD 1'
+                                                : (row.conditionType == 'BETWEEN' ? 'MIN THRESHOLD' : 'THRESHOLD VALUE'),
                                             AppTextField(
                                               controller: row.threshold1Controller,
                                               hint: 'Value',
@@ -726,14 +737,30 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             ),
                                           ),
                                         ),
-                                        if (row.conditionType == 'BETWEEN') ...[
+                                        if (row.conditionType == 'BETWEEN' || row.parameterType == 'Cal Tank' || row.parameterType == 'Cal Kilo Liter' || row.parameterType == 'Sensor Rating' || row.parameterType == 'm Factor' || row.parameterType == 'Data Interval') ...[
                                           const SizedBox(width: 16),
                                           Expanded(
                                             flex: 2,
                                             child: _buildLabelField(
-                                              'MAX THRESHOLD',
+                                              (row.parameterType == 'Cal Tank' || row.parameterType == 'Cal Kilo Liter' || row.parameterType == 'Sensor Rating' || row.parameterType == 'm Factor' || row.parameterType == 'Data Interval')
+                                                  ? 'FIELD 2'
+                                                  : 'MAX THRESHOLD',
                                               AppTextField(
                                                 controller: row.threshold2Controller,
+                                                hint: 'Value',
+                                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        if (row.parameterType == 'Sensor Rating' || row.parameterType == 'm Factor') ...[
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            flex: 2,
+                                            child: _buildLabelField(
+                                              'FIELD 3',
+                                              AppTextField(
+                                                controller: row.threshold3Controller,
                                                 hint: 'Value',
                                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                               ),

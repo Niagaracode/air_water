@@ -40,6 +40,14 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     'PRESSURE',
     'TEMPERATURE',
     'FLOW',
+    'Cal Tank',
+    'Cal Kilo Liter',
+    'sensor',
+    'setbar',
+    'setcalbar',
+    'mfactor',
+    'Data Interval',
+    'Chart Data',
     'OTHER'
   ];
 

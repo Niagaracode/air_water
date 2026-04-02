@@ -21,12 +21,23 @@ class Tank {
   final double? width;
   final double? height;
   final double? dishHeight;
+  final double? canLength;
+  final double? diameter;
+  final double? length;
+  final double? dishDepth;
+  final double? depth;
+  final double? coneLength;
+  final double? tonnes;
   final int? companyId;
   final String? companyName;
   final String? deviceId;
   final String? simNumber;
   final String? timeZone;
   final int status;
+  final bool? useStrappingChart;
+  final List<StrappingPoint>? strappingPoints;
+  final String? levelUnit;
+  final String? volumeUnit;
   final String? createdAt;
 
   Tank({
@@ -47,12 +58,23 @@ class Tank {
     this.width,
     this.height,
     this.dishHeight,
+    this.canLength,
+    this.diameter,
+    this.length,
+    this.dishDepth,
+    this.depth,
+    this.coneLength,
+    this.tonnes,
     this.companyId,
     this.companyName,
     this.deviceId,
     this.simNumber,
     this.timeZone,
     required this.status,
+    this.useStrappingChart,
+    this.strappingPoints,
+    this.levelUnit,
+    this.volumeUnit,
     this.tankName,
     this.createdAt,
   });
@@ -80,12 +102,27 @@ class Tank {
       width: _toDouble(json['width']),
       height: _toDouble(json['height']),
       dishHeight: _toDouble(json['dish_height']),
+      canLength: _toDouble(json['can_length']),
+      diameter: _toDouble(json['diameter']),
+      length: _toDouble(json['length']),
+      dishDepth: _toDouble(json['dish_depth']),
+      depth: _toDouble(json['depth']),
+      coneLength: _toDouble(json['cone_length']),
+      tonnes: _toDouble(json['tonnes']),
       companyId: _toInt(json['company_id']),
       companyName: json['company_name'] as String?,
       deviceId: json['device_id'] as String?,
       simNumber: json['sim_number'] as String?,
       timeZone: json['time_zone'] as String?,
       status: json['status'] ?? 1,
+      useStrappingChart: json['use_strapping_chart'] == 1 || json['use_strapping_chart'] == true,
+      strappingPoints: json['strapping_points'] != null
+          ? (json['strapping_points'] as List)
+              .map((i) => StrappingPoint.fromJson(i as Map<String, dynamic>))
+              .toList()
+          : null,
+      levelUnit: json['level_unit'] as String?,
+      volumeUnit: json['volume_unit'] as String?,
       tankName: json['tank_name'] as String?,
       createdAt: json['created_at'] as String?,
     );
@@ -238,8 +275,19 @@ class TankCreateRequest {
   final double? width;
   final double? height;
   final double? dishHeight;
+  final double? canLength;
+  final double? diameter;
+  final double? length;
+  final double? dishDepth;
+  final double? depth;
+  final double? coneLength;
+  final double? tonnes;
   final int? plantId;
   final int? status;
+  final bool? useStrappingChart;
+  final List<StrappingPoint>? strappingPoints;
+  final String? levelUnit;
+  final String? volumeUnit;
 
   TankCreateRequest({
     required this.tankNumber,
@@ -252,8 +300,19 @@ class TankCreateRequest {
     this.width,
     this.height,
     this.dishHeight,
+    this.canLength,
+    this.diameter,
+    this.length,
+    this.dishDepth,
+    this.depth,
+    this.coneLength,
+    this.tonnes,
     this.plantId,
     this.status,
+    this.useStrappingChart,
+    this.strappingPoints,
+    this.levelUnit,
+    this.volumeUnit,
   });
 
   Map<String, dynamic> toJson() {
@@ -267,8 +326,43 @@ class TankCreateRequest {
       'width': width,
       'height': height,
       'dish_height': dishHeight,
+      'can_length': canLength,
+      'diameter': diameter,
+      'length': length,
+      'dish_depth': dishDepth,
+      'depth': depth,
+      'cone_length': coneLength,
+      'tonnes': tonnes,
       'plant_id': plantId,
       'status': status,
+      'use_strapping_chart': useStrappingChart == true ? 1 : 0,
+      'strapping_points': strappingPoints?.map((e) => e.toJson()).toList(),
+      'level_unit': levelUnit,
+      'volume_unit': volumeUnit,
+    };
+  }
+}
+
+class StrappingPoint {
+  final double levelMm;
+  final double volumeM3;
+
+  StrappingPoint({
+    required this.levelMm,
+    required this.volumeM3,
+  });
+
+  factory StrappingPoint.fromJson(Map<String, dynamic> json) {
+    return StrappingPoint(
+      levelMm: (json['level_mm'] as num).toDouble(),
+      volumeM3: (json['volume_m3'] as num).toDouble(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'level_mm': levelMm,
+      'volume_m3': volumeM3,
     };
   }
 }

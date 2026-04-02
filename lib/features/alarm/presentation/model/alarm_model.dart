@@ -27,30 +27,68 @@ class Alarm {
     this.status = 'Active',
   });
 
-  factory Alarm.mock({
-    required int id,
-    required String ruleName,
-    required String plantName,
-    required String tankNumber,
-    required String parameterType,
-    required String conditionType,
-    required double threshold1,
-    double? threshold2,
-    required double currentValue,
-    required String importance,
-  }) {
+  factory Alarm.fromJson(Map<String, dynamic> json) {
+    double toDouble(dynamic v) {
+      if (v == null) return 0.0;
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v) ?? 0.0;
+      return 0.0;
+    }
+
     return Alarm(
-      id: id,
-      ruleName: ruleName,
-      plantName: plantName,
-      tankNumber: tankNumber,
-      parameterType: parameterType,
-      conditionType: conditionType,
-      threshold1: threshold1,
-      threshold2: threshold2,
-      currentValue: currentValue,
-      importance: importance,
-      triggeredAt: DateTime.now().subtract(Duration(minutes: id * 15)),
+      id: json['id'] as int? ?? 0,
+      ruleName: json['rule_name'] as String? ?? 'Unnamed Rule',
+      plantName: json['plant_name'] as String? ?? 'Generic Plant',
+      tankNumber: json['tank_number'] as String? ?? 'Generic Tank',
+      parameterType: json['parameter_type'] as String? ?? 'Unknown',
+      conditionType: json['condition_type'] as String? ?? 'UNKNOWN',
+      threshold1: toDouble(json['threshold_1']),
+      threshold2: toDouble(json['threshold_2']),
+      currentValue: toDouble(json['triggered_value']),
+      importance: json['importance'] as String? ?? 'Medium',
+      triggeredAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
+      status: json['status'] as String? ?? 'Active',
+    );
+  }
+}
+
+class AlarmResponse {
+  final List<Alarm> data;
+  final AlarmPagination pagination;
+
+  AlarmResponse({required this.data, required this.pagination});
+
+  factory AlarmResponse.fromJson(Map<String, dynamic> json) {
+    return AlarmResponse(
+      data: (json['data'] as List? ?? [])
+          .map((i) => Alarm.fromJson(i as Map<String, dynamic>))
+          .toList(),
+      pagination: AlarmPagination.fromJson(
+        json['pagination'] as Map<String, dynamic>? ?? {},
+      ),
+    );
+  }
+}
+
+class AlarmPagination {
+  final int total;
+  final int page;
+  final int limit;
+  final int totalPages;
+
+  AlarmPagination({
+    required this.total,
+    required this.page,
+    required this.limit,
+    required this.totalPages,
+  });
+
+  factory AlarmPagination.fromJson(Map<String, dynamic> json) {
+    return AlarmPagination(
+      total: json['total'] as int? ?? 0,
+      page: json['page'] as int? ?? 1,
+      limit: json['limit'] as int? ?? 20,
+      totalPages: json['totalPages'] as int? ?? 1,
     );
   }
 }

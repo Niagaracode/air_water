@@ -68,9 +68,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         // 1. Immediate redirection based on Storage-based Role (Eliminates "one second flash")
         if (roleFromStorage != null) {
           if (roleFromStorage == UserRole.customer) {
-             if (location == '/profile' || restrictedRoutes.contains(location)) {
-               return '/dashboard';
-             }
+            // Customers should be able to access /setting and /profile as per sidebar config
+            final customerRestricted = restrictedRoutes.where((r) => r != '/setting').toList();
+            if (customerRestricted.contains(location)) {
+              return '/dashboard';
+            }
           }
           if (roleFromStorage == UserRole.technician) {
             if (restrictedRoutes.contains(location)) {
@@ -84,7 +86,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final roleId = currentUser.roleId;
 
           if (roleId == 6) { // Customer
-            if (location == '/profile' || restrictedRoutes.contains(location)) {
+            // Customers should be able to access /setting and /profile as per sidebar config
+            final customerRestricted = restrictedRoutes.where((r) => r != '/setting').toList();
+            if (customerRestricted.contains(location)) {
               return '/dashboard';
             }
           }
