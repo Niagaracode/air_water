@@ -152,11 +152,10 @@ class _TankWideState extends ConsumerState<TankWide> {
       child: Row(
         children: [
           AppTableHeaderCell('SI.NO', width: 60),
-          AppTableHeaderCell('Tank Number', flex: 2),
-          AppTableHeaderCell('Type', flex: 2),
+          AppTableHeaderCell('Tank Number', flex: 3),
+          AppTableHeaderCell('Type', flex: 3),
           AppTableHeaderCell('Product', flex: 2),
           AppTableHeaderCell('Unit', flex: 1),
-          AppTableHeaderCell('H / W / Dish', flex: 2),
           AppTableHeaderCell('Status', flex: 1),
           AppTableHeaderCell('Actions', width: 120),
         ],
@@ -533,7 +532,7 @@ class _TankWideState extends ConsumerState<TankWide> {
         children: [
           const SizedBox(width: 60),
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Row(
               children: [
                 if (tank.tankImageUrl != null)
@@ -567,13 +566,9 @@ class _TankWideState extends ConsumerState<TankWide> {
               ],
             ),
           ),
-          AppTableCell(tank.tankTypeName ?? '-', flex: 2),
+          AppTableCell(tank.tankTypeName ?? '-', flex: 3),
           AppTableCell(tank.productName ?? '-', flex: 2),
           AppTableCell(tank.unitName ?? '-', flex: 1),
-          AppTableCell(
-            '${tank.height ?? 0} / ${tank.width ?? 0} / ${tank.dishHeight ?? 0}',
-            flex: 2,
-          ),
           Expanded(
             flex: 1,
             child: Align(

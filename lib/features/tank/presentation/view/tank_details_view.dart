@@ -50,6 +50,8 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
   List<String> _unitOptions = ['mm', 'cm', 'm', 'ft', 'in', 'yd', 'Liter', 'Kilogram', 'Ton', 'Cubic Meter', 'Gallon'];
   List<StrappingPoint> _editPoints = [];
 
+  int _saveVersion = 0;
+
   @override
   void initState() {
     super.initState();
@@ -124,10 +126,10 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
         _selectedVolumeUnit = tank.volumeUnit!;
       }
 
-      _editPoints = List.from(tank.strappingPoints ?? []);
-      if (_editPoints.isEmpty) {
-        _editPoints = [StrappingPoint(levelMm: 0, volumeM3: 0)];
-      }
+      // DO NOT load previous strapping points into the entry area
+      // Always start with a clean 0 entry for new record addition as per user request
+      _editPoints = [StrappingPoint(levelMm: 0, volumeM3: 0)];
+      _saveVersion++; // Force reset of any leftover text in the fields
     });
   }
 
@@ -243,9 +245,158 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
           ),
           const SizedBox(height: 24),
           _buildDataChannelsTable(state),
+          const SizedBox(height: 32),
+          _buildSectionLabel('STRAPPING POINTS'),
+          const SizedBox(height: 16),
+          _buildDetailsStrappingTable(state.tank),
         ],
       ),
     );
+  }
+
+  Widget _buildDetailsStrappingTable(Tank? tank) {
+    final points = tank?.strappingPoints ?? [];
+    if (points.isEmpty) {
+      return Container(
+        height: 100,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: const Center(child: Text('No strapping points defined')),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: const BoxDecoration(
+              color: Color(0xFF141E7A), // Restored original navy
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(11),
+                topRight: Radius.circular(11),
+              ),
+            ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'LEVEL',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 40),
+                    Expanded(
+                      child: Text(
+                        'VOLUME',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: points.length,
+                separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                itemBuilder: (context, index) {
+                  final point = points[index];
+                  final bool isEven = index % 2 == 0;
+                  final String levelVal = _getDisplayValue(point.levelMm, point.levelUnit ?? _selectedLevelUnit);
+                  final String levelUnit = point.levelUnit ?? _selectedLevelUnit;
+                  final String volumeVal = _getDisplayValue(point.volumeM3, point.volumeUnit ?? _selectedVolumeUnit);
+                  final String volumeUnit = point.volumeUnit ?? _selectedVolumeUnit;
+
+                  return Container(
+                    color: isEven ? Colors.white : const Color(0xFFF8FAFC),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: levelVal,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF1E293B),
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: ' $levelUnit',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 40),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: volumeVal,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF1E293B),
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: ' $volumeUnit',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
   }
 
   Widget _buildChartCard(TankDetailsState state) {
@@ -901,68 +1052,11 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
   }
 
   String _getDisplayValue(double baseVal, String unit, {bool isVolumeColumn = false}) {
-    if (baseVal == 0) return '';
-    double factor = 1.0;
-    final lowerUnit = unit.toLowerCase();
-    
-    // Check for Volume/Mass units
-    if (lowerUnit == 'liter' || lowerUnit == 'kilogram') {
-      factor = 1000.0;
-    } else if (lowerUnit == 'gallon') {
-      factor = 264.172; // 1 M3 = 264.172 US GAL
-    } else if (lowerUnit == 'ton' || lowerUnit == 'cubic meter') {
-      factor = 1.0;
-    } 
-    // Check for Length units
-    else if (lowerUnit == 'cm') {
-      factor = 0.1;
-    } else if (lowerUnit == 'm') {
-      factor = 0.001;
-    } else if (lowerUnit == 'in') {
-      factor = 1 / 25.4;
-    } else if (lowerUnit == 'ft') {
-      factor = 1 / 304.8;
-    } else if (lowerUnit == 'yd') {
-      factor = 1 / 914.4;
-    } else {
-      factor = 1.0; // Default (mm/m3)
-    }
-    
-    double result = baseVal * factor;
-    // Format to 2-3 decimal places for clarity if not an exact integer
-    if (result == result.toInt()) return result.toInt().toString();
-    return result.toStringAsFixed(3).replaceAll(RegExp(r'0*$'), '').replaceAll(RegExp(r'\.$'), '');
+    // Return raw value as per user request to maintain 'as-is' entry
+    if (baseVal == baseVal.toInt()) return baseVal.toInt().toString();
+    return baseVal.toStringAsFixed(3).replaceAll(RegExp(r'0*$'), '').replaceAll(RegExp(r'\.$'), '');
   }
 
-  double _getBaseValue(double displayVal, String unit, {bool isVolumeColumn = false}) {
-    double factor = 1.0;
-    final lowerUnit = unit.toLowerCase();
-
-    // Check for Volume/Mass units
-    if (lowerUnit == 'liter' || lowerUnit == 'kilogram') {
-      factor = 0.001;
-    } else if (lowerUnit == 'gallon') {
-      factor = 0.00378541; // 1 GAL = 0.00378541 M3
-    } else if (lowerUnit == 'ton' || lowerUnit == 'cubic meter') {
-      factor = 1.0;
-    } 
-    // Check for Length units
-    else if (lowerUnit == 'cm') {
-      factor = 10.0;
-    } else if (lowerUnit == 'm') {
-      factor = 1000.0;
-    } else if (lowerUnit == 'in') {
-      factor = 25.4;
-    } else if (lowerUnit == 'ft') {
-      factor = 304.8;
-    } else if (lowerUnit == 'yd') {
-      factor = 914.4;
-    } else {
-      factor = 1.0; // Default (mm/m3)
-    }
-
-    return displayVal * factor;
-  }
 
   Widget _buildUnitDropdown(String label, String value, List<String> options, ValueChanged<String?> onChanged) {
     return Row(
@@ -972,20 +1066,26 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
           style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 0.5),
         ),
         Theme(
-          data: ThemeData(canvasColor: const Color(0xFF141E7A)),
+          data: ThemeData(
+            canvasColor: const Color(0xFF1E293B),
+            textTheme: TextTheme(
+              titleMedium: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+          ),
           child: DropdownButton<String>(
             value: value,
             underline: const SizedBox(),
-            icon: const Icon(Icons.arrow_drop_down, color: Colors.white, size: 16),
+            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white70, size: 14),
             isDense: true,
-            style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+            dropdownColor: const Color(0xFF1E293B),
+            style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.5),
             items: options.map((String opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
             onChanged: onChanged,
           ),
         ),
         Text(
           ')',
-          style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
+          style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white70),
         ),
       ],
     );
@@ -997,14 +1097,24 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: const BoxDecoration(
-              color: Color(0xFF141E7A),
-              borderRadius: BorderRadius.only(topLeft: Radius.circular(11), topRight: Radius.circular(11)),
+              color: Color(0xFF141E7A), // Restored original navy
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(11), 
+                topRight: Radius.circular(11),
+              ),
             ),
             child: Row(
               children: [
@@ -1023,25 +1133,33 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
               itemBuilder: (context, index) {
                 final bool isEven = index % 2 == 0;
                 return Container(
-                  color: isEven ? Colors.white : const Color(0xFFF9FAFB),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  color: isEven ? Colors.white : const Color(0xFFF8FAFC),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   child: Row(
                     children: [
                       Expanded(
                         child: TextFormField(
-                          key: ValueKey('level-$index-$_selectedLevelUnit'),
-                          initialValue: _getDisplayValue(_editPoints[index].levelMm, _selectedLevelUnit),
-                          decoration: InputDecoration(border: InputBorder.none, hintText: '0.00 $_selectedLevelUnit'),
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+                          key: ValueKey('level-$index-$_selectedLevelUnit-$_saveVersion'),
+                          initialValue: _editPoints[index].levelMm == 0 ? '' : _getDisplayValue(_editPoints[index].levelMm, _selectedLevelUnit),
+                          decoration: InputDecoration(
+                            border: InputBorder.none, 
+                            hintText: '0.00 $_selectedLevelUnit',
+                            hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.w400),
+                          ),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14, color: const Color(0xFF1E293B)),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
                           onChanged: (val) {
                             final double? v = double.tryParse(val);
                             if (v != null) {
-                              _editPoints[index] = StrappingPoint(
-                                levelMm: _getBaseValue(v, _selectedLevelUnit),
-                                volumeM3: _editPoints[index].volumeM3,
-                              );
+                              setState(() {
+                                _editPoints[index] = StrappingPoint(
+                                  levelMm: v,
+                                  volumeM3: _editPoints[index].volumeM3,
+                                  levelUnit: _selectedLevelUnit,
+                                  volumeUnit: _editPoints[index].volumeUnit ?? _selectedVolumeUnit,
+                                );
+                              });
                             }
                           },
                         ),
@@ -1049,19 +1167,27 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
                       const SizedBox(width: 40),
                       Expanded(
                         child: TextFormField(
-                          key: ValueKey('volume-$index-$_selectedVolumeUnit'),
-                          initialValue: _getDisplayValue(_editPoints[index].volumeM3, _selectedVolumeUnit, isVolumeColumn: true),
-                          decoration: InputDecoration(border: InputBorder.none, hintText: '0.00 $_selectedVolumeUnit'),
-                          style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+                          key: ValueKey('volume-$index-$_selectedVolumeUnit-$_saveVersion'),
+                          initialValue: _editPoints[index].volumeM3 == 0 ? '' : _getDisplayValue(_editPoints[index].volumeM3, _selectedVolumeUnit, isVolumeColumn: true),
+                          decoration: InputDecoration(
+                            border: InputBorder.none, 
+                            hintText: '0.00 $_selectedVolumeUnit',
+                            hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.w400),
+                          ),
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14, color: const Color(0xFF1E293B)),
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
                           onChanged: (val) {
                             final double? v = double.tryParse(val);
                             if (v != null) {
-                              _editPoints[index] = StrappingPoint(
-                                levelMm: _editPoints[index].levelMm,
-                                volumeM3: _getBaseValue(v, _selectedVolumeUnit, isVolumeColumn: true),
-                              );
+                              setState(() {
+                                _editPoints[index] = StrappingPoint(
+                                  levelMm: _editPoints[index].levelMm,
+                                  volumeM3: v,
+                                  levelUnit: _editPoints[index].levelUnit ?? _selectedLevelUnit,
+                                  volumeUnit: _selectedVolumeUnit,
+                                );
+                              });
                             }
                           },
                         ),
@@ -1104,7 +1230,12 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
       status: tank.status,
       description: tank.description, // Use existing as it's now read-only
       useStrappingChart: _useStrappingChart,
-      strappingPoints: _editPoints.where((p) => p.levelMm > 0 || p.volumeM3 > 0).toList(),
+      strappingPoints: _editPoints.where((p) => p.levelMm > 0 || p.volumeM3 > 0).map((p) => StrappingPoint(
+        levelMm: p.levelMm,
+        volumeM3: p.volumeM3,
+        levelUnit: _selectedLevelUnit,
+        volumeUnit: _selectedVolumeUnit,
+      )).toList(),
       width: tank.width,
       height: tank.height,
       dishHeight: tank.dishHeight,
@@ -1125,8 +1256,16 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
       messenger.showSnackBar(
         const SnackBar(content: Text('Information updated successfully')),
       );
+      
+      // Clear input list and controller for new record entry as requested
+      setState(() {
+        _editPoints = [StrappingPoint(levelMm: 0, volumeM3: 0)];
+        _generateCountController.clear();
+        _saveVersion++; // Force complete reset of all text fields
+      });
+
       // Reload details data
-      ref.read(tankDetailsProvider.notifier).loadData(widget.tank!.tankId);
+      ref.read(tankDetailsProvider.notifier).loadData(tank.tankId);
     } else {
       final error = ref.read(tankProvider).error;
       messenger.showSnackBar(

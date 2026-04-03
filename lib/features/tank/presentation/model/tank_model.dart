@@ -346,16 +346,22 @@ class TankCreateRequest {
 class StrappingPoint {
   final double levelMm;
   final double volumeM3;
+  final String? levelUnit;
+  final String? volumeUnit;
 
   StrappingPoint({
     required this.levelMm,
     required this.volumeM3,
+    this.levelUnit,
+    this.volumeUnit,
   });
 
   factory StrappingPoint.fromJson(Map<String, dynamic> json) {
     return StrappingPoint(
       levelMm: (json['level_mm'] as num).toDouble(),
       volumeM3: (json['volume_m3'] as num).toDouble(),
+      levelUnit: json['levelunit'] as String?,
+      volumeUnit: json['volumeunit'] as String?,
     );
   }
 
@@ -363,6 +369,8 @@ class StrappingPoint {
     return {
       'level_mm': levelMm,
       'volume_m3': volumeM3,
+      'level_unit': levelUnit,
+      'volume_unit': volumeUnit,
     };
   }
 }

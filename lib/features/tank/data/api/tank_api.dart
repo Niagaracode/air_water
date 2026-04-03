@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../presentation/model/tank_model.dart';
 import '../../../plant/presentation/model/plant_model.dart';
@@ -51,8 +52,13 @@ class TankApi {
   Future<void> createTank(TankCreateRequest request) async {
     if (request.imageFile != null) {
       final bytes = await request.imageFile!.readAsBytes();
+      final jsonRequest = request.toJson();
+      if (jsonRequest['strapping_points'] != null) {
+        jsonRequest['strapping_points'] = jsonEncode(jsonRequest['strapping_points']);
+      }
+
       final formData = FormData.fromMap({
-        ...request.toJson(),
+        ...jsonRequest,
         'tank_image': MultipartFile.fromBytes(
           bytes,
           filename: request.imageFile!.name,
@@ -67,8 +73,13 @@ class TankApi {
   Future<void> updateTank(int id, TankCreateRequest request) async {
     if (request.imageFile != null) {
       final bytes = await request.imageFile!.readAsBytes();
+      final jsonRequest = request.toJson();
+      if (jsonRequest['strapping_points'] != null) {
+        jsonRequest['strapping_points'] = jsonEncode(jsonRequest['strapping_points']);
+      }
+
       final formData = FormData.fromMap({
-        ...request.toJson(),
+        ...jsonRequest,
         'tank_image': MultipartFile.fromBytes(
           bytes,
           filename: request.imageFile!.name,

@@ -243,6 +243,14 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
 
     if (allSuccess && mounted) {
       if (!silent) {
+        // If it's a LEVEL or CAL TANK rule, automatically trigger MQTT Send to Device for Admins too
+        final row1 = _rows.isNotEmpty ? _rows[0] : null;
+        if ((row1?.parameterType == 'LEVEL' || row1?.parameterType == 'CAL TANK') && _deviceIdController.text.isNotEmpty) {
+          // Trigger the MQTT command and tell it we already saved to the database
+          await _sendToDevice(skipSave: true); 
+          return true;
+        }
+
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -258,7 +266,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   }
 
 
-  Future<void> _sendToDevice() async {
+  Future<void> _sendToDevice({bool skipSave = false}) async {
     final userRole = ref.read(userRoleProvider).asData?.value;
     final isSuperOrCompany = userRole == UserRole.superAdmin || userRole == UserRole.companyAdmin;
     
@@ -284,7 +292,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     try {
       final apiClient = ref.read(apiClientProvider);
       
-      // Construct complex command string
+      // Construct command parameters
       final productName = _selectedProduct?.name ?? 'N/A';
       final scmM3 = _selectedProduct?.scmM3.toString() ?? '0.0';
       final specificGravity = _selectedProduct?.specificGravity.toString() ?? '0.0';
@@ -303,7 +311,23 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       // Unique parameters from all rows
       final allParams = _rows.map((r) => r.parameterType).toSet().join('/');
       
-      final payload = '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$thresh3,$importance1,$deviceId,$simNumber,$allParams';
+      // Construction of MQTT command string
+      String payload;
+      if (param1 == 'LEVEL') {
+        // Special command for Level parameters as requested
+        payload = 'ReOrderLevel,$thresh1';
+      } else if (param1 == 'CAL TANK') {
+        // Special command for CAL TANK calibration as requested
+        // Multiply threshold values by 100,000 for high-precision scale
+        final val1 = ((double.tryParse(thresh1) ?? 0) * 100000).toInt();
+        final val2 = ((double.tryParse(thresh2) ?? 0) * 100000).toInt();
+        
+        // Using 'CALTANK' WITHOUT space for the command name, then static '1', then scaled field values
+        payload = 'CALTANK,1,$val1,$val2';
+      } else {
+        // Standard complex command string for other parameters
+        payload = '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$thresh3,$importance1,$deviceId,$simNumber,$allParams';
+      }
       
       debugPrint('Sending Advanced Command via Backend: deviceId=$deviceId, payload=$payload');
       
@@ -317,12 +341,18 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       
       if (mounted) {
         if (response.statusCode == 200) {
-          // Automated Trigger of _save after successful Send Device
-          final saveSuccess = await _save(silent: true);
+          // Determine if we need to save to DB (only if not already saved via _save)
+          bool saveSuccess = true;
+          if (!skipSave) {
+            saveSuccess = await _save(silent: true);
+          }
           
           if (mounted) {
             if (saveSuccess) {
-              Navigator.of(context).pop();
+              // Only pop and show success if save was successful (or skipped)
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Configuration sent and setting updated successfully'),
@@ -691,14 +721,14 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             'PARAMETER TYPE',
                                             AppDropdown<String>(
                                               value: row.parameterType,
-                                              items: const ['LEVEL', 'BATTERY', 'PRESSURE', 'TEMPERATURE', 'FLOW', 'Cal Tank', 'Cal Kilo Liter', 'Sensor Rating', 'setbar', 'setcalbar', 'm Factor', 'Data Interval', 'Chart Data', 'OTHER'],
+                                              items: const ['LEVEL', 'BATTERY', 'PRESSURE', 'TEMPERATURE', 'FLOW', 'CAL TANK', 'CAL KILO LITER', 'SENSOR RATING', 'SETBAR', 'SETCALBAR', 'M FACTOR', 'DATA INTERVAL', 'CHART DATA', 'OTHER'],
                                               hint: 'Select Param',
                                               itemLabel: (v) => v,
                                               onChanged: (v) => setState(() => row.parameterType = v!),
                                             ),
                                           ),
                                         ),
-                                        if (row.parameterType != 'Cal Tank' && row.parameterType != 'Cal Kilo Liter' && row.parameterType != 'setbar' && row.parameterType != 'setcalbar' && row.parameterType != 'Sensor Rating' && row.parameterType != 'm Factor' && row.parameterType != 'Data Interval' && row.parameterType != 'Chart Data') ...[
+                                        if (row.parameterType != 'CAL TANK' && row.parameterType != 'CAL KILO LITER' && row.parameterType != 'SETBAR' && row.parameterType != 'SETCALBAR' && row.parameterType != 'SENSOR RATING' && row.parameterType != 'M FACTOR' && row.parameterType != 'DATA INTERVAL' && row.parameterType != 'CHART DATA') ...[
                                           const SizedBox(width: 16),
                                           Expanded(
                                             flex: 2,
@@ -727,7 +757,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         Expanded(
                                           flex: 2,
                                           child: _buildLabelField(
-                                            (row.parameterType == 'Cal Tank' || row.parameterType == 'Cal Kilo Liter' || row.parameterType == 'Sensor Rating' || row.parameterType == 'm Factor' || row.parameterType == 'Data Interval' || row.parameterType == 'setbar' || row.parameterType == 'setcalbar' || row.parameterType == 'Chart Data')
+                                            (row.parameterType == 'CAL TANK' || row.parameterType == 'CAL KILO LITER' || row.parameterType == 'SENSOR RATING' || row.parameterType == 'M FACTOR' || row.parameterType == 'DATA INTERVAL' || row.parameterType == 'SETBAR' || row.parameterType == 'SETCALBAR' || row.parameterType == 'CHART DATA')
                                                 ? 'FIELD 1'
                                                 : (row.conditionType == 'BETWEEN' ? 'MIN THRESHOLD' : 'THRESHOLD VALUE'),
                                             AppTextField(
@@ -737,12 +767,12 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             ),
                                           ),
                                         ),
-                                        if (row.conditionType == 'BETWEEN' || row.parameterType == 'Cal Tank' || row.parameterType == 'Cal Kilo Liter' || row.parameterType == 'Sensor Rating' || row.parameterType == 'm Factor' || row.parameterType == 'Data Interval') ...[
+                                        if (row.conditionType == 'BETWEEN' || row.parameterType == 'CAL TANK' || row.parameterType == 'CAL KILO LITER' || row.parameterType == 'SENSOR RATING' || row.parameterType == 'M FACTOR' || row.parameterType == 'DATA INTERVAL') ...[
                                           const SizedBox(width: 16),
                                           Expanded(
                                             flex: 2,
                                             child: _buildLabelField(
-                                              (row.parameterType == 'Cal Tank' || row.parameterType == 'Cal Kilo Liter' || row.parameterType == 'Sensor Rating' || row.parameterType == 'm Factor' || row.parameterType == 'Data Interval')
+                                              (row.parameterType == 'CAL TANK' || row.parameterType == 'CAL KILO LITER' || row.parameterType == 'SENSOR RATING' || row.parameterType == 'M FACTOR' || row.parameterType == 'DATA INTERVAL')
                                                   ? 'FIELD 2'
                                                   : 'MAX THRESHOLD',
                                               AppTextField(
@@ -753,7 +783,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             ),
                                           ),
                                         ],
-                                        if (row.parameterType == 'Sensor Rating' || row.parameterType == 'm Factor') ...[
+                                        if (row.parameterType == 'SENSOR RATING' || row.parameterType == 'M FACTOR') ...[
                                           const SizedBox(width: 16),
                                           Expanded(
                                             flex: 2,

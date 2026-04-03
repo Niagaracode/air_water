@@ -333,22 +333,24 @@ class _SettingWideState extends ConsumerState<SettingWide> {
       ),
       child: Row(
         children: [
-          AppTableHeaderCell('SI.NO', width: 70),
+          const AppTableHeaderCell('SI.NO', width: 60),
           if (isCustomer) ...[
-            AppTableHeaderCell('Tank Number', flex: 2),
-            AppTableHeaderCell('Device ID', flex: 2),
-            AppTableHeaderCell('Parameter', flex: 2),
-            AppTableHeaderCell('Condition', flex: 2),
+            const AppTableHeaderCell('Tank Number', flex: 2),
+            const AppTableHeaderCell('Device ID', flex: 2),
+            const AppTableHeaderCell('Parameter', flex: 2),
+            const AppTableHeaderCell('Condition', flex: 2),
           ] else ...[
-            AppTableHeaderCell('Rule Name', flex: 2),
-            AppTableHeaderCell('Plant', flex: 2),
-            AppTableHeaderCell('Tank', flex: 2),
-            AppTableHeaderCell('Parameter', flex: 2),
-            AppTableHeaderCell('Condition', flex: 2),
-            AppTableHeaderCell('Importance', flex: 2),
+            const AppTableHeaderCell('Rule Name', flex: 3),
+            const AppTableHeaderCell('Plant', width: 100),
+            const AppTableHeaderCell('Tank', width: 100),
+            const AppTableHeaderCell('Parameter', flex: 2),
+            const AppTableHeaderCell('Condition', flex: 2),
+            const AppTableHeaderCell('Importance', width: 130),
+            const SizedBox(width: 16),
+            const AppTableHeaderCell('Status', width: 110),
           ],
-          if (!isCustomer) AppTableHeaderCell('Status', flex: 2),
-          AppTableHeaderCell('Action', width: 100),
+          const SizedBox(width: 16),
+          const AppTableHeaderCell('Action', width: 80),
         ],
       ),
     );
@@ -460,7 +462,9 @@ class _SettingWideState extends ConsumerState<SettingWide> {
 
   Widget _buildSettingRow(Setting setting, SettingNotifier notifier, bool isCustomer) {
     String conditionText = '—';
-    if (setting.conditionType != null && setting.threshold1 != null) {
+    if (setting.parameterType == 'CAL TANK') {
+      conditionText = '${setting.threshold1 ?? '0'}, ${setting.threshold2 ?? '0'}';
+    } else if (setting.conditionType != null && setting.threshold1 != null) {
       if (setting.conditionType == 'BETWEEN' && setting.threshold2 != null) {
         conditionText = '${setting.threshold1} - ${setting.threshold2}';
       } else {
@@ -480,7 +484,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const SizedBox(width: 70),
+          const AppTableCell('', width: 60), // Match SI.NO width
           if (isCustomer) ...[
             AppTableCell(setting.tankNumber ?? '—', flex: 2, bold: true),
             AppTableCell(setting.deviceId ?? '—', flex: 2),
@@ -518,9 +522,9 @@ class _SettingWideState extends ConsumerState<SettingWide> {
               ),
             ),
           ] else ...[
-            AppTableCell(setting.name, flex: 2, bold: true),
-            AppTableCell(setting.plantName ?? '—', flex: 2),
-            AppTableCell(setting.tankNumber ?? '—', flex: 2),
+            AppTableCell(setting.name, flex: 3, bold: true),
+            AppTableCell(setting.plantName ?? '—', width: 100),
+            AppTableCell(setting.tankNumber ?? '—', width: 100),
             AppTableCell(setting.parameterType?.toUpperCase() ?? '—', flex: 2),
             AppTableCell(
               null,
@@ -556,20 +560,20 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             ),
             AppTableCell(
               null,
-              flex: 2,
+              width: 130,
               child: AppImportanceBadge(importance: setting.importance),
             ),
-          ],
-          if (!isCustomer)
-            Expanded(
-              flex: 2,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AppStatusBadge(status: setting.isActive),
-              ),
+            const SizedBox(width: 16),
+            AppTableCell(
+              null,
+              width: 110,
+              child: AppStatusBadge(status: setting.isActive),
             ),
-          SizedBox(
-            width: 100,
+          ],
+          const SizedBox(width: 16),
+          AppTableCell(
+            null,
+            width: 80,
             child: Row(
               children: [
                 AppTableActionButton(

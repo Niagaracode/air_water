@@ -46,15 +46,57 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   void initState() {
     super.initState();
     if (widget.initialTank != null) {
-      _tankNumberController.text = widget.initialTank!.tankNumber;
-      _heightController.text = widget.initialTank!.height?.toString() ?? '';
-      _widthController.text = widget.initialTank!.width?.toString() ?? '';
-      _dishHeightController.text =
-          widget.initialTank!.dishHeight?.toString() ?? '';
-      _tonnesController.text = widget.initialTank!.tonnes?.toString() ?? '';
-      _descriptionController.text = widget.initialTank!.description ?? '';
-      _plantAutocompleteController.text = widget.initialTank!.plantName ?? '';
-      _status = widget.initialTank!.status;
+      final tank = widget.initialTank!;
+      _tankNumberController.text = tank.tankNumber;
+      _tonnesController.text = tank.tonnes?.toString() ?? '';
+      _descriptionController.text = tank.description ?? '';
+      _plantAutocompleteController.text = tank.plantName ?? '';
+      _status = tank.status;
+
+      // Dynamic mapping of dimensions based on tank type
+      final typeName = tank.tankTypeName ?? '';
+      switch (typeName) {
+        case 'Cyclinder':
+          _heightController.text = tank.height?.toString() ?? '';
+          _widthController.text = tank.width?.toString() ?? '';
+          _dishHeightController.text = tank.dishHeight?.toString() ?? '';
+          break;
+        case 'Rectangle':
+        case 'Rectangular':
+          _heightController.text = tank.height?.toString() ?? '';
+          _widthController.text = tank.width?.toString() ?? '';
+          _dishHeightController.text = tank.depth?.toString() ?? '';
+          break;
+        case 'Horizontal with 2:1 Ellipsoidal Ends':
+        case 'Horizontal with Hemispherical Ends':
+        case 'None':
+        case 'Spherical':
+        case 'Vertical with 2:1 Ellipsoidal Ends':
+        case 'Vertical with Flat Ends':
+        case 'Vertical with Hemispherical Ends':
+          _heightController.text = tank.canLength?.toString() ?? '';
+          _widthController.text = tank.diameter?.toString() ?? '';
+          break;
+        case 'Horizontal with Flat Ends':
+          _heightController.text = tank.length?.toString() ?? '';
+          _widthController.text = tank.diameter?.toString() ?? '';
+          break;
+        case 'Horizontal with Variable Dished Ends':
+        case 'Vertical with Variable Dished Ends':
+          _heightController.text = tank.canLength?.toString() ?? '';
+          _widthController.text = tank.diameter?.toString() ?? '';
+          _dishHeightController.text = tank.dishDepth?.toString() ?? '';
+          break;
+        case 'Vertical with Conical Bottom End':
+          _heightController.text = tank.canLength?.toString() ?? '';
+          _widthController.text = tank.diameter?.toString() ?? '';
+          _dishHeightController.text = tank.coneLength?.toString() ?? '';
+          break;
+        default:
+          _heightController.text = tank.height?.toString() ?? '';
+          _widthController.text = tank.width?.toString() ?? '';
+          _dishHeightController.text = tank.dishHeight?.toString() ?? '';
+      }
     }
     _loadDropdownData();
   }
@@ -148,9 +190,38 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     double? dh = double.tryParse(_dishHeightController.text);
 
     String typeName = _selectedTankType?['name'] ?? '';
+    final List<String> requiredFields = _getDimensionFields(typeName);
+    
+    // Validation for dynamic dimension fields
+    if (requiredFields.isNotEmpty) {
+      if (_heightController.text.isEmpty) {
+        messenger.showSnackBar(SnackBar(content: Text('Please enter ${requiredFields[0]}')));
+        return;
+      }
+      if (requiredFields.length > 1 && _widthController.text.isEmpty) {
+        messenger.showSnackBar(SnackBar(content: Text('Please enter ${requiredFields[1]}')));
+        return;
+      }
+      if (requiredFields.length > 2 && _dishHeightController.text.isEmpty) {
+        messenger.showSnackBar(SnackBar(content: Text('Please enter ${requiredFields[2]}')));
+        return;
+      }
+    }
+
     double? canLength, diameter, length, dishDepth, dishHeight, height, width, depth, coneLength;
 
     switch (typeName) {
+      case 'Cyclinder':
+        height = h;
+        width = w;
+        dishHeight = dh;
+        break;
+      case 'Rectangle':
+      case 'Rectangular':
+        height = h;
+        width = w;
+        depth = dh;
+        break;
       case 'Horizontal with 2:1 Ellipsoidal Ends':
       case 'Horizontal with Hemispherical Ends':
       case 'None':
@@ -170,11 +241,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
         canLength = h;
         diameter = w;
         dishDepth = dh;
-        break;
-      case 'Rectangular':
-        height = h;
-        width = w;
-        depth = dh;
         break;
       case 'Vertical with Conical Bottom End':
         canLength = h;
@@ -430,39 +496,26 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                         builder: (context) {
                                           final fields = _getDimensionFields(_selectedTankType['name']);
                                           return Row(
-                                            children: [
-                                              Expanded(
-                                                child: _buildLabelField(
-                                                  fields[0],
-                                                  AppTextField(
-                                                    controller: _heightController,
-                                                    hint: '0.00',
+                                            children: List.generate(fields.length, (index) {
+                                              return Expanded(
+                                                child: Padding(
+                                                  padding: EdgeInsets.only(
+                                                    right: index < fields.length - 1 ? 16 : 0,
                                                   ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 16),
-                                              Expanded(
-                                                child: _buildLabelField(
-                                                  fields[1],
-                                                  AppTextField(
-                                                    controller: _widthController,
-                                                    hint: '0.00',
-                                                  ),
-                                                ),
-                                              ),
-                                              if (fields.length > 2) ...[
-                                                const SizedBox(width: 16),
-                                                Expanded(
                                                   child: _buildLabelField(
-                                                    fields[2],
+                                                    fields[index],
                                                     AppTextField(
-                                                      controller: _dishHeightController,
+                                                      controller: index == 0
+                                                          ? _heightController
+                                                          : index == 1
+                                                              ? _widthController
+                                                              : _dishHeightController,
                                                       hint: '0.00',
                                                     ),
                                                   ),
                                                 ),
-                                              ],
-                                            ],
+                                              );
+                                            }),
                                           );
                                         },
                                       ),
@@ -955,9 +1008,14 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   }
 
   List<String> _getDimensionFields(String? typeName) {
-    if (typeName == null) return ['Field 1', 'Field 2'];
+    if (typeName == null) return ['HEIGHT', 'WIDTH'];
 
     switch (typeName) {
+      case 'Cyclinder':
+        return ['HEIGHT', 'WIDTH', 'DISH HEIGHT'];
+      case 'Rectangle':
+      case 'Rectangular':
+        return ['HEIGHT', 'WIDTH'];
       case 'Horizontal with 2:1 Ellipsoidal Ends':
         return ['Can Length (L)', 'Diameter (D)'];
       case 'Horizontal with Flat Ends':
@@ -968,8 +1026,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
         return ['Can Length (L)', 'Diameter (D)', 'Dish Depth (DL)'];
       case 'None':
         return ['Can Length (L)', 'Diameter (D)'];
-      case 'Rectangular':
-        return ['Height (H)', 'Width (W)', 'Depth (D)'];
       case 'Spherical':
         return ['Can Length (L)', 'Diameter (D)'];
       case 'Vertical with 2:1 Ellipsoidal Ends':
