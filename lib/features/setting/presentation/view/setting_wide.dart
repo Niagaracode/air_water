@@ -78,22 +78,30 @@ class _SettingWideState extends ConsumerState<SettingWide> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = constraints.maxWidth > 1200 ? constraints.maxWidth : 1200.0;
+                final tableWidth = constraints.maxWidth > 1200
+                    ? constraints.maxWidth
+                    : 1200.0;
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
                     width: tableWidth,
                     child: Column(
                       children: [
-                        if (state.groupedSettings.isNotEmpty || !state.isLoading)
+                        if (state.groupedSettings.isNotEmpty ||
+                            !state.isLoading)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: _buildFixedTableHeader(isCustomer),
                           ),
                         Expanded(
-                          child: state.isLoading && state.groupedSettings.isEmpty
+                          child:
+                              state.isLoading && state.groupedSettings.isEmpty
                               ? const AppTableInitialLoader()
-                              : _buildVirtualizedTable(state, notifier, isCustomer),
+                              : _buildVirtualizedTable(
+                                  state,
+                                  notifier,
+                                  isCustomer,
+                                ),
                         ),
                         if (state.isLoading && state.groupedSettings.isNotEmpty)
                           const AppTableLoadingMore(),
@@ -110,8 +118,11 @@ class _SettingWideState extends ConsumerState<SettingWide> {
     );
   }
 
-  Widget _buildHeader(SettingState state, SettingNotifier notifier, bool isCustomer) {
-
+  Widget _buildHeader(
+    SettingState state,
+    SettingNotifier notifier,
+    bool isCustomer,
+  ) {
     return Container(
       padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
       decoration: const BoxDecoration(
@@ -131,7 +142,8 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.title ?? (isCustomer ? 'SETTING MANAGEMENT' : 'RULE MANAGEMENT'),
+                    widget.title ??
+                        (isCustomer ? 'SETTING MANAGEMENT' : 'RULE MANAGEMENT'),
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -141,9 +153,10 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    widget.subTitle ?? (isCustomer 
-                        ? 'Centralize device configuration, threshold management, and status monitoring.'
-                        : 'Define and manage alarm conditions and automated notification rules.'),
+                    widget.subTitle ??
+                        (isCustomer
+                            ? 'Centralize device configuration, threshold management, and status monitoring.'
+                            : 'Define and manage alarm conditions and automated notification rules.'),
                     style: GoogleFonts.inter(
                       color: const Color(0xFF6B7280),
                       fontSize: 13,
@@ -157,8 +170,13 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF141E7A),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   icon: const Icon(Icons.add_rounded, size: 20),
                   label: Text(
@@ -200,14 +218,19 @@ class _SettingWideState extends ConsumerState<SettingWide> {
     );
   }
 
-  Widget _buildFilterRow(SettingState state, SettingNotifier notifier, bool isCustomer) {
+  Widget _buildFilterRow(
+    SettingState state,
+    SettingNotifier notifier,
+    bool isCustomer,
+  ) {
     return Row(
       children: [
         Expanded(
           flex: 2,
           child: RawAutocomplete<SettingAutocompleteInfo>(
             optionsBuilder: (TextEditingValue textEditingValue) async {
-              if (textEditingValue.text.isEmpty) return const Iterable<SettingAutocompleteInfo>.empty();
+              if (textEditingValue.text.isEmpty)
+                return const Iterable<SettingAutocompleteInfo>.empty();
               return await notifier.searchSettings(textEditingValue.text);
             },
             displayStringForOption: (option) => option.name,
@@ -216,21 +239,26 @@ class _SettingWideState extends ConsumerState<SettingWide> {
               notifier.setSearchName(selection.name);
               notifier.loadSettings(isReload: true);
             },
-            fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-              if (_settingSearchController.text != controller.text && _settingSearchController.text.isNotEmpty && controller.text.isEmpty) {
-                controller.text = _settingSearchController.text;
-              }
-              return AppTextField(
-                controller: controller,
-                focusNode: focusNode,
-                hint: isCustomer ? 'Search By Setting Name' : 'Search By Rule Name',
-                onSubmitted: (value) {
-                  _settingSearchController.text = value;
-                  notifier.setSearchName(value);
-                  notifier.loadSettings(isReload: true);
+            fieldViewBuilder:
+                (context, controller, focusNode, onFieldSubmitted) {
+                  if (_settingSearchController.text != controller.text &&
+                      _settingSearchController.text.isNotEmpty &&
+                      controller.text.isEmpty) {
+                    controller.text = _settingSearchController.text;
+                  }
+                  return AppTextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    hint: isCustomer
+                        ? 'Search By Setting Name'
+                        : 'Search By Rule Name',
+                    onSubmitted: (value) {
+                      _settingSearchController.text = value;
+                      notifier.setSearchName(value);
+                      notifier.loadSettings(isReload: true);
+                    },
+                  );
                 },
-              );
-            },
             optionsViewBuilder: (context, onSelected, options) {
               return Align(
                 alignment: Alignment.topLeft,
@@ -239,7 +267,11 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
                     width: 400,
-                    constraints: const BoxConstraints(maxHeight: 300),
+                    height: 300,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     child: ListView.builder(
                       padding: EdgeInsets.zero,
                       shrinkWrap: true,
@@ -247,8 +279,17 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                       itemBuilder: (context, index) {
                         final option = options.elementAt(index);
                         return ListTile(
-                          title: Text(option.name, style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13)),
-                          subtitle: Text(option.plantName ?? '—', style: GoogleFonts.inter(fontSize: 12)),
+                          title: Text(
+                            option.name,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                          subtitle: Text(
+                            option.plantName ?? '—',
+                            style: GoogleFonts.inter(fontSize: 12),
+                          ),
                           onTap: () => onSelected(option),
                         );
                       },
@@ -264,15 +305,22 @@ class _SettingWideState extends ConsumerState<SettingWide> {
           flex: 1,
           child: AppDropdown<int>(
             value: state.selectedPlantId,
-            items: ref.watch(plantNotifierProvider.select((s) => s.groupedPlants))
-                .where((e) => e.addresses.isNotEmpty && e.addresses.first.plantId != null)
+            items: ref
+                .watch(plantNotifierProvider.select((s) => s.groupedPlants))
+                .where(
+                  (e) =>
+                      e.addresses.isNotEmpty &&
+                      e.addresses.first.plantId != null,
+                )
                 .map((e) => e.addresses.first.plantId!)
                 .toList(),
             hint: 'Plant',
             itemLabel: (v) {
               final plants = ref.read(plantNotifierProvider).groupedPlants;
               try {
-                final group = plants.firstWhere((p) => p.addresses.any((a) => a.plantId == v));
+                final group = plants.firstWhere(
+                  (p) => p.addresses.any((a) => a.plantId == v),
+                );
                 return group.name;
               } catch (_) {
                 return 'Unassigned';
@@ -313,7 +361,10 @@ class _SettingWideState extends ConsumerState<SettingWide> {
       pageBuilder: (context, anim1, anim2) => const AddSettingModal(),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
-          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
           child: child,
         );
       },
@@ -356,7 +407,11 @@ class _SettingWideState extends ConsumerState<SettingWide> {
     );
   }
 
-  Widget _buildVirtualizedTable(SettingState state, SettingNotifier notifier, bool isCustomer) {
+  Widget _buildVirtualizedTable(
+    SettingState state,
+    SettingNotifier notifier,
+    bool isCustomer,
+  ) {
     if (state.groupedSettings.isEmpty && !state.isLoading) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 24),
@@ -378,8 +433,15 @@ class _SettingWideState extends ConsumerState<SettingWide> {
     );
   }
 
-  Widget _buildGroupSection(int groupIndex, SettingGroup group, SettingNotifier notifier, bool isCustomer) {
-    final companyName = group.settings.isNotEmpty ? group.settings.first.companyName : null;
+  Widget _buildGroupSection(
+    int groupIndex,
+    SettingGroup group,
+    SettingNotifier notifier,
+    bool isCustomer,
+  ) {
+    final companyName = group.settings.isNotEmpty
+        ? group.settings.first.companyName
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -430,15 +492,22 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                     group.plantName.toUpperCase(),
                     style: GoogleFonts.inter(
                       fontSize: isCustomer ? 13 : 11,
-                      fontWeight: isCustomer ? FontWeight.w700 : FontWeight.w500,
-                      color: isCustomer ? const Color(0xFF111827) : const Color(0xFF6B7280),
+                      fontWeight: isCustomer
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: isCustomer
+                          ? const Color(0xFF111827)
+                          : const Color(0xFF6B7280),
                     ),
                   ),
                 ],
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0E7FF),
                   borderRadius: BorderRadius.circular(20),
@@ -454,21 +523,41 @@ class _SettingWideState extends ConsumerState<SettingWide> {
               ),
             ],
           ),
-        ),
-        for (final s in group.settings) _buildSettingRow(s, notifier, isCustomer),
+),
+        for (final s in group.settings)
+          _buildSettingRow(s, notifier, isCustomer),
       ],
     );
   }
 
-  Widget _buildSettingRow(Setting setting, SettingNotifier notifier, bool isCustomer) {
+  Widget _buildSettingRow(
+    Setting setting,
+    SettingNotifier notifier,
+    bool isCustomer,
+  ) {
     String conditionText = '—';
-    if (setting.parameterType == 'CAL TANK') {
-      conditionText = '${setting.threshold1 ?? '0'}, ${setting.threshold2 ?? '0'}';
-    } else if (setting.conditionType != null && setting.threshold1 != null) {
-      if (setting.conditionType == 'BETWEEN' && setting.threshold2 != null) {
-        conditionText = '${setting.threshold1} - ${setting.threshold2}';
+    final paramType = setting.parameterType?.toUpperCase().trim() ?? '';
+
+    // Join all non-null thresholds with commas as the default display
+    final activeThresholds = setting.thresholds
+        .where((t) => t != null && t != 0)
+        .map((t) => t!.toString().replaceAll(RegExp(r'\.0$'), '')) // Remove trailing .0
+        .toList();
+
+    if (activeThresholds.isNotEmpty) {
+      if (setting.conditionType == 'BETWEEN' && activeThresholds.length >= 2) {
+        conditionText = '${activeThresholds[0]} - ${activeThresholds[1]}';
+      } else if (paramType == 'CAL TANK' ||
+          paramType == 'CAL KILO LITER' ||
+          paramType == 'MFACTOR' ||
+          paramType == 'M FACTOR' ||
+          paramType == 'SENSOR' ||
+          paramType == 'SENSOR RATING') {
+        conditionText = activeThresholds.join(', ');
       } else {
-        conditionText = '${setting.conditionType} ${setting.threshold1}';
+        conditionText = (setting.conditionType != null)
+            ? '${setting.conditionType} ${activeThresholds.join(", ")}'
+            : activeThresholds.join(', ');
       }
     }
 
@@ -505,7 +594,8 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                       color: const Color(0xFF111827),
                     ),
                   ),
-                  if (setting.statusLabel != null && setting.statusLabel!.isNotEmpty)
+                  if (setting.statusLabel != null &&
+                      setting.statusLabel!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
@@ -542,7 +632,8 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                       color: const Color(0xFF111827),
                     ),
                   ),
-                  if (setting.statusLabel != null && setting.statusLabel!.isNotEmpty)
+                  if (setting.statusLabel != null &&
+                      setting.statusLabel!.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
@@ -597,7 +688,8 @@ class _SettingWideState extends ConsumerState<SettingWide> {
       barrierLabel: 'EditSetting',
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) => AddSettingModal(initialSetting: setting),
+      pageBuilder: (context, anim1, anim2) =>
+          AddSettingModal(initialSetting: setting),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
           position: Tween<Offset>(
