@@ -7,6 +7,7 @@ import '../../../../core/user_config/user_role.dart';
 import '../model/setting_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
+import '../../../../shared/widgets/app_multi_select_dropdown.dart';
 import '../controller/setting_provider.dart';
 import '../../../company/presentation/model/company_model.dart';
 import '../../../company/presentation/controller/company_provider.dart';
@@ -38,6 +39,7 @@ class SettingRowData {
   final TextEditingController statusLabelController;
   String importance;
   MessageTemplate? selectedTemplate;
+  List<StrappingPoint> selectedPoints;
 
   SettingRowData({
     this.parameterType = 'LEVEL',
@@ -48,10 +50,12 @@ class SettingRowData {
     String statusLabel = '',
     this.importance = 'Critical',
     this.selectedTemplate,
+    List<StrappingPoint>? selectedPoints,
   }) : threshold1Controller = TextEditingController(text: threshold1),
        threshold2Controller = TextEditingController(text: threshold2),
        threshold3Controller = TextEditingController(text: threshold3),
-       statusLabelController = TextEditingController(text: statusLabel);
+       statusLabelController = TextEditingController(text: statusLabel),
+       selectedPoints = selectedPoints ?? [];
 
   void dispose() {
     threshold1Controller.dispose();
@@ -112,6 +116,28 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     }
 
     Future.microtask(() => _loadData());
+  }
+
+  Future<void> _fetchFullTankDetails(Tank t) async {
+    if (t.strappingPoints != null && t.strappingPoints!.isNotEmpty) return;
+    
+    setState(() => _isLoadingData = true);
+    try {
+      final tankRepo = ref.read(tankRepositoryProvider);
+      final fullTank = await tankRepo.getTankById(t.tankId);
+      setState(() {
+        _selectedTank = fullTank;
+        // Also update the tank in the local list so we don't fetch it again
+        final index = _tanks.indexWhere((tank) => tank.tankId == t.tankId);
+        if (index != -1) {
+          _tanks[index] = fullTank;
+        }
+      });
+    } catch (e) {
+      debugPrint('Error fetching full tank details: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingData = false);
+    }
   }
 
   Future<void> _loadData() async {
@@ -178,6 +204,17 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
               s.simNumber ?? _selectedTank?.simNumber ?? '';
           _timeZoneController.text =
               s.timeZone ?? _selectedTank?.timeZone ?? '';
+        } else {
+          // New Setting Mode: Auto-select if only one tank is available
+          if (_tanks.length == 1) {
+            _selectedTank = _tanks[0];
+            _selectedPlant = _plants.where((p) => p.id == _selectedTank!.plantId).firstOrNull;
+            _selectedCompanyGroup = _companyGroups.where((g) => g.addresses.any((a) => a.companyId == _selectedTank!.companyId)).firstOrNull;
+            _deviceIdController.text = _selectedTank?.deviceId ?? '';
+            _simNumberController.text = _selectedTank?.simNumber ?? '';
+            _timeZoneController.text = _selectedTank?.timeZone ?? '';
+            _fetchFullTankDetails(_selectedTank!);
+          }
         }
       });
     } catch (e) {
@@ -290,7 +327,11 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                 paramType == 'SETBAR' ||
                 paramType == 'SENSOR' ||
                 paramType == 'SENSOR RATING' ||
-                paramType == 'MFACTOR') &&
+                paramType == 'DATA INTERVAL' ||
+                paramType == 'BATTERY' ||
+                paramType == 'SOLAR' ||
+                paramType == 'MFACTOR' ||
+                paramType == 'CHART DATA') &&
             _deviceIdController.text.isNotEmpty) {
           await _sendToDevice(skipSave: true);
           return true;
@@ -381,6 +422,18 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         final productCode = _selectedProduct?.productCode ?? 'N/A';
         final tonnes = (_selectedTank?.tonnes ?? 0.0).toStringAsFixed(2);
         payload = 'SENSORRATING,1,$thresh1,$productCode,$thresh2,$tonnes,0';
+      } else if (param1.toUpperCase().trim() == 'DATA INTERVAL') {
+        payload = 'DATAINTERVAL,$thresh1$thresh2';
+      } else if (param1.toUpperCase().trim() == 'BATTERY') {
+        payload = 'BATVOLTCAL,1,$thresh1';
+      } else if (param1.toUpperCase().trim() == 'SOLAR') {
+        payload = 'SOLARVOLTCAL,1,$thresh1';
+      } else if (param1.toUpperCase().trim() == 'CHART DATA') {
+        final pointsData = row1?.selectedPoints
+                .map((p) => '${p.levelMm.toInt()},${p.volumeM3.toInt()}')
+                .join(',') ??
+            '';
+        payload = '{"\"chartdata\"",$pointsData,9999,9999}';
       } else {
         payload =
             '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$thresh3,$importance1,$deviceId,$simNumber,$allParams';
@@ -604,7 +657,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         isSuperOrCompanyAdmin
                                             ? 'TANK'
                                             : 'TANK (OPTIONAL)',
-                                        isCustomer
+                                        (isCustomer && isEditMode)
                                             ? AppTextField(
                                                 readOnly: true,
                                                 controller:
@@ -618,50 +671,56 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               )
                                             : AppDropdown<Tank>(
                                                 value: _selectedTank,
-                                                items: _selectedPlant == null
+                                                items: (_selectedPlant == null && !isCustomer)
                                                     ? []
                                                     : _tanks
                                                           .where(
                                                             (t) =>
+                                                                isCustomer ||
+                                                                _selectedPlant == null ||
                                                                 t.plantId ==
                                                                 _selectedPlant!
                                                                     .id,
                                                           )
                                                           .toList(),
-                                                hint: _selectedPlant == null
+                                                hint: (_selectedPlant == null && !isCustomer)
                                                     ? 'Select Plant First'
                                                     : 'Select Tank',
                                                 itemLabel: (t) => t.tankNumber,
-                                                onChanged:
-                                                    _selectedPlant == null
+                                                onChanged: (_selectedPlant == null && !isCustomer)
                                                     ? null
-                                                    : (t) => setState(() {
-                                                        _selectedTank = t;
-                                                        if (t != null) {
-                                                          _deviceIdController
-                                                                  .text =
-                                                              t.deviceId ?? '';
-                                                          _simNumberController
-                                                                  .text =
-                                                              t.simNumber ?? '';
-                                                          _timeZoneController
-                                                                  .text =
-                                                              t.timeZone ?? '';
-                                                          if (t.productId !=
-                                                                  null &&
-                                                              t.productId !=
-                                                                  0) {
-                                                            _selectedProduct =
-                                                                _products
-                                                                    .where(
-                                                                      (p) =>
-                                                                          p.id ==
-                                                                          t.productId,
-                                                                    )
-                                                                    .firstOrNull;
-                                                          }
-                                                        }
-                                                      }),
+                                                     : (t) {
+                                                         setState(() {
+                                                           _selectedTank = t;
+                                                           if (t != null) {
+                                                             _deviceIdController
+                                                                     .text =
+                                                                 t.deviceId ?? '';
+                                                             _simNumberController
+                                                                     .text =
+                                                                 t.simNumber ?? '';
+                                                             _timeZoneController
+                                                                     .text =
+                                                                 t.timeZone ?? '';
+                                                             if (t.productId !=
+                                                                     null &&
+                                                                 t.productId !=
+                                                                     0) {
+                                                               _selectedProduct =
+                                                                   _products
+                                                                       .where(
+                                                                         (p) =>
+                                                                             p.id ==
+                                                                             t.productId,
+                                                                       )
+                                                                       .firstOrNull;
+                                                             }
+                                                           }
+                                                         });
+                                                         if (t != null) {
+                                                           _fetchFullTankDetails(t);
+                                                         }
+                                                       },
                                               ),
                                       ),
                                     ),
@@ -737,29 +796,34 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                           itemLabel: (t) => t.tankNumber,
                                           onChanged: _selectedPlant == null
                                               ? null
-                                              : (t) => setState(() {
-                                                  _selectedTank = t;
-                                                  if (t != null) {
-                                                    _deviceIdController.text =
-                                                        t.deviceId ?? '';
-                                                    _simNumberController.text =
-                                                        t.simNumber ?? '';
-                                                    _timeZoneController.text =
-                                                        t.timeZone ?? '';
+                                              : (t) {
+                                                  setState(() {
+                                                    _selectedTank = t;
+                                                    if (t != null) {
+                                                      _deviceIdController.text =
+                                                          t.deviceId ?? '';
+                                                      _simNumberController.text =
+                                                          t.simNumber ?? '';
+                                                      _timeZoneController.text =
+                                                          t.timeZone ?? '';
 
-                                                    if (t.productId != null &&
-                                                        t.productId != 0) {
-                                                      _selectedProduct =
-                                                          _products
-                                                              .where(
-                                                                (p) =>
-                                                                    p.id ==
-                                                                    t.productId,
-                                                              )
-                                                              .firstOrNull;
+                                                      if (t.productId != null &&
+                                                          t.productId != 0) {
+                                                        _selectedProduct =
+                                                            _products
+                                                                .where(
+                                                                  (p) =>
+                                                                      p.id ==
+                                                                      t.productId,
+                                                                )
+                                                                .firstOrNull;
+                                                      }
                                                     }
+                                                  });
+                                                  if (t != null) {
+                                                    _fetchFullTankDetails(t);
                                                   }
-                                                }),
+                                                },
                                         ),
                                       ),
                                     ),
@@ -918,13 +982,17 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                 'MFACTOR',
                                                 'DATA INTERVAL',
                                                 'CHART DATA',
+                                                'SOLAR',
                                                 'OTHER',
                                               ],
                                               hint: 'Select Param',
                                               itemLabel: (v) => v,
-                                              onChanged: (v) => setState(
-                                                () => row.parameterType = v!,
-                                              ),
+                                               onChanged: (v) {
+                                                 setState(() => row.parameterType = v!);
+                                                 if (v == 'CHART DATA' && _selectedTank != null) {
+                                                   _fetchFullTankDetails(_selectedTank!);
+                                                 }
+                                               },
                                             ),
                                           ),
                                         ),
@@ -953,18 +1021,20 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            flex: 4,
-                                            child: _buildLabelField(
-                                              'STATUS LABEL (UI DISPLAY)',
-                                              AppTextField(
-                                                controller:
-                                                    row.statusLabelController,
-                                                hint: 'e.g. LOW LEVEL',
+                                          if (row.parameterType.toUpperCase().trim() != 'BATTERY' && row.parameterType.toUpperCase().trim() != 'SOLAR') ...[
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              flex: 4,
+                                              child: _buildLabelField(
+                                                'STATUS LABEL (UI DISPLAY)',
+                                                AppTextField(
+                                                  controller:
+                                                      row.statusLabelController,
+                                                  hint: 'e.g. LOW LEVEL',
+                                                ),
                                               ),
                                             ),
-                                          ),
+                                          ],
                                         ],
                                       ],
                                     ),
@@ -976,14 +1046,34 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                           child: _buildLabelField(
                                             (row.parameterType.toUpperCase().trim() == 'SENSOR' || row.parameterType.toUpperCase().trim() == 'SENSOR RATING')
                                                 ? 'SENSOR RATING'
-                                                : (['CAL TANK', 'CAL KILO LITER', 'MFACTOR', 'DATA INTERVAL', 'SETBAR', 'SETCALBAR', 'CHART DATA'].contains(row.parameterType.toUpperCase().trim()))
-                                                    ? 'FIELD 1'
-                                                    : (row.conditionType == 'BETWEEN' ? 'MIN THRESHOLD' : 'THRESHOLD VALUE'),
-                                            AppTextField(
-                                              controller: row.threshold1Controller,
-                                              hint: 'Value',
-                                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                            ),
+                                                : (row.parameterType.toUpperCase().trim() == 'BATTERY' || row.parameterType.toUpperCase().trim() == 'SOLAR')
+                                                    ? 'VOLTAGE'
+                                                    : (['CAL TANK', 'CAL KILO LITER', 'MFACTOR', 'DATA INTERVAL', 'SETBAR', 'SETCALBAR', 'CHART DATA'].contains(row.parameterType.toUpperCase().trim()))
+                                                        ? 'FIELD 1'
+                                                        : (row.conditionType == 'BETWEEN' ? 'MIN THRESHOLD' : 'THRESHOLD VALUE'),
+                                            row.parameterType.toUpperCase().trim() == 'CHART DATA'
+                                                ? AppMultiSelectDropdown<StrappingPoint>(
+                                                    selectedItems: row.selectedPoints,
+                                                    items: _selectedTank?.strappingPoints ?? [],
+                                                    hint: _selectedTank == null 
+                                                         ? 'Select Tank First' 
+                                                         : (_selectedTank!.strappingPoints == null || _selectedTank!.strappingPoints!.isEmpty)
+                                                             ? 'No Points Available'
+                                                             : 'Select Point(s)',
+                                                    itemLabel: (p) => 'L: ${p.levelMm} | V: ${p.volumeM3}',
+                                                    onChanged: (list) {
+                                                      setState(() {
+                                                        row.selectedPoints = list;
+                                                        row.threshold1Controller.text = list.map((p) => p.levelMm).join(',');
+                                                        row.threshold2Controller.text = list.map((p) => p.volumeM3).join(',');
+                                                      });
+                                                    },
+                                                  )
+                                                : AppTextField(
+                                                    controller: row.threshold1Controller,
+                                                    hint: 'Value',
+                                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                  ),
                                           ),
                                         ),
                                         if (row.conditionType == 'BETWEEN' || 
@@ -1000,6 +1090,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               AppTextField(
                                                 controller: row.threshold2Controller,
                                                 hint: 'Value',
+                                                readOnly: row.parameterType.toUpperCase().trim() == 'CHART DATA',
                                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                                               ),
                                             ),

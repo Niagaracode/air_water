@@ -552,7 +552,10 @@ class _SettingWideState extends ConsumerState<SettingWide> {
           paramType == 'MFACTOR' ||
           paramType == 'M FACTOR' ||
           paramType == 'SENSOR' ||
-          paramType == 'SENSOR RATING') {
+          paramType == 'SENSOR RATING' ||
+          paramType == 'DATA INTERVAL' ||
+          paramType == 'SOLAR' ||
+          paramType == 'CHART DATA') {
         conditionText = activeThresholds.join(', ');
       } else {
         conditionText = (setting.conditionType != null)

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../../../plant/presentation/model/plant_model.dart';
 import '../../../../core/config/app_config.dart';
@@ -116,11 +117,30 @@ class Tank {
       timeZone: json['time_zone'] as String?,
       status: json['status'] ?? 1,
       useStrappingChart: json['use_strapping_chart'] == 1 || json['use_strapping_chart'] == true,
-      strappingPoints: json['strapping_points'] != null
-          ? (json['strapping_points'] as List)
+      strappingPoints: (() {
+        if (json['strapping_points'] != null && 
+            (json['strapping_points'] as List).isNotEmpty) {
+          return (json['strapping_points'] as List)
               .map((i) => StrappingPoint.fromJson(i as Map<String, dynamic>))
-              .toList()
-          : null,
+              .toList();
+        }
+        if (json['strapping_points_json'] != null && 
+            json['strapping_points_json'] is String && 
+            json['strapping_points_json'].toString().trim().isNotEmpty &&
+            json['strapping_points_json'].toString().trim() != '[]') {
+          try {
+            final decoded = jsonDecode(json['strapping_points_json'].toString().trim());
+            if (decoded is List) {
+              return decoded
+                  .map((i) => StrappingPoint.fromJson(i as Map<String, dynamic>))
+                  .toList();
+            }
+          } catch (e) {
+            return null;
+          }
+        }
+        return null;
+      })(),
       levelUnit: json['level_unit'] as String?,
       volumeUnit: json['volume_unit'] as String?,
       tankName: json['tank_name'] as String?,
@@ -358,11 +378,18 @@ class StrappingPoint {
 
   factory StrappingPoint.fromJson(Map<String, dynamic> json) {
     return StrappingPoint(
-      levelMm: (json['level_mm'] as num).toDouble(),
-      volumeM3: (json['volume_m3'] as num).toDouble(),
-      levelUnit: json['levelunit'] as String?,
-      volumeUnit: json['volumeunit'] as String?,
+      levelMm: _toDouble(json['level_mm'] ?? json['levelmm'] ?? json['level'] ?? 0.0),
+      volumeM3: _toDouble(json['volume_m3'] ?? json['volumem3'] ?? json['volume'] ?? 0.0),
+      levelUnit: (json['levelunit'] ?? json['level_unit'] ?? json['levelUnit']) as String?,
+      volumeUnit: (json['volumeunit'] ?? json['volume_m3_unit'] ?? json['volumeUnit']) as String?,
     );
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
   }
 
   Map<String, dynamic> toJson() {
