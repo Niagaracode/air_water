@@ -23,9 +23,7 @@ class Setting {
 
   final String? parameterType;
   final String? conditionType;
-  final double? threshold1;
-  final double? threshold2;
-  final double? threshold3;
+  final List<double?> thresholds;
   final String? importance;
   final String? statusLabel;
   final int? messageTemplateId;
@@ -43,6 +41,11 @@ class Setting {
   final String? rosterName;
   final double? currentValue;
   final String? currentValueUnit;
+
+  // Compatibility getters
+  double? get threshold1 => thresholds.isNotEmpty ? thresholds[0] : null;
+  double? get threshold2 => thresholds.length > 1 ? thresholds[1] : null;
+  double? get threshold_3 => thresholds.length > 2 ? thresholds[2] : null;
 
   Setting({
     required this.id,
@@ -67,9 +70,7 @@ class Setting {
     this.plantPincode,
     this.parameterType,
     this.conditionType,
-    this.threshold1,
-    this.threshold2,
-    this.threshold3,
+    required this.thresholds,
     this.importance,
     this.statusLabel,
     this.messageTemplateId,
@@ -101,9 +102,29 @@ class Setting {
     double? toDouble(dynamic v) {
       if (v == null) return null;
       if (v is num) return v.toDouble();
-      if (v is String) return double.tryParse(v);
-      return null;
+      try {
+        // Handle cases where it might be a weird object or string
+        final str = v.toString().trim();
+        if (str.isEmpty || str.toLowerCase() == 'null') return null;
+        // Clean up any potential non-numeric characters except '-' and '.'
+        final cleanStr = str.replaceAll(RegExp(r'[^0-9.-]'), '');
+        return double.tryParse(cleanStr);
+      } catch (_) {
+        return null;
+      }
     }
+
+    final rawParam = ((json['parameter_type'] as String?) ??
+        (json['parameter_name'] as String?) ??
+        (json['type'] as String?) ??
+        'LEVEL');
+    final normalizedParamType = rawParam.toUpperCase().trim().replaceAll(' ', '');
+    final resolvedParamType = normalizedParamType == 'MFACTOR' ? 'MFACTOR' : rawParam;
+
+    // Definite and robust mapping for thresholds from backend JSON
+    final t1 = toDouble(json['threshold1'] ?? json['threshold_1'] ?? json['rule_threshold_1'] ?? json['rule_threshold1']);
+    final t2 = toDouble(json['threshold2'] ?? json['threshold_2'] ?? json['rule_threshold_2'] ?? json['rule_threshold2']);
+    final t3 = toDouble(json['threshold3'] ?? json['threshold_3'] ?? json['rule_threshold_3'] ?? json['rule_threshold3']);
 
     return Setting(
       id: toInt(json['id']),
@@ -126,11 +147,9 @@ class Setting {
       plantCity: json['plant_city'] as String?,
       plantState: json['plant_state'] as String?,
       plantPincode: json['plant_pincode'] as String?,
-      parameterType: json['parameter_type'] as String?,
+      parameterType: resolvedParamType,
       conditionType: json['condition_type'] as String?,
-      threshold1: toDouble(json['threshold_1']),
-      threshold2: toDouble(json['threshold_2']),
-      threshold3: toDouble(json['threshold_3']),
+      thresholds: [t1, t2, t3],
       importance: json['importance'] as String?,
       statusLabel: json['status_label'] as String?,
       messageTemplateId: json['message_template_id'] != null
@@ -139,13 +158,11 @@ class Setting {
       templateName: json['template_name'] as String?,
       productId: json['product_id'] != null ? toInt(json['product_id']) : null,
       productName: json['product_name'] as String?,
-      isActive:
-          (json['is_active'] as num?)?.toInt() ??
+      isActive: (json['is_active'] as num?)?.toInt() ??
           (json['is_active'] is String
               ? (int.tryParse(json['is_active'] as String) ?? 1)
               : 1),
-      status:
-          (json['status'] as num?)?.toInt() ??
+      status: (json['status'] as num?)?.toInt() ??
           (json['status'] is String
               ? (int.tryParse(json['status'] as String) ?? 1)
               : 1),
@@ -156,6 +173,8 @@ class Setting {
       createdByUsername: json['created_by_username'] as String?,
       updatedByUsername: json['updated_by_username'] as String?,
       rosterName: json['roster_name'] as String?,
+      currentValue: toDouble(json['current_value']),
+      currentValueUnit: json['current_value_unit'] as String?,
     );
   }
 
@@ -171,9 +190,11 @@ class Setting {
       'time_zone': timeZone,
       'parameter_type': parameterType,
       'condition_type': conditionType,
+      'thresholds': thresholds,
+      // For backward compatibility with some backends
       'threshold_1': threshold1,
       'threshold_2': threshold2,
-      'threshold_3': threshold3,
+      'threshold_3': threshold_3,
       'importance': importance,
       'status_label': statusLabel,
       'message_template_id': messageTemplateId,
@@ -274,7 +295,14 @@ class SettingAutocompleteInfo {
           : (int.tryParse(json['id']?.toString() ?? '') ?? 0),
       name: json['name'] as String? ?? 'Unnamed',
       plantName: json['plant_name'] as String?,
-      parameterType: json['parameter_type'] as String?,
+      parameterType:
+          (json['parameter_type'] as String?)?.toUpperCase().trim().replaceAll(
+                ' ',
+                '',
+              ) ==
+              'MFACTOR'
+          ? 'MFACTOR'
+          : (json['parameter_type'] as String?),
     );
   }
 }

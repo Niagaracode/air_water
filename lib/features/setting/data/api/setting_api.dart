@@ -23,7 +23,11 @@ class SettingApi {
       if (isActive != null) 'is_active': isActive,
     };
 
-    final response = await _client.get('/rules/grouped', query: queryParameters);
+    final response = await _client.get(
+      '/rules/grouped',
+      query: queryParameters,
+    );
+
     return SettingGroupResponse.fromJson(response.data);
   }
 
@@ -61,14 +65,22 @@ class SettingApi {
   }
 
   Future<List<SettingAutocompleteInfo>> searchSettings({String? q}) async {
-    final response = await _client.get('/rules/search', query: {if (q != null) 'q': q});
+    final response = await _client.get(
+      '/rules/search',
+      query: {if (q != null) 'q': q},
+    );
     return (response.data['data'] as List)
         .map((e) => SettingAutocompleteInfo.fromJson(e))
         .toList();
   }
 
-  Future<List<Map<String, dynamic>>> getTemplatesByParameter(String parameterType) async {
-    final response = await _client.get('/rules-templates/by-parameter', query: {'parameterType': parameterType});
+  Future<List<Map<String, dynamic>>> getTemplatesByParameter(
+    String parameterType,
+  ) async {
+    final response = await _client.get(
+      '/rules-templates/by-parameter',
+      query: {'parameterType': parameterType},
+    );
     return List<Map<String, dynamic>>.from(response.data['data'] as List);
   }
 }

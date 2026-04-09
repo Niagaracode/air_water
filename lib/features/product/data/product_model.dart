@@ -1,6 +1,7 @@
 class Product {
   final int id;
   final String name;
+  final String productCode;
   final String description;
   final double scmM3;
   final double specificGravity;
@@ -8,6 +9,7 @@ class Product {
   Product({
     required this.id,
     required this.name,
+    required this.productCode,
     required this.description,
     required this.scmM3,
     required this.specificGravity,
@@ -21,6 +23,8 @@ class Product {
 
       // ✅ SAFE string parsing
       name: json['product_name']?.toString() ?? '',
+
+      productCode: json['product_code']?.toString() ?? '',
 
       description: json['description']?.toString() ?? '',
 
