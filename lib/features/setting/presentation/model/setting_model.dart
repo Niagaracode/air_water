@@ -128,7 +128,6 @@ class Setting {
         : rawParam;
 
     // Definite and robust mapping for thresholds from backend JSON
-<<<<<<< HEAD
     final t1 = toDouble(
       json['threshold1'] ??
           json['threshold_1'] ??
@@ -147,11 +146,6 @@ class Setting {
           json['rule_threshold_3'] ??
           json['rule_threshold3'],
     );
-=======
-    final t1 = toDouble(json['threshold1'] ?? json['threshold_1'] ?? json['rule_threshold_1'] ?? json['rule_threshold1']);
-    final t2 = toDouble(json['threshold2'] ?? json['threshold_2'] ?? json['rule_threshold_2'] ?? json['rule_threshold2']);
-    final t3 = toDouble(json['threshold3'] ?? json['threshold__3'] ?? json['rule_threshold_3'] ?? json['rule_threshold3']);
->>>>>>> karthik_dev
 
     return Setting(
       id: toInt(json['id']),
