@@ -1,12 +1,12 @@
-import '../../presentation/model/plant_model.dart';
+import '../../presentation/model/site_model.dart';
 import '../../../../core/network/api_client.dart';
 
-class PlantApi {
+class SiteApi {
   final ApiClient _client;
 
-  PlantApi(this._client);
+  SiteApi(this._client);
 
-  Future<PlantResponse> getPlants({
+  Future<SiteResponse> getSites({
     int page = 1,
     int limit = 10,
     String? name,
@@ -25,10 +25,10 @@ class PlantApi {
     }
 
     final response = await _client.get('/plants', query: query);
-    return PlantResponse.fromJson(Map<String, dynamic>.from(response.data));
+    return SiteResponse.fromJson(Map<String, dynamic>.from(response.data));
   }
 
-  Future<PlantGroupedResponse> getPlantsGrouped({
+  Future<SiteGroupedResponse> getSitesGrouped({
     int page = 1,
     int limit = 50,
     String? name,
@@ -51,35 +51,35 @@ class PlantApi {
     }
 
     final response = await _client.get('/plants/grouped', query: query);
-    return PlantGroupedResponse.fromJson(
+    return SiteGroupedResponse.fromJson(
       Map<String, dynamic>.from(response.data),
     );
   }
 
-  Future<void> createPlant(PlantCreateRequest request) async {
+  Future<void> createSite(SiteCreateRequest request) async {
     await _client.post('/plants', data: request.toJson());
   }
 
-  Future<void> updatePlant(int id, PlantCreateRequest request) async {
+  Future<void> updateSite(int id, SiteCreateRequest request) async {
     await _client.put('/plants/$id', data: request.toJson());
   }
 
-  Future<void> deletePlant(int id) async {
+  Future<void> deleteSite(int id) async {
     await _client.delete('/plants/$id');
   }
 
-  Future<List<PlantAutocompleteInfo>> getPlantAutocomplete({String? q}) async {
+  Future<List<SiteAutocompleteInfo>> getSiteAutocomplete({String? q}) async {
     final query = q != null ? {'q': q} : <String, dynamic>{};
     final response = await _client.get('/plants/autocomplete', query: query);
     final List data = response.data['data'] ?? [];
     return data
         .map(
-          (e) => PlantAutocompleteInfo.fromJson(Map<String, dynamic>.from(e)),
+          (e) => SiteAutocompleteInfo.fromJson(Map<String, dynamic>.from(e)),
         )
         .toList();
   }
 
-  Future<Map<String, dynamic>> getPlantWithAddresses(int id) async {
+  Future<Map<String, dynamic>> getSiteWithAddresses(int id) async {
     final response = await _client.get('/plants/$id/addresses');
     return Map<String, dynamic>.from(response.data['data']);
   }

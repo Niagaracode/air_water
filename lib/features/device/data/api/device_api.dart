@@ -1,6 +1,6 @@
 import '../../../../core/network/api_client.dart';
 import '../../presentation/model/device_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 
 class DeviceApi {
   final ApiClient _client;
@@ -51,7 +51,7 @@ class DeviceApi {
     await _client.delete('/devices/$id');
   }
 
-  Future<List<PlantAutocompleteInfo>> getPlantsForDeviceAutocomplete({
+  Future<List<SiteAutocompleteInfo>> getPlantsForDeviceAutocomplete({
     String? q,
   }) async {
     final Map<String, dynamic> query = {};
@@ -63,7 +63,7 @@ class DeviceApi {
       query: query,
     );
     return (response.data['data'] as List)
-        .map((i) => PlantAutocompleteInfo.fromJson(i as Map<String, dynamic>))
+        .map((i) => SiteAutocompleteInfo.fromJson(i as Map<String, dynamic>))
         .toList();
   }
 
@@ -83,11 +83,11 @@ class DeviceApi {
 
   Future<List<Map<String, dynamic>>> searchTanks(
     String q, {
-    int? plantId,
+    int? siteId,
   }) async {
     final Map<String, dynamic> query = {'q': q};
-    if (plantId != null) {
-      query['plant_id'] = plantId.toString();
+    if (siteId != null) {
+      query['plant_id'] = siteId.toString();
     }
     final response = await _client.get('/tanks/autocomplete', query: query);
     return List<Map<String, dynamic>>.from(response.data['data']);

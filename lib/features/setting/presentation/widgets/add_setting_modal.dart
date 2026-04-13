@@ -11,8 +11,8 @@ import '../../../../shared/widgets/app_multi_select_dropdown.dart';
 import '../controller/setting_provider.dart';
 import '../../../company/presentation/model/company_model.dart';
 import '../../../company/presentation/controller/company_provider.dart';
-import '../../../plant/presentation/model/plant_model.dart';
-import '../../../plant/presentation/controller/plant_provider.dart';
+import '../../../site/presentation/model/site_model.dart';
+import '../../../site/presentation/controller/site_provider.dart';
 import '../../../message_template/presentation/model/message_template_model.dart';
 import '../../../message_template/presentation/controller/message_template_provider.dart';
 import '../../../tank/presentation/model/tank_model.dart';
@@ -74,7 +74,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   final _timeZoneController = TextEditingController();
 
   CompanyGroup? _selectedCompanyGroup;
-  Plant? _selectedPlant;
+  Site? _selectedSite;
   Tank? _selectedTank;
   Product? _selectedProduct;
   int _isActive = 1;
@@ -82,7 +82,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   final List<SettingRowData> _rows = [];
 
   List<CompanyGroup> _companyGroups = [];
-  List<Plant> _plants = [];
+  List<Site> _sites = [];
   List<Tank> _tanks = [];
   List<Product> _products = [];
   List<MessageTemplate> _templates = [];
@@ -144,21 +144,21 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     setState(() => _isLoadingData = true);
     try {
       final companyRepo = ref.read(companyRepositoryProvider);
-      final plantRepo = ref.read(plantRepositoryProvider);
+      final siteRepo = ref.read(siteRepositoryProvider);
       final templateRepo = ref.read(messageTemplateRepositoryProvider);
       final tankRepo = ref.read(tankRepositoryProvider);
 
       final companiesResponse = await companyRepo.getGroupedCompanies(
         limit: 1000,
       );
-      final plantsResponse = await plantRepo.getPlants(limit: 1000);
+      final sitesResponse = await siteRepo.getSites(limit: 1000);
       final tanksResponse = await tankRepo.getTanks();
       final activeTemplates = await templateRepo.getActiveTemplates();
       final products = await ref.read(productListProvider.future);
 
       setState(() {
         _companyGroups = companiesResponse.data;
-        _plants = plantsResponse.data;
+        _sites = sitesResponse.data;
         _tanks = tanksResponse;
         _templates = activeTemplates;
         _products = products;
@@ -169,9 +169,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
               .where((g) => g.addresses.any((a) => a.companyId == s.companyId))
               .firstOrNull;
 
-          if (s.plantId != null) {
-            _selectedPlant = _plants
-                .where((p) => p.id == s.plantId)
+          if (s.siteId != null) {
+            _selectedSite = _sites
+                .where((p) => p.id == s.siteId)
                 .firstOrNull;
           }
 
@@ -208,7 +208,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
           // New Setting Mode: Auto-select if only one tank is available
           if (_tanks.length == 1) {
             _selectedTank = _tanks[0];
-            _selectedPlant = _plants.where((p) => p.id == _selectedTank!.plantId).firstOrNull;
+            _selectedSite = _sites.where((p) => p.id == _selectedTank!.siteId).firstOrNull;
             _selectedCompanyGroup = _companyGroups.where((g) => g.addresses.any((a) => a.companyId == _selectedTank!.companyId)).firstOrNull;
             _deviceIdController.text = _selectedTank?.deviceId ?? '';
             _simNumberController.text = _selectedTank?.simNumber ?? '';
@@ -247,11 +247,11 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         userRole == UserRole.superAdmin || userRole == UserRole.companyAdmin;
 
     if (isSuperOrCompany) {
-      if (_selectedPlant == null) {
+      if (_selectedSite == null) {
         if (!silent) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Plant is required')));
+          ).showSnackBar(const SnackBar(content: Text('Site is required')));
         }
         return false;
       }
@@ -278,7 +278,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
             ? null
             : _descriptionController.text.trim(),
         'company_id': companyId,
-        'plant_id': _selectedPlant?.id,
+        'site_id': _selectedSite?.id,
         'tank_id': _selectedTank?.tankId,
         'product_id': _selectedProduct?.id,
         'parameter_type': row.parameterType,
@@ -359,10 +359,10 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         userRole == UserRole.superAdmin || userRole == UserRole.companyAdmin;
 
     if (isSuperOrCompany) {
-      if (_selectedPlant == null) {
+      if (_selectedSite == null) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Plant is required')));
+        ).showSnackBar(const SnackBar(content: Text('Site is required')));
         return;
       }
       if (_selectedTank == null) {
@@ -502,12 +502,12 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
 
   @override
   Widget build(BuildContext context) {
-    List<Plant> filteredPlants = [];
+    List<Site> filteredSites = [];
     if (_selectedCompanyGroup != null) {
       final companyIds = _selectedCompanyGroup!.addresses
           .map((a) => a.companyId)
           .toList();
-      filteredPlants = _plants
+      filteredSites = _sites
           .where((p) => companyIds.contains(p.companyId))
           .toList();
     }
@@ -671,23 +671,23 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               )
                                             : AppDropdown<Tank>(
                                                 value: _selectedTank,
-                                                items: (_selectedPlant == null && !isCustomer)
+                                                items: (_selectedSite == null && !isCustomer)
                                                     ? []
                                                     : _tanks
                                                           .where(
                                                             (t) =>
                                                                 isCustomer ||
-                                                                _selectedPlant == null ||
-                                                                t.plantId ==
-                                                                _selectedPlant!
+                                                                _selectedSite == null ||
+                                                                t.siteId ==
+                                                                _selectedSite!
                                                                     .id,
                                                           )
                                                           .toList(),
-                                                hint: (_selectedPlant == null && !isCustomer)
-                                                    ? 'Select Plant First'
+                                                hint: (_selectedSite == null && !isCustomer)
+                                                    ? 'Select Site First'
                                                     : 'Select Tank',
                                                 itemLabel: (t) => t.tankNumber,
-                                                onChanged: (_selectedPlant == null && !isCustomer)
+                                                onChanged: (_selectedSite == null && !isCustomer)
                                                     ? null
                                                      : (t) {
                                                          setState(() {
@@ -743,7 +743,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                           itemLabel: (cg) => cg.name,
                                           onChanged: (cg) => setState(() {
                                             _selectedCompanyGroup = cg;
-                                            _selectedPlant = null;
+                                            _selectedSite = null;
                                             _selectedTank = null;
                                           }),
                                         ),
@@ -753,15 +753,15 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                     Expanded(
                                       child: _buildLabelField(
                                         isSuperOrCompanyAdmin
-                                            ? 'PLANT'
-                                            : 'PLANT (OPTIONAL)',
-                                        AppDropdown<Plant>(
-                                          value: _selectedPlant,
-                                          items: filteredPlants,
-                                          hint: 'Select Plant',
+                                            ? 'SITE'
+                                            : 'SITE (OPTIONAL)',
+                                        AppDropdown<Site>(
+                                          value: _selectedSite,
+                                          items: filteredSites,
+                                          hint: 'Select Site',
                                           itemLabel: (p) => p.name,
                                           onChanged: (p) => setState(() {
-                                            _selectedPlant = p;
+                                            _selectedSite = p;
                                             _selectedTank = null;
                                           }),
                                         ),
@@ -781,20 +781,20 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             : 'TANK (OPTIONAL)',
                                         AppDropdown<Tank>(
                                           value: _selectedTank,
-                                          items: _selectedPlant == null
+                                          items: _selectedSite == null
                                               ? []
                                               : _tanks
                                                     .where(
                                                       (t) =>
-                                                          t.plantId ==
-                                                          _selectedPlant!.id,
+                                                          t.siteId ==
+                                                          _selectedSite!.id,
                                                     )
                                                     .toList(),
-                                          hint: _selectedPlant == null
-                                              ? 'Select Plant First'
+                                          hint: _selectedSite == null
+                                              ? 'Select Site First'
                                               : 'Select Tank',
                                           itemLabel: (t) => t.tankNumber,
-                                          onChanged: _selectedPlant == null
+                                          onChanged: _selectedSite == null
                                               ? null
                                               : (t) {
                                                   setState(() {

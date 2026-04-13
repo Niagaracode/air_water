@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../model/plant_model.dart';
+import '../model/site_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_autocomplete.dart';
 import '../../../../shared/widgets/location_picker.dart';
-import '../controller/plant_provider.dart';
+import '../controller/site_provider.dart';
 import '../../../../core/user_config/user_role.dart';
 import '../../../../core/user_config/user_role_provider.dart';
 import '../../../company/presentation/controller/company_provider.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../company/presentation/model/company_model.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../shared/utils/time_zones.dart';
 
-class AddPlantModal extends ConsumerStatefulWidget {
-  final Plant? initialPlant;
-  const AddPlantModal({super.key, this.initialPlant});
+class AddSiteModal extends ConsumerStatefulWidget {
+  final Site? initialSite;
+  const AddSiteModal({super.key, this.initialSite});
 
   @override
-  ConsumerState<AddPlantModal> createState() => _AddPlantModalState();
+  ConsumerState<AddSiteModal> createState() => _AddSiteModalState();
 }
 
 class AddressControllers {
   final addressController = TextEditingController();
   final pinCodeController = TextEditingController();
+  final contactController = TextEditingController();
   String? country;
   String? state;
   String? city;
@@ -32,6 +34,7 @@ class AddressControllers {
   void dispose() {
     addressController.dispose();
     pinCodeController.dispose();
+    contactController.dispose();
   }
 
   void updateFromRegistered(CompanyAddress addr) {
@@ -41,42 +44,48 @@ class AddressControllers {
   }
 }
 
-class _AddPlantModalState extends ConsumerState<AddPlantModal> {
+class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   final _nameController = TextEditingController();
+  final _orgCodeController = TextEditingController();
   CompanyGroup? _selectedGroup;
   List<CompanyGroup> _companyGroups = [];
   final List<AddressControllers> _addressRows = [AddressControllers()];
   int _status = 1;
   bool _isLoadingCompanies = false;
   bool _showCompanyDropdown = true;
-  String? _selectedPlantName;
+  final _timeZoneController = TextEditingController();
+  String? _selectedSiteName;
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialPlant != null) {
-      _nameController.text = widget.initialPlant!.name;
-      _status = widget.initialPlant!.status;
+    if (widget.initialSite != null) {
+      _nameController.text = widget.initialSite!.name;
+      _orgCodeController.text = widget.initialSite!.siteOrganizationCode ?? '';
+      _status = widget.initialSite!.status;
       _addressRows.first.addressController.text =
-          widget.initialPlant!.addressLine1 ?? '';
+          widget.initialSite!.addressLine1 ?? '';
       _addressRows.first.pinCodeController.text =
-          widget.initialPlant!.pincode ?? '';
-      _addressRows.first.country = widget.initialPlant!.countryName;
-      _addressRows.first.state = widget.initialPlant!.stateName;
-      _addressRows.first.city = widget.initialPlant!.cityName;
+          widget.initialSite!.pincode ?? '';
+      _addressRows.first.contactController.text =
+          widget.initialSite!.contactNumber ?? '';
+      _addressRows.first.country = widget.initialSite!.countryName;
+      _addressRows.first.state = widget.initialSite!.stateName;
+      _addressRows.first.city = widget.initialSite!.cityName;
       _showCompanyDropdown = false;
-      _selectedPlantName = widget.initialPlant!.name;
+      _selectedSiteName = widget.initialSite!.name;
+      _timeZoneController.text = widget.initialSite!.timeZone ?? '';
     }
     _nameController.addListener(_onNameChanged);
     Future.microtask(() => _loadInitialData());
   }
 
   void _onNameChanged() {
-    if (_selectedPlantName != null &&
-        _nameController.text != _selectedPlantName) {
+    if (_selectedSiteName != null &&
+        _nameController.text != _selectedSiteName) {
       setState(() {
         _showCompanyDropdown = true;
-        _selectedPlantName = null;
+        _selectedSiteName = null;
       });
     }
   }
@@ -99,11 +108,11 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
     } finally {
       if (mounted) {
         setState(() => _isLoadingCompanies = false);
-        if (widget.initialPlant != null) {
+        if (widget.initialSite != null) {
           final initialGroup = _companyGroups
               .where(
                 (g) => g.addresses.any(
-                  (a) => a.companyId == widget.initialPlant!.companyId,
+                  (a) => a.companyId == widget.initialSite!.companyId,
             ),
           )
               .firstOrNull;
@@ -111,7 +120,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
             _selectedGroup = initialGroup;
             _addressRows.first.selectedRegisteredAddress = initialGroup
                 .addresses
-                .where((a) => a.companyId == widget.initialPlant!.companyId)
+                .where((a) => a.companyId == widget.initialSite!.companyId)
                 .firstOrNull;
           }
         }
@@ -126,6 +135,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
         row.selectedRegisteredAddress = null;
         row.addressController.clear();
         row.pinCodeController.clear();
+        row.contactController.clear();
         row.country = null;
         row.state = null;
         row.city = null;
@@ -157,7 +167,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
     if (_nameController.text.isEmpty || _selectedGroup == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill in Plant Name and select a Company'),
+          content: Text('Please fill in Site Name and select a Company'),
         ),
       );
       return;
@@ -183,6 +193,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
         country: row.country ?? '',
         state: row.state ?? '',
         city: row.city ?? '',
+        contactNumber: row.contactController.text,
         status: _status,
         companyId: resolvedCompanyId,
       );
@@ -197,24 +208,24 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
       return;
     }
 
-    final request = PlantCreateRequest(
+    final request = SiteCreateRequest(
       name: _nameController.text,
+      orgCode: _orgCodeController.text,
       companyId: primaryCompanyId,
-      country: _addressRows.first.country,
-      state: _addressRows.first.state,
       city: _addressRows.first.city,
+      timeZone: _timeZoneController.text,
       addresses: addresses,
     );
 
     final bool success;
-    if (widget.initialPlant != null) {
+    if (widget.initialSite != null) {
       success = await ref
-          .read(plantNotifierProvider.notifier)
-          .updatePlant(widget.initialPlant!.id, request);
+          .read(siteNotifierProvider.notifier)
+          .updateSite(widget.initialSite!.id, request);
     } else {
       success = await ref
-          .read(plantNotifierProvider.notifier)
-          .createPlant(request);
+          .read(siteNotifierProvider.notifier)
+          .createSite(request);
     }
 
     if (success && mounted) {
@@ -224,7 +235,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
 
   @override
   Widget build(BuildContext context) {
-    final plantState = ref.watch(plantNotifierProvider);
+    final siteState = ref.watch(siteNotifierProvider);
 
     return Align(
         alignment: Alignment.centerRight,
@@ -269,9 +280,9 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  widget.initialPlant != null
-                                      ? 'Edit Plant Details'
-                                      : 'Register New Plant',
+                                  widget.initialSite != null
+                                      ? 'Edit Site Details'
+                                      : 'Register New Site',
                                   style: GoogleFonts.outfit(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w700,
@@ -312,39 +323,39 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                         children: [
                           Expanded(
                             child: _buildLabelField(
-                              'PLANT IDENTIFIER',
-                              AppAutocomplete<PlantAutocompleteInfo>(
+                              'SITE IDENTIFIER',
+                              AppAutocomplete<SiteAutocompleteInfo>(
                                 controller: _nameController,
-                                hint: 'e.g. South Plant Unit A',
-                                displayStringForOption: (plant) =>
-                                plant.plantName,
-                                subtitleBuilder: (plant) =>
-                                plant.companyName ?? '',
+                                hint: 'e.g. South Site Unit A',
+                                displayStringForOption: (site) =>
+                                site.siteName,
+                                subtitleBuilder: (site) =>
+                                site.companyName ?? '',
                                 optionsBuilder: (textEditingValue) async {
                                   if (textEditingValue.text.isEmpty) {
                                     return const Iterable<
-                                        PlantAutocompleteInfo
+                                        SiteAutocompleteInfo
                                     >.empty();
                                   }
                                   return await ref
-                                      .read(plantNotifierProvider.notifier)
-                                      .searchPlants(textEditingValue.text);
+                                      .read(siteNotifierProvider.notifier)
+                                      .searchSites(textEditingValue.text);
                                 },
-                                onSelected: (plant) {
+                                onSelected: (site) {
                                   setState(() {
                                     _showCompanyDropdown = false;
-                                    _selectedPlantName = plant.plantName;
+                                    _selectedSiteName = site.siteName;
                                     if (_addressRows.isNotEmpty) {
                                       final row = _addressRows.first;
 
                                       // Also select the company and registered address if available
-                                      if (plant.companyId != null) {
+                                      if (site.companyId != null) {
                                         final group = _companyGroups
                                             .where(
                                               (g) => g.addresses.any(
                                                 (a) =>
                                             a.companyId ==
-                                                plant.companyId,
+                                                site.companyId,
                                           ),
                                         )
                                             .firstOrNull;
@@ -355,7 +366,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                                                   .where(
                                                     (a) =>
                                                 a.companyId ==
-                                                    plant.companyId,
+                                                    site.companyId,
                                               )
                                                   .firstOrNull;
                                         }
@@ -391,6 +402,29 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                       ),
                       const SizedBox(height: 48),
 
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildLabelField(
+                              'ORGANIZATION CODE',
+                              AppTextField(
+                                controller: _orgCodeController,
+                                hint: 'e.g. SITE-UNIT-001',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 32),
+                          Expanded(
+                            child: _buildLabelField(
+                              'TIME ZONE REGION',
+                              _buildTimeZoneAutocomplete(),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 48),
+
                       // Section: Location Details
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -414,7 +448,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                               ),
                             ],
                           ),
-                          if (widget.initialPlant == null)
+                          if (widget.initialSite == null)
                             TextButton.icon(
                               onPressed: _addAddressRow,
                               icon: const Icon(
@@ -464,7 +498,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'PLANT STATUS',
+                                  'SITE STATUS',
                                   style: GoogleFonts.outfit(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 12,
@@ -503,7 +537,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: plantState.isProcessing ? null : _save,
+                          onPressed: siteState.isProcessing ? null : _save,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF141E7A),
                             foregroundColor: Colors.white,
@@ -512,14 +546,14 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          child: plantState.isProcessing
+                          child: siteState.isProcessing
                               ? const CircularProgressIndicator(
                             color: Colors.white,
                           )
                               : Text(
-                            widget.initialPlant != null
-                                ? 'UPDATE PLANT'
-                                : 'REGISTER PLANT',
+                            widget.initialSite != null
+                                ? 'UPDATE SITE'
+                                : 'REGISTER SITE',
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
@@ -530,7 +564,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                     ],
                   ),
                 ),
-                if (plantState.isProcessing) ...[
+                if (siteState.isProcessing) ...[
         Positioned.fill(
         child: Container(
         color: Colors.black12,
@@ -630,7 +664,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              widget.initialPlant != null
+              widget.initialSite != null
                   ? 'Update site information and registry details.'
                   : 'Register a new manufacturing site or operational plant.',
               style: GoogleFonts.inter(
@@ -679,7 +713,7 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
                   letterSpacing: 1.5,
                 ),
               ),
-              if (_addressRows.length > 1 && widget.initialPlant == null)
+              if (_addressRows.length > 1 && widget.initialSite == null)
                 IconButton(
                   onPressed: () => _removeAddressRow(index),
                   icon: const Icon(
@@ -737,6 +771,14 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
             ],
           ),
           const SizedBox(height: 24),
+          _buildLabelField(
+            'CONTACT NUMBER',
+            AppTextField(
+              controller: controllers.contactController,
+              hint: 'e.g. +1 234 567 8900',
+            ),
+          ),
+          const SizedBox(height: 24),
           LocationPicker(
             key: ValueKey(
               'loc_${controllers.country}_${controllers.state}_${controllers.city}',
@@ -766,9 +808,66 @@ class _AddPlantModalState extends ConsumerState<AddPlantModal> {
     );
   }
 
+  Widget _buildTimeZoneAutocomplete() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return RawAutocomplete<String>(
+          textEditingController: _timeZoneController,
+          focusNode: FocusNode(),
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            if (textEditingValue.text.isEmpty) {
+              return const Iterable<String>.empty();
+            }
+            return TimeZoneUtils.ianaTimeZones.where((String option) {
+              return option.toLowerCase().contains(
+                    textEditingValue.text.toLowerCase(),
+                  );
+            });
+          },
+          displayStringForOption: (String option) => option,
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            return AppTextField(
+              controller: controller,
+              focusNode: focusNode,
+              hint: 'Search Time Zone (e.g. Asia/Kolkata)',
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                child: SizedBox(
+                  width: constraints.maxWidth,
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options.elementAt(index);
+                      return ListTile(
+                        title: Text(
+                          option,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        onTap: () => onSelected(option),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
+    _orgCodeController.dispose();
+    _timeZoneController.dispose();
     for (var controllers in _addressRows) {
       controllers.dispose();
     }

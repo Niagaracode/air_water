@@ -7,8 +7,8 @@ import '../controller/group_provider.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
 import '../model/group_model.dart';
 import '../widgets/add_group_modal.dart';
-import 'plant_group_detail_view.dart';
-import 'package:air_water/features/plant/presentation/model/plant_model.dart';
+import 'joint_site_detail_view.dart';
+import 'package:air_water/features/site/presentation/model/site_model.dart';
 
 class GroupWide extends ConsumerStatefulWidget {
   const GroupWide({super.key});
@@ -79,13 +79,13 @@ class _GroupWideState extends ConsumerState<GroupWide> {
                     width: tableWidth,
                     child: Column(
                       children: [
-                        if (!state.isLoading || state.plantUserCounts.isNotEmpty)
+                        if (!state.isLoading || state.siteUserCounts.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
                             child: _buildFixedTableHeader(),
                           ),
                         Expanded(
-                          child: state.isLoading && state.plantUserCounts.isEmpty
+                          child: state.isLoading && state.siteUserCounts.isEmpty
                               ? const Center(
                                   child: CircularProgressIndicator(color: Color(0xFF141E7A)),
                                 )
@@ -142,7 +142,7 @@ class _GroupWideState extends ConsumerState<GroupWide> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Manage access groups by assigning specific plants and tanks to control user permissions.',
+                    'Manage access groups by assigning specific sites and tanks to control user permissions.',
                     style: GoogleFonts.inter(
                       color: const Color(0xFF6B7280),
                       fontSize: 13,
@@ -185,7 +185,7 @@ class _GroupWideState extends ConsumerState<GroupWide> {
           Row(
             children: [
               Expanded(
-                child: _buildPlantAutocomplete(notifier),
+                child: _buildSiteAutocomplete(notifier),
               ),
               const SizedBox(width: 16),
               AppClearButton(
@@ -200,7 +200,7 @@ class _GroupWideState extends ConsumerState<GroupWide> {
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              'Showing ${state.plantUserCounts.length} of ${state.totalEntries} entries',
+              'Showing ${state.siteUserCounts.length} of ${state.totalEntries} entries',
               style: GoogleFonts.inter(
                 color: const Color(0xFF9CA3AF),
                 fontSize: 12,
@@ -212,32 +212,32 @@ class _GroupWideState extends ConsumerState<GroupWide> {
     );
   }
 
-  Widget _buildPlantAutocomplete(GroupNotifier notifier) {
+  Widget _buildSiteAutocomplete(GroupNotifier notifier) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return RawAutocomplete<PlantAutocompleteInfo>(
+        return RawAutocomplete<SiteAutocompleteInfo>(
           textEditingController: _searchController,
           focusNode: FocusNode(),
-          displayStringForOption: (option) => option.plantName,
+          displayStringForOption: (option) => option.siteName,
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.isEmpty) {
-              return const Iterable<PlantAutocompleteInfo>.empty();
+              return const Iterable<SiteAutocompleteInfo>.empty();
             }
-            return await notifier.getPlantSuggestions(textEditingValue.text);
+            return await notifier.getSiteSuggestions(textEditingValue.text);
           },
           onSelected: (option) {
-            notifier.setSearchQuery(option.plantName);
-            notifier.loadPlantUserCounts();
+            notifier.setSearchQuery(option.siteName);
+            notifier.loadSiteUserCounts();
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,
               focusNode: focusNode,
-              hint: 'Search By Plant Name',
+              hint: 'Search By Site Name',
               prefixIcon: const Icon(Icons.search, size: 20),
               onSubmitted: (v) {
                 notifier.setSearchQuery(v);
-                notifier.loadPlantUserCounts();
+                notifier.loadSiteUserCounts();
               },
             );
           },
@@ -258,7 +258,7 @@ class _GroupWideState extends ConsumerState<GroupWide> {
                       final option = options.elementAt(index);
                       return ListTile(
                         title: Text(
-                          option.plantName,
+                          option.siteName,
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -297,7 +297,7 @@ class _GroupWideState extends ConsumerState<GroupWide> {
       child: Row(
         children: [
           const AppTableHeaderCell('SI.NO', width: 60),
-          const AppTableHeaderCell('Plant Name / Location', flex: 3),
+          const AppTableHeaderCell('Site Name / Location', flex: 3),
           const AppTableHeaderCell('Assigned Groups', flex: 3),
           const AppTableHeaderCell('Tanks', width: 80),
           const AppTableHeaderCell('Total Users', width: 100),
@@ -308,7 +308,7 @@ class _GroupWideState extends ConsumerState<GroupWide> {
   }
 
   Widget _buildVirtualizedTable(GroupState state, GroupNotifier notifier) {
-    if (state.plantUserCounts.isEmpty) {
+    if (state.siteUserCounts.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 24),
         child: AppTableEmptyState(
@@ -324,10 +324,10 @@ class _GroupWideState extends ConsumerState<GroupWide> {
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           sliver: SliverList.builder(
-            itemCount: state.plantUserCounts.length,
+            itemCount: state.siteUserCounts.length,
             itemBuilder: (context, index) {
-              final plant = state.plantUserCounts[index];
-              return _buildPlantRow(plant, index, notifier);
+              final site = state.siteUserCounts[index];
+              return _buildSiteRow(site, index, notifier);
             },
           ),
         ),
@@ -340,8 +340,8 @@ class _GroupWideState extends ConsumerState<GroupWide> {
     );
   }
 
-  Widget _buildPlantRow(
-    PlantUserCount plant,
+  Widget _buildSiteRow(
+    SiteUserCount site,
     int index,
     GroupNotifier notifier,
   ) {
@@ -365,30 +365,30 @@ class _GroupWideState extends ConsumerState<GroupWide> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  plant.plantName,
+                  site.siteName,
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                     color: const Color(0xFF111827),
                   ),
                 ),
-                if ((plant.addressLine1 != null && plant.addressLine1!.isNotEmpty) ||
-                    plant.cityName != null || plant.stateName != null || plant.pincode != null)
+                if ((site.addressLine1 != null && site.addressLine1!.isNotEmpty) ||
+                    site.cityName != null || site.stateName != null || site.pincode != null)
                   Text(
                     [
-                      if (plant.addressLine1 != null && plant.addressLine1!.isNotEmpty) plant.addressLine1!,
-                      if (plant.cityName != null && plant.cityName!.isNotEmpty) plant.cityName!,
-                      if (plant.stateName != null && plant.stateName!.isNotEmpty) plant.stateName!,
-                      if (plant.pincode != null && plant.pincode!.isNotEmpty) plant.pincode!,
+                      if (site.addressLine1 != null && site.addressLine1!.isNotEmpty) site.addressLine1!,
+                      if (site.cityName != null && site.cityName!.isNotEmpty) site.cityName!,
+                      if (site.stateName != null && site.stateName!.isNotEmpty) site.stateName!,
+                      if (site.pincode != null && site.pincode!.isNotEmpty) site.pincode!,
                     ].join(', '),
                     style: GoogleFonts.inter(
                       color: const Color(0xFF9CA3AF),
                       fontSize: 11,
                     ),
                   )
-                else if (plant.location != null)
+                else if (site.location != null)
                   Text(
-                    plant.location!,
+                    site.location!,
                     style: GoogleFonts.inter(
                       color: const Color(0xFF9CA3AF),
                       fontSize: 11,
@@ -403,7 +403,7 @@ class _GroupWideState extends ConsumerState<GroupWide> {
             child: Wrap(
               spacing: 4,
               runSpacing: 4,
-              children: plant.groupNames.map<Widget>((name) {
+              children: site.groupNames.map<Widget>((name) {
                 return Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -427,12 +427,12 @@ class _GroupWideState extends ConsumerState<GroupWide> {
             ),
           ),
           AppTableCell(
-            plant.tankCount.toString(),
+            site.tankCount.toString(),
             width: 80,
             textAlign: TextAlign.center,
           ),
           AppTableCell(
-            plant.userCount.toString(),
+            site.userCount.toString(),
             width: 100,
             textAlign: TextAlign.center,
             bold: true,
@@ -450,8 +450,8 @@ class _GroupWideState extends ConsumerState<GroupWide> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => PlantGroupDetailView(
-                        plantId: plant.plantId,
+                      builder: (context) => JointSiteDetailView(
+                        siteId: site.siteId,
                       ),
                     ),
                   );

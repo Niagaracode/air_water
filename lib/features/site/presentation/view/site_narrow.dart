@@ -4,20 +4,20 @@ import 'package:air_water/shared/widgets/app_text_field.dart';
 import 'package:air_water/shared/widgets/app_dropdown.dart';
 import 'package:air_water/shared/widgets/app_date_picker.dart';
 import '../../../../core/app_theme/app_theme.dart';
-import '../controller/plant_provider.dart';
-import '../widgets/add_plant_modal.dart';
-import '../model/plant_model.dart';
+import '../controller/site_provider.dart';
+import '../widgets/add_site_modal.dart';
+import '../model/site_model.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
 
-class PlantNarrow extends ConsumerStatefulWidget {
-  const PlantNarrow({super.key});
+class SiteNarrow extends ConsumerStatefulWidget {
+  const SiteNarrow({super.key});
 
   @override
-  ConsumerState<PlantNarrow> createState() => _PlantNarrowState();
+  ConsumerState<SiteNarrow> createState() => _SiteNarrowState();
 }
 
-class _PlantNarrowState extends ConsumerState<PlantNarrow> {
-  final _plantSearchController = TextEditingController();
+class _SiteNarrowState extends ConsumerState<SiteNarrow> {
+  final _siteSearchController = TextEditingController();
   final _scrollController = ScrollController();
 
   @override
@@ -29,21 +29,21 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
-      ref.read(plantNotifierProvider.notifier).loadMore();
+      ref.read(siteNotifierProvider.notifier).loadMore();
     }
   }
 
   @override
   void dispose() {
-    _plantSearchController.dispose();
+    _siteSearchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final plantState = ref.watch(plantNotifierProvider);
-    final plantNotifier = ref.read(plantNotifierProvider.notifier);
+    final siteState = ref.watch(siteNotifierProvider);
+    final siteNotifier = ref.read(siteNotifierProvider.notifier);
 
     return Scaffold(
       body: CustomScrollView(
@@ -52,14 +52,14 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(12.0),
-              child: _buildHeader(plantState, plantNotifier),
+              child: _buildHeader(siteState, siteNotifier),
             ),
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            sliver: _buildVirtualizedTable(plantState, plantNotifier),
+            sliver: _buildVirtualizedTable(siteState, siteNotifier),
           ),
-          if (plantState.isLoading && plantState.groupedPlants.isNotEmpty)
+          if (siteState.isLoading && siteState.groupedSites.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
@@ -86,44 +86,44 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
     );
   }
 
-  Widget _buildHeader(PlantState plantState, PlantNotifier plantNotifier) {
+  Widget _buildHeader(SiteState siteState, SiteNotifier siteNotifier) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'PLANT MANAGEMENT',
+          'SITE MANAGEMENT',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        RawAutocomplete<PlantAutocompleteInfo>(
+        RawAutocomplete<SiteAutocompleteInfo>(
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.isEmpty) {
-              return const Iterable<PlantAutocompleteInfo>.empty();
+              return const Iterable<SiteAutocompleteInfo>.empty();
             }
-            return await plantNotifier.searchPlants(textEditingValue.text);
+            return await siteNotifier.searchSites(textEditingValue.text);
           },
-          displayStringForOption: (PlantAutocompleteInfo option) =>
-              option.plantName,
-          onSelected: (PlantAutocompleteInfo selection) {
-            _plantSearchController.text = selection.plantName;
-            plantNotifier.setSearchName(selection.plantName);
-            plantNotifier.loadGroupedPlants(isReload: true);
+          displayStringForOption: (SiteAutocompleteInfo option) =>
+              option.siteName,
+          onSelected: (SiteAutocompleteInfo selection) {
+            _siteSearchController.text = selection.siteName;
+            siteNotifier.setSearchName(selection.siteName);
+            siteNotifier.loadGroupedSites(isReload: true);
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            if (_plantSearchController.text != controller.text &&
-                _plantSearchController.text.isNotEmpty &&
+            if (_siteSearchController.text != controller.text &&
+                _siteSearchController.text.isNotEmpty &&
                 controller.text.isEmpty) {
-              controller.text = _plantSearchController.text;
+              controller.text = _siteSearchController.text;
             }
 
             return AppTextField(
               controller: controller,
               focusNode: focusNode,
-              hint: 'Search By Plant',
+              hint: 'Search By Site',
               onSubmitted: (value) {
-                _plantSearchController.text = value;
-                plantNotifier.setSearchName(value);
-                plantNotifier.loadGroupedPlants(isReload: true);
+                _siteSearchController.text = value;
+                siteNotifier.setSearchName(value);
+                siteNotifier.loadGroupedSites(isReload: true);
               },
             );
           },
@@ -144,7 +144,7 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
                       final option = options.elementAt(index);
                       return ListTile(
                         title: Text(
-                          option.plantName,
+                          option.siteName,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -170,18 +170,18 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
           children: [
             Expanded(
               child: AppDropdown<int>(
-                value: plantState.selectedStatus,
+                value: siteState.selectedStatus,
                 items: const [1, 0],
                 hint: 'Status',
                 itemLabel: (v) => v == 1 ? 'Active' : 'Inactive',
-                onChanged: (v) => plantNotifier.setStatus(v),
+                onChanged: (v) => siteNotifier.setStatus(v),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: AppDatePickerField(
-                selectedDate: plantState.selectedDate != null
-                    ? DateTime.parse(plantState.selectedDate!)
+                selectedDate: siteState.selectedDate != null
+                    ? DateTime.parse(siteState.selectedDate!)
                     : null,
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2100),
@@ -189,9 +189,9 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
                   if (date != null) {
                     final formatted =
                         "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-                    plantNotifier.setDate(formatted);
+                    siteNotifier.setDate(formatted);
                   } else {
-                    plantNotifier.setDate(null);
+                    siteNotifier.setDate(null);
                   }
                 },
               ),
@@ -204,8 +204,8 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
             Expanded(
               child: AppClearButton(
                 onPressed: () {
-                  _plantSearchController.clear();
-                  plantNotifier.clearFilters();
+                  _siteSearchController.clear();
+                  siteNotifier.clearFilters();
                 },
               ),
             ),
@@ -219,10 +219,10 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
             showGeneralDialog(
               context: context,
               barrierDismissible: true,
-              barrierLabel: 'AddPlant',
+              barrierLabel: 'AddSite',
               barrierColor: Colors.black54,
               transitionDuration: const Duration(milliseconds: 300),
-              pageBuilder: (context, anim1, anim2) => const AddPlantModal(),
+              pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
               transitionBuilder: (context, anim1, anim2, child) {
                 return SlideTransition(
                   position:
@@ -244,7 +244,7 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
         Align(
           alignment: Alignment.centerRight,
           child: Text(
-            'Showing  ${plantState.totalEntries} entries',
+            'Showing  ${siteState.totalEntries} entries',
             style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
         ),
@@ -252,8 +252,8 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
     );
   }
 
-  Widget _buildVirtualizedTable(PlantState plantState, PlantNotifier notifier) {
-    if (plantState.groupedPlants.isEmpty && !plantState.isLoading) {
+  Widget _buildVirtualizedTable(SiteState siteState, SiteNotifier notifier) {
+    if (siteState.groupedSites.isEmpty && !siteState.isLoading) {
       return SliverToBoxAdapter(
         child: Container(
           padding: const EdgeInsets.all(24),
@@ -264,14 +264,14 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
           ),
           alignment: Alignment.center,
           child: const Text(
-            'No record found',
+            'No sites found',
             style: TextStyle(color: Colors.grey, fontSize: 14),
           ),
         ),
       );
     }
 
-    if (plantState.isLoading && plantState.groupedPlants.isEmpty) {
+    if (siteState.isLoading && siteState.groupedSites.isEmpty) {
       return SliverToBoxAdapter(
         child: Container(
           padding: const EdgeInsets.all(24.0),
@@ -297,8 +297,8 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
 
     // Generate linear list of items (headers and rows)
     final List<dynamic> items = [];
-    for (int i = 0; i < plantState.groupedPlants.length; i++) {
-      final group = plantState.groupedPlants[i];
+    for (int i = 0; i < siteState.groupedSites.length; i++) {
+      final group = siteState.groupedSites[i];
       items.add({'type': 'header', 'group': group, 'index': i + 1});
 
       for (final addr in group.addresses) {
@@ -314,15 +314,15 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
 
         if (item['type'] == 'header') {
           return _buildGroupHeader(
-            plantState,
-            item['group'] as PlantGroup,
+            siteState,
+            item['group'] as SiteGroup,
             item['index'] as int,
             isLast,
           );
         } else {
-          return _buildPlantRow(
-            item['address'] as PlantGroupAddress,
-            item['group'] as PlantGroup,
+          return _buildSiteRow(
+            item['address'] as SiteGroupAddress,
+            item['group'] as SiteGroup,
             isLast,
           );
         }
@@ -331,8 +331,8 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
   }
 
   Widget _buildGroupHeader(
-    PlantState state,
-    PlantGroup group,
+    SiteState state,
+    SiteGroup group,
     int index,
     bool isLast,
   ) {
@@ -408,9 +408,9 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
     );
   }
 
-  Widget _buildPlantRow(
-    PlantGroupAddress plant,
-    PlantGroup group,
+  Widget _buildSiteRow(
+    SiteGroupAddress site,
+    SiteGroup group,
     bool isLast,
   ) {
     return Container(
@@ -440,13 +440,18 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(plant.city ?? '—', style: const TextStyle(fontSize: 12)),
+                  Text(site.city ?? '—', style: const TextStyle(fontSize: 12)),
                   Text(
-                    '${plant.companyName ?? '—'} (${plant.country ?? '—'})',
+                    '${site.companyName ?? '—'} (${site.country ?? '—'})',
                     style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
                   ),
+                  if (site.timeZone != null)
+                    Text(
+                      'Time Zone: ${site.timeZone}',
+                      style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
+                    ),
                   Text(
-                    plant.fullAddress,
+                    site.fullAddress,
                     style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -460,7 +465,7 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.edit, color: Colors.blue, size: 14),
-                    onPressed: () => _showEditModal(plant.toPlant()),
+                    onPressed: () => _showEditModal(site.toSite()),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -471,7 +476,7 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
                       color: Colors.red.shade400,
                       size: 14,
                     ),
-                    onPressed: () => _showDeleteDialog(plant.toPlant()),
+                    onPressed: () => _showDeleteDialog(site.toSite()),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -484,13 +489,13 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
     );
   }
 
-  void _showEditModal(Plant plant) {
+  void _showEditModal(Site site) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: '',
       pageBuilder: (context, anim1, anim2) {
-        return AddPlantModal(initialPlant: plant);
+        return AddSiteModal(initialSite: site);
       },
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
@@ -504,13 +509,13 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
     );
   }
 
-  Future<void> _showDeleteDialog(Plant plant) async {
+  Future<void> _showDeleteDialog(Site site) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Plant'),
+        title: const Text('Delete Site'),
         content: Text(
-          'Are you sure you want to delete "${plant.name}" at "${plant.cityName}"?',
+          'Are you sure you want to delete "${site.name}" at "${site.cityName}"?',
         ),
         actions: [
           TextButton(
@@ -528,11 +533,11 @@ class _PlantNarrowState extends ConsumerState<PlantNarrow> {
 
     if (confirmed == true) {
       final success = await ref
-          .read(plantNotifierProvider.notifier)
-          .deletePlant(plant.id);
+          .read(siteNotifierProvider.notifier)
+          .deleteSite(site.id);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Plant deleted successfully')),
+          const SnackBar(content: Text('Site deleted successfully')),
         );
       }
     }

@@ -3,7 +3,7 @@ import '../../../../core/network/api_client.dart';
 import '../../data/api/tank_api.dart';
 import '../../data/repository/tank_repository_impl.dart';
 import '../model/tank_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 
 class TankState {
   final List<TankGroup> groupedTanks;
@@ -15,7 +15,7 @@ class TankState {
   final bool hasMore;
   final Set<String> expandedGroups;
   final List<TankProduct> products;
-  final String searchPlant;
+  final String searchSite;
   final String searchTank;
   final int? selectedStatus;
 
@@ -29,7 +29,7 @@ class TankState {
     this.hasMore = false,
     required this.expandedGroups,
     this.products = const [],
-    this.searchPlant = '',
+    this.searchSite = '',
     this.searchTank = '',
     this.selectedStatus,
   });
@@ -44,7 +44,7 @@ class TankState {
     bool? hasMore,
     Set<String>? expandedGroups,
     List<TankProduct>? products,
-    String? searchPlant,
+    String? searchSite,
     String? searchTank,
     int? selectedStatus,
     bool clearError = false,
@@ -59,7 +59,7 @@ class TankState {
       hasMore: hasMore ?? this.hasMore,
       expandedGroups: expandedGroups ?? this.expandedGroups,
       products: products ?? this.products,
-      searchPlant: searchPlant ?? this.searchPlant,
+      searchSite: searchSite ?? this.searchSite,
       searchTank: searchTank ?? this.searchTank,
       selectedStatus: selectedStatus != null
           ? selectedStatus
@@ -77,8 +77,8 @@ class TankNotifier extends Notifier<TankState> {
     return TankState(groupedTanks: [], isLoading: false, expandedGroups: {});
   }
 
-  void setSearchPlant(String value) {
-    state = state.copyWith(searchPlant: value);
+  void setSearchSite(String value) {
+    state = state.copyWith(searchSite: value);
   }
 
   void setSearchTank(String value) {
@@ -92,7 +92,7 @@ class TankNotifier extends Notifier<TankState> {
 
   void clearFilters() {
     state = state.copyWith(
-      searchPlant: '',
+      searchSite: '',
       searchTank: '',
       selectedStatus: null,
     );
@@ -105,14 +105,14 @@ class TankNotifier extends Notifier<TankState> {
       final repository = ref.read(tankRepositoryProvider);
       final response = await repository.getTanksGrouped(
         page: 1,
-        plantName: state.searchPlant.isEmpty ? null : state.searchPlant,
+        siteName: state.searchSite.isEmpty ? null : state.searchSite,
         tankName: state.searchTank.isEmpty ? null : state.searchTank,
         status: state.selectedStatus,
       );
 
       final expandedGroups = <String>{};
       for (var group in response.data) {
-        expandedGroups.add(group.plantName);
+        expandedGroups.add(group.siteName);
       }
 
       state = state.copyWith(
@@ -137,7 +137,7 @@ class TankNotifier extends Notifier<TankState> {
       final repository = ref.read(tankRepositoryProvider);
       final response = await repository.getTanksGrouped(
         page: nextPage,
-        plantName: state.searchPlant.isEmpty ? null : state.searchPlant,
+        siteName: state.searchSite.isEmpty ? null : state.searchSite,
         tankName: state.searchTank.isEmpty ? null : state.searchTank,
         status: state.selectedStatus,
       );
@@ -145,7 +145,7 @@ class TankNotifier extends Notifier<TankState> {
       final updatedGroups = [...state.groupedTanks, ...response.data];
       final expandedGroups = Set<String>.from(state.expandedGroups);
       for (var group in response.data) {
-        expandedGroups.add(group.plantName);
+        expandedGroups.add(group.siteName);
       }
 
       state = state.copyWith(
@@ -203,10 +203,10 @@ class TankNotifier extends Notifier<TankState> {
     }
   }
 
-  Future<List<PlantAutocompleteInfo>> searchPlants(String query) async {
+  Future<List<SiteAutocompleteInfo>> searchSites(String query) async {
     try {
       final repository = ref.read(tankRepositoryProvider);
-      return await repository.getPlantsForTankAutocomplete(q: query);
+      return await repository.getSitesForTankAutocomplete(q: query);
     } catch (e) {
       return [];
     }

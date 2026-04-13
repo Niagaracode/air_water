@@ -8,14 +8,14 @@ import '../../../../shared/widgets/app_details_header.dart';
 import '../../../../shared/widgets/app_asset_info_grid.dart';
 
 
-class PlantGroupDetailView extends ConsumerWidget {
-  final int plantId;
+class JointSiteDetailView extends ConsumerWidget {
+  final int siteId;
 
-  const PlantGroupDetailView({super.key, required this.plantId});
+  const JointSiteDetailView({super.key, required this.siteId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final detailsAsync = ref.watch(plantGroupDetailsProvider(plantId));
+    final detailsAsync = ref.watch(siteGroupDetailsProvider(siteId));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -31,19 +31,19 @@ class PlantGroupDetailView extends ConsumerWidget {
           ),
         ),
         data: (data) {
-          final plant = data.plant;
+          final site = data.site;
           final tanks = data.tanks;
           final users = data.users;
 
           return Column(
             children: [
               AppDetailsHeader(
-                title: plant.name,
-                subtitle: plant.location,
+                title: site.name,
+                subtitle: site.location,
                 breadcrumbs: [
                   BreadcrumbItem(label: 'Home', onTap: () => context.go('/dashboard')),
                   BreadcrumbItem(label: 'Groups', onTap: () => context.pop()),
-                  BreadcrumbItem(label: 'Plant Access Details', isCurrent: true),
+                  BreadcrumbItem(label: 'Site Access Details', isCurrent: true),
                 ],
                 onBack: () => context.pop(),
               ),
@@ -52,11 +52,11 @@ class PlantGroupDetailView extends ConsumerWidget {
                   padding: const EdgeInsets.all(24),
                   children: [
                     AppAssetInfoGrid(
-                      title: 'Plant Information',
+                      title: 'Site Information',
                       items: [
-                        AppInfoItemData(label: 'Plant Name', value: plant.name),
-                        AppInfoItemData(label: 'Location', value: plant.location ?? '—'),
-                        AppInfoItemData(label: 'Company', value: plant.companyDetails ?? '—'),
+                        AppInfoItemData(label: 'Site Name', value: site.name),
+                        AppInfoItemData(label: 'Location', value: site.location ?? '—'),
+                        AppInfoItemData(label: 'Company', value: site.companyDetails ?? '—'),
                         AppInfoItemData(label: 'Status', value: 'Active'),
                       ],
                     ),
@@ -66,7 +66,7 @@ class PlantGroupDetailView extends ConsumerWidget {
                     _buildSectionHeader('Tanks & Devices', Icons.storage_outlined),
                     const SizedBox(height: 12),
                     if (tanks.isEmpty)
-                      _buildEmptyState('No tanks assigned to this plant.')
+                      _buildEmptyState('No tanks assigned to this site.')
                     else
                       ListView.separated(
                         shrinkWrap: true,
@@ -194,7 +194,7 @@ class PlantGroupDetailView extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     if (users.isEmpty)
-                      _buildEmptyState('No users assigned to this plant.')
+                      _buildEmptyState('No users assigned to this site.')
                     else
                       _buildCard(
                         padding: EdgeInsets.zero,
@@ -374,8 +374,8 @@ class PlantGroupDetailView extends ConsumerWidget {
   Future<void> _showUnassignDialog(
     BuildContext context,
     WidgetRef ref,
-    PlantDetailsUser user,
-    List<PlantDetailsTank> plantTanks,
+    SiteDetailsUser user,
+    List<SiteDetailsTank> siteTanks,
   ) async {
     int? selectedTankId;
 
@@ -391,7 +391,7 @@ class PlantGroupDetailView extends ConsumerWidget {
           ),
           content: Text(
             '${user.username} has access via an "All Tanks" assignment. '
-            'Unassigning will remove them from the group granting access to ALL tanks in this plant. '
+            'Unassigning will remove them from the group granting access to ALL tanks in this site. '
             'Continue?',
             style: GoogleFonts.inter(),
           ),
@@ -412,7 +412,7 @@ class PlantGroupDetailView extends ConsumerWidget {
       if (confirmed == true) {
         // Technically they are unassigning "All Tanks", so we pick any tank ID 
         // to represent the "All Tanks" group removal (backend logic covers this)
-        final firstTank = plantTanks.isNotEmpty ? plantTanks.first : null;
+        final firstTank = siteTanks.isNotEmpty ? siteTanks.first : null;
         if (firstTank != null) {
           await _performUnassign(context, ref, user.userId, firstTank.id);
         }
@@ -422,7 +422,7 @@ class PlantGroupDetailView extends ConsumerWidget {
     }
 
     // Filter tanks that this user actually has access to
-    final userTanks = plantTanks.where((t) => user.tankIds.contains(t.id)).toList();
+    final userTanks = siteTanks.where((t) => user.tankIds.contains(t.id)).toList();
 
     if (userTanks.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -534,7 +534,7 @@ class PlantGroupDetailView extends ConsumerWidget {
     final scaffold = ScaffoldMessenger.of(context);
     final success = await ref
         .read(groupProvider.notifier)
-        .unassignUserFromTank(userId, plantId, tankId);
+        .unassignUserFromTank(userId, siteId, tankId);
 
     if (success) {
       scaffold.showSnackBar(

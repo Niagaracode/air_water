@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../../../../core/config/app_config.dart';
 
 class Tank {
@@ -17,8 +17,8 @@ class Tank {
   final String? description;
   final double? latitude;
   final double? longitude;
-  final int? plantId;
-  final String? plantName;
+  final int? siteId;
+  final String? siteName;
   final double? width;
   final double? height;
   final double? dishHeight;
@@ -54,8 +54,8 @@ class Tank {
     this.description,
     this.latitude,
     this.longitude,
-    this.plantId,
-    this.plantName,
+    this.siteId,
+    this.siteName,
     this.width,
     this.height,
     this.dishHeight,
@@ -98,8 +98,8 @@ class Tank {
       longitude: (json['longitude'] is num?)
           ? (json['longitude'] as num?)?.toDouble()
           : null,
-      plantId: _toInt(json['plant_id']),
-      plantName: json['plant_name'] as String?,
+      siteId: _toInt(json['plant_id']),
+      siteName: json['plant_name'] as String?,
       width: _toDouble(json['width']),
       height: _toDouble(json['height']),
       dishHeight: _toDouble(json['dish_height']),
@@ -173,25 +173,25 @@ class Tank {
 }
 
 class TankGroup {
-  final String plantName;
+  final String siteName;
   final String? addressLine1;
   final String? city;
   final String? state;
   final String? country;
   final String? pincode;
-  final int plantId;
-  final String? plantOrganizationCode;
+  final int siteId;
+  final String? siteOrganizationCode;
   final List<Tank> tanks;
 
   TankGroup({
-    required this.plantName,
+    required this.siteName,
     this.addressLine1,
     this.city,
     this.state,
     this.country,
     this.pincode,
-    required this.plantId,
-    this.plantOrganizationCode,
+    required this.siteId,
+    this.siteOrganizationCode,
     required this.tanks,
   });
 
@@ -201,16 +201,16 @@ class TankGroup {
         .toList();
 
     return TankGroup(
-      plantName: json['plant_name'] as String,
+      siteName: json['plant_name'] as String,
       addressLine1: json['address_line_1'] as String?,
       city: json['city'] as String?,
       state: json['state'] as String?,
       country: json['country'] as String?,
       pincode: json['pincode'] as String?,
-      plantId:
+      siteId:
           Tank._toInt(json['plant_id']) ??
-          (tanks.isNotEmpty ? (tanks.first.plantId ?? 0) : 0),
-      plantOrganizationCode: json['plant_organization_code'] as String?,
+          (tanks.isNotEmpty ? (tanks.first.siteId ?? 0) : 0),
+      siteOrganizationCode: json['plant_organization_code'] as String?,
       tanks: tanks,
     );
   }
@@ -227,26 +227,26 @@ class TankGroup {
   }
 
   TankGroup copyWith({
-    String? plantName,
+    String? siteName,
     String? addressLine1,
     String? city,
     String? state,
     String? country,
     String? pincode,
-    int? plantId,
-    String? plantOrganizationCode,
+    int? siteId,
+    String? siteOrganizationCode,
     List<Tank>? tanks,
   }) {
     return TankGroup(
-      plantName: plantName ?? this.plantName,
+      siteName: siteName ?? this.siteName,
       addressLine1: addressLine1 ?? this.addressLine1,
       city: city ?? this.city,
       state: state ?? this.state,
       country: country ?? this.country,
       pincode: pincode ?? this.pincode,
-      plantId: plantId ?? this.plantId,
-      plantOrganizationCode:
-          plantOrganizationCode ?? this.plantOrganizationCode,
+      siteId: siteId ?? this.siteId,
+      siteOrganizationCode:
+          siteOrganizationCode ?? this.siteOrganizationCode,
       tanks: tanks ?? this.tanks,
     );
   }
@@ -302,7 +302,7 @@ class TankCreateRequest {
   final double? depth;
   final double? coneLength;
   final double? tonnes;
-  final int? plantId;
+  final int? siteId;
   final int? status;
   final bool? useStrappingChart;
   final List<StrappingPoint>? strappingPoints;
@@ -327,7 +327,7 @@ class TankCreateRequest {
     this.depth,
     this.coneLength,
     this.tonnes,
-    this.plantId,
+    this.siteId,
     this.status,
     this.useStrappingChart,
     this.strappingPoints,
@@ -353,7 +353,7 @@ class TankCreateRequest {
       'depth': depth,
       'cone_length': coneLength,
       'tonnes': tonnes,
-      'plant_id': plantId,
+      'plant_id': siteId,
       'status': status,
       'use_strapping_chart': useStrappingChart == true ? 1 : 0,
       'strapping_points': strappingPoints?.map((e) => e.toJson()).toList(),

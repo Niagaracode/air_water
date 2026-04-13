@@ -5,7 +5,7 @@ import '../../data/api/user_api.dart';
 import '../../data/repository/user_repository_impl.dart';
 import '../../domain/repository/user_repository.dart';
 import '../model/user_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../../../tank/presentation/model/tank_model.dart';
 
 class UserState {
@@ -22,7 +22,7 @@ class UserState {
   final int? roleId;
   final int? companyId;
   final int? status;
-  final int? plantId;
+  final int? siteId;
   final int? tankId;
   final int totalEntries;
 
@@ -40,7 +40,7 @@ class UserState {
     this.roleId,
     this.companyId,
     this.status,
-    this.plantId,
+    this.siteId,
     this.tankId,
     this.totalEntries = 0,
   });
@@ -59,7 +59,7 @@ class UserState {
     int? roleId,
     int? companyId,
     int? status,
-    int? plantId,
+    int? siteId,
     int? tankId,
     int? totalEntries,
   }) {
@@ -77,7 +77,7 @@ class UserState {
       roleId: roleId ?? this.roleId,
       companyId: companyId ?? this.companyId,
       status: status ?? this.status,
-      plantId: plantId ?? this.plantId,
+      siteId: siteId ?? this.siteId,
       tankId: tankId ?? this.tankId,
       totalEntries: totalEntries ?? this.totalEntries,
     );
@@ -109,7 +109,7 @@ class UserNotifier extends Notifier<UserState> {
   void setSearchQuery(String q) => state = state.copyWith(searchQuery: q);
   void setRoleId(int? id) => state = state.copyWith(roleId: id);
   void setStatus(int? s) => state = state.copyWith(status: s);
-  void setPlantId(int? id) => state = state.copyWith(plantId: id);
+  void setSiteId(int? id) => state = state.copyWith(siteId: id);
   void setTankId(int? id) => state = state.copyWith(tankId: id);
   void setCompanyId(int? id) => state = state.copyWith(companyId: id);
 
@@ -121,7 +121,7 @@ class UserNotifier extends Notifier<UserState> {
       roleId: null,
       companyId: null,
       status: null,
-      plantId: null,
+      siteId: null,
       tankId: null,
     );
     loadUsers();
@@ -139,7 +139,7 @@ class UserNotifier extends Notifier<UserState> {
         roleId: state.roleId,
         companyId: state.companyId,
         status: state.status,
-        plantId: state.plantId,
+        siteId: state.siteId,
         tankId: state.tankId,
       );
 
@@ -182,7 +182,7 @@ class UserNotifier extends Notifier<UserState> {
         roleId: state.roleId,
         companyId: state.companyId,
         status: state.status,
-        plantId: state.plantId,
+        siteId: state.siteId,
         tankId: state.tankId,
       );
 
@@ -198,7 +198,7 @@ class UserNotifier extends Notifier<UserState> {
           : response.data;
 
       state = state.copyWith(
-        users: [...state.users, ...filteredNewUsers],
+        users: [...state.users, ...(filteredNewUsers as List<User>)],
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
@@ -268,10 +268,10 @@ class UserNotifier extends Notifier<UserState> {
     }
   }
 
-  Future<List<PlantAutocompleteInfo>> searchPlants(String query) async {
+  Future<List<SiteAutocompleteInfo>> searchSites(String query) async {
     try {
       final repository = ref.read(userRepositoryProvider);
-      return await repository.searchPlants(query);
+      return await repository.searchSites(query);
     } catch (e) {
       return [];
     }
@@ -280,7 +280,7 @@ class UserNotifier extends Notifier<UserState> {
   Future<TankGroupedResponse?> getTanksGrouped({
     int page = 1,
     int limit = 500,
-    String? plantName,
+    String? siteName,
     String? tankName,
     int? status,
   }) async {
@@ -289,7 +289,7 @@ class UserNotifier extends Notifier<UserState> {
       return await repository.getTanksGrouped(
         page: page,
         limit: limit,
-        plantName: plantName,
+        siteName: siteName,
         tankName: tankName,
         status: status,
       );

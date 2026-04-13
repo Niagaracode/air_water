@@ -6,6 +6,7 @@ class CompanyAddress {
   final String? country;
   final String? state;
   final String? city;
+  final String? contactNumber;
   final int status;
   final int? companyId;
   final String? createdAt;
@@ -18,6 +19,7 @@ class CompanyAddress {
     this.country,
     this.state,
     this.city,
+    this.contactNumber,
     required this.status,
     this.companyId,
     this.createdAt,
@@ -32,6 +34,7 @@ class CompanyAddress {
       country: json['country'] as String?,
       state: json['state'] as String?,
       city: json['city'] as String?,
+      contactNumber: json['contact_number'] as String?,
       status: (json['status'] as num?)?.toInt() ?? 1,
       companyId: json['company_id'] as int?,
       createdAt: json['created_at'] as String?,
@@ -47,6 +50,7 @@ class CompanyAddress {
       'country': country,
       'state': state,
       'city': city,
+      'contact_number': contactNumber,
       'status': status,
       'company_id': companyId,
       'created_at': createdAt,
@@ -73,11 +77,12 @@ class CompanyAddress {
           country == other.country &&
           state == other.state &&
           city == other.city &&
+          contactNumber == other.contactNumber &&
           companyId == other.companyId;
 
   @override
   int get hashCode =>
-      Object.hash(addressLine1, pincode, country, state, city, companyId);
+      Object.hash(addressLine1, pincode, country, state, city, contactNumber, companyId);
 }
 
 class Company {

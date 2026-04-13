@@ -210,7 +210,7 @@ class _DeviceMiddleState extends ConsumerState<DeviceMiddle> {
     DeviceNotifier notifier,
   ) {
     final isExpanded = state.expandedGroups.contains(
-      group.plantOrganizationCode,
+      group.siteOrganizationCode,
     );
 
     return Card(
@@ -218,7 +218,7 @@ class _DeviceMiddleState extends ConsumerState<DeviceMiddle> {
       child: ExpansionTile(
         initiallyExpanded: isExpanded,
         onExpansionChanged: (_) =>
-            notifier.toggleGroup(group.plantOrganizationCode),
+            notifier.toggleGroup(group.siteOrganizationCode),
         title: Text(
           group.siteName,
           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -243,7 +243,7 @@ class _DeviceMiddleState extends ConsumerState<DeviceMiddle> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Plant: ${device.siteName ?? '-'} (${device.siteInformation?.fullAddress ?? ''})',
+            'Site: ${device.siteName ?? '-'} (${device.siteInformation?.fullAddress ?? ''})',
             style: const TextStyle(fontSize: 11, color: Colors.grey),
           ),
           Text(

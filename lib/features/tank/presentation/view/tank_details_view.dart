@@ -168,7 +168,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
       body: Column(
         children: [
           AppDetailsHeader(
-            title: '${tankInfo?.plantName ?? 'Awaiting Data...'} Tank Nr: ${tankInfo?.tankNumber ?? ''}',
+            title: '${tankInfo?.siteName ?? 'Awaiting Data...'} Tank Nr: ${tankInfo?.tankNumber ?? ''}',
             subtitle: tankInfo?.description,
             breadcrumbs: [
               BreadcrumbItem(label: 'Home', onTap: () => context.go('/dashboard')),
@@ -235,7 +235,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
           AppAssetInfoGrid(
             title: 'Asset Information',
             items: [
-              AppInfoItemData(label: 'Plant', value: tank?.plantName ?? '—'),
+              AppInfoItemData(label: 'Site', value: tank?.siteName ?? '—'),
               AppInfoItemData(label: 'Tank ID', value: tank?.tankNumber ?? '—'),
               AppInfoItemData(label: 'Status', value: tank?.status == 1 ? 'Active' : 'Inactive'),
               AppInfoItemData(label: 'Tank Type', value: tank?.tankTypeName ?? '—'),
@@ -1226,7 +1226,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
       tankTypeId: tank.tankTypeId,
       unitId: tank.unitId,
       productId: tank.productId,
-      plantId: tank.plantId,
+      siteId: tank.siteId,
       status: tank.status,
       description: tank.description, // Use existing as it's now read-only
       useStrappingChart: _useStrappingChart,

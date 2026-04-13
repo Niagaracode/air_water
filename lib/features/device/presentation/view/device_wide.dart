@@ -5,7 +5,7 @@ import '../../../../../shared/widgets/app_table.dart';
 import '../../../../../shared/widgets/app_clear_button.dart';
 import '../controller/device_provider.dart';
 import '../model/device_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../widgets/add_device_modal.dart';
 
 class DeviceWide extends ConsumerStatefulWidget {
@@ -17,7 +17,7 @@ class DeviceWide extends ConsumerStatefulWidget {
 
 class _DeviceWideState extends ConsumerState<DeviceWide> {
   final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _plantSearchController = TextEditingController();
+  final TextEditingController _siteSearchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -36,7 +36,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
   @override
   void dispose() {
     _searchController.dispose();
-    _plantSearchController.dispose();
+    _siteSearchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -52,75 +52,19 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(deviceProvider);
-    final notifier = ref.read(deviceProvider.notifier);
-
-    if (state.searchPlant != _plantSearchController.text &&
-        state.searchPlant.isEmpty) {
-      _plantSearchController.text = '';
-    }
-    if (state.searchDevice != _searchController.text &&
-        state.searchDevice.isEmpty) {
-      _searchController.text = '';
-    }
-
-    return Scaffold(
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: _buildHeader(state, notifier),
-          ),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final tableWidth = constraints.maxWidth > 1400 ? constraints.maxWidth : 1400.0;
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: tableWidth,
-                    child: Column(
-                      children: [
-                        if (!state.isLoading || state.groupedDevices.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: _buildFixedTableHeader(),
-                          ),
-                        Expanded(
-                          child: state.isLoading && state.groupedDevices.isEmpty
-                              ? const Center(
-                                  child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                                )
-                              : state.error != null
-                              ? Center(child: Text(state.error!))
-                              : _buildVirtualizedTable(state, notifier),
-                        ),
-                        if (state.isLoading && state.groupedDevices.isNotEmpty)
-                          const AppTableLoadingMore(),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeader(DeviceState state, DeviceNotifier notifier) {
     return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 24),
+      decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,7 +87,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Centralize device information including identification, configuration, connectivity, and status management.',
+                    'Monitor and configure your water monitoring hardware across various sites.',
                     style: GoogleFonts.inter(
                       color: const Color(0xFF6B7280),
                       fontSize: 13,
@@ -153,7 +97,10 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
               ),
               ElevatedButton.icon(
                 onPressed: () => _showAddModal(),
-                style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF141E7A),
+                  foregroundColor: Colors.white,
+                ),
                 icon: const Icon(Icons.add, size: 18),
                 label: Text(
                   'ADD DEVICE',
@@ -166,7 +113,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Text(
             'FILTER',
             style: GoogleFonts.inter(
@@ -176,27 +123,17 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
               letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: _buildDeviceAutocomplete(notifier)),
-              const SizedBox(width: 16),
-              Expanded(child: _buildPlantAutocomplete(notifier)),
-              const SizedBox(width: 16),
-              AppClearButton(
-                onPressed: () {
-                  _searchController.clear();
-                  _plantSearchController.clear();
-                  notifier.clearFilters();
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+          _buildFilterRow(state, notifier),
+          if (state.error != null) ...[
+            const SizedBox(height: 16),
+            _buildErrorBanner(state.error!, notifier),
+          ],
+          const SizedBox(height: 16),
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              'Showing ${state.totalEntries} entries',
+              'Showing ${state.groupedDevices.fold<int>(0, (sum, g) => sum + g.devices.length)} of ${state.totalEntries} entries',
               style: GoogleFonts.inter(
                 color: const Color(0xFF9CA3AF),
                 fontSize: 12,
@@ -208,30 +145,102 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     );
   }
 
-  Widget _buildFixedTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        border: Border(
-          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+  Widget _buildFilterRow(DeviceState state, DeviceNotifier notifier) {
+    return Row(
+      children: [
+        Expanded(flex: 2, child: _buildSiteAutocomplete(notifier)),
+        const SizedBox(width: 16),
+        Expanded(flex: 2, child: _buildDeviceAutocomplete(notifier)),
+        const SizedBox(width: 16),
+        AppClearButton(
+          onPressed: () {
+            _siteSearchController.clear();
+            _searchController.clear();
+            notifier.clearFilters();
+          },
         ),
+      ],
+    );
+  }
+
+  Widget _buildErrorBanner(String error, DeviceNotifier notifier) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFFECACA)),
       ),
       child: Row(
         children: [
-          const AppTableHeaderCell('SI.NO', width: 70),
-          const AppTableHeaderCell('Date', flex: 2),
-          const AppTableHeaderCell('Device ID', flex: 2),
-          const AppTableHeaderCell('Company', flex: 2),
-          const AppTableHeaderCell('Category', flex: 2),
-          const AppTableHeaderCell('Sim Number', flex: 2),
-          const AppTableHeaderCell('Notes', flex: 3),
-          const AppTableHeaderCell('Tank', flex: 2),
-          const AppTableHeaderCell('Time Zone', flex: 2),
-          const AppTableHeaderCell('Status', flex: 2),
-          const AppTableHeaderCell('Action', width: 100),
+          const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              error,
+              style: GoogleFonts.inter(
+                color: const Color(0xFFDC2626),
+                fontSize: 13,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Color(0xFFDC2626), size: 16),
+            onPressed: () => notifier.loadGroupedDevices(),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(deviceProvider);
+    final notifier = ref.read(deviceProvider.notifier);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF9FAFB),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: _buildHeader(state, notifier),
+          ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = constraints.maxWidth > 1200 ? constraints.maxWidth : 1200.0;
+                return Scrollbar(
+                  controller: _scrollController,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: tableWidth,
+                      child: Column(
+                        children: [
+                          if (!state.isLoading || state.groupedDevices.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: _buildFixedTableHeader(),
+                            ),
+                          Expanded(
+                            child: state.isLoading && state.groupedDevices.isEmpty
+                                ? const Center(child: CircularProgressIndicator(color: Color(0xFF141E7A)))
+                                : _buildVirtualizedTable(state, notifier),
+                          ),
+                          if (state.isLoading && state.groupedDevices.isNotEmpty)
+                            const AppTableLoadingMore(),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -248,231 +257,247 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
       );
     }
 
-    return CustomScrollView(
-      controller: _scrollController,
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          sliver: SliverList.builder(
-            itemCount: state.groupedDevices.length,
-            itemBuilder: (context, index) {
-              final group = state.groupedDevices[index];
+    // Generate linear list (Site Headers + Device Rows)
+    final List<dynamic> items = [];
+    for (int i = 0; i < state.groupedDevices.length; i++) {
+      final group = state.groupedDevices[i];
+      items.add({'type': 'header', 'group': group, 'index': i + 1});
+      for (final device in group.devices) {
+        items.add({'type': 'row', 'device': device, 'group': group});
+      }
+    }
 
-              return Column(
-                children: [
-                  // Plant Group Header - light blue
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 13,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEFF6FF),
-                      border: Border(
-                        left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                        right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                        bottom: BorderSide(
-                          color: Color(0xFFD1D5DB),
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 70,
-                          child: Text(
-                            (index + 1).toString().padLeft(2, '0'),
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1E40AF),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    group.siteName,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: const Color(0xFF1E40AF),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: const Color(0xFFBFDBFE),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      '${group.devices.length} Devices',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF2563EB),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (group.devices.isNotEmpty &&
-                                  group.devices.first.siteInformation != null)
-                                Text(
-                                  group
-                                      .devices
-                                      .first
-                                      .siteInformation!
-                                      .fullAddress,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    color: const Color(0xFF6B7280),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Device Rows
-                  ...group.devices.map(
-                    (device) => _buildDeviceRow(device, notifier),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-        if (state.groupedDevices.isNotEmpty)
-          const SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
-          ),
-      ],
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        final isLast = index == items.length - 1;
+
+        if (item['type'] == 'header') {
+          return _buildGroupHeader(
+            item['group'] as DeviceGroup,
+            item['index'] as int,
+            isLast,
+          );
+        } else {
+          return _buildDeviceRow(
+            item['device'] as Device,
+            notifier,
+            isLast,
+          );
+        }
+      },
     );
   }
 
-  Widget _buildDeviceRow(Device device, DeviceNotifier notifier) {
+  Widget _buildFixedTableHeader() {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: Color(0xFF141E7A),
         border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
           left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
           right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          bottom: BorderSide(color: Color(0xFFF3F4F6)),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
+      child: const Row(
         children: [
-          const AppTableCell(null, width: 70), // SI.NO placeholder space
-          AppTableCell(device.createdAt?.split('T')[0] ?? '—', flex: 2),
-          AppTableCell(device.deviceId, flex: 2, bold: true),
-          AppTableCell(device.companyName ?? '—', flex: 2),
-          AppTableCell(device.category ?? '—', flex: 2),
-          AppTableCell(device.simNumber ?? '—', flex: 2),
-          AppTableCell(device.notes ?? '—', flex: 3),
-          AppTableCell(device.tankName ?? '—', flex: 2),
-          AppTableCell(device.timeZone ?? '—', flex: 2),
-          AppTableCell(
-            null,
-            flex: 2,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: AppStatusBadge(status: device.status),
-            ),
-          ),
-          AppTableCell(
-            null,
-            width: 100,
-            child: Row(
-              children: [
-                AppTableActionButton(
-                  icon: Icons.edit_outlined,
-                  color: const Color(0xFF2563EB),
-                  bg: const Color(0xFFEFF6FF),
-                  onTap: () => _showAddModal(device),
-                ),
-                const SizedBox(width: 8),
-                AppTableActionButton(
-                  icon: Icons.delete_outline_rounded,
-                  color: const Color(0xFFDC2626),
-                  bg: const Color(0xFFFEF2F2),
-                  onTap: () => _confirmDelete(device, notifier),
-                ),
-              ],
-            ),
-          ),
+          AppTableHeaderCell('SI.NO', width: 70),
+          AppTableHeaderCell('Date', flex: 2),
+          AppTableHeaderCell('Device ID', flex: 3),
+          AppTableHeaderCell('Company', flex: 2),
+          AppTableHeaderCell('Category', flex: 2),
+          AppTableHeaderCell('Sim Number', flex: 2),
+          AppTableHeaderCell('Tank', flex: 2),
+          AppTableHeaderCell('Status', flex: 2),
+          AppTableHeaderCell('Action', width: 100),
         ],
       ),
     );
   }
 
-  Widget _buildPlantAutocomplete(DeviceNotifier notifier) {
+  Widget _buildGroupHeader(DeviceGroup group, int index, bool isLast) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        border: Border(
+          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          bottom: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 70,
+              child: Text(
+                index.toString().padLeft(2, '0'),
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1E40AF),
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2, // Align with DATE column
+              child: Row(
+                children: [
+                  Text(
+                    group.siteName,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1E40AF),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: Text(
+                      '${group.devices.length} Devices',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 13, // Align with the rest of columns (Total 15 - Date 2)
+              child: group.devices.isNotEmpty && group.devices.first.siteInformation != null
+                  ? Text(
+                      group.devices.first.siteInformation!.fullAddress,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: const Color(0xFF6B7280),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeviceRow(Device device, DeviceNotifier notifier, bool isLast) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          bottom: isLast
+              ? const BorderSide(color: Color(0xFFD1D5DB), width: 1.5)
+              : const BorderSide(color: Color(0xFFF3F4F6)),
+        ),
+        borderRadius: isLast
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              )
+            : BorderRadius.zero,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        child: Row(
+          children: [
+            const AppTableCell(null, width: 70),
+            AppTableCell(device.createdAt?.split('T')[0] ?? '—', flex: 2),
+            AppTableCell(device.deviceId, flex: 3, bold: true),
+            AppTableCell(device.companyName ?? '—', flex: 2),
+            AppTableCell(device.category ?? '—', flex: 2),
+            AppTableCell(device.simNumber ?? '—', flex: 2),
+            AppTableCell(device.tankName ?? '—', flex: 2),
+            AppTableCell(
+              null,
+              flex: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: AppStatusBadge(status: device.status),
+              ),
+            ),
+            AppTableCell(
+              null,
+              width: 100,
+              child: Row(
+                children: [
+                  AppTableActionButton(
+                    icon: Icons.edit_outlined,
+                    color: const Color(0xFF2563EB),
+                    bg: const Color(0xFFEFF6FF),
+                    onTap: () => _showAddModal(device),
+                  ),
+                  const SizedBox(width: 8),
+                  AppTableActionButton(
+                    icon: Icons.delete_outline_rounded,
+                    color: const Color(0xFFDC2626),
+                    bg: const Color(0xFFFEF2F2),
+                    onTap: () => _confirmDelete(device, notifier),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSiteAutocomplete(DeviceNotifier notifier) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return RawAutocomplete<PlantAutocompleteInfo>(
-          textEditingController: _plantSearchController,
+        return RawAutocomplete<SiteAutocompleteInfo>(
+          textEditingController: _siteSearchController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.isEmpty) {
-              return const Iterable<PlantAutocompleteInfo>.empty();
+              return const Iterable<SiteAutocompleteInfo>.empty();
             }
-            return await notifier.searchPlants(textEditingValue.text);
+            return await notifier.searchSites(textEditingValue.text);
           },
-          displayStringForOption: (PlantAutocompleteInfo option) =>
-              option.plantName,
+          displayStringForOption: (SiteAutocompleteInfo option) => option.siteName,
           onSelected: (option) {
-            notifier.setSearchPlant(option.plantName);
+            notifier.setSearchSite(option.siteName);
             notifier.loadGroupedDevices();
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return TextField(
               controller: controller,
               focusNode: focusNode,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: const Color(0xFF1A1A2E),
-              ),
+              style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF1A1A2E)),
               decoration: InputDecoration(
-                hintText: 'Filter By Plant Name',
-                hintStyle: GoogleFonts.inter(
-                  color: const Color(0xFF9CA3AF),
-                  fontSize: 14,
-                ),
-                prefixIcon: const Icon(
-                  Icons.location_on_outlined,
-                  size: 20,
-                  color: Color(0xFF6B7280),
-                ),
+                hintText: 'Filter By Site Name',
+                hintStyle: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 14),
+                prefixIcon: const Icon(Icons.location_on_outlined, size: 20, color: Color(0xFF6B7280)),
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: Color(0xFF141E7A),
-                    width: 2,
-                  ),
+                  borderSide: const BorderSide(color: Color(0xFF141E7A), width: 2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
               onSubmitted: (v) {
-                notifier.setSearchPlant(v);
+                notifier.setSearchSite(v);
                 notifier.loadGroupedDevices();
               },
             );
@@ -494,16 +519,10 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                       final option = options.elementAt(index);
                       return ListTile(
                         title: Text(
-                          option.plantName,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          option.siteName,
+                          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
                         ),
-                        subtitle: Text(
-                          option.fullAddress,
-                          style: GoogleFonts.inter(fontSize: 11),
-                        ),
+                        subtitle: Text(option.fullAddress, style: GoogleFonts.inter(fontSize: 11)),
                         onTap: () => onSelected(option),
                       );
                     },
@@ -527,9 +546,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             if (textEditingValue.text.isEmpty) {
               return const Iterable<String>.empty();
             }
-            return await notifier.getDeviceNameSuggestions(
-              textEditingValue.text,
-            );
+            return await notifier.getDeviceNameSuggestions(textEditingValue.text);
           },
           displayStringForOption: (String option) => option,
           onSelected: (option) {
@@ -540,30 +557,17 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             return TextField(
               controller: controller,
               focusNode: focusNode,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: const Color(0xFF1A1A2E),
-              ),
+              style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF1A1A2E)),
               decoration: InputDecoration(
                 hintText: 'Search By Device ID / Name',
-                hintStyle: GoogleFonts.inter(
-                  color: const Color(0xFF9CA3AF),
-                  fontSize: 14,
-                ),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  size: 20,
-                  color: Color(0xFF6B7280),
-                ),
+                hintStyle: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 14),
+                prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF6B7280)),
                 enabledBorder: OutlineInputBorder(
                   borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: Color(0xFF141E7A),
-                    width: 2,
-                  ),
+                  borderSide: const BorderSide(color: Color(0xFF141E7A), width: 2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -590,10 +594,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                     itemBuilder: (context, index) {
                       final option = options.elementAt(index);
                       return ListTile(
-                        title: Text(
-                          option,
-                          style: GoogleFonts.inter(fontSize: 13),
-                        ),
+                        title: Text(option, style: GoogleFonts.inter(fontSize: 13)),
                         onTap: () => onSelected(option),
                       );
                     },
@@ -614,10 +615,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
         title: const Text('Delete Device'),
         content: const Text('Are you sure you want to delete this device?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -628,10 +626,35 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     if (confirm == true) {
       final success = await notifier.deleteDevice(device.id);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Device deleted successfully')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Device deleted successfully')));
       }
     }
+  }
+}
+
+
+class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _SliverHeaderDelegate({required this.child, this.height = 56});
+
+  @override
+  double get minExtent => height;
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_SliverHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child || oldDelegate.height != height;
   }
 }

@@ -36,12 +36,12 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
       // Fetch all grouped tanks and filter for those assigned to this group
       final response = await repository.getTanksGrouped(limit: 100);
 
-      final assignedPlantIds = widget.group.assignedPlants.toSet();
+      final assignedSiteIds = widget.group.assignedSites.toSet();
       final assignedTankIds = widget.group.assignedTanks.toSet();
 
       _filteredGroups = response.data
           .where((pg) {
-            return assignedPlantIds.contains(pg.plantId);
+            return assignedSiteIds.contains(pg.siteId);
           })
           .map((pg) {
             // Filter tanks within each plant group
@@ -84,7 +84,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   _buildHeader(),
                   const SizedBox(height: 24),
                   const Text(
-                    'ASSIGNED PLANTS & TANKS',
+                    'ASSIGNED SITES & TANKS',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -97,12 +97,12 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                       child: Padding(
                         padding: EdgeInsets.all(40.0),
                         child: Text(
-                          'No plant or tank assignments found for this group.',
+                          'No site or tank assignments found for this group.',
                         ),
                       ),
                     )
                   else
-                    ..._filteredGroups.map((pg) => _buildPlantCard(pg)),
+                    ..._filteredGroups.map((pg) => _buildSiteCard(pg)),
                 ],
               ),
             ),
@@ -185,7 +185,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
     );
   }
 
-  Widget _buildPlantCard(TankGroup pg) {
+  Widget _buildSiteCard(TankGroup pg) {
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -210,7 +210,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        pg.plantName,
+                        pg.siteName,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,

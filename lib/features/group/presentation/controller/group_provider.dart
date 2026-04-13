@@ -4,7 +4,7 @@ import '../../data/api/group_api.dart';
 import '../../data/repository/group_repository_impl.dart';
 import '../../domain/repository/group_repository.dart';
 import '../model/group_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 
 class GroupState {
   final List<Group> groups;
@@ -19,7 +19,7 @@ class GroupState {
   final String? filterName;
   final int? filterStatus;
   final int totalEntries;
-  final List<PlantUserCount> plantUserCounts;
+  final List<SiteUserCount> siteUserCounts;
 
   GroupState({
     this.groups = const [],
@@ -34,7 +34,7 @@ class GroupState {
     this.filterName,
     this.filterStatus,
     this.totalEntries = 0,
-    this.plantUserCounts = const [],
+    this.siteUserCounts = const [],
   });
 
   GroupState copyWith({
@@ -50,7 +50,7 @@ class GroupState {
     String? filterName,
     int? filterStatus,
     int? totalEntries,
-    List<PlantUserCount>? plantUserCounts,
+    List<SiteUserCount>? siteUserCounts,
   }) {
     return GroupState(
       groups: groups ?? this.groups,
@@ -65,7 +65,7 @@ class GroupState {
       filterName: filterName ?? this.filterName,
       filterStatus: filterStatus ?? this.filterStatus,
       totalEntries: totalEntries ?? this.totalEntries,
-      plantUserCounts: plantUserCounts ?? this.plantUserCounts,
+      siteUserCounts: siteUserCounts ?? this.siteUserCounts,
     );
   }
 }
@@ -74,7 +74,7 @@ class GroupNotifier extends Notifier<GroupState> {
   @override
   GroupState build() {
     ref.keepAlive();
-    Future.microtask(() => loadPlantUserCounts());
+    Future.microtask(() => loadSiteUserCounts());
     return GroupState();
   }
 
@@ -84,7 +84,7 @@ class GroupNotifier extends Notifier<GroupState> {
 
   void clearFilters() {
     state = state.copyWith(searchQuery: '', filterStatus: null);
-    loadPlantUserCounts();
+    loadSiteUserCounts();
   }
 
   Future<void> loadGroups({
@@ -144,7 +144,7 @@ class GroupNotifier extends Notifier<GroupState> {
     }
   }
 
-  Future<void> loadPlantUserCounts({String? name}) async {
+  Future<void> loadSiteUserCounts({String? name}) async {
     final searchName = name ?? state.searchQuery;
     state = state.copyWith(
       isLoading: true,
@@ -153,12 +153,12 @@ class GroupNotifier extends Notifier<GroupState> {
     );
     try {
       final repository = ref.read(groupRepositoryProvider);
-      final response = await repository.getPlantsWithUserCounts(
+      final response = await repository.getSitesWithUserCounts(
         name: searchName,
       );
       state = state.copyWith(
         isLoading: false,
-        plantUserCounts: response,
+        siteUserCounts: response,
         totalEntries: response.length,
       );
     } catch (e) {
@@ -173,7 +173,7 @@ class GroupNotifier extends Notifier<GroupState> {
       await repository.createGroup(request);
       state = state.copyWith(isProcessing: false);
       await loadGroups();
-      await loadPlantUserCounts();
+      await loadSiteUserCounts();
       return true;
 
     } catch (e) {
@@ -189,7 +189,7 @@ class GroupNotifier extends Notifier<GroupState> {
       await repository.updateGroup(id, data);
       state = state.copyWith(isProcessing: false);
       await loadGroups();
-      await loadPlantUserCounts();
+      await loadSiteUserCounts();
       return true;
 
     } catch (e) {
@@ -205,7 +205,7 @@ class GroupNotifier extends Notifier<GroupState> {
       await repository.deleteGroup(id);
       state = state.copyWith(isProcessing: false);
       await loadGroups();
-      await loadPlantUserCounts();
+      await loadSiteUserCounts();
       return true;
 
     } catch (e) {
@@ -221,7 +221,7 @@ class GroupNotifier extends Notifier<GroupState> {
       await repository.assignUsersToGroup(groupId, userIds);
       state = state.copyWith(isProcessing: false);
       await loadGroups();
-      await loadPlantUserCounts();
+      await loadSiteUserCounts();
       return true;
 
     } catch (e) {
@@ -254,7 +254,7 @@ class GroupNotifier extends Notifier<GroupState> {
       final repository = ref.read(groupRepositoryProvider);
       await repository.assignGroupsToUser(userId, groupIds);
       state = state.copyWith(isProcessing: false);
-      await loadPlantUserCounts();
+      await loadSiteUserCounts();
       return true;
 
     } catch (e) {
@@ -269,7 +269,7 @@ class GroupNotifier extends Notifier<GroupState> {
       final repository = ref.read(groupRepositoryProvider);
       await repository.removeUserFromGroup(groupId, userId);
       state = state.copyWith(isProcessing: false);
-      await loadPlantUserCounts();
+      await loadSiteUserCounts();
       return true;
 
     } catch (e) {
@@ -278,24 +278,24 @@ class GroupNotifier extends Notifier<GroupState> {
     }
   }
 
-  Future<List<PlantAutocompleteInfo>> getPlantSuggestions(String query) async {
+  Future<List<SiteAutocompleteInfo>> getSiteSuggestions(String query) async {
     try {
       final repository = ref.read(groupRepositoryProvider);
-      return await repository.getPlantSuggestions(query);
+      return await repository.getSiteSuggestions(query);
     } catch (e) {
       return [];
     }
   }
 
-  Future<bool> unassignUserFromTank(int userId, int plantId, int tankId) async {
+  Future<bool> unassignUserFromTank(int userId, int siteId, int tankId) async {
     state = state.copyWith(isProcessing: true, error: null);
     try {
       final repository = ref.read(groupRepositoryProvider);
-      await repository.unassignUserFromTank(userId, plantId, tankId);
+      await repository.unassignUserFromTank(userId, siteId, tankId);
       state = state.copyWith(isProcessing: false);
       // Refresh details
-      ref.invalidate(plantGroupDetailsProvider(plantId));
-      await loadPlantUserCounts();
+      ref.invalidate(siteGroupDetailsProvider(siteId));
+      await loadSiteUserCounts();
       return true;
 
     } catch (e) {
@@ -320,7 +320,7 @@ final groupProvider = NotifierProvider<GroupNotifier, GroupState>(
   GroupNotifier.new,
 );
 
-final plantGroupDetailsProvider = FutureProvider.family<PlantGroupDetails, int>((ref, plantId) async {
+final siteGroupDetailsProvider = FutureProvider.family<SiteGroupDetails, int>((ref, siteId) async {
   final repository = ref.watch(groupRepositoryProvider);
-  return repository.getPlantGroupDetails(plantId);
+  return repository.getSiteGroupDetails(siteId);
 });

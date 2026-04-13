@@ -95,23 +95,6 @@ class CompanyNotifier extends Notifier<CompanyState> {
   }
 
   List<CompanyGroup> _filterCompanies(List<CompanyGroup> companies) {
-    final userState = ref.read(userProvider);
-    final currentUser = userState.currentUser;
-    
-    if (currentUser == null) return companies;
-    
-    final roleName = currentUser.roleName?.toLowerCase() ?? '';
-    // Check if the user is a super_admin or company_admin
-    final isAdmin = roleName.contains('admin');
-    
-    if (isAdmin && currentUser.companyId != null) {
-      // Exclude groups where any address matches the current user's companyId
-      return companies.where((group) {
-        final groupCompanyIds = group.addresses.map((a) => a.companyId).toSet();
-        return !groupCompanyIds.contains(currentUser.companyId);
-      }).toList();
-    }
-    
     return companies;
   }
 

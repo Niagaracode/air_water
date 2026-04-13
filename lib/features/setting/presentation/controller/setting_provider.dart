@@ -15,7 +15,7 @@ class SettingState {
   final int totalEntries;
   final String searchName;
   final String? parameterType;
-  final int? selectedPlantId;
+  final int? selectedSiteId;
   final int? selectedStatus;
 
   SettingState({
@@ -28,7 +28,7 @@ class SettingState {
     this.totalEntries = 0,
     this.searchName = '',
     this.parameterType,
-    this.selectedPlantId,
+    this.selectedSiteId,
     this.selectedStatus,
   });
 
@@ -42,10 +42,10 @@ class SettingState {
     int? totalEntries,
     String? searchName,
     String? parameterType,
-    int? selectedPlantId,
+    int? selectedSiteId,
     int? selectedStatus,
     bool clearParameterType = false,
-    bool clearPlantId = false,
+    bool clearSiteId = false,
     bool clearStatus = false,
   }) {
     return SettingState(
@@ -58,7 +58,7 @@ class SettingState {
       totalEntries: totalEntries ?? this.totalEntries,
       searchName: searchName ?? this.searchName,
       parameterType: clearParameterType ? null : (parameterType ?? this.parameterType),
-      selectedPlantId: clearPlantId ? null : (selectedPlantId ?? this.selectedPlantId),
+      selectedSiteId: clearSiteId ? null : (selectedSiteId ?? this.selectedSiteId),
       selectedStatus: clearStatus ? null : (selectedStatus ?? this.selectedStatus),
     );
   }
@@ -90,7 +90,7 @@ class SettingNotifier extends Notifier<SettingState> {
         limit: _limit,
         name: state.searchName,
         parameterType: state.parameterType,
-        plantId: state.selectedPlantId,
+        plantId: state.selectedSiteId,
         isActive: state.selectedStatus,
       );
 
@@ -127,7 +127,7 @@ class SettingNotifier extends Notifier<SettingState> {
         limit: _limit,
         name: state.searchName,
         parameterType: state.parameterType,
-        plantId: state.selectedPlantId,
+        plantId: state.selectedSiteId,
         isActive: state.selectedStatus,
       );
 
@@ -150,13 +150,13 @@ class SettingNotifier extends Notifier<SettingState> {
 
   SettingGroup _injectMockDeviceData(SettingGroup group) {
     return SettingGroup(
-      plantId: group.plantId,
-      plantName: group.plantName,
-      plantOrganizationCode: group.plantOrganizationCode,
-      plantAddressLine1: group.plantAddressLine1,
-      plantCity: group.plantCity,
-      plantState: group.plantState,
-      plantPincode: group.plantPincode,
+      siteId: group.siteId,
+      siteName: group.siteName,
+      siteOrganizationCode: group.siteOrganizationCode,
+      siteAddressLine1: group.siteAddressLine1,
+      siteCity: group.siteCity,
+      siteState: group.siteState,
+      sitePincode: group.sitePincode,
       settings: group.settings.map((setting) {
         double val = 45.0 + (setting.id % 30);
         String unit = '%';
@@ -174,8 +174,8 @@ class SettingNotifier extends Notifier<SettingState> {
           description: setting.description,
           companyId: setting.companyId,
           companyName: setting.companyName,
-          plantId: setting.plantId,
-          plantName: setting.plantName,
+          siteId: setting.siteId,
+          siteName: setting.siteName,
           tankId: setting.tankId,
           tankNumber: setting.tankNumber,
           deviceId: setting.deviceId,
@@ -205,8 +205,8 @@ class SettingNotifier extends Notifier<SettingState> {
     loadSettings(isReload: true);
   }
 
-  void setPlantId(int? plantId) {
-    state = state.copyWith(selectedPlantId: plantId);
+  void setSiteId(int? siteId) {
+    state = state.copyWith(selectedSiteId: siteId);
     loadSettings(isReload: true);
   }
 
@@ -219,7 +219,7 @@ class SettingNotifier extends Notifier<SettingState> {
     state = state.copyWith(
       searchName: '',
       clearParameterType: true,
-      clearPlantId: true,
+      clearSiteId: true,
       clearStatus: true,
     );
     loadSettings(isReload: true);

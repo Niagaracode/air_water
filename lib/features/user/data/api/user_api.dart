@@ -1,7 +1,7 @@
 import 'dart:convert';
 import '../../../../core/network/api_client.dart';
 import '../../presentation/model/user_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../../../tank/presentation/model/tank_model.dart';
 
 class UserApi {
@@ -18,7 +18,7 @@ class UserApi {
     int? roleId,
     int? companyId,
     int? status,
-    int? plantId,
+    int? siteId,
     int? tankId,
     List<Map<String, dynamic>>? excludeAssignments,
     String? groupName,
@@ -31,7 +31,7 @@ class UserApi {
     if (roleId != null) query['role_id'] = roleId;
     if (companyId != null) query['company_id'] = companyId;
     if (status != null) query['status'] = status;
-    if (plantId != null) query['plant_id'] = plantId;
+    if (siteId != null) query['plant_id'] = siteId;
     if (tankId != null) query['tank_id'] = tankId;
     if (excludeAssignments != null && excludeAssignments.isNotEmpty) {
       query['exclude_assignments'] = jsonEncode(excludeAssignments);
@@ -83,27 +83,27 @@ class UserApi {
         .toList();
   }
 
-  Future<List<PlantAutocompleteInfo>> searchPlants(String q) async {
+  Future<List<SiteAutocompleteInfo>> searchSites(String q) async {
     final Map<String, dynamic> query = {'q': q};
     final response = await _client.get(
       '/plants/tank-autocomplete',
       query: query,
     );
     return (response.data['data'] as List)
-        .map((i) => PlantAutocompleteInfo.fromJson(i as Map<String, dynamic>))
+        .map((i) => SiteAutocompleteInfo.fromJson(i as Map<String, dynamic>))
         .toList();
   }
 
   Future<TankGroupedResponse> getTanksGrouped({
     int page = 1,
     int limit = 50,
-    String? plantName,
+    String? siteName,
     String? tankName,
     int? status,
   }) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
-    if (plantName != null && plantName.isNotEmpty) {
-      query['plant_name'] = plantName;
+    if (siteName != null && siteName.isNotEmpty) {
+      query['plant_name'] = siteName;
     }
     if (tankName != null && tankName.isNotEmpty) {
       query['tank_number'] = tankName;

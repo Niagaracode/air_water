@@ -1,23 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../model/plant_model.dart';
-import '../../data/api/plant_api.dart';
-import '../../domain/repository/plant_repository.dart';
-import '../../data/repository/plant_repository_impl.dart';
+import '../model/site_model.dart';
+import '../../data/api/site_api.dart';
+import '../../domain/repository/site_repository.dart';
+import '../../data/repository/site_repository_impl.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../features/company/presentation/controller/company_provider.dart';
 import '../../../../features/company/presentation/model/company_model.dart';
 
-final plantApiProvider = Provider(
-  (ref) => PlantApi(ref.read(apiClientProvider)),
+final siteApiProvider = Provider(
+  (ref) => SiteApi(ref.read(apiClientProvider)),
 );
 
-final plantRepositoryProvider = Provider<PlantRepository>(
-  (ref) => PlantRepositoryImpl(ref.read(plantApiProvider)),
+final siteRepositoryProvider = Provider<SiteRepository>(
+  (ref) => SiteRepositoryImpl(ref.read(siteApiProvider)),
 );
 
-class PlantState {
-  final List<Plant> plants;
-  final List<PlantGroup> groupedPlants;
+class SiteState {
+  final List<Site> sites;
+  final List<SiteGroup> groupedSites;
   final bool isLoading;
   final bool isProcessing;
   final bool hasMore;
@@ -28,9 +28,9 @@ class PlantState {
   final int? selectedStatus;
   final String? selectedDate;
 
-  PlantState({
-    this.plants = const [],
-    this.groupedPlants = const [],
+  SiteState({
+    this.sites = const [],
+    this.groupedSites = const [],
     this.isLoading = false,
     this.isProcessing = false,
     this.hasMore = true,
@@ -42,9 +42,9 @@ class PlantState {
     this.selectedDate,
   });
 
-  PlantState copyWith({
-    List<Plant>? plants,
-    List<PlantGroup>? groupedPlants,
+  SiteState copyWith({
+    List<Site>? sites,
+    List<SiteGroup>? groupedSites,
     bool? isLoading,
     bool? isProcessing,
     bool? hasMore,
@@ -57,9 +57,9 @@ class PlantState {
     bool clearStatus = false,
     bool clearDate = false,
   }) {
-    return PlantState(
-      plants: plants ?? this.plants,
-      groupedPlants: groupedPlants ?? this.groupedPlants,
+    return SiteState(
+      sites: sites ?? this.sites,
+      groupedSites: groupedSites ?? this.groupedSites,
       isLoading: isLoading ?? this.isLoading,
       isProcessing: isProcessing ?? this.isProcessing,
       hasMore: hasMore ?? this.hasMore,
@@ -75,26 +75,26 @@ class PlantState {
   }
 }
 
-class PlantNotifier extends Notifier<PlantState> {
+class SiteNotifier extends Notifier<SiteState> {
   static const int _limit = 50;
 
   @override
-  PlantState build() {
+  SiteState build() {
     ref.keepAlive();
-    Future.microtask(() => loadGroupedPlants());
-    return PlantState();
+    Future.microtask(() => loadGroupedSites());
+    return SiteState();
   }
 
-  Future<void> loadGroupedPlants({bool isReload = false}) async {
+  Future<void> loadGroupedSites({bool isReload = false}) async {
     if (state.isLoading) return;
 
-    if (state.groupedPlants.isEmpty || isReload) {
+    if (state.groupedSites.isEmpty || isReload) {
       state = state.copyWith(isLoading: true, error: null);
     }
 
     try {
-      final repository = ref.read(plantRepositoryProvider);
-      final response = await repository.getPlantsGrouped(
+      final repository = ref.read(siteRepositoryProvider);
+      final response = await repository.getSitesGrouped(
         page: 1,
         limit: _limit,
         name: state.searchName,
@@ -103,7 +103,7 @@ class PlantNotifier extends Notifier<PlantState> {
       );
 
       state = state.copyWith(
-        groupedPlants: response.data,
+        groupedSites: response.data,
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: 1,
@@ -121,8 +121,8 @@ class PlantNotifier extends Notifier<PlantState> {
 
     try {
       final nextPage = state.page + 1;
-      final repository = ref.read(plantRepositoryProvider);
-      final response = await repository.getPlantsGrouped(
+      final repository = ref.read(siteRepositoryProvider);
+      final response = await repository.getSitesGrouped(
         page: nextPage,
         limit: _limit,
         name: state.searchName,
@@ -131,7 +131,7 @@ class PlantNotifier extends Notifier<PlantState> {
       );
 
       state = state.copyWith(
-        groupedPlants: [...state.groupedPlants, ...response.data],
+        groupedSites: [...state.groupedSites, ...response.data],
         isLoading: false,
         hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
@@ -147,13 +147,13 @@ class PlantNotifier extends Notifier<PlantState> {
 
   void clearFilters() {
     state = state.copyWith(searchName: '', clearStatus: true, clearDate: true);
-    loadGroupedPlants(isReload: true);
+    loadGroupedSites(isReload: true);
   }
 
-  Future<List<PlantAutocompleteInfo>> searchPlants(String query) async {
+  Future<List<SiteAutocompleteInfo>> searchSites(String query) async {
     try {
-      final repository = ref.read(plantRepositoryProvider);
-      return await repository.getPlantAutocomplete(q: query);
+      final repository = ref.read(siteRepositoryProvider);
+      return await repository.getSiteAutocomplete(q: query);
     } catch (e) {
       return [];
     }
@@ -174,7 +174,7 @@ class PlantNotifier extends Notifier<PlantState> {
     } else {
       state = state.copyWith(selectedStatus: status);
     }
-    loadGroupedPlants(isReload: true);
+    loadGroupedSites(isReload: true);
   }
 
   void setDate(String? date) {
@@ -183,15 +183,15 @@ class PlantNotifier extends Notifier<PlantState> {
     } else {
       state = state.copyWith(selectedDate: date);
     }
-    loadGroupedPlants(isReload: true);
+    loadGroupedSites(isReload: true);
   }
 
-  Future<bool> createPlant(PlantCreateRequest request) async {
+  Future<bool> createSite(SiteCreateRequest request) async {
     state = state.copyWith(isProcessing: true, error: null);
     try {
-      final repository = ref.read(plantRepositoryProvider);
-      await repository.createPlant(request);
-      await loadGroupedPlants(isReload: true);
+      final repository = ref.read(siteRepositoryProvider);
+      await repository.createSite(request);
+      await loadGroupedSites(isReload: true);
       state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {
@@ -200,12 +200,12 @@ class PlantNotifier extends Notifier<PlantState> {
     }
   }
 
-  Future<bool> updatePlant(int id, PlantCreateRequest request) async {
+  Future<bool> updateSite(int id, SiteCreateRequest request) async {
     state = state.copyWith(isProcessing: true, error: null);
     try {
-      final repository = ref.read(plantRepositoryProvider);
-      await repository.updatePlant(id, request);
-      await loadGroupedPlants(isReload: true);
+      final repository = ref.read(siteRepositoryProvider);
+      await repository.updateSite(id, request);
+      await loadGroupedSites(isReload: true);
       state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {
@@ -214,12 +214,12 @@ class PlantNotifier extends Notifier<PlantState> {
     }
   }
 
-  Future<bool> deletePlant(int id) async {
+  Future<bool> deleteSite(int id) async {
     state = state.copyWith(isProcessing: true, error: null);
     try {
-      final repository = ref.read(plantRepositoryProvider);
-      await repository.deletePlant(id);
-      await loadGroupedPlants(isReload: true);
+      final repository = ref.read(siteRepositoryProvider);
+      await repository.deleteSite(id);
+      await loadGroupedSites(isReload: true);
       state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {
@@ -229,6 +229,6 @@ class PlantNotifier extends Notifier<PlantState> {
   }
 }
 
-final plantNotifierProvider = NotifierProvider<PlantNotifier, PlantState>(
-  PlantNotifier.new,
+final siteNotifierProvider = NotifierProvider<SiteNotifier, SiteState>(
+  SiteNotifier.new,
 );

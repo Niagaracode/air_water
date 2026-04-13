@@ -9,17 +9,17 @@ class Setting {
   final String? companyState;
   final String? companyPincode;
 
-  final int? plantId;
-  final String? plantName;
+  final int? siteId;
+  final String? siteName;
   final int? tankId;
   final String? tankNumber;
   final String? deviceId;
   final String? simNumber;
   final String? timeZone;
-  final String? plantAddressLine1;
-  final String? plantCity;
-  final String? plantState;
-  final String? plantPincode;
+  final String? siteAddressLine1;
+  final String? siteCity;
+  final String? siteState;
+  final String? sitePincode;
 
   final String? parameterType;
   final String? conditionType;
@@ -57,17 +57,17 @@ class Setting {
     this.companyCity,
     this.companyState,
     this.companyPincode,
-    this.plantId,
-    this.plantName,
+    this.siteId,
+    this.siteName,
     this.tankId,
     this.tankNumber,
     this.deviceId,
     this.simNumber,
     this.timeZone,
-    this.plantAddressLine1,
-    this.plantCity,
-    this.plantState,
-    this.plantPincode,
+    this.siteAddressLine1,
+    this.siteCity,
+    this.siteState,
+    this.sitePincode,
     this.parameterType,
     this.conditionType,
     required this.thresholds,
@@ -124,7 +124,7 @@ class Setting {
     // Definite and robust mapping for thresholds from backend JSON
     final t1 = toDouble(json['threshold1'] ?? json['threshold_1'] ?? json['rule_threshold_1'] ?? json['rule_threshold1']);
     final t2 = toDouble(json['threshold2'] ?? json['threshold_2'] ?? json['rule_threshold_2'] ?? json['rule_threshold2']);
-    final t3 = toDouble(json['threshold3'] ?? json['threshold_3'] ?? json['rule_threshold_3'] ?? json['rule_threshold3']);
+    final t3 = toDouble(json['threshold3'] ?? json['threshold__3'] ?? json['rule_threshold_3'] ?? json['rule_threshold3']);
 
     return Setting(
       id: toInt(json['id']),
@@ -136,17 +136,17 @@ class Setting {
       companyCity: json['company_city'] as String?,
       companyState: json['company_state'] as String?,
       companyPincode: json['company_pincode'] as String?,
-      plantId: json['plant_id'] != null ? toInt(json['plant_id']) : null,
-      plantName: json['plant_name'] as String?,
+      siteId: json['plant_id'] != null ? toInt(json['plant_id']) : null,
+      siteName: json['plant_name'] as String?,
       tankId: json['tank_id'] != null ? toInt(json['tank_id']) : null,
       tankNumber: json['tank_number'] as String?,
       deviceId: json['device_id'] as String?,
       simNumber: json['sim_number'] as String?,
       timeZone: json['time_zone'] as String?,
-      plantAddressLine1: json['plant_address_line_1'] as String?,
-      plantCity: json['plant_city'] as String?,
-      plantState: json['plant_state'] as String?,
-      plantPincode: json['plant_pincode'] as String?,
+      siteAddressLine1: json['plant_address_line_1'] as String?,
+      siteCity: json['plant_city'] as String?,
+      siteState: json['plant_state'] as String?,
+      sitePincode: json['plant_pincode'] as String?,
       parameterType: resolvedParamType,
       conditionType: json['condition_type'] as String?,
       thresholds: [t1, t2, t3],
@@ -184,7 +184,7 @@ class Setting {
       'name': name,
       'description': description,
       'company_id': companyId,
-      'plant_id': plantId,
+      'plant_id': siteId,
       'tank_id': tankId,
       'sim_number': simNumber,
       'time_zone': timeZone,
@@ -215,12 +215,12 @@ class Setting {
     return parts.isNotEmpty ? parts.join(', ') : '—';
   }
 
-  String get plantFullAddress {
+  String get siteFullAddress {
     final parts = [
-      plantAddressLine1,
-      plantCity,
-      plantState,
-      plantPincode,
+      siteAddressLine1,
+      siteCity,
+      siteState,
+      sitePincode,
     ].whereType<String>().where((e) => e.trim().isNotEmpty);
     return parts.isNotEmpty ? parts.join(', ') : '—';
   }
@@ -278,13 +278,13 @@ class SettingPagination {
 class SettingAutocompleteInfo {
   final int id;
   final String name;
-  final String? plantName;
+  final String? siteName;
   final String? parameterType;
 
   SettingAutocompleteInfo({
     required this.id,
     required this.name,
-    this.plantName,
+    this.siteName,
     this.parameterType,
   });
 
@@ -294,7 +294,7 @@ class SettingAutocompleteInfo {
           ? (json['id'] as num).toInt()
           : (int.tryParse(json['id']?.toString() ?? '') ?? 0),
       name: json['name'] as String? ?? 'Unnamed',
-      plantName: json['plant_name'] as String?,
+      siteName: json['plant_name'] as String?,
       parameterType:
           (json['parameter_type'] as String?)?.toUpperCase().trim().replaceAll(
                 ' ',
@@ -308,23 +308,23 @@ class SettingAutocompleteInfo {
 }
 
 class SettingGroup {
-  final int plantId;
-  final String plantName;
-  final String? plantOrganizationCode;
-  final String? plantAddressLine1;
-  final String? plantCity;
-  final String? plantState;
-  final String? plantPincode;
+  final int siteId;
+  final String siteName;
+  final String? siteOrganizationCode;
+  final String? siteAddressLine1;
+  final String? siteCity;
+  final String? siteState;
+  final String? sitePincode;
   final List<Setting> settings;
 
   SettingGroup({
-    required this.plantId,
-    required this.plantName,
-    this.plantOrganizationCode,
-    this.plantAddressLine1,
-    this.plantCity,
-    this.plantState,
-    this.plantPincode,
+    required this.siteId,
+    required this.siteName,
+    this.siteOrganizationCode,
+    this.siteAddressLine1,
+    this.siteCity,
+    this.siteState,
+    this.sitePincode,
     required this.settings,
   });
 
@@ -338,25 +338,25 @@ class SettingGroup {
     }
 
     return SettingGroup(
-      plantId: toInt(json['plant_id']),
-      plantName: json['plant_name'] as String? ?? 'Unassigned',
-      plantOrganizationCode: json['plant_organization_code'] as String?,
-      plantAddressLine1: json['plant_address_line_1'] as String?,
-      plantCity: json['plant_city'] as String?,
-      plantState: json['plant_state'] as String?,
-      plantPincode: json['plant_pincode'] as String?,
+      siteId: toInt(json['plant_id']),
+      siteName: json['plant_name'] as String? ?? 'Unassigned',
+      siteOrganizationCode: json['plant_organization_code'] as String?,
+      siteAddressLine1: json['plant_address_line_1'] as String?,
+      siteCity: json['plant_city'] as String?,
+      siteState: json['plant_state'] as String?,
+      sitePincode: json['plant_pincode'] as String?,
       settings: (json['rules'] as List? ?? [])
           .map((i) => Setting.fromJson(i as Map<String, dynamic>))
           .toList(),
     );
   }
 
-  String get plantFullAddress {
+  String get siteFullAddress {
     final parts = [
-      plantAddressLine1,
-      plantCity,
-      plantState,
-      plantPincode,
+      siteAddressLine1,
+      siteCity,
+      siteState,
+      sitePincode,
     ].whereType<String>().where((e) => e.trim().isNotEmpty);
     return parts.isNotEmpty ? parts.join(', ') : '';
   }
