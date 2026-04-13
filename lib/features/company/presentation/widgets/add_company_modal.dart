@@ -239,7 +239,7 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                         widget.initialAddress != null
                             ? TextField(
                           controller: _nameController,
-                          enabled: false,
+                          enabled: true,
                           decoration: InputDecoration(
                             hintText: 'Enter Company name',
                             filled: true,

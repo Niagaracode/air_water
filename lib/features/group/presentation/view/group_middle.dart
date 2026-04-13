@@ -6,7 +6,7 @@ import '../controller/group_provider.dart';
 import '../model/group_model.dart';
 import '../widgets/add_group_modal.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
-import 'group_detail.dart';
+import 'joint_site_detail_view.dart';
 
 class GroupMiddle extends ConsumerStatefulWidget {
   const GroupMiddle({super.key});
@@ -77,7 +77,7 @@ class _GroupMiddleState extends ConsumerState<GroupMiddle> {
               ),
             ),
           ),
-          if (state.isLoading && state.plantUserCounts.isEmpty)
+          if (state.isLoading && state.siteUserCounts.isEmpty)
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(48.0),
@@ -131,11 +131,11 @@ class _GroupMiddleState extends ConsumerState<GroupMiddle> {
         Expanded(
           child: AppTextField(
             controller: _searchController,
-            hint: 'Search Plant Name',
+            hint: 'Search Site Name',
             prefixIcon: const Icon(Icons.search, size: 20),
             onSubmitted: (v) {
               notifier.setSearchQuery(v);
-              notifier.loadPlantUserCounts();
+              notifier.loadSiteUserCounts();
             },
           ),
         ),
@@ -151,13 +151,13 @@ class _GroupMiddleState extends ConsumerState<GroupMiddle> {
   }
 
   Widget _buildVirtualizedList(GroupState state, GroupNotifier notifier) {
-    if (state.plantUserCounts.isEmpty && !state.isLoading) {
+    if (state.siteUserCounts.isEmpty && !state.isLoading) {
       return const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.all(32.0),
           child: Center(
             child: Text(
-              'No plant assignments found',
+              'No site assignments found',
               style: TextStyle(color: Colors.grey),
             ),
           ),
@@ -168,16 +168,16 @@ class _GroupMiddleState extends ConsumerState<GroupMiddle> {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverList.builder(
-        itemCount: state.plantUserCounts.length,
+        itemCount: state.siteUserCounts.length,
         itemBuilder: (context, index) {
-          final plant = state.plantUserCounts[index];
-          return _buildPlantCard(plant, notifier);
+          final site = state.siteUserCounts[index];
+          return _buildSiteCard(site, notifier);
         },
       ),
     );
   }
 
-  Widget _buildPlantCard(PlantUserCount plant, GroupNotifier notifier) {
+  Widget _buildSiteCard(SiteUserCount site, GroupNotifier notifier) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -194,15 +194,15 @@ class _GroupMiddleState extends ConsumerState<GroupMiddle> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        plant.plantName,
+                        site.siteName,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
                       ),
-                      if (plant.location != null)
+                      if (site.location != null)
                         Text(
-                          plant.location!,
+                          site.location!,
                           style: TextStyle(
                             color: Colors.grey.shade600,
                             fontSize: 11,
@@ -213,7 +213,14 @@ class _GroupMiddleState extends ConsumerState<GroupMiddle> {
                 ),
                 TextButton(
                   onPressed: () {
-                    // Navigation to detail
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => JointSiteDetailView(
+                          siteId: site.siteId,
+                        ),
+                      ),
+                    );
                   },
                   child: const Text('VIEW'),
                 ),
@@ -232,7 +239,7 @@ class _GroupMiddleState extends ConsumerState<GroupMiddle> {
             Wrap(
               spacing: 4,
               runSpacing: 4,
-              children: plant.groupNames.map<Widget>((name) {
+              children: site.groupNames.map<Widget>((name) {
                 return Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -257,12 +264,12 @@ class _GroupMiddleState extends ConsumerState<GroupMiddle> {
             const SizedBox(height: 12),
             Row(
               children: [
-                _countBadge(Icons.layers_outlined, 'Tanks', plant.tankCount),
+                _countBadge(Icons.layers_outlined, 'Tanks', site.tankCount),
                 const SizedBox(width: 16),
                 _countBadge(
                   Icons.people_outline,
                   'Users',
-                  plant.userCount,
+                  site.userCount,
                   isPrimary: true,
                 ),
               ],

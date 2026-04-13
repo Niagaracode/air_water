@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../presentation/model/tank_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../../../../core/network/api_client.dart';
 
 class TankApi {
@@ -12,13 +12,13 @@ class TankApi {
   Future<TankGroupedResponse> getTanksGrouped({
     int page = 1,
     int limit = 50,
-    String? plantName,
+    String? siteName,
     String? tankName,
     int? status,
   }) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
-    if (plantName != null && plantName.isNotEmpty) {
-      query['plant_name'] = plantName;
+    if (siteName != null && siteName.isNotEmpty) {
+      query['plant_name'] = siteName;
     }
     if (tankName != null && tankName.isNotEmpty) {
       query['tank_number'] = tankName;
@@ -33,7 +33,7 @@ class TankApi {
     );
   }
 
-  Future<List<PlantAutocompleteInfo>> getPlantsForTankAutocomplete({
+  Future<List<SiteAutocompleteInfo>> getSitesForTankAutocomplete({
     String? q,
   }) async {
     final Map<String, dynamic> query = {};
@@ -45,7 +45,7 @@ class TankApi {
       query: query,
     );
     return (response.data['data'] as List)
-        .map((i) => PlantAutocompleteInfo.fromJson(i as Map<String, dynamic>))
+        .map((i) => SiteAutocompleteInfo.fromJson(i as Map<String, dynamic>))
         .toList();
   }
 
@@ -119,10 +119,10 @@ class TankApi {
         .toList();
   }
 
-  Future<List<Tank>> getTanks({int? plantId}) async {
+  Future<List<Tank>> getTanks({int? siteId}) async {
     final Map<String, dynamic> query = {};
-    if (plantId != null) {
-      query['plant_id'] = plantId;
+    if (siteId != null) {
+      query['plant_id'] = siteId;
     }
     final response = await _client.get('/tanks', query: query);
     final List data = response.data['data'] ?? [];

@@ -210,7 +210,7 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
     DeviceNotifier notifier,
   ) {
     final isExpanded = state.expandedGroups.contains(
-      group.plantOrganizationCode,
+      group.siteOrganizationCode,
     );
 
     return Theme(
@@ -220,7 +220,7 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
         child: ExpansionTile(
           initiallyExpanded: isExpanded,
           onExpansionChanged: (_) =>
-              notifier.toggleGroup(group.plantOrganizationCode),
+              notifier.toggleGroup(group.siteOrganizationCode),
           title: Text(
             group.siteName,
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
@@ -301,12 +301,15 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
               ],
             ),
             const SizedBox(height: 8),
-            _infoRow('Plant', device.siteName ?? '-'),
+            _infoRow('Site', device.siteName ?? '-'),
             _infoRow('Address', device.siteInformation?.fullAddress ?? '-'),
             _infoRow('Tank', device.tankName ?? '-'),
             _infoRow('Category', device.category ?? '-'),
             _infoRow('Sim Number', device.simNumber ?? '-'),
-            _infoRow('Time Zone', device.timeZone ?? '-'),
+            _infoRow('Power Source', device.powerSource ?? '-'),
+            _infoRow('Auto Sync', device.lastSync == '1' ? 'ON' : 'OFF'),
+            _infoRow('Start Hour', device.startHour?.toString() ?? '-'),
+            _infoRow('Duration', device.duration?.toString() ?? '-'),
           ],
         ),
       ),

@@ -3,7 +3,7 @@ import '../../../../core/network/api_client.dart';
 import '../../data/api/device_api.dart';
 import '../../data/repository/device_repository_impl.dart';
 import '../model/device_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 
 class DeviceState {
   final List<DeviceGroup> groupedDevices;
@@ -13,7 +13,7 @@ class DeviceState {
   final int page;
   final bool hasMore;
   final Set<String?> expandedGroups;
-  final String searchPlant;
+  final String searchSite;
   final String searchDevice;
   final int? selectedSiteId;
   final int? selectedCompanyId;
@@ -27,7 +27,7 @@ class DeviceState {
     this.page = 1,
     this.hasMore = false,
     required this.expandedGroups,
-    this.searchPlant = '',
+    this.searchSite = '',
     this.searchDevice = '',
     this.selectedSiteId,
     this.selectedCompanyId,
@@ -42,7 +42,7 @@ class DeviceState {
     int? page,
     bool? hasMore,
     Set<String?>? expandedGroups,
-    String? searchPlant,
+    String? searchSite,
     String? searchDevice,
     int? selectedSiteId,
     int? selectedCompanyId,
@@ -56,7 +56,7 @@ class DeviceState {
       page: page ?? this.page,
       hasMore: hasMore ?? this.hasMore,
       expandedGroups: expandedGroups ?? this.expandedGroups,
-      searchPlant: searchPlant ?? this.searchPlant,
+      searchSite: searchSite ?? this.searchSite,
       searchDevice: searchDevice ?? this.searchDevice,
       selectedSiteId: selectedSiteId ?? this.selectedSiteId,
       selectedCompanyId: selectedCompanyId ?? this.selectedCompanyId,
@@ -78,8 +78,8 @@ class DeviceNotifier extends Notifier<DeviceState> {
     );
   }
 
-  void setSearchPlant(String value) {
-    state = state.copyWith(searchPlant: value);
+  void setSearchSite(String value) {
+    state = state.copyWith(searchSite: value);
   }
 
   void setSearchDevice(String value) {
@@ -98,7 +98,7 @@ class DeviceNotifier extends Notifier<DeviceState> {
 
   void clearFilters() {
     state = state.copyWith(
-      searchPlant: '',
+      searchSite: '',
       searchDevice: '',
       selectedSiteId: null,
       selectedCompanyId: null,
@@ -112,7 +112,7 @@ class DeviceNotifier extends Notifier<DeviceState> {
       final repository = ref.read(deviceRepositoryProvider);
       final response = await repository.getDevicesGrouped(
         page: 1,
-        plantName: state.searchPlant.isEmpty ? null : state.searchPlant,
+        plantName: state.searchSite.isEmpty ? null : state.searchSite,
         deviceId: state.searchDevice.isEmpty ? null : state.searchDevice,
         siteId: state.selectedSiteId,
         companyId: state.selectedCompanyId,
@@ -120,7 +120,7 @@ class DeviceNotifier extends Notifier<DeviceState> {
 
       final expandedGroups = <String?>{};
       for (var group in response.data) {
-        expandedGroups.add(group.plantOrganizationCode);
+        expandedGroups.add(group.siteOrganizationCode);
       }
 
       state = state.copyWith(
@@ -145,16 +145,16 @@ class DeviceNotifier extends Notifier<DeviceState> {
       final repository = ref.read(deviceRepositoryProvider);
       final response = await repository.getDevicesGrouped(
         page: nextPage,
-        plantName: state.searchPlant.isEmpty ? null : state.searchPlant,
+        plantName: state.searchSite.isEmpty ? null : state.searchSite,
         deviceId: state.searchDevice.isEmpty ? null : state.searchDevice,
         siteId: state.selectedSiteId,
         companyId: state.selectedCompanyId,
       );
 
-      final updatedGroups = [...state.groupedDevices, ...response.data];
+      final List<DeviceGroup> updatedGroups = [...state.groupedDevices, ...response.data];
       final expandedGroups = Set<String?>.from(state.expandedGroups);
       for (var group in response.data) {
-        expandedGroups.add(group.plantOrganizationCode);
+        expandedGroups.add(group.siteOrganizationCode);
       }
 
       state = state.copyWith(
@@ -212,7 +212,7 @@ class DeviceNotifier extends Notifier<DeviceState> {
     }
   }
 
-  Future<List<PlantAutocompleteInfo>> searchPlants(String query) async {
+  Future<List<SiteAutocompleteInfo>> searchSites(String query) async {
     try {
       final repository = ref.read(deviceRepositoryProvider);
       return await repository.getPlantsForDeviceAutocomplete(q: query);
@@ -251,11 +251,11 @@ class DeviceNotifier extends Notifier<DeviceState> {
 
   Future<List<Map<String, dynamic>>> searchTanks(
     String query, {
-    int? plantId,
+    int? siteId,
   }) async {
     try {
       final repository = ref.read(deviceRepositoryProvider);
-      return await repository.searchTanks(query, plantId: plantId);
+      return await repository.searchTanks(query, siteId: siteId);
     } catch (e) {
       return [];
     }

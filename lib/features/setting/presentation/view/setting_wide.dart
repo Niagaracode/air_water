@@ -8,7 +8,7 @@ import '../../../../shared/widgets/app_table.dart';
 import '../controller/setting_provider.dart';
 import '../model/setting_model.dart';
 import '../widgets/add_setting_modal.dart';
-import '../../../plant/presentation/controller/plant_provider.dart';
+import '../../../site/presentation/controller/site_provider.dart';
 import '../../../../core/user_config/user_role_provider.dart';
 import '../../../../core/user_config/user_role.dart';
 
@@ -287,7 +287,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                             ),
                           ),
                           subtitle: Text(
-                            option.plantName ?? '—',
+                            option.siteName ?? '—',
                             style: GoogleFonts.inter(fontSize: 12),
                           ),
                           onTap: () => onSelected(option),
@@ -304,29 +304,29 @@ class _SettingWideState extends ConsumerState<SettingWide> {
         Expanded(
           flex: 1,
           child: AppDropdown<int>(
-            value: state.selectedPlantId,
+            value: state.selectedSiteId,
             items: ref
-                .watch(plantNotifierProvider.select((s) => s.groupedPlants))
+                .watch(siteNotifierProvider.select((s) => s.groupedSites))
                 .where(
                   (e) =>
                       e.addresses.isNotEmpty &&
-                      e.addresses.first.plantId != null,
+                      e.addresses.first.siteId != null,
                 )
-                .map((e) => e.addresses.first.plantId!)
+                .map((e) => e.addresses.first.siteId!)
                 .toList(),
-            hint: 'Plant',
+            hint: 'Site',
             itemLabel: (v) {
-              final plants = ref.read(plantNotifierProvider).groupedPlants;
+              final sites = ref.read(siteNotifierProvider).groupedSites;
               try {
-                final group = plants.firstWhere(
-                  (p) => p.addresses.any((a) => a.plantId == v),
+                final group = sites.firstWhere(
+                  (p) => p.addresses.any((a) => a.siteId == v),
                 );
                 return group.name;
               } catch (_) {
                 return 'Unassigned';
               }
             },
-            onChanged: (v) => notifier.setPlantId(v),
+            onChanged: (v) => notifier.setSiteId(v),
           ),
         ),
         const SizedBox(width: 16),
@@ -392,7 +392,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             const AppTableHeaderCell('Condition', flex: 2),
           ] else ...[
             const AppTableHeaderCell('Rule Name', flex: 3),
-            const AppTableHeaderCell('Plant', width: 100),
+            const AppTableHeaderCell('Site', width: 100),
             const AppTableHeaderCell('Tank', width: 100),
             const AppTableHeaderCell('Parameter', flex: 2),
             const AppTableHeaderCell('Condition', flex: 2),
@@ -489,7 +489,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                       ),
                     ),
                   Text(
-                    group.plantName.toUpperCase(),
+                    group.siteName.toUpperCase(),
                     style: GoogleFonts.inter(
                       fontSize: isCustomer ? 13 : 11,
                       fontWeight: isCustomer
@@ -503,30 +503,31 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                 ],
               ),
               const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E7FF),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${group.settings.length} ${group.settings.length == 1 ? (isCustomer ? 'Setting' : 'Rule') : (isCustomer ? 'Settings' : 'Rules')}',
-                  style: GoogleFonts.outfit(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF141E7A),
-                  ),
-                ),
-              ),
+              _buildSettingCountBadge(group, isCustomer),
             ],
           ),
-),
+        ),
         for (final s in group.settings)
           _buildSettingRow(s, notifier, isCustomer),
       ],
+    );
+  }
+
+  Widget _buildSettingCountBadge(SettingGroup group, bool isCustomer) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE0E7FF),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '${group.settings.length} ${group.settings.length == 1 ? (isCustomer ? 'Setting' : 'Rule') : (isCustomer ? 'Settings' : 'Rules')}',
+        style: GoogleFonts.outfit(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF141E7A),
+        ),
+      ),
     );
   }
 
@@ -541,7 +542,9 @@ class _SettingWideState extends ConsumerState<SettingWide> {
     // Join all non-null thresholds with commas as the default display
     final activeThresholds = setting.thresholds
         .where((t) => t != null && t != 0)
-        .map((t) => t!.toString().replaceAll(RegExp(r'\.0$'), '')) // Remove trailing .0
+        .map(
+          (t) => t!.toString().replaceAll(RegExp(r'\.0$'), ''),
+        ) // Remove trailing .0
         .toList();
 
     if (activeThresholds.isNotEmpty) {
@@ -616,7 +619,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             ),
           ] else ...[
             AppTableCell(setting.name, flex: 3, bold: true),
-            AppTableCell(setting.plantName ?? '—', width: 100),
+            AppTableCell(setting.siteName ?? '—', width: 100),
             AppTableCell(setting.tankNumber ?? '—', width: 100),
             AppTableCell(setting.parameterType?.toUpperCase() ?? '—', flex: 2),
             AppTableCell(

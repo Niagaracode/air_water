@@ -1,7 +1,7 @@
 import '../../domain/repository/group_repository.dart';
 import '../api/group_api.dart';
 import '../../presentation/model/group_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 
 class GroupRepositoryImpl implements GroupRepository {
   final GroupApi _api;
@@ -71,23 +71,23 @@ class GroupRepositoryImpl implements GroupRepository {
   }
 
   @override
-  Future<List<PlantUserCount>> getPlantsWithUserCounts({String? name}) {
-    return _api.getPlantsWithUserCounts(name: name);
+  Future<List<SiteUserCount>> getSitesWithUserCounts({String? name}) {
+    return _api.getSitesWithUserCounts(name: name);
   }
 
   @override
-  Future<PlantGroupDetails> getPlantGroupDetails(int plantId) {
-    return _api.getPlantGroupDetails(plantId);
+  Future<SiteGroupDetails> getSiteGroupDetails(int siteId) {
+    return _api.getSiteGroupDetails(siteId);
   }
 
   @override
-  Future<List<PlantAutocompleteInfo>> getPlantSuggestions(String query) {
-    return _api.getPlantSuggestions(query);
+  Future<List<SiteAutocompleteInfo>> getSiteSuggestions(String query) {
+    return _api.getSiteSuggestions(query);
   }
 
   @override
-  Future<void> unassignUserFromTank(int userId, int plantId, int tankId) {
-    return _api.unassignUserFromTank(userId, plantId, tankId);
+  Future<void> unassignUserFromTank(int userId, int siteId, int tankId) {
+    return _api.unassignUserFromTank(userId, siteId, tankId);
   }
 }
 

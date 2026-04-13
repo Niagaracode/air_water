@@ -1,5 +1,5 @@
 import '../../presentation/model/user_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../../../tank/presentation/model/tank_model.dart';
 
 abstract class UserRepository {
@@ -12,7 +12,7 @@ abstract class UserRepository {
     int? roleId,
     int? companyId,
     int? status,
-    int? plantId,
+    int? siteId,
     int? tankId,
     List<Map<String, dynamic>>? excludeAssignments,
     String? groupName,
@@ -30,12 +30,12 @@ abstract class UserRepository {
 
   Future<List<CompanyAutocomplete>> searchCompanies(String q);
 
-  Future<List<PlantAutocompleteInfo>> searchPlants(String q);
+  Future<List<SiteAutocompleteInfo>> searchSites(String q);
 
   Future<TankGroupedResponse> getTanksGrouped({
     int page = 1,
     int limit = 50,
-    String? plantName,
+    String? siteName,
     String? tankName,
     int? status,
   });

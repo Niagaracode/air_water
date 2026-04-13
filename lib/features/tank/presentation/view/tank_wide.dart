@@ -8,7 +8,7 @@ import '../../../../shared/widgets/app_clear_button.dart';
 import '../controller/tank_provider.dart';
 import '../widgets/add_tank_modal.dart';
 import '../model/tank_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
 
@@ -20,7 +20,7 @@ class TankWide extends ConsumerStatefulWidget {
 }
 
 class _TankWideState extends ConsumerState<TankWide> {
-  final _plantSearchController = TextEditingController();
+  final _siteSearchController = TextEditingController();
   final _tankSearchController = TextEditingController();
   final _scrollController = ScrollController();
   Timer? _debounce;
@@ -40,7 +40,7 @@ class _TankWideState extends ConsumerState<TankWide> {
 
   @override
   void dispose() {
-    _plantSearchController.dispose();
+    _siteSearchController.dispose();
     _tankSearchController.dispose();
     _scrollController.dispose();
     _debounce?.cancel();
@@ -82,7 +82,7 @@ class _TankWideState extends ConsumerState<TankWide> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Centralize tank information including dimensions, types, products and plant associations.',
+                    'Centralize tank information including dimensions, types, products and site associations.',
                     style: GoogleFonts.inter(
                       color: const Color(0xFF6B7280),
                       fontSize: 13,
@@ -137,36 +137,11 @@ class _TankWideState extends ConsumerState<TankWide> {
     );
   }
 
-  Widget _buildFixedTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      height: 52,
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        border: Border(
-          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          AppTableHeaderCell('SI.NO', width: 60),
-          AppTableHeaderCell('Tank Number', flex: 3),
-          AppTableHeaderCell('Type', flex: 3),
-          AppTableHeaderCell('Product', flex: 2),
-          AppTableHeaderCell('Unit', flex: 1),
-          AppTableHeaderCell('Status', flex: 1),
-          AppTableHeaderCell('Actions', width: 120),
-        ],
-      ),
-    );
-  }
 
   Widget _buildFilterRow(TankState state, TankNotifier notifier) {
     return Row(
       children: [
-        Expanded(flex: 2, child: _buildPlantAutocomplete(notifier)),
+        Expanded(flex: 2, child: _buildSiteAutocomplete(notifier)),
         const SizedBox(width: 16),
         Expanded(flex: 2, child: _buildTankAutocomplete(notifier)),
         const SizedBox(width: 16),
@@ -184,7 +159,7 @@ class _TankWideState extends ConsumerState<TankWide> {
         const SizedBox(width: 16),
         AppClearButton(
           onPressed: () {
-            _plantSearchController.clear();
+            _siteSearchController.clear();
             _tankSearchController.clear();
             notifier.clearFilters();
           },
@@ -193,32 +168,32 @@ class _TankWideState extends ConsumerState<TankWide> {
     );
   }
 
-  Widget _buildPlantAutocomplete(TankNotifier notifier) {
+  Widget _buildSiteAutocomplete(TankNotifier notifier) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return RawAutocomplete<PlantAutocompleteInfo>(
-          textEditingController: _plantSearchController,
+        return RawAutocomplete<SiteAutocompleteInfo>(
+          textEditingController: _siteSearchController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.isEmpty) {
-              return const Iterable<PlantAutocompleteInfo>.empty();
+              return const Iterable<SiteAutocompleteInfo>.empty();
             }
-            return await notifier.searchPlants(textEditingValue.text);
+            return await notifier.searchSites(textEditingValue.text);
           },
-          displayStringForOption: (PlantAutocompleteInfo option) =>
-              option.plantName,
+          displayStringForOption: (SiteAutocompleteInfo option) =>
+              option.siteName,
           onSelected: (option) {
-            notifier.setSearchPlant(option.plantName);
+            notifier.setSearchSite(option.siteName);
             notifier.loadGroupedTanks();
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,
               focusNode: focusNode,
-              hint: 'Filter By Plant',
+              hint: 'Filter By Site',
               prefixIcon: const Icon(Icons.search, size: 20),
               onSubmitted: (v) {
-                notifier.setSearchPlant(v);
+                notifier.setSearchSite(v);
                 notifier.loadGroupedTanks();
               },
             );
@@ -240,7 +215,7 @@ class _TankWideState extends ConsumerState<TankWide> {
                       final option = options.elementAt(index);
                       return ListTile(
                         title: Text(
-                          option.plantName,
+                          option.siteName,
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -333,280 +308,299 @@ class _TankWideState extends ConsumerState<TankWide> {
     final state = ref.watch(tankProvider);
     final notifier = ref.read(tankProvider.notifier);
 
-    if (state.searchPlant != _plantSearchController.text &&
-        state.searchPlant.isEmpty) {
-      _plantSearchController.text = '';
-    }
-    if (state.searchTank != _tankSearchController.text &&
-        state.searchTank.isEmpty) {
-      _tankSearchController.text = '';
-    }
-
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final tableWidth = constraints.maxWidth > 1000 ? constraints.maxWidth : 1000.0;
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: tableWidth,
-              child: CustomScrollView(
-                controller: _scrollController,
-        slivers: [
-          // 1. Header & Filters
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: _buildHeader(state, notifier),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: _buildHeader(state, notifier),
+          ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = constraints.maxWidth > 1000 ? constraints.maxWidth : 1000.0;
+                return Scrollbar(
+                  controller: _scrollController,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: tableWidth,
+                      child: Column(
+                        children: [
+                          if (!state.isLoading || state.groupedTanks.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              child: _buildFixedTableHeader(),
+                            ),
+                          Expanded(
+                            child: state.isLoading && state.groupedTanks.isEmpty
+                                ? const AppTableInitialLoader()
+                                : _buildVirtualizedTable(state, notifier),
+                          ),
+                          if (state.isLoading && state.groupedTanks.isNotEmpty)
+                            const AppTableLoadingMore(),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-
-          // 2. Fixed Table Header
-          if (state.groupedTanks.isNotEmpty || !state.isLoading)
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SliverHeaderDelegate(
-                height: 52,
-                child: Container(
-                  color: const Color(0xFFF9FAFB), // Match body bg
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _buildFixedTableHeader(),
-                ),
-              ),
-            ),
-
-          // 3. Virtualized Table Content
-          if (state.isLoading && state.groupedTanks.isEmpty)
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: AppTableInitialLoader(),
-            )
-          else if (state.groupedTanks.isEmpty)
-            const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverToBoxAdapter(
-                child: AppTableEmptyState(
-                  icon: Icons.water_outlined,
-                  title: 'No tanks found',
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverList.builder(
-                itemCount: state.groupedTanks.length,
-                itemBuilder: (context, index) {
-                  return _buildGroupSection(
-                    index,
-                    state.groupedTanks[index],
-                    notifier,
-                  );
-                },
-              ),
-            ),
-
-          // 4. Loading More Overlay
-          if (state.isLoading && state.groupedTanks.isNotEmpty)
-            const SliverToBoxAdapter(child: AppTableLoadingMore()),
-
-          // 5. Bottom Cap & Spacing
-          if (state.groupedTanks.isNotEmpty)
-            const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
-            ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 48)),
+          const SizedBox(height: 24),
         ],
-      ),
-            ),
-          );
-        },
       ),
     );
   }
 
-  Widget _buildGroupSection(
-    int groupIndex,
-    TankGroup group,
-    TankNotifier notifier,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Plant group header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: const BoxDecoration(
-            color: Color(0xFFEFF6FF),
-            border: Border(
-              left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-              right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-              bottom: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-            ),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 60,
-                child: Text(
-                  (groupIndex + 1).toString().padLeft(2, '0'),
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E40AF),
-                  ),
+  Widget _buildVirtualizedTable(TankState state, TankNotifier notifier) {
+    if (state.groupedTanks.isEmpty && !state.isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24),
+        child: AppTableEmptyState(
+          icon: Icons.water_outlined,
+          title: 'No tanks found',
+        ),
+      );
+    }
+
+    // Generate linear list (Site Headers + Tank Rows)
+    final List<dynamic> items = [];
+    for (int i = 0; i < state.groupedTanks.length; i++) {
+      final group = state.groupedTanks[i];
+      items.add({'type': 'header', 'group': group, 'index': i + 1});
+      for (final tank in group.tanks) {
+        items.add({'type': 'row', 'tank': tank, 'group': group});
+      }
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        final isLast = index == items.length - 1;
+
+        if (item['type'] == 'header') {
+          return _buildGroupHeader(
+            item['group'] as TankGroup,
+            item['index'] as int,
+            isLast,
+          );
+        } else {
+          return _buildTankRow(
+            item['tank'] as Tank,
+            notifier,
+            isLast,
+          );
+        }
+      },
+    );
+  }
+
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Color(0xFF141E7A),
+        border: Border(
+          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+        ),
+      ),
+      child: const Row(
+        children: [
+          AppTableHeaderCell('SI.NO', width: 60),
+          AppTableHeaderCell('Tank Number', flex: 3),
+          AppTableHeaderCell('Type', flex: 3),
+          AppTableHeaderCell('Product', flex: 2),
+          AppTableHeaderCell('Unit', flex: 1),
+          AppTableHeaderCell('Status', flex: 1),
+          AppTableHeaderCell('Actions', width: 120),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupHeader(TankGroup group, int index, bool isLast) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        border: Border(
+          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          bottom: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 60,
+              child: Text(
+                index.toString().padLeft(2, '0'),
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF1E40AF),
                 ),
               ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          group.plantName,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1E40AF),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
-                          ),
-                          child: Text(
-                            '${group.tanks.length} Tanks',
-                            style: GoogleFonts.inter(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF2563EB),
-                            ),
-                          ),
-                        ),
-                      ],
+            ),
+            Expanded(
+              child: Row(
+                children: [
+                  Text(
+                    group.siteName,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1E40AF),
                     ),
-                    if (group.fullAddress.isNotEmpty)
-                      Text(
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: Text(
+                      '${group.tanks.length} Tanks',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  if (group.fullAddress.isNotEmpty)
+                    Expanded(
+                      child: Text(
                         group.fullAddress,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           color: const Color(0xFF6B7280),
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        ...group.tanks.asMap().entries.map((entry) {
-          return _buildTankRow(entry.value, entry.key, notifier);
-        }),
-      ],
+      ),
     );
   }
 
-  Widget _buildTankRow(Tank tank, int tankIndex, TankNotifier notifier) {
+  Widget _buildTankRow(Tank tank, TankNotifier notifier, bool isLast) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          bottom: BorderSide(color: Color(0xFFF3F4F6)),
+          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          bottom: isLast
+              ? const BorderSide(color: Color(0xFFD1D5DB), width: 1.5)
+              : const BorderSide(color: Color(0xFFF3F4F6)),
         ),
+        borderRadius: isLast
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              )
+            : BorderRadius.zero,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          const SizedBox(width: 60),
-          Expanded(
-            flex: 3,
-            child: Row(
-              children: [
-                if (tank.tankImageUrl != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: Image.network(
-                      tank.tankImageUrl!,
-                      width: 44,
-                      height: 44,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          _noImageBox(),
-                    ),
-                  )
-                else
-                  _noImageBox(),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
-                    child: Text(
-                      tank.tankNumber,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF2563EB),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        child: Row(
+          children: [
+            const SizedBox(width: 60),
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  if (tank.tankImageUrl != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.network(
+                        tank.tankImageUrl!,
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => _noImageBox(),
+                      ),
+                    )
+                  else
+                    _noImageBox(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
+                      child: Text(
+                        tank.tankNumber,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF2563EB),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          AppTableCell(tank.tankTypeName ?? '-', flex: 3),
-          AppTableCell(tank.productName ?? '-', flex: 2),
-          AppTableCell(tank.unitName ?? '-', flex: 1),
-          Expanded(
-            flex: 1,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: AppStatusBadge(status: tank.status),
+            AppTableCell(tank.tankTypeName ?? '-', flex: 3),
+            AppTableCell(tank.productName ?? '-', flex: 2),
+            AppTableCell(tank.unitName ?? '-', flex: 1),
+            Expanded(
+              flex: 1,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: AppStatusBadge(status: tank.status),
+              ),
             ),
-          ),
-          SizedBox(
-            width: 120,
-            child: Row(
-              children: [
-                AppTableActionButton(
-                  icon: Icons.visibility_outlined,
-                  color: const Color(0xFF141E7A),
-                  bg: const Color(0xFFF0FDF4),
-                  onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
-                ),
-                const SizedBox(width: 6),
-                AppTableActionButton(
-                  icon: Icons.edit_outlined,
-                  color: const Color(0xFF2563EB),
-                  bg: const Color(0xFFEFF6FF),
-                  onTap: () => _showAddDialog(tank),
-                ),
-                const SizedBox(width: 6),
-                AppTableActionButton(
-                  icon: Icons.delete_outline,
-                  color: const Color(0xFFDC2626),
-                  bg: const Color(0xFFFEE2E2),
-                  onTap: () => _showDeleteDialog(tank),
-                ),
-              ],
+            SizedBox(
+              width: 120,
+              child: Row(
+                children: [
+                  AppTableActionButton(
+                    icon: Icons.visibility_outlined,
+                    color: const Color(0xFF141E7A),
+                    bg: const Color(0xFFF0FDF4),
+                    onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
+                  ),
+                  const SizedBox(width: 6),
+                  AppTableActionButton(
+                    icon: Icons.edit_outlined,
+                    color: const Color(0xFF2563EB),
+                    bg: const Color(0xFFEFF6FF),
+                    onTap: () => _showAddDialog(tank),
+                  ),
+                  const SizedBox(width: 6),
+                  AppTableActionButton(
+                    icon: Icons.delete_outline,
+                    color: const Color(0xFFDC2626),
+                    bg: const Color(0xFFFEE2E2),
+                    onTap: () => _showDeleteDialog(tank),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
 
   Widget _noImageBox() {
     return Container(
@@ -753,7 +747,7 @@ class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return child;
+    return SizedBox.expand(child: child);
   }
 
   @override

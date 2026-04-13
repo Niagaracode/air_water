@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/tank_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../controller/tank_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
@@ -27,9 +27,9 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   final _dishHeightController = TextEditingController();
   final _tonnesController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _plantAutocompleteController = TextEditingController();
+  final _siteAutocompleteController = TextEditingController();
 
-  PlantAutocompleteInfo? _selectedPlant;
+  SiteAutocompleteInfo? _selectedSite;
   Map<String, dynamic>? _dropdownData;
   List<TankProduct> _products = [];
   bool _isLoadingDropdowns = false;
@@ -50,7 +50,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       _tankNumberController.text = tank.tankNumber;
       _tonnesController.text = tank.tonnes?.toString() ?? '';
       _descriptionController.text = tank.description ?? '';
-      _plantAutocompleteController.text = tank.plantName ?? '';
+      _siteAutocompleteController.text = tank.siteName ?? '';
       _status = tank.status;
 
       // Dynamic mapping of dimensions based on tank type
@@ -157,9 +157,9 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
-    if (_selectedPlant == null && widget.initialTank?.plantId == null) {
+    if (_selectedSite == null && widget.initialTank?.siteId == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Plant')),
+        const SnackBar(content: Text('Please select a Site')),
       );
       return;
     }
@@ -266,7 +266,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       coneLength: coneLength,
       tonnes: double.tryParse(_tonnesController.text),
       description: _descriptionController.text,
-      plantId: _selectedPlant?.plantId ?? widget.initialTank?.plantId,
+      siteId: _selectedSite?.siteId ?? widget.initialTank?.siteId,
       unitId: _selectedUnit?['id'],
       tankTypeId: _selectedTankType?['id'],
       productId: _selectedProduct is TankProduct
@@ -426,8 +426,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           ),
                           const SizedBox(height: 32),
                           _buildLabelField(
-                            'PLANT ASSOCIATION',
-                            _buildPlantAutocomplete(),
+                            'SITE ASSOCIATION',
+                            _buildSiteAutocomplete(),
                           ),
                           const SizedBox(height: 40),
                           // Section Title: Physical Specifications
@@ -951,26 +951,26 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
-  Widget _buildPlantAutocomplete() {
+  Widget _buildSiteAutocomplete() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return RawAutocomplete<PlantAutocompleteInfo>(
-          textEditingController: _plantAutocompleteController,
+        return RawAutocomplete<SiteAutocompleteInfo>(
+          textEditingController: _siteAutocompleteController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.isEmpty)
-              return const Iterable<PlantAutocompleteInfo>.empty();
+              return const Iterable<SiteAutocompleteInfo>.empty();
             return await ref
                 .read(tankProvider.notifier)
-                .searchPlants(textEditingValue.text);
+                .searchSites(textEditingValue.text);
           },
-          displayStringForOption: (PlantAutocompleteInfo option) =>
-              option.displayName ?? option.plantName,
+          displayStringForOption: (SiteAutocompleteInfo option) =>
+              option.displayName ?? option.siteName,
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,
               focusNode: focusNode,
-              hint: 'Search Plant by Name',
+              hint: 'Search Site by Name',
             );
           },
           optionsViewBuilder: (context, onSelected, options) {
@@ -989,11 +989,11 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       return ListTile(
                         title: Text(
                           option.displayName ??
-                              option.plantName + " " + option.fullAddress,
+                              option.siteName + " " + option.fullAddress,
                         ),
                         onTap: () {
                           onSelected(option);
-                          setState(() => _selectedPlant = option);
+                          setState(() => _selectedSite = option);
                         },
                       );
                     },
@@ -1050,7 +1050,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     _widthController.dispose();
     _dishHeightController.dispose();
     _descriptionController.dispose();
-    _plantAutocompleteController.dispose();
+    _siteAutocompleteController.dispose();
     super.dispose();
   }
 }

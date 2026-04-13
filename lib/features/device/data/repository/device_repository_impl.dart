@@ -1,6 +1,6 @@
 import '../api/device_api.dart';
 import '../../presentation/model/device_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 
 abstract class DeviceRepository {
   Future<DeviceGroupedResponse> getDevicesGrouped({
@@ -15,12 +15,12 @@ abstract class DeviceRepository {
   Future<void> createDevice(DeviceCreateRequest request);
   Future<void> updateDevice(int id, DeviceCreateRequest request);
   Future<void> deleteDevice(int id);
-  Future<List<PlantAutocompleteInfo>> getPlantsForDeviceAutocomplete({
+  Future<List<SiteAutocompleteInfo>> getPlantsForDeviceAutocomplete({
     String? q,
   });
   Future<Map<String, dynamic>> getDeviceDropdowns();
   Future<List<String>> getDeviceNameSuggestions(String q);
-  Future<List<Map<String, dynamic>>> searchTanks(String q, {int? plantId});
+  Future<List<Map<String, dynamic>>> searchTanks(String q, {int? siteId});
 }
 
 class DeviceRepositoryImpl implements DeviceRepository {
@@ -65,7 +65,7 @@ class DeviceRepositoryImpl implements DeviceRepository {
   }
 
   @override
-  Future<List<PlantAutocompleteInfo>> getPlantsForDeviceAutocomplete({
+  Future<List<SiteAutocompleteInfo>> getPlantsForDeviceAutocomplete({
     String? q,
   }) {
     return _api.getPlantsForDeviceAutocomplete(q: q);
@@ -82,7 +82,7 @@ class DeviceRepositoryImpl implements DeviceRepository {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> searchTanks(String q, {int? plantId}) {
-    return _api.searchTanks(q, plantId: plantId);
+  Future<List<Map<String, dynamic>>> searchTanks(String q, {int? siteId}) {
+    return _api.searchTanks(q, siteId: siteId);
   }
 }

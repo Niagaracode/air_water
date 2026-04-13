@@ -411,7 +411,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
-                    color: const Color(0xFF111827),
+                    color: const Color(0xFF1E40AF),
                   ),
                 ),
               ),

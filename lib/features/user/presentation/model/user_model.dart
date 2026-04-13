@@ -12,7 +12,7 @@ class User {
   final int status;
   final int? sessionTimeout;
   final String? createdAt;
-  final List<AssignedPlant>? assignedPlants;
+  final List<AssignedSite>? assignedSites;
   final List<int>? assignedTanks;
   final int? messageCategoryId;
   final String? messageCategoryName;
@@ -32,7 +32,7 @@ class User {
     required this.status,
     this.sessionTimeout,
     this.createdAt,
-    this.assignedPlants,
+    this.assignedSites,
     this.assignedTanks,
     this.messageCategoryId,
     this.messageCategoryName,
@@ -54,9 +54,9 @@ class User {
       status: json['status'] ?? 1,
       sessionTimeout: json['session_timeout'] as int?,
       createdAt: json['created_at'] as String?,
-      assignedPlants: json['assigned_plants'] != null
+      assignedSites: json['assigned_plants'] != null
           ? (json['assigned_plants'] as List)
-                .map((i) => AssignedPlant.fromJson(i as Map<String, dynamic>))
+                .map((i) => AssignedSite.fromJson(i as Map<String, dynamic>))
                 .toList()
           : null,
       assignedTanks: json['assigned_tanks'] != null
@@ -86,23 +86,23 @@ class User {
   int get hashCode => userId.hashCode;
 }
 
-class AssignedPlant {
-  final List<int> plantIds;
-  final String? plantOrganizationCode;
+class AssignedSite {
+  final List<int> siteIds;
+  final String? siteOrganizationCode;
   final String name;
   final int count;
 
-  AssignedPlant({
-    required this.plantIds,
-    this.plantOrganizationCode,
+  AssignedSite({
+    required this.siteIds,
+    this.siteOrganizationCode,
     required this.name,
     required this.count,
   });
 
-  factory AssignedPlant.fromJson(Map<String, dynamic> json) {
-    return AssignedPlant(
-      plantIds: (json['plant_ids'] as List).map((e) => e as int).toList(),
-      plantOrganizationCode: json['plant_organization_code'] as String?,
+  factory AssignedSite.fromJson(Map<String, dynamic> json) {
+    return AssignedSite(
+      siteIds: (json['plant_ids'] as List).map((e) => e as int).toList(),
+      siteOrganizationCode: json['plant_organization_code'] as String?,
       name: json['name'] as String,
       count: json['count'] as int,
     );
@@ -161,7 +161,7 @@ class UserCreateRequest {
   final String? mobileNumber;
   final int? status;
   final int? sessionTimeout;
-  final List<int>? assignedPlants;
+  final List<int>? assignedSites;
   final List<int>? assignedTanks;
   final int? messageCategoryId;
 
@@ -176,7 +176,7 @@ class UserCreateRequest {
     this.mobileNumber,
     this.status,
     this.sessionTimeout,
-    this.assignedPlants,
+    this.assignedSites,
     this.assignedTanks,
     this.messageCategoryId,
   });
@@ -193,7 +193,7 @@ class UserCreateRequest {
       'mobile_number': mobileNumber,
       'status': status,
       'session_timeout': sessionTimeout,
-      'assigned_plants': assignedPlants,
+      'assigned_plants': assignedSites,
       'assigned_tanks': assignedTanks,
       'message_category_id': messageCategoryId,
     };
@@ -233,18 +233,18 @@ class CompanyAutocomplete {
   }
 }
 
-// PlantTankAssignment class for the dropdown selector widget
-// This is used internally by the widget and converted to assignedPlants/assignedTanks
-class PlantTankAssignment {
-  final int plantId;
-  final String plantName;
+// SiteTankAssignment class for the dropdown selector widget
+// This is used internally by the widget and converted to assignedSites/assignedTanks
+class SiteTankAssignment {
+  final int siteId;
+  final String siteName;
   final bool allTanks;
   final List<int>? tankIds;
   final List<String>? tankNames;
 
-  PlantTankAssignment({
-    required this.plantId,
-    required this.plantName,
+  SiteTankAssignment({
+    required this.siteId,
+    required this.siteName,
     required this.allTanks,
     this.tankIds,
     this.tankNames,
@@ -252,26 +252,26 @@ class PlantTankAssignment {
 
   String get displayText {
     if (allTanks) {
-      return '$plantName (All Tanks)';
+      return '$siteName (All Tanks)';
     } else if (tankIds != null) {
-      return '$plantName (${tankIds!.length} tanks)';
+      return '$siteName (${tankIds!.length} tanks)';
     }
-    return plantName;
+    return siteName;
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'plant_id': plantId,
-      'plant_name': plantName,
+      'plant_id': siteId,
+      'plant_name': siteName,
       'all_tanks': allTanks,
       if (!allTanks && tankIds != null) 'tank_ids': tankIds,
     };
   }
 
-  factory PlantTankAssignment.fromJson(Map<String, dynamic> json) {
-    return PlantTankAssignment(
-      plantId: json['plant_id'] as int,
-      plantName: json['plant_name'] as String? ?? '',
+  factory SiteTankAssignment.fromJson(Map<String, dynamic> json) {
+    return SiteTankAssignment(
+      siteId: json['plant_id'] as int,
+      siteName: json['plant_name'] as String? ?? '',
       allTanks: json['all_tanks'] as bool? ?? false,
       tankIds: json['tank_ids'] != null
           ? (json['tank_ids'] as List).map((e) => e as int).toList()

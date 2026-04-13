@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../model/device_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../controller/device_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
-import '../../../../shared/utils/time_zones.dart';
 import '../widgets/map_picker_dialog.dart';
 import '../../../../shared/widgets/app_autocomplete.dart';
 
@@ -24,17 +23,20 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
   final _deviceIdController = TextEditingController();
   final _notesController = TextEditingController();
   final _simNumberController = TextEditingController();
-  final _plantAutocompleteController = TextEditingController();
+  final _siteAutocompleteController = TextEditingController();
   final _tankAutocompleteController = TextEditingController();
-  final _timeZoneController = TextEditingController();
+  final _startHourController = TextEditingController();
+  final _durationController = TextEditingController();
 
-  PlantAutocompleteInfo? _selectedPlant;
+  SiteAutocompleteInfo? _selectedSite;
   int? _selectedTankId;
   Map<String, dynamic>? _dropdownData;
   bool _isLoadingDropdowns = false;
 
   dynamic _selectedCategory;
   dynamic _selectedUnit;
+  String? _selectedPowerSource;
+  bool _autoSync = false;
   int _status = 1;
 
   double? _latitude;
@@ -47,13 +49,16 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
       _deviceIdController.text = widget.device!.deviceId;
       _notesController.text = widget.device!.notes ?? '';
       _simNumberController.text = widget.device!.simNumber ?? '';
-      _plantAutocompleteController.text = widget.device!.siteName ?? '';
+      _siteAutocompleteController.text = widget.device!.siteName ?? '';
       _tankAutocompleteController.text = widget.device!.tankName ?? '';
-      _timeZoneController.text = widget.device!.timeZone ?? '';
       _status = widget.device!.status;
+      _selectedPowerSource = widget.device!.powerSource;
+      _autoSync = widget.device!.lastSync == '1';
       _selectedTankId = widget.device!.tankId;
       _latitude = widget.device!.latitude;
       _longitude = widget.device!.longitude;
+      _startHourController.text = widget.device!.startHour?.toString() ?? '';
+      _durationController.text = widget.device!.duration?.toString() ?? '';
     }
     _loadDropdownData();
   }
@@ -87,9 +92,10 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     _deviceIdController.dispose();
     _notesController.dispose();
     _simNumberController.dispose();
-    _plantAutocompleteController.dispose();
+    _siteAutocompleteController.dispose();
     _tankAutocompleteController.dispose();
-    _timeZoneController.dispose();
+    _startHourController.dispose();
+    _durationController.dispose();
     super.dispose();
   }
 
@@ -129,14 +135,17 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
       category: _selectedCategory is String
           ? _selectedCategory
           : _selectedCategory['id'],
-      timeZone: _timeZoneController.text,
-      siteId: _selectedPlant?.plantId ?? widget.device?.siteId,
-      companyId: _selectedPlant?.companyId ?? widget.device?.companyId,
+      siteId: _selectedSite?.siteId ?? widget.device?.siteId,
+      companyId: _selectedSite?.companyId ?? widget.device?.companyId,
       tankId: _selectedTankId,
       unitId: _selectedUnit['id'].toString(),
-      status: _status,
+      powerSource: _selectedPowerSource,
+       status: _status,
+      lastSync: _autoSync ? '1' : '0',
       latitude: _latitude,
       longitude: _longitude,
+      startHour: int.tryParse(_startHourController.text),
+      duration: int.tryParse(_durationController.text),
     );
 
     final success = widget.device != null
@@ -299,8 +308,8 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                       ),
                       const SizedBox(height: 32),
                       _buildLabelField(
-                        'PLANT ASSOCIATION',
-                        _buildPlantAutocomplete(),
+                        'SITE ASSOCIATION',
+                        _buildSiteAutocomplete(),
                       ),
                       const SizedBox(height: 32),
                       _buildLabelField(
@@ -343,11 +352,22 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                         ),
                       ),
                       const SizedBox(height: 24),
+                      _buildLabelField(
+                        'POWER SOURCE',
+                        AppDropdown<String>(
+                          value: _selectedPowerSource,
+                          items: const ['Main', 'Solar', 'Battery', 'Volt'],
+                          itemLabel: (v) => v,
+                          hint: 'Select Power Source',
+                          onChanged: (v) => setState(() => _selectedPowerSource = v),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       Row(
                         children: [
                           Expanded(
                             child: OutlinedButton.icon(
-                              onPressed: _selectedPlant == null
+                              onPressed: _selectedSite == null
                                   ? null
                                   : _pickLocation,
                               icon: const Icon(
@@ -393,10 +413,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      _buildLabelField(
-                        'TIME ZONE REGION',
-                        _buildTimeZoneAutocomplete(),
-                      ),
+
                       const SizedBox(height: 40),
 
                       // Section: Additional Info
@@ -425,13 +442,67 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                         color: Color(0xFFF3F4F6),
                       ),
 
-                      _buildLabelField(
+                       _buildLabelField(
                         'CONFIGURATION NOTES',
                         AppTextField(
                           controller: _notesController,
                           hint: 'Enter technical notes...',
                           maxLines: 3,
                         ),
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: SwitchListTile(
+                          title: Text(
+                            'AUTO SYNC',
+                            style: GoogleFonts.outfit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF141E7A),
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Enable independent daily sync at scheduled start hour.',
+                            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
+                          ),
+                          value: _autoSync,
+                          activeColor: const Color(0xFF141E7A),
+                          onChanged: (v) => setState(() => _autoSync = v),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildLabelField(
+                              'START HOUR (0-23)',
+                              AppTextField(
+                                controller: _startHourController,
+                                hint: 'e.g. 10',
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 32),
+                          Expanded(
+                            child: _buildLabelField(
+                              'DURATION (HOURS)',
+                              AppTextField(
+                                controller: _durationController,
+                                hint: 'e.g. 2',
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 40),
 
@@ -540,7 +611,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     final result = await showDialog<LatLng>(
       context: context,
       builder: (context) => MapPickerDialog(
-        initialAddress: _selectedPlant?.fullAddress,
+        initialAddress: _selectedSite?.fullAddress,
         initialLocation: _latitude != null && _longitude != null
             ? LatLng(_latitude!, _longitude!)
             : null,
@@ -555,60 +626,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     }
   }
 
-  Widget _buildTimeZoneAutocomplete() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return RawAutocomplete<String>(
-          textEditingController: _timeZoneController,
-          focusNode: FocusNode(),
-          optionsBuilder: (TextEditingValue textEditingValue) {
-            if (textEditingValue.text.isEmpty) {
-              return const Iterable<String>.empty();
-            }
-            return TimeZoneUtils.ianaTimeZones.where((String option) {
-              return option.toLowerCase().contains(
-                textEditingValue.text.toLowerCase(),
-              );
-            });
-          },
-          displayStringForOption: (String option) => option,
-          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return AppTextField(
-              controller: controller,
-              focusNode: focusNode,
-              hint: 'Search Time Zone (e.g. Asia/Kolkata)',
-            );
-          },
-          optionsViewBuilder: (context, onSelected, options) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                child: SizedBox(
-                  width: constraints.maxWidth,
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options.elementAt(index);
-                      return ListTile(
-                        title: Text(
-                          option,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        onTap: () => onSelected(option),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
+
 
   Widget _buildTankAutocomplete() {
     return LayoutBuilder(
@@ -624,7 +642,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                 .read(deviceProvider.notifier)
                 .searchTanks(
               textEditingValue.text,
-              plantId: _selectedPlant?.plantId ?? widget.device?.siteId,
+              siteId: _selectedSite?.siteId ?? widget.device?.siteId,
             );
           },
           displayStringForOption: (Map<String, dynamic> option) =>
@@ -684,27 +702,27 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     );
   }
 
-  Widget _buildPlantAutocomplete() {
+  Widget _buildSiteAutocomplete() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return RawAutocomplete<PlantAutocompleteInfo>(
-          textEditingController: _plantAutocompleteController,
+        return RawAutocomplete<SiteAutocompleteInfo>(
+          textEditingController: _siteAutocompleteController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.isEmpty) {
-              return const Iterable<PlantAutocompleteInfo>.empty();
+              return const Iterable<SiteAutocompleteInfo>.empty();
             }
             return await ref
                 .read(deviceProvider.notifier)
-                .searchPlants(textEditingValue.text);
+                .searchSites(textEditingValue.text);
           },
-          displayStringForOption: (PlantAutocompleteInfo option) =>
-          option.displayName ?? option.plantName,
+          displayStringForOption: (SiteAutocompleteInfo option) =>
+          option.displayName ?? option.siteName,
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,
               focusNode: focusNode,
-              hint: 'Search Plant by Name',
+              hint: 'Search Site by Name',
             );
           },
           optionsViewBuilder: (context, onSelected, options) {
@@ -728,7 +746,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                         ),
                         title: Text(
                           option.displayName ??
-                              '${option.plantName} ${option.fullAddress}',
+                              '${option.siteName} ${option.fullAddress}',
                           style: const TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 13,
@@ -736,7 +754,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                         ),
                         onTap: () {
                           onSelected(option);
-                          setState(() => _selectedPlant = option);
+                          setState(() => _selectedSite = option);
                         },
                       );
                     },
@@ -829,4 +847,4 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
       ),
     );
   }
-}
+}

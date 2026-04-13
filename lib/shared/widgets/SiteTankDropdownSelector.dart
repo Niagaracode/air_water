@@ -5,29 +5,29 @@ import 'package:air_water/features/user/presentation/model/user_model.dart';
 import 'package:air_water/features/tank/presentation/model/tank_model.dart';
 import 'package:air_water/features/tank/presentation/controller/tank_provider.dart';
 
-/// Hierarchical Plant-Tank Dropdown Selector
+/// Hierarchical Site-Tank Dropdown Selector
 /// Supports:
-/// 1. Selecting a Plant
-/// 2. Selecting all tanks in that plant
-/// 3. Selecting specific tanks in that plant
+/// 1. Selecting a Site
+/// 2. Selecting all tanks in that site
+/// 3. Selecting specific tanks in that site
 
-class PlantTankDropdownSelector extends StatefulWidget {
-  final List<PlantTankAssignment> initialAssignments;
-  final Function(List<PlantTankAssignment>) onChanged;
+class SiteTankDropdownSelector extends StatefulWidget {
+  final List<SiteTankAssignment> initialAssignments;
+  final Function(List<SiteTankAssignment>) onChanged;
 
-  const PlantTankDropdownSelector({
+  const SiteTankDropdownSelector({
     super.key,
     required this.initialAssignments,
     required this.onChanged,
   });
 
   @override
-  State<PlantTankDropdownSelector> createState() =>
-      _PlantTankDropdownSelectorState();
+  State<SiteTankDropdownSelector> createState() =>
+      _SiteTankDropdownSelectorState();
 }
 
-class _PlantTankDropdownSelectorState extends State<PlantTankDropdownSelector> {
-  late List<PlantTankAssignment> _assignments;
+class _SiteTankDropdownSelectorState extends State<SiteTankDropdownSelector> {
+  late List<SiteTankAssignment> _assignments;
 
   @override
   void initState() {
@@ -38,7 +38,7 @@ class _PlantTankDropdownSelectorState extends State<PlantTankDropdownSelector> {
   void _showSelectorDialog() {
     showDialog(
       context: context,
-      builder: (context) => PlantTankSelectorDialog(
+      builder: (context) => SiteTankSelectorDialog(
         currentAssignments: _assignments,
         onSave: (newAssignments) {
           setState(() {
@@ -57,7 +57,7 @@ class _PlantTankDropdownSelectorState extends State<PlantTankDropdownSelector> {
       children: [
         if (_assignments.isEmpty)
           Text(
-            'No plants or tanks assigned',
+            'No sites or tanks assigned',
             style: GoogleFonts.inter(
               color: const Color(0xFF6B7280),
               fontSize: 13,
@@ -93,7 +93,7 @@ class _PlantTankDropdownSelectorState extends State<PlantTankDropdownSelector> {
           onPressed: _showSelectorDialog,
           icon: const Icon(Icons.add, size: 20),
           label: Text(
-            'Add Plant & Tanks Access',
+            'Add Site & Tanks Access',
             style: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
           ),
           style: TextButton.styleFrom(
@@ -106,24 +106,24 @@ class _PlantTankDropdownSelectorState extends State<PlantTankDropdownSelector> {
   }
 }
 
-class PlantTankSelectorDialog extends ConsumerStatefulWidget {
-  final List<PlantTankAssignment> currentAssignments;
-  final Function(List<PlantTankAssignment>) onSave;
+class SiteTankSelectorDialog extends ConsumerStatefulWidget {
+  final List<SiteTankAssignment> currentAssignments;
+  final Function(List<SiteTankAssignment>) onSave;
 
-  const PlantTankSelectorDialog({
+  const SiteTankSelectorDialog({
     super.key,
     required this.currentAssignments,
     required this.onSave,
   });
 
   @override
-  ConsumerState<PlantTankSelectorDialog> createState() =>
-      _PlantTankSelectorDialogState();
+  ConsumerState<SiteTankSelectorDialog> createState() =>
+      _SiteTankSelectorDialogState();
 }
 
-class _PlantTankSelectorDialogState
-    extends ConsumerState<PlantTankSelectorDialog> {
-  final Map<int, PlantSelection> _plantSelections = {};
+class _SiteTankSelectorDialogState
+    extends ConsumerState<SiteTankSelectorDialog> {
+  final Map<int, SiteSelection> _siteSelections = {};
   bool _isLoading = true;
   String? _error;
 
@@ -143,26 +143,26 @@ class _PlantTankSelectorDialogState
       final repository = ref.read(tankRepositoryProvider);
       final response = await repository.getTanksGrouped(limit: 100);
       debugPrint(
-        'PlantTankDropdownSelector: Fetched ${response.data.length} grouped plants',
+        'SiteTankDropdownSelector: Fetched ${response.data.length} grouped sites',
       );
       for (var group in response.data) {
         debugPrint(
-          'Plant: ${group.plantName} (ID: ${group.plantId}), Tanks: ${group.tanks.length}',
+          'Site: ${group.siteName} (ID: ${group.siteId}), Tanks: ${group.tanks.length}',
         );
       }
 
-      _plantSelections.clear();
+      _siteSelections.clear();
 
       for (final group in response.data) {
-        final plantId = group.plantId;
-        final plantName = group.plantName;
+        final siteId = group.siteId;
+        final siteName = group.siteName;
 
-        // Check if we already have assignments for this plant
+        // Check if we already have assignments for this site
         final existing = widget.currentAssignments.firstWhere(
-          (a) => a.plantId == plantId,
-          orElse: () => PlantTankAssignment(
-            plantId: plantId,
-            plantName: plantName,
+          (a) => a.siteId == siteId,
+          orElse: () => SiteTankAssignment(
+            siteId: siteId,
+            siteName: siteName,
             allTanks: false,
             tankIds: [],
           ),
@@ -176,9 +176,9 @@ class _PlantTankSelectorDialogState
           availableTankIds.add(tank.tankId);
         }
 
-        _plantSelections[plantId] = PlantSelection(
-          plantId: plantId,
-          plantName: plantName,
+        _siteSelections[siteId] = SiteSelection(
+          siteId: siteId,
+          siteName: siteName,
           fullAddress: group.fullAddress,
           allTanks: existing.allTanks,
           selectedTankIds: Set.from(existing.tankIds ?? []),
@@ -193,11 +193,11 @@ class _PlantTankSelectorDialogState
     }
   }
 
-  void _togglePlantAllTanks(int plantId, bool? value) {
+  void _toggleSiteAllTanks(int siteId, bool? value) {
     if (value == null) return;
 
     setState(() {
-      final selection = _plantSelections[plantId];
+      final selection = _siteSelections[siteId];
       if (selection != null) {
         selection.allTanks = value;
         if (value) {
@@ -209,9 +209,9 @@ class _PlantTankSelectorDialogState
     });
   }
 
-  void _toggleTank(int plantId, int tankId) {
+  void _toggleTank(int siteId, int tankId) {
     setState(() {
-      final selection = _plantSelections[plantId];
+      final selection = _siteSelections[siteId];
       if (selection != null) {
         if (selection.selectedTankIds.contains(tankId)) {
           selection.selectedTankIds.remove(tankId);
@@ -232,15 +232,15 @@ class _PlantTankSelectorDialogState
   }
 
   void _save() {
-    final assignments = <PlantTankAssignment>[];
+    final assignments = <SiteTankAssignment>[];
 
-    for (final entry in _plantSelections.entries) {
+    for (final entry in _siteSelections.entries) {
       final selection = entry.value;
 
       if (selection.selectedTankIds.isNotEmpty) {
-        final assignment = PlantTankAssignment(
-          plantId: entry.key,
-          plantName: selection.plantName,
+        final assignment = SiteTankAssignment(
+          siteId: entry.key,
+          siteName: selection.siteName,
           allTanks: selection.allTanks,
           tankIds: selection.allTanks
               ? null
@@ -292,7 +292,7 @@ class _PlantTankSelectorDialogState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Select Plants & Tanks',
+                              'Select Sites & Tanks',
                               style: GoogleFonts.outfit(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
@@ -302,7 +302,7 @@ class _PlantTankSelectorDialogState
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Select plants and their tanks that this user can access',
+                              'Select sites and their tanks that this user can access',
                               style: GoogleFonts.inter(
                                 color: const Color(0xFF4B5563),
                                 fontSize: 13,
@@ -322,7 +322,7 @@ class _PlantTankSelectorDialogState
                   const SizedBox(height: 16),
                   const Divider(),
 
-                  // Plant List with Tanks
+                  // Site List with Tanks
                   Expanded(
                     child: _error != null
                         ? Center(
@@ -343,14 +343,14 @@ class _PlantTankSelectorDialogState
                             ),
                           )
                         : ListView.builder(
-                            itemCount: _plantSelections.length,
+                            itemCount: _siteSelections.length,
                             itemBuilder: (context, index) {
-                              final plantId = _plantSelections.keys.elementAt(
+                              final siteId = _siteSelections.keys.elementAt(
                                 index,
                               );
-                              final selection = _plantSelections[plantId]!;
+                              final selection = _siteSelections[siteId]!;
 
-                              return _buildPlantCard(plantId, selection);
+                              return _buildSiteCard(siteId, selection);
                             },
                           ),
                   ),
@@ -412,7 +412,7 @@ class _PlantTankSelectorDialogState
     );
   }
 
-  Widget _buildPlantCard(int plantId, PlantSelection selection) {
+  Widget _buildSiteCard(int siteId, SiteSelection selection) {
     final hasSelection = selection.selectedTankIds.isNotEmpty;
 
     return Container(
@@ -442,7 +442,7 @@ class _PlantTankSelectorDialogState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                selection.plantName,
+                selection.siteName,
                 style: GoogleFonts.outfit(
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
@@ -476,7 +476,7 @@ class _PlantTankSelectorDialogState
             // All Tanks Checkbox
             CheckboxListTile(
               value: selection.allTanks,
-              onChanged: (value) => _togglePlantAllTanks(plantId, value),
+              onChanged: (value) => _toggleSiteAllTanks(siteId, value),
               activeColor: const Color(0xFF475569),
               checkColor: Colors.white,
               checkboxShape: RoundedRectangleBorder(
@@ -501,7 +501,7 @@ class _PlantTankSelectorDialogState
                   selection.availableTankNames[tankId] ?? 'Tank $tankId';
               return CheckboxListTile(
                 value: selection.selectedTankIds.contains(tankId),
-                onChanged: (value) => _toggleTank(plantId, tankId),
+                onChanged: (value) => _toggleTank(siteId, tankId),
                 activeColor: const Color(0xFF475569),
                 checkColor: Colors.white,
                 checkboxShape: RoundedRectangleBorder(
@@ -524,19 +524,19 @@ class _PlantTankSelectorDialogState
   }
 }
 
-/// Helper class to track plant selection state
-class PlantSelection {
-  final int plantId;
-  final String plantName;
+/// Helper class to track site selection state
+class SiteSelection {
+  final int siteId;
+  final String siteName;
   final String fullAddress;
   bool allTanks;
   Set<int> selectedTankIds;
   final List<int> availableTankIds;
   final Map<int, String> availableTankNames;
 
-  PlantSelection({
-    required this.plantId,
-    required this.plantName,
+  SiteSelection({
+    required this.siteId,
+    required this.siteName,
     required this.fullAddress,
     required this.allTanks,
     required this.selectedTankIds,

@@ -54,8 +54,12 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
 
   Future<void> loadData({bool refresh = false}) async {
     if (refresh) {
-      state =
-          state.copyWith(page: 1, schedules: [], isLoading: true, error: null);
+      state = state.copyWith(
+        page: 1,
+        schedules: [],
+        isLoading: true,
+        error: null,
+      );
     } else {
       state = state.copyWith(isLoading: true, error: null);
     }
@@ -76,7 +80,10 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
       final bool isTechnician = user?.roleId == 5;
 
       // Fetch all active settings to map them to tanks/parameters
-      final settingsResponse = await settingApi.getSettings(limit: 1000, isActive: 1);
+      final settingsResponse = await settingApi.getSettings(
+        limit: 1000,
+        isActive: 1,
+      );
       final allSettings = settingsResponse.data;
 
       final List<AssetScheduleModel> newSchedules = [];
@@ -91,11 +98,13 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
 
       for (final tankGroup in response.data) {
         for (final tank in tankGroup.tanks) {
-          // Filter settings for this specific tank or its plant
+          // Filter settings for this specific tank or its site
           final tankSettings = allSettings
-              .where((r) =>
-                  r.tankId == tank.tankId ||
-                  (r.tankId == null && r.plantId == tank.plantId))
+              .where(
+                (r) =>
+                    r.tankId == tank.tankId ||
+                    (r.tankId == null && r.siteId == tank.siteId),
+              )
               .toList();
 
           for (var param in parameters) {
@@ -104,17 +113,22 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
 
             // Check if there's a setting for this parameter
             final setting = tankSettings
-                .where((r) =>
-                    r.parameterType?.toLowerCase() == paramName.toLowerCase())
+                .where(
+                  (r) =>
+                      r.parameterType?.toLowerCase() == paramName.toLowerCase(),
+                )
                 .firstOrNull;
 
             // Authorization logic
             bool isAuthorized = false;
             if (isTechnician) {
               // Technician: Must have a setting AND that setting must belong to one of the user's rosters
-              isAuthorized = setting != null &&
+              isAuthorized =
+                  setting != null &&
                   userRosters.any(
-                      (ur) => setting.rosterName?.toLowerCase() == ur.toLowerCase());
+                    (ur) =>
+                        setting.rosterName?.toLowerCase() == ur.toLowerCase(),
+                  );
             } else {
               // Admin/Customer: Level by default, or if has a setting
               isAuthorized = paramName == 'Level' || setting != null;
@@ -126,7 +140,8 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
               final daysToRunout = (currentLevel / depletionRate).floor();
 
               final runoutDate = now.add(
-                  Duration(days: daysToRunout, hours: random.nextInt(24)));
+                Duration(days: daysToRunout, hours: random.nextInt(24)),
+              );
               final nextRefill = daysToRunout > 2
                   ? now.add(Duration(days: max(1, daysToRunout - 2), hours: 9))
                   : null;
@@ -138,24 +153,27 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
                 return AssetScheduleForecast(
                   date: date,
                   value: val,
-                  status:
-                      val < 20 ? 'critical' : (val < 40 ? 'warning' : 'normal'),
+                  status: val < 20
+                      ? 'critical'
+                      : (val < 40 ? 'warning' : 'normal'),
                 );
               });
 
-              newSchedules.add(AssetScheduleModel(
-                plantId: tank.plantId ?? 0,
-                plantName: tankGroup.plantName,
-                tankId: tank.tankId,
-                tankNumber: tank.tankNumber,
-                item: paramName,
-                siteLocation:
-                    '${tankGroup.city ?? "Unknown"}, ${tankGroup.state ?? ""}',
-                runoutDate: runoutDate,
-                nextScheduledRefill: nextRefill,
-                unit: paramUnit,
-                forecast: forecasts,
-              ));
+              newSchedules.add(
+                AssetScheduleModel(
+                  plantId: tank.siteId ?? 0,
+                  plantName: tankGroup.siteName,
+                  tankId: tank.tankId,
+                  tankNumber: tank.tankNumber,
+                  item: paramName,
+                  siteLocation:
+                      '${tankGroup.city ?? "Unknown"}, ${tankGroup.state ?? ""}',
+                  runoutDate: runoutDate,
+                  nextScheduledRefill: nextRefill,
+                  unit: paramUnit,
+                  forecast: forecasts,
+                ),
+              );
             }
           }
         }
@@ -163,7 +181,9 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
 
       state = state.copyWith(
         isLoading: false,
-        schedules: refresh ? newSchedules : [...state.schedules, ...newSchedules],
+        schedules: refresh
+            ? newSchedules
+            : [...state.schedules, ...newSchedules],
         totalPages: response.pagination.totalPages,
       );
     } catch (e) {
@@ -172,15 +192,12 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
   }
 
   void setFilters({String? daysToRunOut, String? unit}) {
-    state = state.copyWith(
-      daysToRunOutFilter: daysToRunOut,
-      unitFilter: unit,
-    );
+    state = state.copyWith(daysToRunOutFilter: daysToRunOut, unitFilter: unit);
     loadData(refresh: true);
   }
 }
 
 final assetScheduleProvider =
     NotifierProvider<AssetScheduleNotifier, AssetScheduleState>(
-  AssetScheduleNotifier.new,
-);
+      AssetScheduleNotifier.new,
+    );

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../../../../shared/widgets/PlantTankDropdownSelector.dart';
+import '../../../../shared/widgets/SiteTankDropdownSelector.dart';
 import '../../../user/presentation/model/user_model.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../controller/group_provider.dart';
@@ -20,7 +20,7 @@ class AddGroupModal extends ConsumerStatefulWidget {
 
 class _AddGroupModalState extends ConsumerState<AddGroupModal> {
   final _descriptionController = TextEditingController();
-  List<PlantTankAssignment> _assignments = [];
+  List<SiteTankAssignment> _assignments = [];
 
   List<Role> _roles = [];
   int? _selectedRoleId;
@@ -56,11 +56,11 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
         });
 
         // Initialize assignments
-        _assignments = widget.group!.assignedPlants.map((plantId) {
+        _assignments = widget.group!.assignedSites.map((siteId) {
           final plantTanks = widget.group!.assignedTanks.toList();
-          return PlantTankAssignment(
-            plantId: plantId,
-            plantName: 'Plant $plantId',
+          return SiteTankAssignment(
+            siteId: siteId,
+            siteName: 'Site $siteId',
             allTanks: false,
             tankIds: plantTanks,
           );
@@ -98,7 +98,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
     // Construct structured assignments for precise exclusion
     final List<Map<String, dynamic>> excludeAssignments = _assignments.map((a) {
       return {
-        'plant_id': a.plantId,
+        'plant_id': a.siteId,
         if (a.tankIds != null && a.tankIds!.isNotEmpty) 'tank_ids': a.tankIds,
         'all_tanks': a.allTanks,
       };
@@ -150,7 +150,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
     }
 
     final selectedRole = _roles.firstWhere((r) => r.id == _selectedRoleId);
-    final plantIds = _assignments.map((a) => a.plantId).toList();
+    final siteIds = _assignments.map((a) => a.siteId).toList();
     final tankIds = <int>{};
     for (var a in _assignments) {
       if (a.tankIds != null) tankIds.addAll(a.tankIds!);
@@ -164,7 +164,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
             GroupCreateRequest(
               name: selectedRole.name,
               description: _descriptionController.text,
-              assignedPlants: plantIds,
+              assignedSites: siteIds,
               assignedTanks: tankIds.toList(),
               userIds: _selectedUserIds.toList(),
             ),
@@ -175,7 +175,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
           .updateGroup(widget.group!.id, {
             'name': selectedRole.name,
             'description': _descriptionController.text,
-            'assigned_plants': plantIds,
+            'assigned_plants': siteIds,
             'assigned_tanks': tankIds.toList(),
             'user_ids': _selectedUserIds.toList(),
           });
@@ -339,7 +339,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'PLANT & TANK ACCESS',
+                            'SITE & TANK ACCESS',
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
@@ -353,7 +353,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                     Padding(
                       padding: const EdgeInsets.only(left: 4),
                       child: Text(
-                        'First select the plants these users will have access to.',
+                        'First select the sites these users will have access to.',
                         style: GoogleFonts.inter(
                           color: const Color(0xFF6B7280),
                           fontSize: 12,
@@ -361,7 +361,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    PlantTankDropdownSelector(
+                    SiteTankDropdownSelector(
                       initialAssignments: _assignments,
                       onChanged: (newAssignments) {
                         setState(() {

@@ -5,20 +5,20 @@ import 'package:air_water/shared/widgets/app_text_field.dart';
 import 'package:air_water/shared/widgets/app_dropdown.dart';
 import 'package:air_water/shared/widgets/app_date_picker.dart';
 import 'package:air_water/shared/widgets/app_table.dart';
-import '../controller/plant_provider.dart';
-import '../widgets/add_plant_modal.dart';
-import '../model/plant_model.dart';
+import '../controller/site_provider.dart';
+import '../widgets/add_site_modal.dart';
+import '../model/site_model.dart';
 import 'package:air_water/shared/widgets/app_clear_button.dart';
 
-class PlantWide extends ConsumerStatefulWidget {
-  const PlantWide({super.key});
+class SiteWide extends ConsumerStatefulWidget {
+  const SiteWide({super.key});
 
   @override
-  ConsumerState<PlantWide> createState() => _PlantWideState();
+  ConsumerState<SiteWide> createState() => _SiteWideState();
 }
 
-class _PlantWideState extends ConsumerState<PlantWide> {
-  final _plantSearchController = TextEditingController();
+class _SiteWideState extends ConsumerState<SiteWide> {
+  final _siteSearchController = TextEditingController();
   final _scrollController = ScrollController();
 
   @override
@@ -30,50 +30,61 @@ class _PlantWideState extends ConsumerState<PlantWide> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
-      ref.read(plantNotifierProvider.notifier).loadMore();
+      ref.read(siteNotifierProvider.notifier).loadMore();
     }
   }
 
   @override
   void dispose() {
-    _plantSearchController.dispose();
+    _siteSearchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final plantState = ref.watch(plantNotifierProvider);
-    final plantNotifier = ref.read(plantNotifierProvider.notifier);
+    final siteState = ref.watch(siteNotifierProvider);
+    final siteNotifier = ref.read(siteNotifierProvider.notifier);
 
     return Scaffold(
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(24.0),
-            child: _buildHeader(plantState, plantNotifier),
+            child: _buildHeader(siteState, siteNotifier),
           ),
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = constraints.maxWidth > 1200 ? constraints.maxWidth : 1200.0;
+                final tableWidth = constraints.maxWidth > 1200
+                    ? constraints.maxWidth
+                    : 1200.0;
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
                     width: tableWidth,
                     child: Column(
                       children: [
-                        if (!plantState.isLoading || plantState.groupedPlants.isNotEmpty)
+                        if (!siteState.isLoading ||
+                            siteState.groupedSites.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                            ),
                             child: _buildFixedTableHeader(),
                           ),
                         Expanded(
-                          child: plantState.isLoading && plantState.groupedPlants.isEmpty
-                              ? const AppTableInitialLoader()
-                              : _buildVirtualizedTable(plantState, plantNotifier),
+                          child:
+                              siteState.isLoading &&
+                                      siteState.groupedSites.isEmpty
+                               ? const AppTableInitialLoader()
+                               : _buildVirtualizedTable(
+                                   siteState,
+                                   siteNotifier,
+                                 ),
                         ),
-                        if (plantState.isLoading && plantState.groupedPlants.isNotEmpty)
+                        if (siteState.isLoading &&
+                            siteState.groupedSites.isNotEmpty)
                           const AppTableLoadingMore(),
                       ],
                     ),
@@ -88,7 +99,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
     );
   }
 
-  Widget _buildHeader(PlantState state, PlantNotifier notifier) {
+  Widget _buildHeader(SiteState state, SiteNotifier notifier) {
     return Container(
       padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
       decoration: const BoxDecoration(
@@ -102,7 +113,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'PLANT MANAGEMENT',
+            'SITE MANAGEMENT',
             style: GoogleFonts.outfit(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -112,7 +123,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Centralize plant information including identification, locations, and status management.',
+            'Centralize site information including identification, locations, and status management.',
             style: GoogleFonts.inter(
               color: const Color(0xFF6B7280),
               fontSize: 13,
@@ -147,41 +158,41 @@ class _PlantWideState extends ConsumerState<PlantWide> {
     );
   }
 
-  Widget _buildFilterRow(PlantNotifier notifier, PlantState state) {
+  Widget _buildFilterRow(SiteNotifier notifier, SiteState state) {
     return Row(
       children: [
         Expanded(
           flex: 2,
-          child: RawAutocomplete<PlantAutocompleteInfo>(
+          child: RawAutocomplete<SiteAutocompleteInfo>(
             optionsBuilder: (TextEditingValue textEditingValue) async {
               if (textEditingValue.text.isEmpty) {
-                return const Iterable<PlantAutocompleteInfo>.empty();
+                return const Iterable<SiteAutocompleteInfo>.empty();
               }
-              return await notifier.searchPlants(textEditingValue.text);
+              return await notifier.searchSites(textEditingValue.text);
             },
-            displayStringForOption: (PlantAutocompleteInfo option) =>
-                option.plantName,
-            onSelected: (PlantAutocompleteInfo selection) {
-              _plantSearchController.text = selection.plantName;
-              notifier.setSearchName(selection.plantName);
-              notifier.loadGroupedPlants(isReload: true);
+            displayStringForOption: (SiteAutocompleteInfo option) =>
+                option.siteName,
+            onSelected: (SiteAutocompleteInfo selection) {
+              _siteSearchController.text = selection.siteName;
+              notifier.setSearchName(selection.siteName);
+              notifier.loadGroupedSites(isReload: true);
             },
             fieldViewBuilder:
                 (context, controller, focusNode, onFieldSubmitted) {
-                  if (_plantSearchController.text != controller.text &&
-                      _plantSearchController.text.isNotEmpty &&
+                  if (_siteSearchController.text != controller.text &&
+                      _siteSearchController.text.isNotEmpty &&
                       controller.text.isEmpty) {
-                    controller.text = _plantSearchController.text;
+                    controller.text = _siteSearchController.text;
                   }
 
                   return AppTextField(
                     controller: controller,
                     focusNode: focusNode,
-                    hint: 'Search By Plant',
+                    hint: 'Search By Site',
                     onSubmitted: (value) {
-                      _plantSearchController.text = value;
+                      _siteSearchController.text = value;
                       notifier.setSearchName(value);
-                      notifier.loadGroupedPlants(isReload: true);
+                      notifier.loadGroupedSites(isReload: true);
                     },
                   );
                 },
@@ -202,7 +213,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
                         final option = options.elementAt(index);
                         return ListTile(
                           title: Text(
-                            option.plantName,
+                            option.siteName,
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
@@ -258,7 +269,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
         const SizedBox(width: 16),
         AppClearButton(
           onPressed: () {
-            _plantSearchController.clear();
+            _siteSearchController.clear();
             notifier.clearFilters();
           },
         ),
@@ -268,10 +279,10 @@ class _PlantWideState extends ConsumerState<PlantWide> {
             showGeneralDialog(
               context: context,
               barrierDismissible: true,
-              barrierLabel: 'AddPlant',
+              barrierLabel: 'AddSite',
               barrierColor: Colors.black54,
               transitionDuration: const Duration(milliseconds: 300),
-              pageBuilder: (context, anim1, anim2) => const AddPlantModal(),
+              pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
               transitionBuilder: (context, anim1, anim2, child) {
                 return SlideTransition(
                   position:
@@ -289,7 +300,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
           style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
           icon: const Icon(Icons.add, size: 18),
           label: Text(
-            'ADD PLANT',
+            'ADD SITE',
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w800,
               fontSize: 13,
@@ -320,6 +331,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
           AppTableHeaderCell('Company', flex: 2),
           AppTableHeaderCell('State', flex: 2),
           AppTableHeaderCell('Country', flex: 2),
+          AppTableHeaderCell('Time Zone', flex: 2),
           AppTableHeaderCell('Status', flex: 2),
           AppTableHeaderCell('Address', flex: 3),
           AppTableHeaderCell('Action', width: 100),
@@ -328,21 +340,21 @@ class _PlantWideState extends ConsumerState<PlantWide> {
     );
   }
 
-  Widget _buildVirtualizedTable(PlantState state, PlantNotifier notifier) {
-    if (state.groupedPlants.isEmpty && !state.isLoading) {
+  Widget _buildVirtualizedTable(SiteState state, SiteNotifier notifier) {
+    if (state.groupedSites.isEmpty && !state.isLoading) {
       return const Padding(
         padding: EdgeInsets.symmetric(horizontal: 24),
         child: AppTableEmptyState(
           icon: Icons.park_outlined,
-          title: 'No plants found',
+          title: 'No sites found',
         ),
       );
     }
 
     // Generate linear list of items (headers and rows)
     final List<dynamic> items = [];
-    for (int i = 0; i < state.groupedPlants.length; i++) {
-      final group = state.groupedPlants[i];
+    for (int i = 0; i < state.groupedSites.length; i++) {
+      final group = state.groupedSites[i];
       items.add({'type': 'header', 'group': group, 'index': i + 1});
 
       for (final addr in group.addresses) {
@@ -361,14 +373,14 @@ class _PlantWideState extends ConsumerState<PlantWide> {
         if (item['type'] == 'header') {
           return _buildGroupHeader(
             state,
-            item['group'] as PlantGroup,
+            item['group'] as SiteGroup,
             item['index'] as int,
             isLast,
           );
         } else {
-          return _buildPlantRow(
-            item['address'] as PlantGroupAddress,
-            item['group'] as PlantGroup,
+          return _buildSiteRow(
+            item['address'] as SiteGroupAddress,
+            item['group'] as SiteGroup,
             isLast,
           );
         }
@@ -377,8 +389,8 @@ class _PlantWideState extends ConsumerState<PlantWide> {
   }
 
   Widget _buildGroupHeader(
-    PlantState state,
-    PlantGroup group,
+    SiteState state,
+    SiteGroup group,
     int index,
     bool isLast,
   ) {
@@ -430,7 +442,7 @@ class _PlantWideState extends ConsumerState<PlantWide> {
                       border: Border.all(color: const Color(0xFFBFDBFE)),
                     ),
                     child: Text(
-                      '${group.addresses.length} Plants',
+                      '${group.addresses.length} Sites',
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -447,9 +459,9 @@ class _PlantWideState extends ConsumerState<PlantWide> {
     );
   }
 
-  Widget _buildPlantRow(
-    PlantGroupAddress plant,
-    PlantGroup group,
+  Widget _buildSiteRow(
+    SiteGroupAddress site,
+    SiteGroup group,
     bool isLast,
   ) {
     return Container(
@@ -474,44 +486,28 @@ class _PlantWideState extends ConsumerState<PlantWide> {
         child: Row(
           children: [
             const AppTableCell(null, width: 70), // SI.NO spacing
-            AppTableCell(plant.city ?? '—', flex: 2),
-            AppTableCell(plant.createdAt?.split('T')[0] ?? '—', flex: 2),
+            AppTableCell(site.city ?? '—', flex: 2),
+            AppTableCell(site.createdAt?.split('T')[0] ?? '—', flex: 2),
             AppTableCell(
-              null,
+              site.companyName ?? '—',
               flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    plant.companyName ?? '—',
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                      color: const Color(0xFF111827),
-                    ),
-                  ),
-                  if (plant.companyFullAddress.isNotEmpty)
-                    Text(
-                      plant.companyFullAddress,
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: const Color(0xFF9CA3AF),
-                      ),
-                    ),
-                ],
-              ),
+              bold: true,
+              fontSize: 13,
+              color: const Color(0xFF111827),
             ),
-            AppTableCell(plant.state ?? '—', flex: 2),
-            AppTableCell(plant.country ?? '—', flex: 2),
+            const SizedBox(width: 16),
+            AppTableCell(site.state ?? '—', flex: 2),
+            AppTableCell(site.country ?? '—', flex: 2),
+            AppTableCell(site.timeZone ?? '—', flex: 2),
             AppTableCell(
               null,
               flex: 2,
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: AppStatusBadge(status: plant.status ?? 1),
+                child: AppStatusBadge(status: site.status ?? 1),
               ),
             ),
-            AppTableCell(plant.fullAddress, flex: 3),
+            AppTableCell(site.fullAddress, flex: 3),
             AppTableCell(
               null,
               width: 100,
@@ -521,14 +517,14 @@ class _PlantWideState extends ConsumerState<PlantWide> {
                     icon: Icons.edit_outlined,
                     color: const Color(0xFF2563EB),
                     bg: const Color(0xFFEFF6FF),
-                    onTap: () => _showEditModal(plant.toPlant()),
+                    onTap: () => _showEditModal(site.toSite()),
                   ),
                   const SizedBox(width: 8),
                   AppTableActionButton(
                     icon: Icons.delete_outline_rounded,
                     color: const Color(0xFFDC2626),
                     bg: const Color(0xFFFEF2F2),
-                    onTap: () => _showDeleteDialog(plant.toPlant()),
+                    onTap: () => _showDeleteDialog(site.toSite()),
                   ),
                 ],
               ),
@@ -539,13 +535,13 @@ class _PlantWideState extends ConsumerState<PlantWide> {
     );
   }
 
-  void _showEditModal(Plant plant) {
+  void _showEditModal(Site site) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: '',
       pageBuilder: (context, anim1, anim2) {
-        return AddPlantModal(initialPlant: plant);
+        return AddSiteModal(initialSite: site);
       },
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
@@ -559,13 +555,13 @@ class _PlantWideState extends ConsumerState<PlantWide> {
     );
   }
 
-  Future<void> _showDeleteDialog(Plant plant) async {
+  Future<void> _showDeleteDialog(Site site) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Plant'),
+        title: const Text('Delete Site'),
         content: Text(
-          'Are you sure you want to delete "${plant.name}" at "${plant.cityName}"?',
+          'Are you sure you want to delete "${site.name}" at "${site.cityName}"?',
         ),
         actions: [
           TextButton(
@@ -583,11 +579,11 @@ class _PlantWideState extends ConsumerState<PlantWide> {
 
     if (confirmed == true) {
       final success = await ref
-          .read(plantNotifierProvider.notifier)
-          .deletePlant(plant.id);
+          .read(siteNotifierProvider.notifier)
+          .deleteSite(site.id);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Plant deleted successfully')),
+          const SnackBar(content: Text('Site deleted successfully')),
         );
       }
     }

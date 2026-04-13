@@ -1,5 +1,5 @@
 import '../../presentation/model/user_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../../../tank/presentation/model/tank_model.dart';
 import '../../domain/repository/user_repository.dart';
 import '../api/user_api.dart';
@@ -19,7 +19,7 @@ class UserRepositoryImpl implements UserRepository {
     int? roleId,
     int? companyId,
     int? status,
-    int? plantId,
+    int? siteId,
     int? tankId,
     List<Map<String, dynamic>>? excludeAssignments,
     String? groupName,
@@ -34,7 +34,7 @@ class UserRepositoryImpl implements UserRepository {
         roleId: roleId,
         companyId: companyId,
         status: status,
-        plantId: plantId,
+        siteId: siteId,
         tankId: tankId,
         excludeAssignments: excludeAssignments,
         groupName: groupName,
@@ -76,22 +76,22 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<List<PlantAutocompleteInfo>> searchPlants(String q) async {
-    return await _api.searchPlants(q);
+  Future<List<SiteAutocompleteInfo>> searchSites(String q) async {
+    return await _api.searchSites(q);
   }
 
   @override
   Future<TankGroupedResponse> getTanksGrouped({
     int page = 1,
     int limit = 50,
-    String? plantName,
+    String? siteName,
     String? tankName,
     int? status,
   }) async {
     return await _api.getTanksGrouped(
       page: page,
       limit: limit,
-      plantName: plantName,
+      siteName: siteName,
       tankName: tankName,
       status: status,
     );

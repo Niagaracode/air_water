@@ -1,6 +1,6 @@
 import '../../../../core/network/api_client.dart';
 import '../../presentation/model/group_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 
 class GroupApi {
   final ApiClient _client;
@@ -66,7 +66,7 @@ class GroupApi {
     await _client.delete('/groups/$groupId/users/$userId');
   }
 
-  Future<List<PlantUserCount>> getPlantsWithUserCounts({String? name}) async {
+  Future<List<SiteUserCount>> getSitesWithUserCounts({String? name}) async {
     final Map<String, dynamic> query = {};
     if (name != null) query['name'] = name;
     final response = await _client.get(
@@ -74,28 +74,28 @@ class GroupApi {
       query: query,
     );
     return (response.data['data'] as List)
-        .map((i) => PlantUserCount.fromJson(i as Map<String, dynamic>))
+        .map((i) => SiteUserCount.fromJson(i as Map<String, dynamic>))
         .toList();
   }
 
-  Future<List<PlantAutocompleteInfo>> getPlantSuggestions(String query) async {
+  Future<List<SiteAutocompleteInfo>> getSiteSuggestions(String query) async {
     final Map<String, dynamic> qParams = {'q': query};
     final response = await _client.get(
       '/plants/autocomplete',
       query: qParams,
     );
     return (response.data['data'] as List)
-        .map((i) => PlantAutocompleteInfo.fromJson(i as Map<String, dynamic>))
+        .map((i) => SiteAutocompleteInfo.fromJson(i as Map<String, dynamic>))
         .toList();
   }
 
-  Future<PlantGroupDetails> getPlantGroupDetails(int plantId) async {
-    final response = await _client.get('/groups/plants/$plantId/details');
-    return PlantGroupDetails.fromJson(response.data['data'] as Map<String, dynamic>);
+  Future<SiteGroupDetails> getSiteGroupDetails(int siteId) async {
+    final response = await _client.get('/groups/plants/$siteId/details');
+    return SiteGroupDetails.fromJson(response.data['data'] as Map<String, dynamic>);
   }
 
-  Future<void> unassignUserFromTank(int userId, int plantId, int tankId) async {
-    await _client.delete('/groups/unassign-tank/$userId/$plantId/$tankId');
+  Future<void> unassignUserFromTank(int userId, int siteId, int tankId) async {
+    await _client.delete('/groups/unassign-tank/$userId/$siteId/$tankId');
   }
 }
 

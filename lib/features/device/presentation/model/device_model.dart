@@ -1,4 +1,4 @@
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 
 class Device {
   final int id;
@@ -15,9 +15,11 @@ class Device {
   final String? lastSync;
   final String? category;
   final String? simNumber;
+  final String? powerSource;
+  final int? startHour;
+  final int? duration;
   final double? latitude;
   final double? longitude;
-  final String? timeZone;
   final int status;
   final String? createdAt;
   final SiteInformation? siteInformation;
@@ -37,9 +39,11 @@ class Device {
     this.lastSync,
     this.category,
     this.simNumber,
+    this.powerSource,
+    this.startHour,
+    this.duration,
     this.latitude,
     this.longitude,
-    this.timeZone,
     required this.status,
     this.createdAt,
     this.siteInformation,
@@ -61,13 +65,16 @@ class Device {
       lastSync: json['last_sync'] as String?,
       category: json['category'] as String?,
       simNumber: json['sim_number'] as String?,
+      powerSource: json['power_source'] as String?,
+      startHour: json['start_hour'] as int?,
+      duration: json['duration'] as int?,
       latitude: json['latitude'] != null
           ? double.tryParse(json['latitude'].toString())
           : null,
       longitude: json['longitude'] != null
           ? double.tryParse(json['longitude'].toString())
           : null,
-      timeZone: json['time_zone'] as String?,
+
       status: json['status'] ?? 1,
       createdAt: json['created_at'] as String?,
       siteInformation: json['site_information'] != null
@@ -123,19 +130,19 @@ class SiteInformation {
 }
 
 class DeviceGroup {
-  final String? plantOrganizationCode;
+  final String? siteOrganizationCode;
   final String siteName;
   final List<Device> devices;
 
   DeviceGroup({
-    this.plantOrganizationCode,
+    this.siteOrganizationCode,
     required this.siteName,
     required this.devices,
   });
 
   factory DeviceGroup.fromJson(Map<String, dynamic> json) {
     return DeviceGroup(
-      plantOrganizationCode: json['plant_organization_code'] as String?,
+      siteOrganizationCode: json['plant_organization_code'] as String?,
       siteName: json['site_name'] as String,
       devices: (json['devices'] as List)
           .map((i) => Device.fromJson(i as Map<String, dynamic>))
@@ -171,9 +178,12 @@ class DeviceCreateRequest {
   final String? unitId;
   final String? category;
   final String? simNumber;
+  final String? powerSource;
+  final int? startHour;
+  final int? duration;
+  final String? lastSync;
   final double? latitude;
   final double? longitude;
-  final String? timeZone;
   final int? status;
 
   DeviceCreateRequest({
@@ -185,9 +195,12 @@ class DeviceCreateRequest {
     this.unitId,
     this.category,
     this.simNumber,
+    this.powerSource,
+    this.startHour,
+    this.duration,
+    this.lastSync,
     this.latitude,
     this.longitude,
-    this.timeZone,
     this.status,
   });
 
@@ -201,9 +214,13 @@ class DeviceCreateRequest {
       'unit_id': unitId,
       'category': category,
       'sim_number': simNumber,
+      'power_source': powerSource,
+      'start_hour': startHour,
+      'duration': duration,
+      'last_sync': lastSync,
       'latitude': latitude,
       'longitude': longitude,
-      'time_zone': timeZone,
+
       'status': status,
     };
   }

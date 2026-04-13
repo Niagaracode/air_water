@@ -22,7 +22,7 @@ import '../../features/auth/presentation/login_layout.dart';
 import '../../app_startup/app_startup.dart';
 import '../../features/dashboard/dashboard_layout.dart';
 import '../../features/device/device_layout.dart';
-import '../../features/plant/plant_layout.dart';
+import '../../features/site/site_layout.dart';
 import '../../controller/screen_controller.dart';
 import '../../features/tank/tank_layout.dart';
 import '../../features/tank/presentation/view/tank_details_view.dart';
@@ -61,15 +61,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
         // Combine routes to restrict for non-admin roles
         final restrictedRoutes = [
-          '/company', '/user', '/group', '/product', '/device',
-          '/message-template', '/roaster', '/setting', '/rule'
+          '/company',
+          '/user',
+          '/group',
+          '/product',
+          '/device',
+          '/message-template',
+          '/roaster',
+          '/setting',
+          '/rule',
         ];
 
         // 1. Immediate redirection based on Storage-based Role (Eliminates "one second flash")
         if (roleFromStorage != null) {
           if (roleFromStorage == UserRole.customer) {
             // Customers should be able to access /setting and /profile as per sidebar config
-            final customerRestricted = restrictedRoutes.where((r) => r != '/setting').toList();
+            final customerRestricted = restrictedRoutes
+                .where((r) => r != '/setting')
+                .toList();
             if (customerRestricted.contains(location)) {
               return '/dashboard';
             }
@@ -85,15 +94,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (currentUser != null) {
           final roleId = currentUser.roleId;
 
-          if (roleId == 6) { // Customer
+          if (roleId == 6) {
+            // Customer
             // Customers should be able to access /setting and /profile as per sidebar config
-            final customerRestricted = restrictedRoutes.where((r) => r != '/setting').toList();
+            final customerRestricted = restrictedRoutes
+                .where((r) => r != '/setting')
+                .toList();
             if (customerRestricted.contains(location)) {
               return '/dashboard';
             }
           }
 
-          if (roleId == 5) { // Technician
+          if (roleId == 5) {
+            // Technician
             if (restrictedRoutes.contains(location)) {
               return '/dashboard';
             }
@@ -108,7 +121,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/loading',
         builder: (_, __) =>
-        const Scaffold(body: Center(child: CircularProgressIndicator())),
+            const Scaffold(body: Center(child: CircularProgressIndicator())),
       ),
 
       GoRoute(
@@ -126,14 +139,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/dashboard',
             builder: (_, __) => const DashboardLayout(),
           ),
-          GoRoute(
-            path: '/company',
-            builder: (_, __) => const CompanyLayout(),
-          ),
-          GoRoute(
-            path: '/plant',
-            builder: (_, __) => const PlantLayout(),
-          ),
+          GoRoute(path: '/company', builder: (_, __) => const CompanyLayout()),
+          GoRoute(path: '/site', builder: (_, __) => const SiteLayout()),
           GoRoute(
             path: '/tank',
             builder: (_, __) => const TankLayout(),
@@ -148,38 +155,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          GoRoute(
-            path: '/device',
-            builder: (_, __) => const DeviceLayout(),
-          ),
-          GoRoute(
-            path: '/product',
-            builder: (_, __) => const ProductLayout(),
-          ),
-          GoRoute(
-            path: '/user',
-            builder: (_, __) => const UserLayout(),
-          ),
-          GoRoute(
-            path: '/group',
-            builder: (_, __) => const UserGroupLayout(),
-          ),
-          GoRoute(
-            path: '/rule',
-            builder: (_, __) => const SettingLayout(),
-          ),
+          GoRoute(path: '/device', builder: (_, __) => const DeviceLayout()),
+          GoRoute(path: '/product', builder: (_, __) => const ProductLayout()),
+          GoRoute(path: '/user', builder: (_, __) => const UserLayout()),
+          GoRoute(path: '/group', builder: (_, __) => const UserGroupLayout()),
+          GoRoute(path: '/rule', builder: (_, __) => const SettingLayout()),
           GoRoute(
             path: '/message-template',
             builder: (_, __) => const MessageTemplateLayout(),
           ),
-          GoRoute(
-            path: '/roaster',
-            builder: (_, __) => const RoasterLayout(),
-          ),
-          GoRoute(
-            path: '/report',
-            builder: (_, __) => const ReportLayout(),
-          ),
+          GoRoute(path: '/roaster', builder: (_, __) => const RoasterLayout()),
+          GoRoute(path: '/report', builder: (_, __) => const ReportLayout()),
           GoRoute(
             path: '/asset-summary',
             builder: (_, __) => const AssetSummaryLayout(),
@@ -188,22 +174,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/asset-schedule',
             builder: (_, __) => const AssetScheduleLayout(),
           ),
-          GoRoute(
-            path: '/profile',
-            builder: (_, __) => const ProfileLayout(),
-          ),
-          GoRoute(
-            path: '/alarm',
-            builder: (_, __) => const AlarmLayout(),
-          ),
-          GoRoute(
-            path: '/event',
-            builder: (_, __) => const EventLayout(),
-          ),
-          GoRoute(
-            path: '/setting',
-            builder: (_, __) => const SettingLayout(),
-          ),
+          GoRoute(path: '/profile', builder: (_, __) => const ProfileLayout()),
+          GoRoute(path: '/alarm', builder: (_, __) => const AlarmLayout()),
+          GoRoute(path: '/event', builder: (_, __) => const EventLayout()),
+          GoRoute(path: '/setting', builder: (_, __) => const SettingLayout()),
         ],
       ),
     ],

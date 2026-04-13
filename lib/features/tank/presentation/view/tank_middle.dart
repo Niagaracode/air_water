@@ -5,7 +5,7 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../controller/tank_provider.dart';
 import '../widgets/add_tank_modal.dart';
 import '../model/tank_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
 import 'dart:async';
@@ -18,7 +18,7 @@ class TankMiddle extends ConsumerStatefulWidget {
 }
 
 class _TankMiddleState extends ConsumerState<TankMiddle> {
-  final _plantSearchController = TextEditingController();
+  final _siteSearchController = TextEditingController();
   final _tankSearchController = TextEditingController();
   final _scrollController = ScrollController();
   Timer? _debounce;
@@ -38,7 +38,7 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
 
   @override
   void dispose() {
-    _plantSearchController.dispose();
+    _siteSearchController.dispose();
     _tankSearchController.dispose();
     _scrollController.dispose();
     _debounce?.cancel();
@@ -51,9 +51,9 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
     final notifier = ref.read(tankProvider.notifier);
 
     // Sync controllers
-    if (state.searchPlant != _plantSearchController.text &&
-        state.searchPlant.isEmpty) {
-      _plantSearchController.text = '';
+    if (state.searchSite != _siteSearchController.text &&
+        state.searchSite.isEmpty) {
+      _siteSearchController.text = '';
     }
     if (state.searchTank != _tankSearchController.text &&
         state.searchTank.isEmpty) {
@@ -127,7 +127,7 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
           ],
         ),
         const SizedBox(height: 16),
-        _buildPlantAutocomplete(notifier),
+        _buildSiteAutocomplete(notifier),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -135,7 +135,7 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
             const SizedBox(width: 8),
             AppClearButton(
               onPressed: () {
-                _plantSearchController.clear();
+                _siteSearchController.clear();
                 _tankSearchController.clear();
                 notifier.clearFilters();
               },
@@ -155,31 +155,31 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
     );
   }
 
-  Widget _buildPlantAutocomplete(TankNotifier notifier) {
+  Widget _buildSiteAutocomplete(TankNotifier notifier) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return RawAutocomplete<PlantAutocompleteInfo>(
-          textEditingController: _plantSearchController,
+        return RawAutocomplete<SiteAutocompleteInfo>(
+          textEditingController: _siteSearchController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.isEmpty) {
-              return const Iterable<PlantAutocompleteInfo>.empty();
+              return const Iterable<SiteAutocompleteInfo>.empty();
             }
-            return await notifier.searchPlants(textEditingValue.text);
+            return await notifier.searchSites(textEditingValue.text);
           },
-          displayStringForOption: (PlantAutocompleteInfo option) =>
-              option.plantName,
+          displayStringForOption: (SiteAutocompleteInfo option) =>
+              option.siteName,
           onSelected: (option) {
-            notifier.setSearchPlant(option.plantName);
+            notifier.setSearchSite(option.siteName);
             notifier.loadGroupedTanks();
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,
               focusNode: focusNode,
-              hint: 'Filter By Plant',
+              hint: 'Filter By Site',
               onSubmitted: (v) {
-                notifier.setSearchPlant(v);
+                notifier.setSearchSite(v);
                 notifier.loadGroupedTanks();
               },
             );
@@ -199,7 +199,7 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
                     itemBuilder: (context, index) {
                       final option = options.elementAt(index);
                       return ListTile(
-                        title: Text(option.plantName),
+                        title: Text(option.siteName),
                         onTap: () => onSelected(option),
                       );
                     },
@@ -326,7 +326,7 @@ class _TankMiddleState extends ConsumerState<TankMiddle> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  group.plantName,
+                  group.siteName,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1B1B4B),

@@ -6,7 +6,7 @@ import '../controller/tank_provider.dart';
 import '../widgets/add_tank_modal.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
 import '../model/tank_model.dart';
-import '../../../plant/presentation/model/plant_model.dart';
+import '../../../site/presentation/model/site_model.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import 'dart:async';
 
@@ -18,7 +18,7 @@ class TankNarrow extends ConsumerStatefulWidget {
 }
 
 class _TankNarrowState extends ConsumerState<TankNarrow> {
-  final _plantSearchController = TextEditingController();
+  final _siteSearchController = TextEditingController();
   final _tankSearchController = TextEditingController();
   final _scrollController = ScrollController();
   Timer? _debounce;
@@ -37,7 +37,7 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
 
   @override
   void dispose() {
-    _plantSearchController.dispose();
+    _siteSearchController.dispose();
     _tankSearchController.dispose();
     _scrollController.dispose();
     _debounce?.cancel();
@@ -50,9 +50,9 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     final notifier = ref.read(tankProvider.notifier);
 
     // Sync controllers
-    if (state.searchPlant != _plantSearchController.text &&
-        state.searchPlant.isEmpty) {
-      _plantSearchController.text = '';
+    if (state.searchSite != _siteSearchController.text &&
+        state.searchSite.isEmpty) {
+      _siteSearchController.text = '';
     }
     if (state.searchTank != _tankSearchController.text &&
         state.searchTank.isEmpty) {
@@ -85,7 +85,7 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: _buildErrorBanner(state.error!),
                     ),
-                  _buildPlantAutocomplete(notifier),
+                  _buildSiteAutocomplete(notifier),
                   const SizedBox(height: 8),
                   _buildTankAutocomplete(notifier),
                   const SizedBox(height: 8),
@@ -101,7 +101,7 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
                   const SizedBox(height: 8),
                   AppClearButton(
                     onPressed: () {
-                      _plantSearchController.clear();
+                      _siteSearchController.clear();
                       _tankSearchController.clear();
                       notifier.clearFilters();
                     },
@@ -194,7 +194,7 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
       child: ExpansionTile(
         initiallyExpanded: true,
         title: Text(
-          group.plantName,
+          group.siteName,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         subtitle: group.fullAddress.isNotEmpty
@@ -319,31 +319,31 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     );
   }
 
-  Widget _buildPlantAutocomplete(TankNotifier notifier) {
+  Widget _buildSiteAutocomplete(TankNotifier notifier) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return RawAutocomplete<PlantAutocompleteInfo>(
-          textEditingController: _plantSearchController,
+        return RawAutocomplete<SiteAutocompleteInfo>(
+          textEditingController: _siteSearchController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.isEmpty) {
-              return const Iterable<PlantAutocompleteInfo>.empty();
+              return const Iterable<SiteAutocompleteInfo>.empty();
             }
-            return await notifier.searchPlants(textEditingValue.text);
+            return await notifier.searchSites(textEditingValue.text);
           },
-          displayStringForOption: (PlantAutocompleteInfo option) =>
-              option.plantName,
+          displayStringForOption: (SiteAutocompleteInfo option) =>
+              option.siteName,
           onSelected: (option) {
-            notifier.setSearchPlant(option.plantName);
+            notifier.setSearchSite(option.siteName);
             notifier.loadGroupedTanks();
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
             return AppTextField(
               controller: controller,
               focusNode: focusNode,
-              hint: 'Filter By Plant',
+              hint: 'Filter By Site',
               onSubmitted: (v) {
-                notifier.setSearchPlant(v);
+                notifier.setSearchSite(v);
                 notifier.loadGroupedTanks();
               },
             );
@@ -363,7 +363,7 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
                     itemBuilder: (context, index) {
                       final option = options.elementAt(index);
                       return ListTile(
-                        title: Text(option.plantName),
+                        title: Text(option.siteName),
                         onTap: () => onSelected(option),
                       );
                     },
