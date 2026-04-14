@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/config/env.dart';
 import '../../../plant/presentation/model/plant_model.dart';
-import '../../../../core/config/app_config.dart';
 
 class Tank {
   final int tankId;
@@ -152,7 +152,7 @@ class Tank {
 
   String? get tankImageUrl {
     if (tankImage == null || tankImage!.isEmpty) return null;
-    final baseUrl = AppConfig.apiUrl.replaceAll('/api', '');
+    final baseUrl = Env.apiUrl.replaceAll('/api', '');
     return '$baseUrl/uploads/tank/$tankImage';
   }
 

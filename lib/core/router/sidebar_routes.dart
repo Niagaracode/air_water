@@ -1,7 +1,7 @@
 const Map<String, String> menuRoutes = {
   'Dashboard': '/dashboard',
   'Company': '/company',
-  'Plant': '/plant',
+  'Site': '/site',
   'Tank': '/tank',
   'Device': '/device',
   'Product': '/product',

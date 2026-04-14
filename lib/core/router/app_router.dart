@@ -131,7 +131,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const CompanyLayout(),
           ),
           GoRoute(
-            path: '/plant',
+            path: '/site',
             builder: (_, __) => const PlantLayout(),
           ),
           GoRoute(

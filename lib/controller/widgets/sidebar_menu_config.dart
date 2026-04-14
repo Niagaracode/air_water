@@ -41,8 +41,8 @@ const configurationMenu = [
     allowedRoles: [UserRole.superAdmin],
   ),
   SidebarMenuItem(
-    key: 'Plant',
-    label: 'Plant',
+    key: 'Site',
+    label: 'Site',
     icon: Icons.local_florist_rounded,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),
