@@ -43,7 +43,7 @@ const configurationMenu = [
   SidebarMenuItem(
     key: 'Site',
     label: 'Site',
-    icon: Icons.factory_rounded,
+    icon: Icons.local_florist_rounded,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),
   SidebarMenuItem(

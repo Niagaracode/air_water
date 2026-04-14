@@ -1,6 +1,6 @@
-/*
+import '../constants/app_constants.dart';
+
 class Env {
-  static const apiUrl = bool.fromEnvironment('prod')
-      ? 'https://api.prod.com'
-      : 'https://api.dev.com';
-}*/
+  static final String apiUrl = AppConstants.apiUrl;
+  static final String mqttWebUrl = AppConstants.mqttWebHost;
+}
