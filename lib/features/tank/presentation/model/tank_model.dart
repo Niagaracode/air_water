@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/config/env.dart';
 import '../../../site/presentation/model/site_model.dart';
-import '../../../../core/config/app_config.dart';
+import '../../../../core/constants/app_constants.dart';
 
 class Tank {
   final int tankId;
@@ -117,23 +117,29 @@ class Tank {
       simNumber: json['sim_number'] as String?,
       timeZone: json['time_zone'] as String?,
       status: json['status'] ?? 1,
-      useStrappingChart: json['use_strapping_chart'] == 1 || json['use_strapping_chart'] == true,
+      useStrappingChart:
+          json['use_strapping_chart'] == 1 ||
+          json['use_strapping_chart'] == true,
       strappingPoints: (() {
-        if (json['strapping_points'] != null && 
+        if (json['strapping_points'] != null &&
             (json['strapping_points'] as List).isNotEmpty) {
           return (json['strapping_points'] as List)
               .map((i) => StrappingPoint.fromJson(i as Map<String, dynamic>))
               .toList();
         }
-        if (json['strapping_points_json'] != null && 
-            json['strapping_points_json'] is String && 
+        if (json['strapping_points_json'] != null &&
+            json['strapping_points_json'] is String &&
             json['strapping_points_json'].toString().trim().isNotEmpty &&
             json['strapping_points_json'].toString().trim() != '[]') {
           try {
-            final decoded = jsonDecode(json['strapping_points_json'].toString().trim());
+            final decoded = jsonDecode(
+              json['strapping_points_json'].toString().trim(),
+            );
             if (decoded is List) {
               return decoded
-                  .map((i) => StrappingPoint.fromJson(i as Map<String, dynamic>))
+                  .map(
+                    (i) => StrappingPoint.fromJson(i as Map<String, dynamic>),
+                  )
                   .toList();
             }
           } catch (e) {
@@ -246,8 +252,7 @@ class TankGroup {
       country: country ?? this.country,
       pincode: pincode ?? this.pincode,
       siteId: siteId ?? this.siteId,
-      siteOrganizationCode:
-          siteOrganizationCode ?? this.siteOrganizationCode,
+      siteOrganizationCode: siteOrganizationCode ?? this.siteOrganizationCode,
       tanks: tanks ?? this.tanks,
     );
   }
@@ -379,10 +384,18 @@ class StrappingPoint {
 
   factory StrappingPoint.fromJson(Map<String, dynamic> json) {
     return StrappingPoint(
-      levelMm: _toDouble(json['level_mm'] ?? json['levelmm'] ?? json['level'] ?? 0.0),
-      volumeM3: _toDouble(json['volume_m3'] ?? json['volumem3'] ?? json['volume'] ?? 0.0),
-      levelUnit: (json['levelunit'] ?? json['level_unit'] ?? json['levelUnit']) as String?,
-      volumeUnit: (json['volumeunit'] ?? json['volume_m3_unit'] ?? json['volumeUnit']) as String?,
+      levelMm: _toDouble(
+        json['level_mm'] ?? json['levelmm'] ?? json['level'] ?? 0.0,
+      ),
+      volumeM3: _toDouble(
+        json['volume_m3'] ?? json['volumem3'] ?? json['volume'] ?? 0.0,
+      ),
+      levelUnit:
+          (json['levelunit'] ?? json['level_unit'] ?? json['levelUnit'])
+              as String?,
+      volumeUnit:
+          (json['volumeunit'] ?? json['volume_m3_unit'] ?? json['volumeUnit'])
+              as String?,
     );
   }
 
