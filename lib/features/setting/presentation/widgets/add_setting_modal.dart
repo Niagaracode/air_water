@@ -278,7 +278,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
             ? null
             : _descriptionController.text.trim(),
         'company_id': companyId,
-        'site_id': _selectedSite?.id,
+        'plant_id': _selectedSite?.id,
         'tank_id': _selectedTank?.tankId,
         'product_id': _selectedProduct?.id,
         'parameter_type': row.parameterType,
