@@ -28,6 +28,15 @@ class _AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
   OverlayEntry? _overlayEntry;
   bool _isOpen = false;
 
+  // Local copy of selected items used inside the overlay to avoid duplicates
+  late List<T> _localSelected;
+
+  @override
+  void initState() {
+    super.initState();
+    _localSelected = List<T>.from(widget.selectedItems);
+  }
+
   void _toggleDropdown() {
     if (_isOpen) {
       _closeDropdown();
@@ -37,6 +46,8 @@ class _AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
   }
 
   void _openDropdown() {
+    // Sync local selection with current parent state every time we open
+    _localSelected = List<T>.from(widget.selectedItems);
     _overlayEntry = _createOverlayEntry();
     Overlay.of(context).insert(_overlayEntry!);
     setState(() {
@@ -45,6 +56,8 @@ class _AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
   }
 
   void _closeDropdown() {
+    // Commit local selection to parent on close
+    widget.onChanged(_localSelected);
     _overlayEntry?.remove();
     _overlayEntry = null;
     setState(() {
@@ -83,26 +96,43 @@ class _AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
                 ),
                 child: StatefulBuilder(
                   builder: (context, setOverlayState) {
-                    final allSelected = widget.selectedItems.length == widget.items.length && widget.items.isNotEmpty;
-                    
+                    // Use _localSelected (local copy) to drive all checked state
+                    final allSelected = _localSelected.length ==
+                            widget.items.length &&
+                        widget.items.isNotEmpty;
+
                     return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (widget.items.isNotEmpty)
-                          CheckboxListTile(
-                            title: Text('Select All', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.bold)),
-                            value: allSelected,
-                            onChanged: (bool? value) {
+                          ListTile(
+                            dense: true,
+                            visualDensity: VisualDensity.compact,
+                            title: Text(
+                              'Select All',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: allSelected
+                                    ? const Color(0xFF141E7A)
+                                    : Colors.black87,
+                              ),
+                            ),
+                            selected: allSelected,
+                            selectedTileColor: const Color(0xFFEFF6FF),
+                            trailing: allSelected
+                                ? const Icon(Icons.check_rounded,
+                                    color: Color(0xFF141E7A), size: 18)
+                                : null,
+                            onTap: () {
                               setOverlayState(() {
-                                if (value == true) {
-                                  widget.onChanged(List<T>.from(widget.items));
+                                if (!allSelected) {
+                                  _localSelected = List<T>.from(widget.items);
                                 } else {
-                                  widget.onChanged([]);
+                                  _localSelected = [];
                                 }
                               });
                             },
-                            activeColor: const Color(0xFF141E7A),
-                            controlAffinity: ListTileControlAffinity.leading,
                           ),
                         const Divider(height: 1),
                         Flexible(
@@ -112,23 +142,39 @@ class _AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
                             itemCount: widget.items.length,
                             itemBuilder: (context, index) {
                               final item = widget.items[index];
-                              final isSelected = widget.selectedItems.contains(item);
-                              return CheckboxListTile(
-                                title: Text(widget.itemLabel(item), style: GoogleFonts.inter(fontSize: 14)),
-                                value: isSelected,
-                                onChanged: (bool? value) {
+                              // Check against local copy — prevents duplicates and
+                              // correctly shows prior selection on reopen
+                              final isSelected = _localSelected.contains(item);
+                              return ListTile(
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                title: Text(
+                                  widget.itemLabel(item),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: isSelected
+                                        ? const Color(0xFF141E7A)
+                                        : Colors.black87,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                                selected: isSelected,
+                                selectedTileColor: const Color(0xFFF3F8FF),
+                                trailing: isSelected
+                                    ? const Icon(Icons.check_rounded,
+                                        color: Color(0xFF141E7A), size: 18)
+                                    : null,
+                                onTap: () {
                                   setOverlayState(() {
-                                    final newList = List<T>.from(widget.selectedItems);
-                                    if (value == true) {
-                                      newList.add(item);
+                                    if (isSelected) {
+                                      _localSelected.remove(item);
                                     } else {
-                                      newList.remove(item);
+                                      _localSelected.add(item);
                                     }
-                                    widget.onChanged(newList);
                                   });
                                 },
-                                activeColor: const Color(0xFF141E7A),
-                                controlAffinity: ListTileControlAffinity.leading,
                               );
                             },
                           ),
@@ -195,7 +241,7 @@ class _AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
                         : Wrap(
                             spacing: 8,
                             runSpacing: 4,
-                            children: widget.selectedItems.map((item) {
+                            children: widget.selectedItems.toSet().map((item) {
                               return Chip(
                                 label: Text(
                                   widget.itemLabel(item),
@@ -234,7 +280,9 @@ class _AppMultiSelectDropdownState<T> extends State<AppMultiSelectDropdown<T>> {
 
   @override
   void dispose() {
+    // Remove overlay without firing onChanged (widget is being disposed)
     _overlayEntry?.remove();
+    _overlayEntry = null;
     super.dispose();
   }
 }

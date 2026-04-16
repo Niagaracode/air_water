@@ -31,8 +31,12 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
   List<Map<String, dynamic>> _allowedTemplates = [];
 
   List<Role> _selectedRoles = [];
+  List<User> _filteredUsersList = []; // Users filtered by selected roles
+  List<User> _selectedUsers = [];
   MessageTemplate? _selectedTemplate;
   String _selectedParameter = 'LEVEL';
+  bool _isLoadingUsers = false;
+  int _loadGeneration = 0; // Guards against stale async results
 
   final List<String> _parameters = [
     'LEVEL',
@@ -48,9 +52,8 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     'mfactor',
     'Data Interval',
     'Chart Data',
-    'OTHER'
+    'OTHER',
   ];
-
 
   @override
   void initState() {
@@ -71,7 +74,9 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
 
       final roles = await userNotifier.getRoles();
       final templates = await templateRepo.getActiveTemplates();
-      final allowed = await settingRepo.getTemplatesByParameter(_selectedParameter);
+      final allowed = await settingRepo.getTemplatesByParameter(
+        _selectedParameter,
+      );
 
       if (mounted) {
         setState(() {
@@ -80,13 +85,36 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
           _allowedTemplates = allowed;
 
           if (widget.templateMembers != null) {
-            final roleIds = widget.templateMembers!.map((m) => m.roleId).toSet();
-            _selectedRoles = _roles.where((r) => roleIds.contains(r.id)).toList();
-            
+            final roleIds = widget.templateMembers!
+                .map((m) => m.roleId)
+                .toSet();
+            _selectedRoles = _roles
+                .where((r) => roleIds.contains(r.id))
+                .toList();
+
             final templateId = widget.templateMembers!.first.messageTemplateId;
-            _selectedTemplate = _templates.where((t) => t.id == templateId).firstOrNull;
+            _selectedTemplate = _templates
+                .where((t) => t.id == templateId)
+                .firstOrNull;
           }
         });
+      }
+
+      // Load members for pre-selected roles (edit mode)
+      if (_selectedRoles.isNotEmpty) {
+        await _loadUsersByRoles(_selectedRoles);
+        // Restore pre-selected users from templateMembers
+        if (widget.templateMembers != null && mounted) {
+          final userIds = widget.templateMembers!
+              .where((m) => m.userId != null)
+              .map((m) => m.userId)
+              .toSet();
+          setState(() {
+            _selectedUsers = _filteredUsersList
+                .where((u) => userIds.contains(u.userId))
+                .toList();
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error loading initial data: $e');
@@ -95,15 +123,68 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     }
   }
 
+  /// Fetches users for each selected role from the API and merges results.
+  /// Uses a generation counter to ignore results from stale (superseded) requests.
+  Future<void> _loadUsersByRoles(List<Role> roles) async {
+    final myGeneration = ++_loadGeneration;
+    if (roles.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _filteredUsersList = [];
+          _selectedUsers = [];
+          _isLoadingUsers = false;
+        });
+      }
+      return;
+    }
+    if (mounted) setState(() => _isLoadingUsers = true);
+    try {
+      final userRepo = ref.read(userRepositoryProvider);
+      final List<User> merged = [];
+      final seenIds = <int>{};
+      for (final role in roles) {
+        // Abort if a newer request has been triggered
+        if (myGeneration != _loadGeneration) return;
+        final users = await userRepo.getUsers(roleId: role.id);
+        for (final u in users) {
+          if (seenIds.add(u.userId)) {
+            merged.add(u);
+          }
+        }
+      }
+      // Only apply if this is still the latest request
+      if (myGeneration == _loadGeneration && mounted) {
+        setState(() {
+          _filteredUsersList = merged;
+          // Remove selected users that no longer belong to any of the new roles
+          final validIds = merged.map((u) => u.userId).toSet();
+          _selectedUsers = _selectedUsers
+              .where((u) => validIds.contains(u.userId))
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading users by roles: $e');
+    } finally {
+      if (myGeneration == _loadGeneration && mounted) {
+        setState(() => _isLoadingUsers = false);
+      }
+    }
+  }
+
+  // _filteredUsersList is now populated by _loadUsersByRoles()
+  // and always contains only users matching the selected roles.
+
   Future<void> _updateAllowedTemplates(String parameter) async {
     try {
       final settingRepo = ref.read(settingRepositoryProvider);
       final allowed = await settingRepo.getTemplatesByParameter(parameter);
-      
+
       if (mounted) {
         setState(() {
           _allowedTemplates = allowed;
-          if (_selectedTemplate != null && !allowed.any((t) => t['id'] == _selectedTemplate!.id)) {
+          if (_selectedTemplate != null &&
+              !allowed.any((t) => t['id'] == _selectedTemplate!.id)) {
             _selectedTemplate = null;
           }
         });
@@ -138,18 +219,35 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     data['parameter_name'] = _selectedParameter;
     data['message_template_id'] = _selectedTemplate?.id;
 
+    if (_selectedUsers.isNotEmpty) {
+      data['members'] = _selectedUsers.map((user) => {
+        'user_id': user.userId,
+        'role_id': user.roleId,
+        'parameter_name': _selectedParameter,
+        'message_template_id': _selectedTemplate?.id,
+        'enabled': 1,
+      }).toList();
+    }
 
     bool success;
     if (widget.roster != null) {
-      success = await ref.read(roasterNotifierProvider.notifier).updateRoster(widget.roster!.id, data);
+      success = await ref
+          .read(roasterNotifierProvider.notifier)
+          .updateRoster(widget.roster!.id, data);
     } else {
-      success = await ref.read(roasterNotifierProvider.notifier).createRoster(data);
+      success = await ref
+          .read(roasterNotifierProvider.notifier)
+          .createRoster(data);
     }
 
     if (success && mounted) {
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Roster ${widget.roster != null ? 'updated' : 'created'} successfully')),
+        SnackBar(
+          content: Text(
+            'Roster ${widget.roster != null ? 'updated' : 'created'} successfully',
+          ),
+        ),
       );
     }
   }
@@ -172,7 +270,10 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
             children: [
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 48,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -184,7 +285,9 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  widget.roster != null ? 'Edit Roster' : 'Create New Roster',
+                                  widget.roster != null
+                                      ? 'Edit Roster'
+                                      : 'Create New Roster',
                                   style: GoogleFonts.outfit(
                                     fontSize: 28,
                                     fontWeight: FontWeight.w700,
@@ -208,7 +311,9 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                             style: IconButton.styleFrom(
                               backgroundColor: const Color(0xFFF3F4F6),
                               padding: const EdgeInsets.all(12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],
@@ -238,14 +343,54 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                                   items: _roles,
                                   hint: 'Select Multiple Roles',
                                   itemLabel: (r) => r.name,
-                                  onChanged: (list) => setState(() => _selectedRoles = list),
+                                  onChanged: (list) {
+                                    setState(() => _selectedRoles = list);
+                                    // Fetch users for the newly selected roles from API
+                                    _loadUsersByRoles(list);
+                                  },
                                 ),
+                                // Show loading indicator while fetching members
+                                if (_isLoadingUsers) ...
+                                  [
+                                    const SizedBox(height: 24),
+                                    _buildLabel('SELECT MEMBERS'),
+                                    const SizedBox(height: 12),
+                                    const LinearProgressIndicator(),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Loading members for selected role(s)...',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: const Color(0xFF9CA3AF),
+                                      ),
+                                    ),
+                                  ]
+                                // Show members dropdown only when members exist
+                                else if (_filteredUsersList.isNotEmpty) ...
+                                  [
+                                    const SizedBox(height: 24),
+                                    _buildLabel('SELECT MEMBERS'),
+                                    const SizedBox(height: 12),
+                                    AppMultiSelectDropdown<User>(
+                                      selectedItems: _selectedUsers,
+                                      items: _filteredUsersList,
+                                      hint: 'Select Members',
+                                      itemLabel: (u) {
+                                        final name = '${u.firstName ?? ''} ${u.lastName ?? ''}'.trim();
+                                        final display = name.isNotEmpty ? name : u.username;
+                                        return '$display (${u.roleName ?? ''})';
+                                      },
+                                      onChanged: (list) =>
+                                          setState(() => _selectedUsers = list),
+                                    ),
+                                  ],
                                 const SizedBox(height: 24),
                                 Row(
                                   children: [
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           _buildLabel('PARAMETER'),
                                           const SizedBox(height: 12),
@@ -256,7 +401,9 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                                             itemLabel: (p) => p,
                                             onChanged: (v) {
                                               if (v != null) {
-                                                setState(() => _selectedParameter = v);
+                                                setState(
+                                                  () => _selectedParameter = v,
+                                                );
                                                 _updateAllowedTemplates(v);
                                               }
                                             },
@@ -267,16 +414,25 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                                     const SizedBox(width: 24),
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           _buildLabel('MESSAGE TEMPLATE'),
                                           const SizedBox(height: 12),
                                           AppDropdown<MessageTemplate>(
                                             value: _selectedTemplate,
-                                            items: _templates.where((t) => _allowedTemplates.any((at) => at['id'] == t.id)).toList(),
+                                            items: _templates
+                                                .where(
+                                                  (t) => _allowedTemplates.any(
+                                                    (at) => at['id'] == t.id,
+                                                  ),
+                                                )
+                                                .toList(),
                                             hint: 'Select Template',
                                             itemLabel: (t) => t.name,
-                                            onChanged: (v) => setState(() => _selectedTemplate = v),
+                                            onChanged: (v) => setState(
+                                              () => _selectedTemplate = v,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -300,10 +456,14 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                             backgroundColor: const Color(0xFF141E7A),
                             foregroundColor: Colors.white,
                             elevation: 4,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                           child: Text(
-                            widget.roster != null ? 'UPDATE ROSTER' : 'CREATE ROSTER',
+                            widget.roster != null
+                                ? 'UPDATE ROSTER'
+                                : 'CREATE ROSTER',
                             style: GoogleFonts.outfit(
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
@@ -344,12 +504,19 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF92400E)),
+          const Icon(
+            Icons.info_outline_rounded,
+            size: 18,
+            color: Color(0xFF92400E),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Specify the details of the team to begin adding contacts and configuring notification rules later.',
-              style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF92400E)),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF92400E),
+              ),
             ),
           ),
         ],
@@ -382,7 +549,10 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                 ),
                 Text(
                   'The team will be active immediately.',
-                  style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFF94A3B8),
+                  ),
                 ),
               ],
             ),
