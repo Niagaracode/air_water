@@ -36,11 +36,16 @@ class MessageTemplateApi {
     final Map<String, dynamic> query = q != null ? {'q': q} : {};
     final response = await _client.get('/message-templates/search', query: query);
     final List data = response.data['data'] ?? [];
-    return data
-        .map(
+    return data.map(
           (e) => MessageTemplateAutocompleteInfo.fromJson(Map<String, dynamic>.from(e)),
-        )
-        .toList();
+        ).toList();
+  }
+
+  Future<Map<String, dynamic>> getMessageTemplatesPlaceholders() async {
+    final response = await _client.get('/message-template-rules', query: {});
+    // Extract the data field from the response
+    final Map<String, dynamic> responseData = Map<String, dynamic>.from(response.data);
+    return Map<String, dynamic>.from(responseData['data'] ?? {});
   }
 
   Future<void> createMessageTemplate(Map<String, dynamic> data) async {
@@ -58,10 +63,8 @@ class MessageTemplateApi {
   Future<List<MessageTemplate>> getActiveTemplates() async {
     final response = await _client.get('/message-templates/active');
     final List data = response.data['data'] ?? [];
-    return data
-        .map(
+    return data.map(
           (e) => MessageTemplate.fromJson(Map<String, dynamic>.from(e)),
-        )
-        .toList();
+        ).toList();
   }
 }

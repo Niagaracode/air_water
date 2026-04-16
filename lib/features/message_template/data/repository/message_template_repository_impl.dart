@@ -50,4 +50,11 @@ class MessageTemplateRepositoryImpl implements MessageTemplateRepository {
   Future<List<MessageTemplate>> getActiveTemplates() {
     return _api.getActiveTemplates();
   }
+
+  @override
+  Future<Map<String, dynamic>> getMessageTemplatePlaceholders() {
+    return _api.getMessageTemplatesPlaceholders();
+  }
+
+
 }
