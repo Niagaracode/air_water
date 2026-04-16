@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../mqtt_service.dart';
@@ -6,14 +7,28 @@ import 'mqtt_notifier.dart';
 import '../models/mqtt_message.dart';
 import '../models/mqtt_connection_state.dart';
 
-// Provider for the MQTT service instance
+// Singleton provider for MQTT service - persists across app lifecycle
 final mqttServiceProvider = Provider<MqttService>((ref) {
-  return MqttService();
+  final service = MqttService.instance;
+
+  // Initialize on first access
+  service.initialize();
+
+  // Don't dispose - keep alive throughout app lifecycle
+  ref.onDispose(() {
+    // Only disconnect, don't destroy the service
+    service.disconnect();
+  });
+
+  return service;
 });
 
-// Provider for the MQTT notifier (state management)
+// StateNotifier provider - also persists
 final mqttProvider = StateNotifierProvider<MqttNotifier, MqttConnectionStateModel>(
-      (ref) => MqttNotifier(ref.watch(mqttServiceProvider)),
+      (ref) {
+    final service = ref.watch(mqttServiceProvider);
+    return MqttNotifier(service);
+  },
 );
 
 // Provider to get last message for a specific topic
@@ -33,9 +48,11 @@ final mqttTopicStreamProvider = StreamProvider.family<MqttMessage, String>(
 
     ref.onDispose(() {
       controller.close();
+      // Unsubscribe but don't disconnect
       mqttNotifier.unsubscribeFromTopic(topic);
     });
 
+    // Microtask to avoid blocking UI
     Future.microtask(() async {
       await mqttNotifier.subscribeToTopic(topic, onMessage: (message) {
         if (!controller.isClosed) {
@@ -47,3 +64,9 @@ final mqttTopicStreamProvider = StreamProvider.family<MqttMessage, String>(
     return controller.stream;
   },
 );
+
+// Provider to check connection status
+final mqttConnectionStatusProvider = Provider<bool>((ref) {
+  final connectionState = ref.watch(mqttProvider);
+  return connectionState.isConnected;
+});

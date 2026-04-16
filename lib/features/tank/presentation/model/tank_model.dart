@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/config/env.dart';
 import '../../../site/presentation/model/site_model.dart';
-import '../../../../core/config/app_config.dart';
 
 class Tank {
   final int tankId;

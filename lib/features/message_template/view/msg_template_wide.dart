@@ -1,3 +1,4 @@
+import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,7 +7,7 @@ import '../../../../shared/widgets/app_table.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
 import '../presentation/controller/message_template_provider.dart';
-import '../presentation/widgets/add_message_template_modal.dart';
+import '../presentation/widgets/message_template_form.dart';
 import '../presentation/model/message_template_model.dart';
 
 class MsgTemplateWide extends ConsumerStatefulWidget {
@@ -48,29 +49,15 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
-      body: Stack(
+      body: Column(
         children: [
-          SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
-              children: [
-                _buildHeader(state, notifier),
-                if (!state.isLoading || state.templates.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildTableHeader(),
-                        _buildTableBody(state, notifier),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 48),
-              ],
+          _buildHeader(state, notifier),
+          if (!state.isLoading || state.templates.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: _buildTableBody(state, notifier),
             ),
-          ),
-          if (state.isProcessing) const AppLoader(message: 'Processing...'),
+          const SizedBox(height: 48),
         ],
       ),
     );
@@ -130,17 +117,6 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
           ),
           const SizedBox(height: 24),
           _buildFilterRow(notifier, state),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Showing ${state.totalEntries} entries',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF),
-                fontSize: 12,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -223,116 +199,97 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
     );
   }
 
-  Widget _buildTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      child: const Row(
-        children: [
-          AppTableHeaderCell('SI.NO', width: 50),
-          const SizedBox(width: 16),
-          AppTableHeaderCell('Template Name', flex: 6),
-          const SizedBox(width: 16),
-          AppTableHeaderCell('Subject', flex: 8),
-          const SizedBox(width: 16),
-          AppTableHeaderCell('Is Active', flex: 2),
-          const SizedBox(width: 16),
-          AppTableHeaderCell('Actions', width: 110),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTableBody(MessageTemplateState state, MessageTemplateNotifier notifier) {
+
     if (state.templates.isEmpty && !state.isLoading) {
       return const AppTableEmptyState(icon: Icons.message_outlined, title: 'No templates found');
     }
 
     return Container(
+      width: MediaQuery.sizeOf(context).width,
+      height: (state.templates.length*50) + 45,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
-        border: Border(
-           left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-           right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-           bottom: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-        )
+          color: Colors.white,
+          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
+          border: Border(
+            left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+            right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+            bottom: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          )
       ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: state.templates.length + (state.hasMore ? 1 : 0),
-        separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
-        itemBuilder: (context, index) {
-          if (index == state.templates.length) {
-            return const AppTableLoadingMore();
+      child: DataTable2(
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        minWidth: 1000,
+        dataRowHeight: 45,
+        headingRowHeight: 50,
+        headingRowColor: WidgetStateProperty.all(const Color(0xFF141E7A)),
+        columns: const [
+          DataColumn2(
+              label: Center(child: AppTableHeaderCell('SI.NO', width: 70)),
+              fixedWidth: 70
+          ),
+          DataColumn2(
+              label: AppTableHeaderCell('Template Name', width: 150),
+              size: ColumnSize.M
+          ),
+          DataColumn2(
+              label: AppTableHeaderCell('Subject', width: 100),
+              size: ColumnSize.M
+          ),
+          DataColumn2(
+            label: AppTableHeaderCell('Description', width: 150),
+              size: ColumnSize.M
+          ),
+          DataColumn2(
+            label: Center(child: AppTableHeaderCell('Actions', width: 100)),
+            fixedWidth: 100,
+          ),
+        ],
+        rows: List<DataRow>.generate(state.templates.length + (state.hasMore ? 1 : 0), (index) {
+          // Check if this is the "load more" row
+          if (state.hasMore && index == state.templates.length) {
+            return const DataRow(
+              cells: [
+                DataCell(Center(child: CircularProgressIndicator())),
+                DataCell(Text('')),
+                DataCell(Text('')),
+                DataCell(Text('')),
+                DataCell(Text('')),
+              ],
+            );
           }
 
-          final t = state.templates[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Row(
-              children: [
-                AppTableCell((index + 1).toString().padLeft(2, '0'), width: 50),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 6,
-                  child: Text(
-                    t.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF111827),
-                    ),
+          final template = state.templates[index];
+
+          return DataRow(
+            cells: [
+              DataCell(AppDataTableCell((index + 1).toString().padLeft(2, '0'))),
+              DataCell(AppDataTableCell(template.name, bold: true)),
+              DataCell(AppDataTableCell(template.subject)),
+              DataCell(AppDataTableCell(template.description)),
+              DataCell(Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AppTableActionButton(
+                    icon: Icons.edit_outlined,
+                    color: const Color(0xFF2563EB),
+                    bg: const Color(0xFFEFF6FF),
+                    onTap: () => _showAddModal(template),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 8,
-                  child: Text(
-                    t.subject ?? '—',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF4B5563),
-                    ),
+                  const SizedBox(width: 12),
+                  AppTableActionButton(
+                    icon: Icons.delete_outline_rounded,
+                    color: const Color(0xFFDC2626),
+                    bg: const Color(0xFFFEF2F2),
+                    onTap: () => _confirmDelete(template),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(flex: 2, child: Center(child: AppStatusBadge(status: t.isActive))),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 110,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      AppTableActionButton(
-                        icon: Icons.edit_outlined,
-                        color: const Color(0xFF2563EB),
-                        bg: const Color(0xFFEFF6FF),
-                        onTap: () => _showAddModal(t),
-                      ),
-                      const SizedBox(width: 12),
-                      AppTableActionButton(
-                        icon: Icons.delete_outline_rounded,
-                        color: const Color(0xFFDC2626),
-                        bg: const Color(0xFFFEF2F2),
-                        onTap: () => _confirmDelete(t),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                ],
+              )),
+            ],
           );
-        },
+        }),
       ),
     );
   }
@@ -344,7 +301,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
       barrierLabel: 'AddMessageTemplate',
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) => AddMessageTemplateModal(initialTemplate: template),
+      pageBuilder: (context, anim1, anim2) => MessageTemplateForm(initialTemplate: template),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
           position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(

@@ -30,6 +30,50 @@ class AppTableHeaderCell extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // AppTableCell  — regular data cell (fixed width or flex)
 // ─────────────────────────────────────────────────────────────────────────────
+class AppDataTableCell extends StatelessWidget {
+  final String? text;
+  final Widget? child;
+  final int? flex;
+  final double? width;
+  final bool bold;
+  final Color? color;
+  final double? fontSize;
+  final TextAlign? textAlign;
+
+  const AppDataTableCell(
+      this.text, {
+        super.key,
+        this.child,
+        this.flex,
+        this.width,
+        this.bold = false,
+        this.color,
+        this.fontSize,
+        this.textAlign,
+      });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget content = child ??
+        Text(
+          text ?? '',
+          style: GoogleFonts.inter(
+            fontSize: fontSize ?? 14,
+            fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+            color: color ?? (bold ? const Color(0xFF111827) : const Color(0xFF374151)),
+          ),
+          textAlign: textAlign,
+          overflow: TextOverflow.ellipsis,
+        );
+
+    if (width != null) {
+      return SizedBox(width: width, child: content);
+    }
+
+    return content;
+  }
+}
+
 class AppTableCell extends StatelessWidget {
   final String? text;
   final Widget? child;
