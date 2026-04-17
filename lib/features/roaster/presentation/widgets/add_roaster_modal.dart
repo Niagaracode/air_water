@@ -12,6 +12,7 @@ import '../../../message_template/presentation/model/message_template_model.dart
 import '../../../setting/presentation/controller/setting_provider.dart';
 import '../../../../shared/widgets/app_multi_select_dropdown.dart';
 
+
 class AddRosterModal extends ConsumerStatefulWidget {
   final Roster? roster;
   final List<RosterMember>? templateMembers;
@@ -31,12 +32,8 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
   List<Map<String, dynamic>> _allowedTemplates = [];
 
   List<Role> _selectedRoles = [];
-  List<User> _filteredUsersList = []; // Users filtered by selected roles
-  List<User> _selectedUsers = [];
   MessageTemplate? _selectedTemplate;
   String _selectedParameter = 'LEVEL';
-  bool _isLoadingUsers = false;
-  int _loadGeneration = 0; // Guards against stale async results
 
   final List<String> _parameters = [
     'LEVEL',
@@ -99,23 +96,6 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
           }
         });
       }
-
-      // Load members for pre-selected roles (edit mode)
-      if (_selectedRoles.isNotEmpty) {
-        await _loadUsersByRoles(_selectedRoles);
-        // Restore pre-selected users from templateMembers
-        if (widget.templateMembers != null && mounted) {
-          final userIds = widget.templateMembers!
-              .where((m) => m.userId != null)
-              .map((m) => m.userId)
-              .toSet();
-          setState(() {
-            _selectedUsers = _filteredUsersList
-                .where((u) => userIds.contains(u.userId))
-                .toList();
-          });
-        }
-      }
     } catch (e) {
       debugPrint('Error loading initial data: $e');
     } finally {
@@ -123,57 +103,6 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     }
   }
 
-  /// Fetches users for each selected role from the API and merges results.
-  /// Uses a generation counter to ignore results from stale (superseded) requests.
-  Future<void> _loadUsersByRoles(List<Role> roles) async {
-    final myGeneration = ++_loadGeneration;
-    if (roles.isEmpty) {
-      if (mounted) {
-        setState(() {
-          _filteredUsersList = [];
-          _selectedUsers = [];
-          _isLoadingUsers = false;
-        });
-      }
-      return;
-    }
-    if (mounted) setState(() => _isLoadingUsers = true);
-    try {
-      final userRepo = ref.read(userRepositoryProvider);
-      final List<User> merged = [];
-      final seenIds = <int>{};
-      for (final role in roles) {
-        // Abort if a newer request has been triggered
-        if (myGeneration != _loadGeneration) return;
-        final users = await userRepo.getUsers(roleId: role.id);
-        for (final u in users) {
-          if (seenIds.add(u.userId)) {
-            merged.add(u);
-          }
-        }
-      }
-      // Only apply if this is still the latest request
-      if (myGeneration == _loadGeneration && mounted) {
-        setState(() {
-          _filteredUsersList = merged;
-          // Remove selected users that no longer belong to any of the new roles
-          final validIds = merged.map((u) => u.userId).toSet();
-          _selectedUsers = _selectedUsers
-              .where((u) => validIds.contains(u.userId))
-              .toList();
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading users by roles: $e');
-    } finally {
-      if (myGeneration == _loadGeneration && mounted) {
-        setState(() => _isLoadingUsers = false);
-      }
-    }
-  }
-
-  // _filteredUsersList is now populated by _loadUsersByRoles()
-  // and always contains only users matching the selected roles.
 
   Future<void> _updateAllowedTemplates(String parameter) async {
     try {
@@ -218,16 +147,6 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     }
     data['parameter_name'] = _selectedParameter;
     data['message_template_id'] = _selectedTemplate?.id;
-
-    if (_selectedUsers.isNotEmpty) {
-      data['members'] = _selectedUsers.map((user) => {
-        'user_id': user.userId,
-        'role_id': user.roleId,
-        'parameter_name': _selectedParameter,
-        'message_template_id': _selectedTemplate?.id,
-        'enabled': 1,
-      }).toList();
-    }
 
     bool success;
     if (widget.roster != null) {
@@ -345,46 +264,10 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                                   itemLabel: (r) => r.name,
                                   onChanged: (list) {
                                     setState(() => _selectedRoles = list);
-                                    // Fetch users for the newly selected roles from API
-                                    _loadUsersByRoles(list);
                                   },
                                 ),
-                                // Show loading indicator while fetching members
-                                if (_isLoadingUsers) ...
-                                  [
-                                    const SizedBox(height: 24),
-                                    _buildLabel('SELECT MEMBERS'),
-                                    const SizedBox(height: 12),
-                                    const LinearProgressIndicator(),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Loading members for selected role(s)...',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: const Color(0xFF9CA3AF),
-                                      ),
-                                    ),
-                                  ]
-                                // Show members dropdown only when members exist
-                                else if (_filteredUsersList.isNotEmpty) ...
-                                  [
-                                    const SizedBox(height: 24),
-                                    _buildLabel('SELECT MEMBERS'),
-                                    const SizedBox(height: 12),
-                                    AppMultiSelectDropdown<User>(
-                                      selectedItems: _selectedUsers,
-                                      items: _filteredUsersList,
-                                      hint: 'Select Members',
-                                      itemLabel: (u) {
-                                        final name = '${u.firstName ?? ''} ${u.lastName ?? ''}'.trim();
-                                        final display = name.isNotEmpty ? name : u.username;
-                                        return '$display (${u.roleName ?? ''})';
-                                      },
-                                      onChanged: (list) =>
-                                          setState(() => _selectedUsers = list),
-                                    ),
-                                  ],
                                 const SizedBox(height: 24),
+
                                 Row(
                                   children: [
                                     Expanded(

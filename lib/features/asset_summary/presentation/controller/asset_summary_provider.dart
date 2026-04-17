@@ -167,17 +167,21 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
                 .toList();
           }
 
-          if (readings.isNotEmpty) {
-            newGroups.add(
-              AssetSummaryGroup(
-                tankId: tank.tankId,
-                plantName: tankGroup.siteName,
-                tankNumber: tank.tankNumber,
-                deviceId: deviceId,
-                readings: readings,
-              ),
-            );
+          // Always add the tank — show default readings if no settings are configured
+          if (readings.isEmpty) {
+            readings = _generateDefaultReadings(tank);
           }
+
+          newGroups.add(
+            AssetSummaryGroup(
+              tankId: tank.tankId,
+              plantName: tankGroup.siteName,
+              tankNumber: tank.tankNumber,
+              deviceId: deviceId,
+              readings: readings,
+            ),
+          );
+
         }
       }
 
@@ -254,7 +258,26 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
     return result;
   }
 
+  /// Generates placeholder readings for tanks that have no rules/settings configured.
+  /// This ensures tanks always appear in the asset summary even without alarm rules.
+  List<AssetSummaryReading> _generateDefaultReadings(Tank tank) {
+    final now = DateTime.now();
+    return [
+      AssetSummaryReading(
+        item: 'Level',
+        readingTime: now,
+        readingValue: '-- %',
+        product: tank.productName ?? 'Oxygen',
+        importance: 'Low',
+        alarmLevels: 'No rules configured',
+        deliverable: 'No',
+        rosterName: null,
+      ),
+    ];
+  }
+
   void setFilters({String? plant, String? tank, String? importance}) {
+
     state = state.copyWith(
       plantFilter: plant,
       tankFilter: tank,
