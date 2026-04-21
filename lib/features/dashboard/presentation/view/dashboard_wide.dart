@@ -1,7 +1,10 @@
 import 'dart:async';
 
+import 'package:air_water/core/app_theme/app_theme.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../core/network/mqtt/models/mqtt_connection_state.dart';
 import '../../../../core/network/mqtt/models/mqtt_message.dart';
 import '../../../../core/network/mqtt/providers/mqtt_providers.dart';
@@ -48,7 +51,7 @@ class DashboardWide extends ConsumerStatefulWidget {
 }
 
 class _DashboardWideState extends ConsumerState<DashboardWide> {
-  final String tankStatusTopic = 'get-tweet-response/karthik';
+  final String tankStatusTopic = 'tweet/864180050620884';
 
   StreamSubscription<MqttMessage>? _tankSubscription;
 
@@ -61,6 +64,9 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   bool _isListView = true;
   String _selectedRegion = 'All Regions';
 
+  GoogleMapController? _mapController;
+  final Set<Marker> _markers = {};
+
   @override
   void initState() {
     super.initState();
@@ -70,20 +76,32 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
         _setupSubscriptions();
       }
     });
+
+    _addSampleMarkers();
   }
+
 
   void _setupSubscriptions() {
     // Capture ref before async operations
     final refAtCallTime = ref;
 
-    // Use a delayed task instead of Future.delayed
-    final timer = Timer(const Duration(seconds: 2), () {
+    Future.delayed(Duration(seconds: 2), () {
       if (mounted && !_isDisposed) {
         final mqttNotifier = refAtCallTime.read(mqttProvider.notifier);
         mqttNotifier.subscribeToTopic(tankStatusTopic);
       }
     });
 
+  }
+
+  void _addSampleMarkers() {
+    _markers.add(
+      Marker(
+        markerId: const MarkerId('tank1'),
+        position: const LatLng(11.0168, 76.9558),
+        infoWindow: const InfoWindow(title: 'Water Tank', snippet: 'Active'),
+      ),
+    );
   }
 
   void _startPeriodicPublishing() {
@@ -239,67 +257,82 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
     return Row(
       children: [
-        // Active Devices - Green
+        // Active Devices - Soft Green
         _buildStatCard(
           title: 'Active Devices',
           value: '$active/$total',
           subtitle: 'Online',
           icon: Icons.devices,
-          color: const Color(0xFF10B981),
+          color: const Color(0xFFA7F3D0),
           gradient: const LinearGradient(
-            colors: [Color(0xFF10B981), Color(0xFF059669)],
+            colors: [
+              Color(0xFFA7F3D0),
+              Color(0xFF6EE7B7),
+            ],
           ),
         ),
         const SizedBox(width: 16),
 
-        // Offline Devices - Gray
+        // Offline Devices - Soft Gray
         _buildStatCard(
           title: 'Offline Devices',
           value: '$offline/$total',
           subtitle: 'Offline',
           icon: Icons.offline_bolt,
-          color: const Color(0xFF6B7280),
+          color: const Color(0xFFD1D5DB),
           gradient: const LinearGradient(
-            colors: [Color(0xFF6B7280), Color(0xFF4B5563)],
+            colors: [
+              Color(0xFFD1D5DB),
+              Color(0xFF9CA3AF),
+            ],
           ),
         ),
         const SizedBox(width: 16),
 
-        // Low Battery - Orange/Yellow
+        // Low Battery - Soft Yellow
         _buildStatCard(
           title: 'Low Battery',
           value: '$lowBattery/$total',
           subtitle: 'Needs Charging',
           icon: Icons.battery_alert,
-          color: const Color(0xFFF59E0B),
+          color: const Color(0xFFFDE68A),
           gradient: const LinearGradient(
-            colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+            colors: [
+              Color(0xFFFDE68A),
+              Color(0xFFFBBF24),
+            ],
           ),
         ),
         const SizedBox(width: 16),
 
-        // Low Level - Orange/Light Orange (muted)
+        // Low Level - Soft Orange
         _buildStatCard(
           title: 'Low Level',
           value: '$lowLevel/$total',
           subtitle: 'Below Threshold',
           icon: Icons.water_drop,
-          color: const Color(0xFFF97316),
+          color: const Color(0xFFFED7AA),
           gradient: const LinearGradient(
-            colors: [Color(0xFFF97316), Color(0xFFEA580C)],
+            colors: [
+              Color(0xFFFED7AA),
+              Color(0xFFF97316),
+            ],
           ),
         ),
         const SizedBox(width: 16),
 
-        // Reorder Level - Amber/Muted Orange
+        // Reorder Level - Soft Amber
         _buildStatCard(
           title: 'Reorder Level',
           value: '$reorderLevel/$total',
           subtitle: 'Need Restock',
           icon: Icons.inventory,
-          color: const Color(0xFFFBBF24),
+          color: const Color(0xFFFEF3C7),
           gradient: const LinearGradient(
-            colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+            colors: [
+              Color(0xFFFEF3C7),
+              Color(0xFFFBBF24),
+            ],
           ),
         ),
       ],
@@ -337,17 +370,17 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 24),
+                  child: Icon(icon, color: Colors.black.withValues(alpha: 0.7), size: 24),
                 ),
                 Text(
                   subtitle,
                   style: GoogleFonts.outfit(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.black.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -358,7 +391,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
               style: GoogleFonts.outfit(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.black.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 8),
@@ -367,7 +400,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
               style: GoogleFonts.outfit(
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: Colors.black.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -535,14 +568,12 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          boxShadow: isSelected
-              ? [
+          boxShadow: isSelected ? [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 4,
             ),
-          ]
-              : null,
+          ] : null,
         ),
         child: Row(
           children: [
@@ -563,7 +594,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   }
 
   Widget _buildMapView(List<TankDataModel> tanksData) {
-    // Filter tanks based on selected filters
     final filteredTanks = _filterTanks(tanksData);
 
     return Container(
@@ -575,68 +605,17 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            // Map placeholder - replace with actual map widget
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.map, size: 80, color: Colors.grey.shade400),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Map View',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  Text(
-                    'Showing ${filteredTanks.length} tank locations',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Location pins would be placed here based on tank locations
-            Positioned(
-              top: 20,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Legend',
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildLegendItem('Active', Colors.green),
-                    _buildLegendItem('Warning', Colors.orange),
-                    _buildLegendItem('Critical', Colors.red),
-                    _buildLegendItem('Offline', Colors.grey),
-                  ],
-                ),
-              ),
-            ),
-          ],
+        child: GoogleMap(
+          initialCameraPosition: const CameraPosition(
+            target: LatLng(11.0168, 76.9558),
+            zoom: 12,
+          ),
+          onMapCreated: (GoogleMapController controller) {
+            _mapController = controller;
+          },
+          markers: _markers,
+          myLocationEnabled: true,
+          zoomControlsEnabled: true,
         ),
       ),
     );
@@ -665,28 +644,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     }).toList();
   }
 
-  Widget _buildLegendItem(String label, Color color) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.outfit(fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildListView(List<SiteGroup> groupedTanks) {
     // Filter groups based on search and filters
@@ -767,7 +724,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF141E7A),
+              color: primary.withValues(alpha: 0.7),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(10),
                 topRight: Radius.circular(10),

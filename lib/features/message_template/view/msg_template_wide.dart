@@ -6,6 +6,7 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
+import '../../../core/app_theme/app_theme.dart';
 import '../presentation/controller/message_template_provider.dart';
 import '../presentation/widgets/message_template_form.dart';
 import '../presentation/model/message_template_model.dart';
@@ -49,30 +50,30 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
-      body: Column(
-        children: [
-          _buildHeader(state, notifier),
-          if (!state.isLoading || state.templates.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: _buildTableBody(state, notifier),
-            ),
-          const SizedBox(height: 48),
-        ],
+      body: Container(
+        color: Colors.white,
+        child: Column(
+          children: [
+            _buildHeader(state, notifier),
+            if (!state.isLoading || state.templates.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: _buildTableBody(state, notifier),
+              ),
+            const SizedBox(height: 48),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildHeader(MessageTemplateState state, MessageTemplateNotifier notifier) {
     return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
+      padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 16),
       margin: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,8 +224,8 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
         horizontalMargin: 12,
         minWidth: 1000,
         dataRowHeight: 45,
-        headingRowHeight: 50,
-        headingRowColor: WidgetStateProperty.all(const Color(0xFF141E7A)),
+        headingRowHeight: 45,
+        headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.7)),
         columns: const [
           DataColumn2(
               label: Center(child: AppTableHeaderCell('SI.NO', width: 70)),

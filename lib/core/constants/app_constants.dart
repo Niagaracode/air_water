@@ -1,6 +1,6 @@
 class AppConstants {
 
-  static const String apiUrl = 'https://hispanic-inches-attitude-sum.trycloudflare.com/api';
+  static const String apiUrl = 'https://jay-webmasters-repairs-gnome.trycloudflare.com/api';
   static const String googleMapsApiKey = 'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
 
   static const String mqttWebHost = 'wss://irrigationcare.niagaraautomation.com:9443/mqtt';
