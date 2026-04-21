@@ -9,6 +9,7 @@ abstract class TankRepository {
     String? siteName,
     String? tankName,
     int? status,
+    List<int>? companyIds,
   });
   Future<List<SiteAutocompleteInfo>> getSitesForTankAutocomplete({String? q});
   Future<void> createTank(TankCreateRequest request);
@@ -33,6 +34,7 @@ class TankRepositoryImpl implements TankRepository {
     String? siteName,
     String? tankName,
     int? status,
+    List<int>? companyIds,
   }) {
     return _api.getTanksGrouped(
       page: page,
@@ -40,6 +42,7 @@ class TankRepositoryImpl implements TankRepository {
       siteName: siteName,
       tankName: tankName,
       status: status,
+      companyIds: companyIds,
     );
   }
 

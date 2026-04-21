@@ -3,6 +3,7 @@ class Group {
   final String name;
   final String? description;
   final int? companyId;
+  final List<int> companyIds;
   final String? companyName;
   final int status;
   final int userCount;
@@ -20,6 +21,7 @@ class Group {
     required this.name,
     this.description,
     this.companyId,
+    this.companyIds = const [],
     this.companyName,
     this.status = 1,
     this.userCount = 0,
@@ -39,6 +41,9 @@ class Group {
       name: json['name'] as String,
       description: json['description'] as String?,
       companyId: json['company_id'] as int?,
+      companyIds: json['company_ids'] != null
+          ? (json['company_ids'] as List).map((e) => e as int).toList()
+          : [],
       companyName: json['company_name'] as String?,
       status: json['status'] ?? 1,
       userCount: json['user_count'] ?? 0,
@@ -67,6 +72,7 @@ class Group {
       'name': name,
       'description': description,
       'company_id': companyId,
+      'company_ids': companyIds,
       'status': status,
       'assigned_plants': assignedSites,
       'assigned_tanks': assignedTanks,
@@ -83,6 +89,7 @@ class GroupCreateRequest {
   final String name;
   final String? description;
   final int? companyId;
+  final List<int> companyIds;
   final List<int> assignedSites;
   final List<int> assignedTanks;
   final List<int> userIds;
@@ -92,17 +99,21 @@ class GroupCreateRequest {
     required this.name,
     this.description,
     this.companyId,
+    this.companyIds = const [],
     this.assignedSites = const [],
     this.assignedTanks = const [],
     this.userIds = const [],
     this.status = 1,
   });
 
+
   Map<String, dynamic> toJson() {
     return {
       'name': name,
       'description': description,
       'company_id': companyId,
+      'company_ids': companyIds,
+
       'assigned_plants': assignedSites,
       'assigned_tanks': assignedTanks,
       'user_ids': userIds,

@@ -13,12 +13,14 @@ import 'package:air_water/features/tank/presentation/controller/tank_provider.da
 
 class SiteTankDropdownSelector extends StatefulWidget {
   final List<SiteTankAssignment> initialAssignments;
+  final List<int>? companyIds;
   final Function(List<SiteTankAssignment>) onChanged;
 
   const SiteTankDropdownSelector({
     super.key,
     required this.initialAssignments,
     required this.onChanged,
+    this.companyIds,
   });
 
   @override
@@ -40,6 +42,7 @@ class _SiteTankDropdownSelectorState extends State<SiteTankDropdownSelector> {
       context: context,
       builder: (context) => SiteTankSelectorDialog(
         currentAssignments: _assignments,
+        companyIds: widget.companyIds,
         onSave: (newAssignments) {
           setState(() {
             _assignments = newAssignments;
@@ -108,13 +111,16 @@ class _SiteTankDropdownSelectorState extends State<SiteTankDropdownSelector> {
 
 class SiteTankSelectorDialog extends ConsumerStatefulWidget {
   final List<SiteTankAssignment> currentAssignments;
+  final List<int>? companyIds;
   final Function(List<SiteTankAssignment>) onSave;
 
   const SiteTankSelectorDialog({
     super.key,
     required this.currentAssignments,
     required this.onSave,
+    this.companyIds,
   });
+
 
   @override
   ConsumerState<SiteTankSelectorDialog> createState() =>
@@ -139,9 +145,20 @@ class _SiteTankSelectorDialogState
       _error = null;
     });
 
+    if (widget.companyIds == null || widget.companyIds!.isEmpty) {
+      setState(() {
+        _siteSelections.clear();
+        _isLoading = false;
+      });
+      return;
+    }
+
     try {
       final repository = ref.read(tankRepositoryProvider);
-      final response = await repository.getTanksGrouped(limit: 100);
+      final response = await repository.getTanksGrouped(
+        limit: 100,
+        companyIds: widget.companyIds,
+      );
       debugPrint(
         'SiteTankDropdownSelector: Fetched ${response.data.length} grouped sites',
       );
@@ -181,7 +198,9 @@ class _SiteTankSelectorDialogState
           siteName: siteName,
           fullAddress: group.fullAddress,
           allTanks: existing.allTanks,
-          selectedTankIds: Set.from(existing.tankIds ?? []),
+          selectedTankIds: existing.allTanks
+              ? Set.from(availableTankIds)
+              : Set.from(existing.tankIds ?? []),
           availableTankIds: availableTankIds,
           availableTankNames: tankNames,
         );
@@ -342,17 +361,43 @@ class _SiteTankSelectorDialogState
                               ],
                             ),
                           )
-                        : ListView.builder(
-                            itemCount: _siteSelections.length,
-                            itemBuilder: (context, index) {
-                              final siteId = _siteSelections.keys.elementAt(
-                                index,
-                              );
-                              final selection = _siteSelections[siteId]!;
+                        : _siteSelections.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.business_rounded,
+                                      size: 48,
+                                      color: Color(0xFFD1D5DB),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      (widget.companyIds == null ||
+                                              widget.companyIds!.isEmpty)
+                                          ? 'Please select a company first'
+                                          : 'No sites found for the selected companies',
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFF6B7280),
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: _siteSelections.length,
+                                itemBuilder: (context, index) {
+                                  final siteId = _siteSelections.keys.elementAt(
+                                    index,
+                                  );
+                                  final selection = _siteSelections[siteId]!;
 
-                              return _buildSiteCard(siteId, selection);
-                            },
-                          ),
+                                  return _buildSiteCard(siteId, selection);
+                                },
+                              ),
                   ),
 
                   const Divider(),

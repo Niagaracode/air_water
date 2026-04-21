@@ -15,6 +15,7 @@ class TankApi {
     String? siteName,
     String? tankName,
     int? status,
+    List<int>? companyIds,
   }) async {
     final Map<String, dynamic> query = {'page': page, 'limit': limit};
     if (siteName != null && siteName.isNotEmpty) {
@@ -25,6 +26,9 @@ class TankApi {
     }
     if (status != null) {
       query['status'] = status;
+    }
+    if (companyIds != null && companyIds.isNotEmpty) {
+      query['company_ids'] = companyIds;
     }
 
     final response = await _client.get('/tanks/grouped', query: query);

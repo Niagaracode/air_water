@@ -10,8 +10,10 @@ class User {
   final String? companyName;
   final String? mobileNumber;
   final int status;
-  final int? sessionTimeout;
+  final int? sessionHours;
+  final int? sessionMinutes;
   final String? createdAt;
+
   final List<AssignedSite>? assignedSites;
   final List<int>? assignedTanks;
   final int? messageCategoryId;
@@ -30,8 +32,10 @@ class User {
     this.companyName,
     this.mobileNumber,
     required this.status,
-    this.sessionTimeout,
+    this.sessionHours,
+    this.sessionMinutes,
     this.createdAt,
+
     this.assignedSites,
     this.assignedTanks,
     this.messageCategoryId,
@@ -52,7 +56,8 @@ class User {
       companyName: json['company_name'] as String?,
       mobileNumber: json['mobile_number'] as String?,
       status: json['status'] ?? 1,
-      sessionTimeout: json['session_timeout'] as int?,
+      sessionHours: json['session_hours'] as int?,
+      sessionMinutes: json['session_minutes'] as int?,
       createdAt: json['created_at'] as String?,
       assignedSites: json['assigned_plants'] != null
           ? (json['assigned_plants'] as List)
@@ -160,7 +165,8 @@ class UserCreateRequest {
   final int? companyId;
   final String? mobileNumber;
   final int? status;
-  final int? sessionTimeout;
+  final int? sessionHours;
+  final int? sessionMinutes;
   final List<int>? assignedSites;
   final List<int>? assignedTanks;
   final int? messageCategoryId;
@@ -175,7 +181,8 @@ class UserCreateRequest {
     this.companyId,
     this.mobileNumber,
     this.status,
-    this.sessionTimeout,
+    this.sessionHours,
+    this.sessionMinutes,
     this.assignedSites,
     this.assignedTanks,
     this.messageCategoryId,
@@ -192,7 +199,8 @@ class UserCreateRequest {
       'company_id': companyId,
       'mobile_number': mobileNumber,
       'status': status,
-      'session_timeout': sessionTimeout,
+      'session_hours': sessionHours,
+      'session_minutes': sessionMinutes,
       'assigned_plants': assignedSites,
       'assigned_tanks': assignedTanks,
       'message_category_id': messageCategoryId,

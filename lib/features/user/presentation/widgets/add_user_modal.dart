@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 
 // Features
 import 'package:air_water/features/user/presentation/model/user_model.dart';
@@ -27,7 +29,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _companyAutocompleteController = TextEditingController();
-  final _sessionTimeoutController = TextEditingController();
+  final _timeoutController = TextEditingController();
   final _companyFocusNode = FocusNode();
 
   List<Role>? _roles;
@@ -47,8 +49,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       _mobileController.text = widget.user!.mobileNumber ?? '';
       _companyAutocompleteController.text = widget.user!.companyName ?? '';
       _status = widget.user!.status;
-      _sessionTimeoutController.text = (widget.user!.sessionTimeout ?? 86400)
-          .toString();
+      final h = widget.user!.sessionHours ?? 24;
+      final m = widget.user!.sessionMinutes ?? 0;
+      _timeoutController.text = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
 
       if (widget.user!.companyId != null && widget.user!.companyName != null) {
         _selectedCompany = CompanyAutocomplete(
@@ -57,7 +60,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
         );
       }
     } else {
-      _sessionTimeoutController.text = '86400';
+      _timeoutController.text = '24:00';
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -97,8 +100,49 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     }
   }
 
+  Future<void> _selectTime() async {
+    final currentText = _timeoutController.text;
+    TimeOfDay? initialTime;
+
+    if (currentText.contains(':')) {
+      final parts = currentText.split(':');
+      final h = int.tryParse(parts[0]) ?? 24;
+      final m = int.tryParse(parts[1]) ?? 0;
+      initialTime = TimeOfDay(hour: h % 24, minute: m % 60);
+    } else {
+      initialTime = const TimeOfDay(hour: 0, minute: 0);
+    }
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF141E7A),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF111827),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      if (mounted) {
+        setState(() {
+          _timeoutController.text =
+              '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
+
     _usernameController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
@@ -107,7 +151,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _companyAutocompleteController.dispose();
-    _sessionTimeoutController.dispose();
+    _timeoutController.dispose();
     _companyFocusNode.dispose();
     super.dispose();
   }
@@ -145,7 +189,8 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           ? null
           : _mobileController.text,
       status: _status,
-      sessionTimeout: int.tryParse(_sessionTimeoutController.text) ?? 86400,
+      sessionHours: int.tryParse(_timeoutController.text.split(':')[0]) ?? 24,
+      sessionMinutes: int.tryParse(_timeoutController.text.split(':').length > 1 ? _timeoutController.text.split(':')[1] : '0') ?? 0,
     );
 
     final userNotifier = ref.read(userProvider.notifier);
@@ -250,6 +295,11 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                           const SizedBox(height: 32),
                           _buildInfoBar(),
                           const SizedBox(height: 48),
+                          _buildLabelField(
+                            'PRIMARY COMPANY',
+                            _buildCompanyAutocomplete(),
+                          ),
+                          const SizedBox(height: 24),
 
                           _buildLabelField(
                             'USERNAME*',
@@ -268,6 +318,10 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                   AppTextField(
                                     controller: _firstNameController,
                                     hint: 'First Name',
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[a-zA-Z\s]')),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -278,6 +332,10 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                   AppTextField(
                                     controller: _lastNameController,
                                     hint: 'Last Name',
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[a-zA-Z\s]')),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -307,12 +365,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                 ),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          _buildLabelField(
-                            'PRIMARY COMPANY',
-                            _buildCompanyAutocomplete(),
                           ),
                           const SizedBox(height: 24),
 
@@ -366,10 +418,20 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                               const SizedBox(width: 16),
                               Expanded(
                                 child: _buildLabelField(
-                                  'SESSION (SEC)',
+                                  'TIMEOUT',
                                   AppTextField(
-                                    controller: _sessionTimeoutController,
-                                    hint: '86400',
+                                    controller: _timeoutController,
+                                    hint: '24:00',
+                                    suffixIcon: IconButton(
+                                      icon: const Icon(
+                                        Icons.access_time_rounded,
+                                        size: 20,
+                                        color: Color(0xFF141E7A),
+                                      ),
+                                      onPressed: _selectTime,
+                                    ),
+                                    onTap: _selectTime,
+                                    readOnly: true,
                                   ),
                                 ),
                               ),

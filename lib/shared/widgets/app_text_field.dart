@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTextField extends StatelessWidget {
@@ -11,8 +12,11 @@ class AppTextField extends StatelessWidget {
   final bool readOnly;
   final bool enabled;
   final VoidCallback? onToggle;
+  final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final List<TextInputFormatter>? inputFormatters;
+
 
   final int? maxLines;
   final FocusNode? focusNode;
@@ -37,9 +41,13 @@ class AppTextField extends StatelessWidget {
     this.prefixIconColor,
     this.suffixIcon,
     this.onToggle,
+    this.onTap,
     this.onChanged,
     this.onSubmitted,
+    this.inputFormatters,
   });
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -53,8 +61,11 @@ class AppTextField extends StatelessWidget {
       maxLines: maxLines,
       focusNode: focusNode,
       keyboardType: keyboardType,
+      onTap: onTap,
       onChanged: onChanged,
       onSubmitted: onSubmitted,
+      inputFormatters: inputFormatters,
+
       style: GoogleFonts.inter(
         fontSize: 14,
         fontWeight: FontWeight.w500,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
+import '../../../../shared/widgets/app_multi_select_dropdown.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/SiteTankDropdownSelector.dart';
 import '../../../user/presentation/model/user_model.dart';
@@ -28,6 +29,10 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
   final Set<int> _selectedUserIds = {};
   bool _isLoadingRoles = false;
   bool _isLoadingUsers = false;
+  bool _isLoadingCompanies = false;
+
+  List<CompanyAutocomplete> _companies = [];
+  List<CompanyAutocomplete> _selectedCompanies = [];
 
   @override
   void initState() {
@@ -36,12 +41,19 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
   }
 
   Future<void> _loadInitialData() async {
-    setState(() => _isLoadingRoles = true);
+    setState(() {
+      _isLoadingRoles = true;
+      _isLoadingCompanies = true;
+    });
     try {
       final roles = await ref.read(userProvider.notifier).getRoles();
+      final companies = await ref.read(userProvider.notifier).searchCompanies('');
+      
       setState(() {
         _roles = roles;
+        _companies = companies;
         _isLoadingRoles = false;
+        _isLoadingCompanies = false;
       });
 
       if (widget.group != null) {
@@ -53,16 +65,27 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
             .getGroupUsers(widget.group!.id);
         setState(() {
           _selectedUserIds.addAll(groupUsers.map((u) => u.userId));
+          
+          // Map existing companyIds to _selectedCompanies
+          _selectedCompanies = _companies
+              .where((c) => widget.group!.companyIds.contains(c.id))
+              .toList();
         });
 
         // Initialize assignments
-        _assignments = widget.group!.assignedSites.map((siteId) {
+        final bool isAllTanks = widget.group!.assignedTanks.isEmpty;
+        _assignments = widget.group!.assignedSites.asMap().entries.map((entry) {
+          final siteId = entry.value;
+          final String siteName = widget.group!.siteNames.length > entry.key
+              ? widget.group!.siteNames[entry.key]
+              : 'Site $siteId';
+              
           final plantTanks = widget.group!.assignedTanks.toList();
           return SiteTankAssignment(
             siteId: siteId,
-            siteName: 'Site $siteId',
-            allTanks: false,
-            tankIds: plantTanks,
+            siteName: siteName,
+            allTanks: isAllTanks,
+            tankIds: isAllTanks ? null : plantTanks,
           );
         }).toList();
 
@@ -159,26 +182,28 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
     bool success;
     if (widget.group == null) {
       success = await ref
-          .read(groupProvider.notifier)
-          .createGroup(
-            GroupCreateRequest(
-              name: selectedRole.name,
-              description: _descriptionController.text,
-              assignedSites: siteIds,
-              assignedTanks: tankIds.toList(),
-              userIds: _selectedUserIds.toList(),
-            ),
-          );
+            .read(groupProvider.notifier)
+            .createGroup(
+              GroupCreateRequest(
+                name: selectedRole.name,
+                description: _descriptionController.text,
+                companyIds: _selectedCompanies.map((c) => c.id).toList(),
+                assignedSites: siteIds,
+                assignedTanks: tankIds.toList(),
+                userIds: _selectedUserIds.toList(),
+              ),
+            );
     } else {
       success = await ref
           .read(groupProvider.notifier)
           .updateGroup(widget.group!.id, {
-            'name': selectedRole.name,
-            'description': _descriptionController.text,
-            'assigned_plants': siteIds,
-            'assigned_tanks': tankIds.toList(),
-            'user_ids': _selectedUserIds.toList(),
-          });
+        'name': selectedRole.name,
+        'description': _descriptionController.text,
+        'company_ids': _selectedCompanies.map((c) => c.id).toList(),
+        'assigned_plants': siteIds,
+        'assigned_tanks': tankIds.toList(),
+        'user_ids': _selectedUserIds.toList(),
+      });
     }
 
     if (success && mounted) {
@@ -333,6 +358,50 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                       child: Row(
                         children: [
                           const Icon(
+                            Icons.business_rounded,
+                            size: 18,
+                            color: const Color(0xFF475569),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'ASSIGN COMPANIES',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: const Color(0xFF334155),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _isLoadingCompanies
+                        ? const Center(child: CircularProgressIndicator())
+                        : AppMultiSelectDropdown<CompanyAutocomplete>(
+                            selectedItems: _selectedCompanies,
+                            items: _companies,
+                            hint: 'Select companies',
+                            itemLabel: (c) => c.name,
+                            onChanged: (values) {
+                              setState(() {
+                                _selectedCompanies = values;
+                              });
+                            },
+                          ),
+                    const SizedBox(height: 24),
+
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
                             Icons.factory_rounded,
                             size: 18,
                             color: const Color(0xFF475569),
@@ -362,6 +431,7 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                     ),
                     const SizedBox(height: 16),
                     SiteTankDropdownSelector(
+                      companyIds: _selectedCompanies.map((c) => c.id).toList(),
                       initialAssignments: _assignments,
                       onChanged: (newAssignments) {
                         setState(() {
