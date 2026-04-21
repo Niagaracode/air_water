@@ -203,78 +203,82 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
     final now = DateTime.now();
     final List<AssetSummaryReading> result = [];
 
+    // The parameters we want to display in the new visual dashboard
     final parameters = [
-      {'name': 'Level', 'unit': '%', 'defaultVal': '43.00', 'product': true},
-      {
-        'name': 'Pressure',
-        'unit': 'Psi',
-        'defaultVal': '103.00',
-        'product': true,
-      },
-      {'name': 'Battery', 'unit': 'V', 'defaultVal': '3.6', 'product': false},
+      {'name': 'Gas', 'unit': '', 'defaultVal': tank.productName ?? 'Oxygen', 'isStatic': true},
+      {'name': 'Pressure', 'unit': 'bar', 'defaultVal': '0.00', 'isStatic': false},
+      {'name': 'Level', 'unit': 'mmWc', 'defaultVal': '0.00', 'isStatic': false},
+      {'name': 'KL', 'unit': 'KL', 'defaultVal': '0.000', 'isStatic': false},
+      {'name': 'Cubic Meter', 'unit': 'NM3', 'defaultVal': '0.00', 'isStatic': false},
+      {'name': 'Ton', 'unit': 'Ton', 'defaultVal': '0.000', 'isStatic': false},
+      {'name': 'Battery Volt', 'unit': 'V', 'defaultVal': '0.00', 'isStatic': false},
+      {'name': 'Solar Volt', 'unit': 'V', 'defaultVal': '0.00', 'isStatic': false},
     ];
 
     for (var param in parameters) {
       final name = param['name'] as String;
+      final unit = param['unit'] as String;
+      final isStatic = param['isStatic'] as bool;
+      
       final setting = settings
           .where((r) => r.parameterType?.toLowerCase() == name.toLowerCase())
           .firstOrNull;
 
+      String value = param['defaultVal'] as String;
+      String alarmLevelsText = 'No rules';
+      String importance = 'Low';
+      
       if (setting != null) {
-        final unit = param['unit'] as String;
         final u = ' $unit';
+        importance = setting.importance ?? 'Medium';
 
-        String alarmLevelsText = '';
         if (setting.conditionType == 'BETWEEN') {
-          alarmLevelsText =
-              'L1: ${setting.threshold1}$u, L2: ${setting.threshold2}$u';
-        } else if (setting.conditionType == 'LESS THAN' ||
-            setting.conditionType == '<') {
+          alarmLevelsText = 'L1: ${setting.threshold1}$u, L2: ${setting.threshold2}$u';
+        } else if (setting.conditionType == 'LESS THAN' || setting.conditionType == '<') {
           alarmLevelsText = 'L1: ${setting.threshold1}$u';
-        } else if (setting.conditionType == 'GREATER THAN' ||
-            setting.conditionType == '>') {
+        } else if (setting.conditionType == 'GREATER THAN' || setting.conditionType == '>') {
           alarmLevelsText = 'H1: ${setting.threshold1}$u';
         } else {
           alarmLevelsText = '${setting.conditionType} ${setting.threshold1}$u';
         }
-
-        result.add(
-          AssetSummaryReading(
-            item: name,
-            readingTime: now.subtract(const Duration(minutes: 10)),
-            readingValue: name == 'Battery'
-                ? '3.6 V'
-                : '${(40 + (tank.tankId % 50)).toStringAsFixed(2)} $unit',
-            product: tank.productName ?? 'Oxygen',
-            importance: setting.importance ?? 'Medium',
-            alarmLevels: alarmLevelsText,
-            deliverable: name == 'Level' ? 'Yes' : 'NA',
-            rosterName: setting.rosterName,
-          ),
-        );
+        
+        // Mocking values if they are not real yet
+        if (!isStatic) {
+           if (name == 'Level') value = '${(40 + (tank.tankId % 50)).toStringAsFixed(2)} %';
+           else if (name == 'Pressure') value = '103.00 $unit';
+           else if (name == 'Battery Volt') value = '3.6 V';
+           else if (name == 'Solar Volt') value = '12.79 V';
+        }
+      } else {
+        // Even if no setting, provide default display for dashboard consistency
+        if (name == 'Gas') value = tank.productName ?? 'O₂';
       }
+
+      result.add(
+        AssetSummaryReading(
+          item: name,
+          readingTime: now.subtract(const Duration(minutes: 10)),
+          readingValue: value,
+          product: tank.productName ?? 'Oxygen',
+          importance: importance,
+          alarmLevels: alarmLevelsText,
+          deliverable: name == 'Level' ? 'Yes' : 'NA',
+          rosterName: setting?.rosterName,
+        ),
+      );
     }
 
     return result;
   }
 
+
   /// Generates placeholder readings for tanks that have no rules/settings configured.
   /// This ensures tanks always appear in the asset summary even without alarm rules.
   List<AssetSummaryReading> _generateDefaultReadings(Tank tank) {
     final now = DateTime.now();
-    return [
-      AssetSummaryReading(
-        item: 'Level',
-        readingTime: now,
-        readingValue: '-- %',
-        product: tank.productName ?? 'Oxygen',
-        importance: 'Low',
-        alarmLevels: 'No rules configured',
-        deliverable: 'No',
-        rosterName: null,
-      ),
-    ];
+    return _generateReadingsWithSettings(tank, '', []);
   }
+
 
   void setFilters({String? plant, String? tank, String? importance}) {
 

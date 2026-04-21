@@ -8,7 +8,9 @@ import '../model/asset_summary_model.dart';
 import '../../../../shared/widgets/app_table.dart';
 
 class AssetSummaryProTable extends ConsumerWidget {
-  const AssetSummaryProTable({super.key});
+  final Function(int index)? onGroupTap;
+
+  const AssetSummaryProTable({super.key, this.onGroupTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -126,7 +128,13 @@ class AssetSummaryProTable extends ConsumerWidget {
                       const Icon(Icons.factory_outlined, size: 16, color: Color(0xFF1E40AF)),
                       const SizedBox(width: 8),
                       InkWell(
-                        onTap: () => context.push('/tank/details/${group.tankId}'),
+                        onTap: () {
+                          if (onGroupTap != null) {
+                            onGroupTap!(index - 1);
+                          } else {
+                            context.push('/tank/details/${group.tankId}');
+                          }
+                        },
                         child: Text(
                           '${group.plantName} - ${group.tankNumber}',
                           style: GoogleFonts.inter(
