@@ -13,54 +13,57 @@ class SidebarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 64,
-      padding: EdgeInsets.symmetric(
-        horizontal: isExpanded ? 16 : 0,
-      ),
-      child: isExpanded
-          ? Row(
-              children: [
-                Image.asset(
-                  'assets/png/app_logo_white.png',
-                  height: 32,
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(
-                    Icons.keyboard_double_arrow_left_rounded,
-                    size: 20,
-                  ),
-                  color: Colors.white.withValues(alpha: 0.60),
-                  splashRadius: 20,
-                  onPressed: () {
-                    ref.read(sidebarExpandedProvider.notifier).toggle();
-                  },
-                ),
-              ],
-            )
-          : Center(
-              child: InkWell(
+    return Container(
+      color: Colors.white,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 63,
+        padding: EdgeInsets.symmetric(
+          horizontal: isExpanded ? 16 : 0,
+        ),
+        child: isExpanded ?
+        Row(
+          children: [
+            Image.asset(
+              'assets/png/app_logo_white.png',
+              height: 32,
+            ),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(
+                Icons.keyboard_double_arrow_left_rounded,
+                size: 20,
+              ),
+              color: Colors.black.withValues(alpha: 0.60),
+              splashRadius: 20,
+              onPressed: () {
+                ref.read(sidebarExpandedProvider.notifier).toggle();
+              },
+            ),
+          ],
+        ) :
+        Center(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: () {
+              ref.read(sidebarExpandedProvider.notifier).toggle();
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
-                onTap: () {
-                  ref.read(sidebarExpandedProvider.notifier).toggle();
-                },
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.keyboard_double_arrow_right_rounded,
-                    size: 18,
-                    color: Colors.white70,
-                  ),
-                ),
+              ),
+              child: const Icon(
+                Icons.keyboard_double_arrow_right_rounded,
+                size: 18,
+                color: Colors.black54,
               ),
             ),
+          ),
+        ),
+      ),
     );
   }
 }

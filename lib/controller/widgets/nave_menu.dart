@@ -26,14 +26,14 @@ class NaveMenu extends StatelessWidget {
       curve: Curves.easeInOut,
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.white : Colors.transparent,
+        color: isSelected ? primary.withValues(alpha: 0.7): Colors.transparent,
         borderRadius: BorderRadius.circular(10),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: onTap,
-        hoverColor: Colors.white.withValues(alpha: 0.08),
-        splashColor: Colors.white.withValues(alpha: 0.12),
+        hoverColor: Colors.black.withValues(alpha: 0.08),
+        splashColor: Colors.black.withValues(alpha: 0.12),
         child: Padding(
           padding: EdgeInsets.symmetric(
             vertical: 10,
@@ -48,7 +48,7 @@ class NaveMenu extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: isSelected ? primary : Colors.white.withValues(alpha: 0.75),
+                color: isSelected ? Colors.white : Colors.black.withValues(alpha: 0.75),
               ),
 
               /// SPACE — animate instead of jump
@@ -71,11 +71,11 @@ class NaveMenu extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.fade,
                       style: GoogleFonts.outfit(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w500,
-                        color: isSelected ? primary : Colors.white.withValues(alpha: 0.88),
+                        color: isSelected ? Colors.white : Colors.black.withValues(alpha: 0.88),
                       ),
                     ),
                   ),

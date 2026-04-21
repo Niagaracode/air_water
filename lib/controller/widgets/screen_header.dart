@@ -32,10 +32,10 @@ class ScreenHeader extends ConsumerWidget {
         elevation: 0,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: Colors.white,
             border: Border(
-              bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+              bottom: BorderSide(color: Colors.black.withValues(alpha: 0.15), width: 1),
             ),
           ),
           child: Row(
@@ -46,11 +46,11 @@ class ScreenHeader extends ConsumerWidget {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 380),
                   child: Container(
-                    height: 40,
+                    height: 42,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
+                      color: Colors.black.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      border: Border.all(color: Colors.black.withValues(alpha: 0.15)),
                     ),
                     child: TextField(
                       style: GoogleFonts.inter(
@@ -69,11 +69,7 @@ class ScreenHeader extends ConsumerWidget {
                           color: Color(0xFF9CA3AF),
                         ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.only(
-                          right: 12,
-                          top: 10,
-                          bottom: 10,
-                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
                         isDense: true,
                       ),
                     ),

@@ -1,5 +1,10 @@
 class AppConstants {
-  static const String apiUrl = 'http://localhost:4000/api';
+  //tatic const String apiUrl = 'http://localhost:4000/api';
+  // static const String googleMapsApiKey =
+  //     'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
+
+  static const String apiUrl =
+      'https://jay-webmasters-repairs-gnome.trycloudflare.com/api';
   static const String googleMapsApiKey =
       'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
 

@@ -1,3 +1,4 @@
+import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,7 +30,7 @@ class ScreenSidebar extends ConsumerWidget {
           curve: Curves.easeInOut,
           width: isExpanded ? 250 : 72,
           child: Material(
-            color: const Color(0xFF141E7A),
+            color: primary.withValues(alpha: 0.075),
             elevation: 0,
             child: Column(
               children: [
@@ -37,7 +38,7 @@ class ScreenSidebar extends ConsumerWidget {
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: Colors.white.withValues(alpha: 0.10),
+                  color: Colors.black.withValues(alpha: 0.15),
                 ),
                 Expanded(
                   child: ListView(
@@ -124,7 +125,7 @@ class ScreenSidebar extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
-                color: Colors.white.withValues(alpha: 0.40),
+                color: Colors.black.withValues(alpha: 0.40),
                 letterSpacing: 1.4,
               ),
             ),
