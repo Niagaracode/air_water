@@ -10,6 +10,7 @@ import 'package:air_water/features/asset_schedule/asset_schedule_layout.dart';
 import 'package:air_water/features/profile/profile_layout.dart';
 import 'package:air_water/features/alarm/alarm_layout.dart';
 import 'package:air_water/features/events/event_layout.dart';
+import 'package:air_water/features/asset_group/asset_group_layout.dart';
 import 'package:air_water/features/setting/setting_layout.dart';
 import 'package:air_water/features/user/presentation/controller/user_provider.dart';
 import 'package:air_water/core/user_config/user_role.dart';
@@ -70,6 +71,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           '/roaster',
           '/setting',
           '/rule',
+          '/asset-group',
         ];
 
         // 1. Immediate redirection based on Storage-based Role (Eliminates "one second flash")
@@ -178,6 +180,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/alarm', builder: (_, __) => const AlarmLayout()),
           GoRoute(path: '/event', builder: (_, __) => const EventLayout()),
           GoRoute(path: '/setting', builder: (_, __) => const SettingLayout()),
+          GoRoute(path: '/asset-group', builder: (_, __) => const AssetGroupLayout()),
         ],
       ),
     ],

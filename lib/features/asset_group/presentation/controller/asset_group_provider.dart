@@ -1,0 +1,132 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/network/api_client.dart';
+import '../../domain/models/asset_group_model.dart';
+
+class AssetGroupState {
+  final List<AssetGroupModel> groups;
+  final bool isLoading;
+  final bool isProcessing;
+  final String? error;
+  final AssetGroupModel? currentGroup;
+  final List<dynamic> previewAssets;
+
+  AssetGroupState({
+    this.groups = const [],
+    this.isLoading = false,
+    this.isProcessing = false,
+    this.error,
+    this.currentGroup,
+    this.previewAssets = const [],
+  });
+
+  AssetGroupState copyWith({
+    List<AssetGroupModel>? groups,
+    bool? isLoading,
+    bool? isProcessing,
+    String? error,
+    AssetGroupModel? currentGroup,
+    List<dynamic>? previewAssets,
+  }) {
+    return AssetGroupState(
+      groups: groups ?? this.groups,
+      isLoading: isLoading ?? this.isLoading,
+      isProcessing: isProcessing ?? this.isProcessing,
+      error: error,
+      currentGroup: currentGroup ?? this.currentGroup,
+      previewAssets: previewAssets ?? this.previewAssets,
+    );
+  }
+}
+
+class AssetGroupNotifier extends Notifier<AssetGroupState> {
+  @override
+  AssetGroupState build() {
+    Future.microtask(() => loadGroups());
+    return AssetGroupState();
+  }
+
+  Future<void> loadGroups() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final client = ref.read(apiClientProvider);
+      final response = await client.get('/asset-groups');
+
+      final List<AssetGroupModel> groups = (response.data['data'] as List)
+          .map((json) => AssetGroupModel.fromJson(json))
+          .toList();
+
+      state = state.copyWith(isLoading: false, groups: groups);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  Future<void> loadGroupById(int id) async {
+    state = state.copyWith(isProcessing: true, error: null);
+    try {
+      final client = ref.read(apiClientProvider);
+      final response = await client.get('/asset-groups/$id');
+
+      final group = AssetGroupModel.fromJson(response.data['data']);
+      state = state.copyWith(isProcessing: false, currentGroup: group);
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, error: e.toString());
+    }
+  }
+
+  Future<bool> saveGroup(
+    AssetGroupModel group, {
+    List<AssetGroupUser>? users,
+  }) async {
+    state = state.copyWith(isProcessing: true, error: null);
+    try {
+      final client = ref.read(apiClientProvider);
+      final data = group.toJson();
+      if (users != null) {
+        data['users'] = users.map((u) => u.toJson()).toList();
+      }
+
+      if (group.id != null) {
+        await client.put('/asset-groups/${group.id}', data: data);
+      } else {
+        await client.post('/asset-groups', data: data);
+      }
+
+      state = state.copyWith(isProcessing: false);
+      await loadGroups();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<void> loadPreview(int id) async {
+    try {
+      final client = ref.read(apiClientProvider);
+      final response = await client.get('/asset-groups/$id/preview');
+      state = state.copyWith(previewAssets: response.data['data'] as List);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  Future<bool> deleteGroup(int id) async {
+    state = state.copyWith(isProcessing: true, error: null);
+    try {
+      final client = ref.read(apiClientProvider);
+      await client.delete('/asset-groups/$id');
+      state = state.copyWith(isProcessing: false);
+      await loadGroups();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isProcessing: false, error: e.toString());
+      return false;
+    }
+  }
+}
+
+final assetGroupProvider =
+    NotifierProvider<AssetGroupNotifier, AssetGroupState>(
+      AssetGroupNotifier.new,
+    );

@@ -83,6 +83,12 @@ const userMenu = [
     icon: Icons.groups_rounded,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),
+  SidebarMenuItem(
+    key: 'Asset Group',
+    label: 'Asset Group',
+    icon: Icons.layers_outlined,
+    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+  ),
 ];
 
 const eventsMenu = [
