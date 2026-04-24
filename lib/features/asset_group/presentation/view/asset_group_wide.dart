@@ -231,7 +231,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                     child: Switch(
                       value: group.displayInTree,
                       onChanged: (v) {
-                        // ref.read(assetGroupProvider.notifier).updateGroupStatus(group.id!, v);
+                        ref.read(assetGroupProvider.notifier).updateGroupStatus(group.id!, v);
                       },
                       activeColor: const Color(0xFF141E7A),
                     ),
@@ -253,7 +253,29 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                           color: Colors.red,
                           bg: Colors.red.shade50,
                           onTap: () {
-                            // Show delete confirmation
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Asset Group'),
+                                content: Text('Are you sure you want to delete "${group.name}"? This action cannot be undone.'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+                                  TextButton(
+                                    onPressed: () async {
+                                      Navigator.pop(context);
+                                      final success = await ref.read(assetGroupProvider.notifier).deleteGroup(group.id!);
+                                      if (mounted && !success) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Error: ${ref.read(assetGroupProvider).error ?? 'Failed to delete group'}')),
+                                        );
+                                      }
+                                    },
+                                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                    child: const Text('DELETE'),
+                                  ),
+                                ],
+                              ),
+                            );
                           },
                         ),
                       ],

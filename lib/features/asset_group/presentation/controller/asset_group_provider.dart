@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../domain/models/asset_group_model.dart';
 
@@ -95,6 +96,10 @@ class AssetGroupNotifier extends Notifier<AssetGroupState> {
       state = state.copyWith(isProcessing: false);
       await loadGroups();
       return true;
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? e.message;
+      state = state.copyWith(isProcessing: false, error: errorMessage.toString());
+      return false;
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
@@ -119,9 +124,25 @@ class AssetGroupNotifier extends Notifier<AssetGroupState> {
       state = state.copyWith(isProcessing: false);
       await loadGroups();
       return true;
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? e.message;
+      state = state.copyWith(isProcessing: false, error: errorMessage.toString());
+      return false;
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
       return false;
+    }
+  }
+
+  Future<void> updateGroupStatus(int id, bool displayInTree) async {
+    try {
+      final client = ref.read(apiClientProvider);
+      await client.put('/asset-groups/$id', data: {
+        'display_in_tree': displayInTree ? 1 : 0,
+      });
+      await loadGroups();
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
     }
   }
 }

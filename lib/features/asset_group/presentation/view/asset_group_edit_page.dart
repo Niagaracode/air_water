@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +10,7 @@ import '../../../company/presentation/controller/company_provider.dart';
 import '../../../product/provider/product_provider.dart';
 import '../../../site/presentation/controller/site_provider.dart';
 import '../../../device/presentation/controller/device_provider.dart';
+import '../../../tank/presentation/controller/tank_provider.dart';
 
 class AssetGroupEditPage extends ConsumerStatefulWidget {
   final AssetGroupModel? group;
@@ -22,10 +24,14 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   final _formKey = GlobalKey<FormState>();
   List<AssetCriteria> _criteria = [];
   List<AssetGroupUser> _assignedUsers = [];
-  List<User> _availableUsers = [];
+  User? _selectedUserForAssignment;
+  late TextEditingController _nameController;
+  late TextEditingController _descriptionController;
+  bool _displayInTree = true;
+  int _initialCriteriaCount = 0;
 
   final List<String> _parameters = [
-    'Asset Description', 'City', 'Country', 'Customer Name', 'DeviceID', 'Product Name', 'State or Province'
+    'Asset Description', 'City', 'Country', 'Customer Name', 'DeviceID', 'Product Name', 'Site Name', 'State or Province', 'Tank Name'
   ];
   final List<String> _logics = ['Like', '=', '!=', 'Is Empty'];
   final List<String> _operators = ['And', 'Or', 'None'];
@@ -35,28 +41,28 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     super.initState();
     if (widget.group != null) {
       _criteria = List.from(widget.group!.criteria);
+      _initialCriteriaCount = _criteria.length;
       _assignedUsers = List.from(widget.group!.users ?? []);
+      _nameController = TextEditingController(text: widget.group!.name);
+      _descriptionController = TextEditingController(text: widget.group!.description);
+      _displayInTree = widget.group!.displayInTree;
+    } else {
+      _nameController = TextEditingController();
+      _descriptionController = TextEditingController();
+      _displayInTree = true;
     }
     if (_criteria.isEmpty) {
       _addCriteria();
     }
-    _loadUsers();
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadUsers() async {
-    // Ensuring users are loaded from the userProvider
-    await ref.read(userProvider.notifier).loadUsers();
-    if(mounted) {
-       setState(() {
-         _availableUsers = ref.read(userProvider).users;
-       });
-    }
-  }
 
   void _addCriteria() {
     setState(() {
@@ -82,11 +88,15 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
     final newGroup = AssetGroupModel(
       id: widget.group?.id,
-      name: widget.group?.name ?? '',
-      description: widget.group?.description ?? '',
-      displayInTree: widget.group?.displayInTree ?? true,
+      name: _nameController.text.trim(),
+      description: _descriptionController.text.trim(),
+      displayInTree: _displayInTree,
       criteria: _criteria,
     );
+
+    print('DEBUG: Number of criteria to save: ${_criteria.length}');
+    print('DEBUG: Saving Group Data: ${jsonEncode(newGroup.toJson())}');
+    print('DEBUG: Assigned Users: ${jsonEncode(_assignedUsers.map((u) => u.toJson()).toList())}');
 
     final success = await ref.read(assetGroupProvider.notifier).saveGroup(newGroup, users: _assignedUsers);
     if (success && mounted) {
@@ -104,6 +114,8 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     final productState = ref.watch(productListProvider);
     final siteState = ref.watch(siteNotifierProvider);
     final deviceState = ref.watch(deviceProvider);
+    final tankState = ref.watch(tankProvider);
+    final userState = ref.watch(userProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -134,7 +146,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
               const SizedBox(height: 32),
               _buildCriteriaSection(),
               const SizedBox(height: 32),
-              _buildUserSection(),
+              _buildUserSection(userState),
               const SizedBox(height: 48),
               if (widget.group?.id != null)
                 Center(
@@ -155,7 +167,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     );
   }
 
-  Widget _buildUserSection() {
+  Widget _buildUserSection(UserState userState) {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -187,77 +199,141 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             ],
           ),
           const SizedBox(height: 24),
-          _availableUsers.isEmpty 
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFF141E7A)))
-            : ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _availableUsers.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  final user = _availableUsers[index];
-                  final isAssigned = _assignedUsers.any((u) => u.userId == user.userId);
-                  final assignment = isAssigned 
-                      ? _assignedUsers.firstWhere((u) => u.userId == user.userId) 
-                      : null;
+          
+          // Table Header
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Row(
+              children: [
+                Expanded(flex: 3, child: Text('USERNAME', style: _headerStyle)),
+                Expanded(flex: 1, child: Text('IS DEFAULT?', style: _headerStyle)),
+                Expanded(flex: 2, child: Text('ROLE', style: _headerStyle)),
+                Expanded(flex: 2, child: Text('FIRST NAME', style: _headerStyle)),
+                Expanded(flex: 2, child: Text('LAST NAME', style: _headerStyle)),
+                Expanded(flex: 1, child: Center(child: Text('SECURITY', style: _headerStyle))),
+                const SizedBox(width: 48, child: Center(child: Icon(Icons.settings, size: 14, color: Color(0xFF6B7280)))),
+              ],
+            ),
+          ),
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isAssigned ? const Color(0xFFF9FAFF) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: CheckboxListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      activeColor: const Color(0xFF141E7A),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      title: Text(
-                        '${user.firstName} ${user.lastName}',
-                        style: GoogleFonts.inter(
-                          fontWeight: isAssigned ? FontWeight.w700 : FontWeight.w500,
-                          fontSize: 15,
-                        ),
-                      ),
-                      subtitle: Row(
-                        children: [
-                          Icon(Icons.person_outline_rounded, size: 14, color: Colors.grey.shade500),
-                          const SizedBox(width: 4),
-                          Text(user.username, style: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade600)),
-                          const SizedBox(width: 8),
-                          Icon(Icons.verified_user_outlined, size: 14, color: Colors.grey.shade500),
-                          const SizedBox(width: 4),
-                          Text(user.roleName ?? 'User', style: GoogleFonts.inter(fontSize: 13, color: Colors.grey.shade600)),
-                        ],
-                      ),
-                      value: isAssigned,
-                      onChanged: (v) {
-                        setState(() {
-                          if (v == true) {
-                            _assignedUsers.add(AssetGroupUser(
-                              userId: user.userId,
-                              username: user.username,
-                            ));
-                          } else {
-                            _assignedUsers.removeWhere((u) => u.userId == user.userId);
-                          }
-                        });
-                      },
-                      secondary: isAssigned && assignment != null ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildMiniBadge('DEFAULT SEC', assignment.defaultSecurity, (v) {
-                            setState(() => assignment.defaultSecurity = v);
-                          }),
-                          const SizedBox(width: 8),
-                          _buildMiniBadge('IS DEFAULT', assignment.isDefault, (v) {
-                            setState(() => assignment.isDefault = v);
-                          }),
-                        ],
-                      ) : null,
-                    ),
-                  );
-                },
+          // User Rows
+          if (_assignedUsers.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(32),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
+              child: Center(
+                child: Text('No users assigned to this group.', style: GoogleFonts.inter(color: Colors.grey.shade500)),
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _assignedUsers.length,
+              itemBuilder: (context, index) {
+                final assignment = _assignedUsers[index];
+                final user = userState.users.firstWhere((u) => u.userId == assignment.userId, orElse: () => User(userId: assignment.userId, username: assignment.username, email: '', roleId: 0, status: 1));
+                
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(flex: 3, child: Text(user.username, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600))),
+                      Expanded(
+                        flex: 1, 
+                        child: InkWell(
+                          onTap: () => setState(() => assignment.isDefault = !assignment.isDefault),
+                          child: Text(assignment.isDefault ? 'Yes' : 'No', style: GoogleFonts.inter(fontSize: 13, color: assignment.isDefault ? Colors.green : Colors.grey)),
+                        )
+                      ),
+                      Expanded(flex: 2, child: Text(user.roleName ?? 'User', style: GoogleFonts.inter(fontSize: 13))),
+                      Expanded(flex: 2, child: Text(user.firstName ?? '-', style: GoogleFonts.inter(fontSize: 13))),
+                      Expanded(flex: 2, child: Text(user.lastName ?? '-', style: GoogleFonts.inter(fontSize: 13))),
+                      Expanded(
+                        flex: 1, 
+                        child: Center(
+                          child: Checkbox(
+                            value: assignment.defaultSecurity,
+                            onChanged: (v) => setState(() => assignment.defaultSecurity = v ?? false),
+                            activeColor: const Color(0xFF141E7A),
+                          ),
+                        )
+                      ),
+                      SizedBox(
+                        width: 48,
+                        child: IconButton(
+                          onPressed: () => setState(() => _assignedUsers.removeAt(index)),
+                          icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                        ),
+                      )
+                    ],
+                  ),
+                );
+              },
+            ),
+
+          const SizedBox(height: 16),
+
+          // Add User Controls
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: DropdownButtonFormField<User>(
+                  value: _selectedUserForAssignment,
+                  hint: const Text('Select User'),
+                  items: userState.users.where((u) {
+                    final isAlreadyAssigned = _assignedUsers.any((au) => au.userId == u.userId);
+                    final isCustomer = u.roleName?.toLowerCase() == 'customer';
+                    return !isAlreadyAssigned && !isCustomer;
+                  }).map((u) {
+                    return DropdownMenuItem(value: u, child: Text(u.username, style: GoogleFonts.inter(fontSize: 13)));
+                  }).toList(),
+                  onChanged: (v) => setState(() => _selectedUserForAssignment = v),
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(),
+                    fillColor: Color(0xFFF9FAFB),
+                    filled: true,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: _selectedUserForAssignment == null ? null : () {
+                  setState(() {
+                    _assignedUsers.add(AssetGroupUser(
+                      userId: _selectedUserForAssignment!.userId,
+                      username: _selectedUserForAssignment!.username,
+                    ));
+                    _selectedUserForAssignment = null;
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF111827),
+                  side: const BorderSide(color: Color(0xFFE5E7EB)),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('Add'),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -323,9 +399,6 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   }
 
   Widget _buildGeneralSection() {
-    final group = widget.group;
-    if (group == null) return const SizedBox.shrink();
-
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
@@ -340,49 +413,132 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4FF),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.layers_rounded, color: Color(0xFF141E7A), size: 32),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F4FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.layers_rounded, color: Color(0xFF141E7A), size: 24),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'General Information',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF111827),
+                ),
+              ),
+              const Spacer(),
+              _buildTreeToggle(),
+            ],
           ),
-          const SizedBox(width: 24),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          const SizedBox(height: 24),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      group.name,
-                      style: GoogleFonts.outfit(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111827),
+                      'Group Name',
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF374151)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _nameController,
+                      readOnly: widget.group != null,
+                      validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        color: widget.group != null ? const Color(0xFF6B7280) : const Color(0xFF111827),
+                        fontWeight: widget.group != null ? FontWeight.w500 : FontWeight.normal,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Enter group name...',
+                        border: const OutlineInputBorder(),
+                        filled: widget.group != null,
+                        fillColor: widget.group != null ? const Color(0xFFF9FAFB) : Colors.transparent,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    _buildTreeStatusBadge(group.displayInTree),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  group.description.isEmpty ? 'No description available for this group.' : group.description,
-                  style: GoogleFonts.inter(
-                    fontSize: 15,
-                    color: const Color(0xFF6B7280),
-                    height: 1.5,
-                  ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Description',
+                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF374151)),
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _descriptionController,
+                      readOnly: widget.group != null,
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        color: widget.group != null ? const Color(0xFF6B7280) : const Color(0xFF111827),
+                        fontWeight: widget.group != null ? FontWeight.w500 : FontWeight.normal,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Describe the purpose of this group...',
+                        border: const OutlineInputBorder(),
+                        filled: widget.group != null,
+                        fillColor: widget.group != null ? const Color(0xFFF9FAFB) : Colors.transparent,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTreeToggle() {
+    return InkWell(
+      onTap: () => setState(() => _displayInTree = !_displayInTree),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: _displayInTree ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: _displayInTree ? const Color(0xFF10B981).withOpacity(0.2) : const Color(0xFFEF4444).withOpacity(0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _displayInTree ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+              size: 14,
+              color: _displayInTree ? const Color(0xFF059669) : const Color(0xFFDC2626),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _displayInTree ? 'VISIBLE IN TREE' : 'HIDDEN IN TREE',
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: _displayInTree ? const Color(0xFF059669) : const Color(0xFFDC2626),
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -525,40 +681,39 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     final rule = _criteria[index];
     
     if (rule.parameter == 'Customer Name') {
-      final companies = ref.watch(companyNotifierProvider).groupedCompanies.map((g) => g.name).toSet().toList();
-      companies.sort();
+      final companies = ref.watch(companyNotifierProvider).groupedCompanies.map((g) {
+        final companyId = g.addresses.isNotEmpty ? g.addresses.first.companyId : null;
+        return {'id': companyId?.toString() ?? '', 'name': g.name};
+      }).where((c) => c['id'] != '').toList();
+      companies.sort((a, b) => a['name']!.compareTo(b['name']!));
       
-      // Ensure the current value is valid for the dropdown
-      final currentValue = companies.contains(rule.value) ? rule.value : (companies.isNotEmpty ? companies.first : '');
-      if (rule.value != currentValue && companies.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          setState(() => rule.value = currentValue);
-        });
+      final currentValue = companies.any((c) => c['id'] == rule.value) ? rule.value : (companies.isNotEmpty ? companies.first['id'] : '');
+      if (rule.value.isEmpty && companies.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = companies.first['id']!));
       }
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && companies.isNotEmpty ? companies.first : (companies.contains(rule.value) ? rule.value : null),
-        items: companies.map((c) => DropdownMenuItem(value: c, child: Text(c, style: GoogleFonts.inter(fontSize: 13)))).toList(),
+        value: rule.value.isEmpty && companies.isNotEmpty ? companies.first['id'] : (companies.any((c) => c['id'] == rule.value) ? rule.value : null),
+        items: companies.map((c) => DropdownMenuItem<String>(value: c['id'] as String, child: Text(c['name']!, style: GoogleFonts.inter(fontSize: 13)))).toList(),
         onChanged: (v) => setState(() => rule.value = v!),
         decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Select Customer'),
       );
     }
     
     if (rule.parameter == 'Product Name') {
-      final products = ref.watch(productListProvider).value?.map((p) => p.name).toSet().toList() ?? [];
-      products.sort();
+      final products = ref.watch(productListProvider).value?.map((p) => {
+        'id': p.id.toString(),
+        'name': p.name
+      }).toList() ?? [];
+      products.sort((a, b) => a['name']!.compareTo(b['name']!));
 
-      // Ensure the current value is valid for the dropdown
-      final currentValue = products.contains(rule.value) ? rule.value : (products.isNotEmpty ? products.first : '');
-      if (rule.value != currentValue && products.isNotEmpty) {
-         WidgetsBinding.instance.addPostFrameCallback((_) {
-          setState(() => rule.value = currentValue);
-        });
+      if (rule.value.isEmpty && products.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = products.first['id']!));
       }
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && products.isNotEmpty ? products.first : (products.contains(rule.value) ? rule.value : null),
-        items: products.map((p) => DropdownMenuItem(value: p, child: Text(p, style: GoogleFonts.inter(fontSize: 13)))).toList(),
+        value: rule.value.isEmpty && products.isNotEmpty ? products.first['id'] : (products.any((p) => p['id'] == rule.value) ? rule.value : null),
+        items: products.map((p) => DropdownMenuItem<String>(value: p['id'] as String, child: Text(p['name']!, style: GoogleFonts.inter(fontSize: 13)))).toList(),
         onChanged: (v) => setState(() => rule.value = v!),
         decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Select Product'),
       );
@@ -569,9 +724,8 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       final siteCities = ref.watch(siteNotifierProvider).groupedSites.expand((g) => g.addresses).map((a) => a.city).whereType<String>();
       final cities = <String>{...companyCities, ...siteCities}.toList()..sort();
 
-      final currentValue = cities.contains(rule.value) ? rule.value : (cities.isNotEmpty ? cities.first : '');
-      if (rule.value != currentValue && cities.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = currentValue));
+      if (rule.value.isEmpty && cities.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = cities.first));
       }
 
       return DropdownButtonFormField<String>(
@@ -587,9 +741,8 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       final siteCountries = ref.watch(siteNotifierProvider).groupedSites.expand((g) => g.addresses).map((a) => a.country).whereType<String>();
       final countries = <String>{...companyCountries, ...siteCountries}.toList()..sort();
 
-      final currentValue = countries.contains(rule.value) ? rule.value : (countries.isNotEmpty ? countries.first : '');
-      if (rule.value != currentValue && countries.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = currentValue));
+      if (rule.value.isEmpty && countries.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = countries.first));
       }
 
       return DropdownButtonFormField<String>(
@@ -605,9 +758,8 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       final siteStates = ref.watch(siteNotifierProvider).groupedSites.expand((g) => g.addresses).map((a) => a.state).whereType<String>();
       final states = <String>{...companyStates, ...siteStates}.toList()..sort();
 
-      final currentValue = states.contains(rule.value) ? rule.value : (states.isNotEmpty ? states.first : '');
-      if (rule.value != currentValue && states.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = currentValue));
+      if (rule.value.isEmpty && states.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = states.first));
       }
 
       return DropdownButtonFormField<String>(
@@ -619,18 +771,99 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     }
 
     if (rule.parameter == 'DeviceID') {
-      final devices = ref.watch(deviceProvider).groupedDevices.expand((g) => g.devices).map((d) => d.deviceId).toSet().toList()..sort();
+      final devices = ref.watch(deviceProvider).groupedDevices
+          .expand((g) => g.devices)
+          .map((d) => {
+            'id': d.id.toString(),
+            'name': d.deviceId
+          })
+          .toList();
+      devices.sort((a, b) => (a['name'] ?? '').compareTo(b['name'] ?? ''));
 
-      final currentValue = devices.contains(rule.value) ? rule.value : (devices.isNotEmpty ? devices.first : '');
-      if (rule.value != currentValue && devices.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = currentValue));
+      if (rule.value.isEmpty && devices.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = devices.first['id']!));
       }
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && devices.isNotEmpty ? devices.first : (devices.contains(rule.value) ? rule.value : null),
-        items: devices.map((d) => DropdownMenuItem(value: d, child: Text(d, style: GoogleFonts.inter(fontSize: 13)))).toList(),
+        value: rule.value.isEmpty && devices.isNotEmpty ? devices.first['id'] : (devices.any((d) => d['id'] == rule.value) ? rule.value : null),
+        items: devices.map((d) => DropdownMenuItem<String>(value: d['id'] as String, child: Text(d['name'] ?? '', style: GoogleFonts.inter(fontSize: 13)))).toList(),
         onChanged: (v) => setState(() => rule.value = v!),
         decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Select Device ID'),
+      );
+    }
+
+    if (rule.parameter == 'Site Name') {
+      final siteState = ref.watch(siteNotifierProvider);
+      final sites = siteState.groupedSites.map((g) => g.name).toSet().toList()..sort();
+
+      if (sites.isEmpty && siteState.isLoading) {
+        return DropdownButtonFormField<String>(
+          value: null,
+          items: const [DropdownMenuItem(value: null, child: Text('Loading sites...', style: TextStyle(color: Colors.grey)))],
+          onChanged: null,
+          decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Site Name'),
+        );
+      }
+
+      if (sites.isEmpty) {
+        return DropdownButtonFormField<String>(
+          value: null,
+          items: const [DropdownMenuItem(value: null, child: Text('No sites found'))],
+          onChanged: null,
+          decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Site Name'),
+        );
+      }
+
+      if (rule.value.isEmpty && sites.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = sites.first));
+      }
+
+      return DropdownButtonFormField<String>(
+        value: rule.value.isEmpty && sites.isNotEmpty ? sites.first : (sites.contains(rule.value) ? rule.value : null),
+        items: sites.map((s) => DropdownMenuItem(value: s, child: Text(s, style: GoogleFonts.inter(fontSize: 13)))).toList(),
+        onChanged: (v) => setState(() => rule.value = v!),
+        decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Select Site Name'),
+      );
+    }
+
+    if (rule.parameter == 'Tank Name') {
+      final tankState = ref.watch(tankProvider);
+      final tanks = tankState.groupedTanks
+          .expand((g) => g.tanks)
+          .map((t) => {
+            'id': t.tankId.toString(),
+            'name': t.tankName ?? t.tankNumber
+          })
+          .toList();
+      tanks.sort((a, b) => a['name']!.compareTo(b['name']!));
+
+      if (tanks.isEmpty && tankState.isLoading) {
+        return DropdownButtonFormField<String>(
+          value: null,
+          items: const [DropdownMenuItem(value: null, child: Text('Loading tanks...', style: TextStyle(color: Colors.grey)))],
+          onChanged: null,
+          decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Tank Name'),
+        );
+      }
+
+      if (tanks.isEmpty) {
+        return DropdownButtonFormField<String>(
+          value: null,
+          items: const [DropdownMenuItem(value: null, child: Text('No tanks found'))],
+          onChanged: null,
+          decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Tank Name'),
+        );
+      }
+
+      if (rule.value.isEmpty && tanks.isNotEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() => rule.value = tanks.first['id']!));
+      }
+
+      return DropdownButtonFormField<String>(
+        value: rule.value.isEmpty && tanks.isNotEmpty ? tanks.first['id'] : (tanks.any((t) => t['id'] == rule.value) ? rule.value : null),
+        items: tanks.map((t) => DropdownMenuItem<String>(value: t['id'] as String, child: Text(t['name']!, style: GoogleFonts.inter(fontSize: 13)))).toList(),
+        onChanged: (v) => setState(() => rule.value = v!),
+        decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Select Tank Name'),
       );
     }
 
@@ -638,13 +871,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       initialValue: rule.value,
       key: ValueKey('rule_val_${index}_${rule.parameter}'),
       onChanged: (v) => setState(() => rule.value = v),
-      decoration: InputDecoration(
-        border: const OutlineInputBorder(), 
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(), 
         labelText: 'Value',
-        suffixIcon: rule.value.isNotEmpty ? IconButton(
-          icon: const Icon(Icons.clear, size: 18),
-          onPressed: () => setState(() => rule.value = ''),
-        ) : null,
       ),
     );
   }
@@ -660,14 +889,17 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             flex: 4,
             child: DropdownButtonFormField<String>(
               value: rule.parameter,
-              items: _parameters.map((p) => DropdownMenuItem(value: p, child: Text(p, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 13)))).toList(),
+              items: _parameters.map((p) => DropdownMenuItem(value: p, child: Text(p, style: GoogleFonts.inter(fontSize: 13)))).toList(),
               onChanged: (v) {
                 setState(() {
                   rule.parameter = v!;
                   rule.value = ''; 
                 });
               },
-              decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12)),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(), 
+                contentPadding: EdgeInsets.symmetric(horizontal: 12),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -679,7 +911,10 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
               value: rule.logic,
               items: _logics.map((l) => DropdownMenuItem(value: l, child: Text(l, style: GoogleFonts.inter(fontSize: 13)))).toList(),
               onChanged: (v) => setState(() => rule.logic = v!),
-              decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 12)),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(), 
+                contentPadding: EdgeInsets.symmetric(horizontal: 12),
+              ),
             ),
           ),
           const SizedBox(width: 12),

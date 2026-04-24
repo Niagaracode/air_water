@@ -23,7 +23,10 @@ class AssetGroupModel {
 
   factory AssetGroupModel.fromJson(Map<String, dynamic> json) {
     List<AssetCriteria> parsedCriteria = [];
-    if (json['criteria_json'] != null) {
+    if (json['criteria'] != null && json['criteria'] is List) {
+      parsedCriteria = (json['criteria'] as List).map((c) => AssetCriteria.fromJson(c)).toList();
+    } else if (json['criteria_json'] != null) {
+      // Fallback for legacy data if needed during transition
       final dynamic decoded = json['criteria_json'] is String 
           ? jsonDecode(json['criteria_json']) 
           : json['criteria_json'];
@@ -52,7 +55,7 @@ class AssetGroupModel {
       'name': name,
       'description': description,
       'display_in_tree': displayInTree ? 1 : 0,
-      'criteria_json': criteria.map((c) => c.toJson()).toList(),
+      'criteria': criteria.map((c) => c.toJson()).toList(),
       'users': users?.map((u) => u.toJson()).toList(),
     };
   }
