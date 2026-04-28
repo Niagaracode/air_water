@@ -64,7 +64,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     }
   }
 
-  void _handleMqttMessage(MqttMessage message) {
+  void _handleMqttMessage(MqttMessageModel message) {
     try {
       // Parse the MQTT message
       final parsedData = parseMqtt(message.data.toString());
@@ -209,7 +209,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     final statistics = ref.watch(tankStatisticsProvider);
     final groupedTanks = ref.watch(groupedTanksProvider);
 
-    ref.listen<AsyncValue<MqttMessage>>(
+    ref.listen<AsyncValue<MqttMessageModel>>(
       mqttTopicStreamProvider(tankStatusTopic),
           (previous, next) {
         next.whenData((message) {
