@@ -1,47 +1,19 @@
 import 'dart:async';
 
 import 'package:air_water/core/app_theme/app_theme.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../core/network/mqtt/models/mqtt_connection_state.dart';
 import '../../../../core/network/mqtt/models/mqtt_message.dart';
 import '../../../../core/network/mqtt/providers/mqtt_providers.dart';
-import '../../../../core/user_config/user_role.dart';
-import '../../../../core/user_config/user_role_provider.dart';
-import 'package:air_water/features/alarm/presentation/controller/alarm_provider.dart';
-import 'package:air_water/features/tank/presentation/controller/tank_provider.dart';
-import '../../domain/dashboard_repository.dart';
-import '../model/alarm_model.dart';
-import '../model/tank_data_model.dart';
-import '../widgets/dashboard_header.dart';
-import '../widgets/technician_dashboard.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../auth/presentation/controllers/auth_providers.dart';
+import '../../data/tank_data_model.dart';
+import '../../provider/dashboard_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// ============ PROVIDERS ============
-// Provider for grouped tanks
-final groupedTanksProvider = Provider<List<SiteGroup>>((ref) {
-  final tanks = ref.watch(tankProviderDashboard);
-  final tankNotifier = ref.read(tankProviderDashboard.notifier);
-  return tankNotifier.getGroupedTanks();
-});
+import '../model/site_group_model.dart';
 
-// Provider for statistics
-final tankStatisticsProvider = Provider<Map<String, dynamic>>((ref) {
-  final tankNotifier = ref.read(tankProviderDashboard.notifier);
-  return tankNotifier.getStatistics();
-});
-
-// Provider for filtered tanks by region
-final regionFilteredTanksProvider = Provider.family<List<TankDataModel>, String>((ref, region) {
-  final tankNotifier = ref.read(tankProviderDashboard.notifier);
-  return tankNotifier.getTanksByRegion(region);
-});
-// ============ END PROVIDERS ============
 
 class DashboardWide extends ConsumerStatefulWidget {
   const DashboardWide({super.key});
@@ -52,10 +24,6 @@ class DashboardWide extends ConsumerStatefulWidget {
 
 class _DashboardWideState extends ConsumerState<DashboardWide> {
   final String tankStatusTopic = 'tweet/864180050620884';
-
-  StreamSubscription<MqttMessage>? _tankSubscription;
-
-  // Flag to track if widget is disposed
   bool _isDisposed = false;
 
   // Search and filter controllers
@@ -67,123 +35,278 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
 
+  // Track subscribed topics to avoid duplicate subscriptions
+  final Set<String> _subscribedTopics = {};
+
   @override
   void initState() {
     super.initState();
-    // Use WidgetsBinding to ensure ref is ready
+
+    // Only do initialization that doesn't require ref.listen
+    // We'll handle subscription after build is complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_isDisposed) {
-        _setupSubscriptions();
-      }
+      if (!mounted) return;
+      _setupMqttSubscription(); // This will handle subscription only, not listen
     });
 
     _addSampleMarkers();
   }
 
-
-  void _setupSubscriptions() {
-    // Capture ref before async operations
-    final refAtCallTime = ref;
-
-    Future.delayed(Duration(seconds: 2), () {
-      if (mounted && !_isDisposed) {
-        final mqttNotifier = refAtCallTime.read(mqttProvider.notifier);
-        mqttNotifier.subscribeToTopic(tankStatusTopic);
-      }
-    });
-
-  }
-
-  void _addSampleMarkers() {
-    _markers.add(
-      Marker(
-        markerId: const MarkerId('tank1'),
-        position: const LatLng(11.0168, 76.9558),
-        infoWindow: const InfoWindow(title: 'Water Tank', snippet: 'Active'),
-      ),
-    );
-  }
-
-  void _startPeriodicPublishing() {
-    if (_isDisposed) return;
-
-    final refAtCallTime = ref;
-
-    if (mounted && !_isDisposed) {
-      try {
-        final mqttNotifier = refAtCallTime.read(mqttProvider.notifier);
-        mqttNotifier.publishMessage('get-tweet-response/karthik', {
-          "data": 'kamaraj',
-          "timestamp": DateTime.now().toIso8601String(),
-        });
-        debugPrint('📤 Published message at ${DateTime.now()}');
-      } catch (e) {
-        debugPrint('Error publishing: $e');
-      }
+  void _setupMqttSubscription() {
+    if (!_subscribedTopics.contains(tankStatusTopic)) {
+      final mqttNotifier = ref.read(mqttProvider.notifier);
+      mqttNotifier.subscribeToTopic(tankStatusTopic);
+      _subscribedTopics.add(tankStatusTopic);
+      print('Subscribed to MQTT topic: $tankStatusTopic');
     }
   }
 
-  void _handleStreamData(AsyncValue<MqttMessage> tankStream) {
-    // Handle tank status updates
-    tankStream.whenData((message) {
-      if (mounted && !_isDisposed) {
-        _handleTankStatusUpdate(message);
+  void _handleMqttMessage(MqttMessage message) {
+    try {
+      // Parse the MQTT message
+      final parsedData = parseMqtt(message.data.toString());
+      print('Received MQTT update: $parsedData');
+
+      // Update the tank data
+      final tankNotifier = ref.read(tankDataListProvider.notifier);
+      tankNotifier.updateFromMqtt(parsedData);
+
+      // Update markers if needed (for map view)
+      _updateMarkerFromMqtt(parsedData);
+
+    } catch (e) {
+      print('Error handling MQTT message: $e');
+    }
+  }
+
+  void _updateMarkerFromMqtt(Map<String, dynamic> mqttData) {
+    final deviceId = mqttData['deviceId'] as String?;
+    if (deviceId == null) return;
+
+    // Find the tank and update its marker
+    final tanksAsync = ref.read(tankDataListProvider);
+    tanksAsync.whenData((tanks) {
+      final tank = tanks.firstWhere(
+            (t) => t.deviceId == deviceId,
+        orElse: () => null as TankDataModel,
+      );
+
+      if (mounted) {
+        setState(() {
+          _markers.removeWhere((marker) => marker.markerId.value == deviceId);
+          _markers.add(
+            Marker(
+              markerId: MarkerId(deviceId),
+              position: LatLng(tank.latitude, tank.longitude),
+              infoWindow: InfoWindow(
+                title: tank.tankName,
+                snippet: 'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
+              ),
+            ),
+          );
+        });
       }
     });
+  }
 
+  Map<String, dynamic> parseMqtt(String raw) {
+    print('Raw MQTT message: $raw');
+
+    String? deviceId;
+    double? level;
+    double? pressure;
+    double? battery;
+    double? solar;
+
+    // Extract device ID from cC field
+    final cCMatch = RegExp(r'cC:\s*([0-9]+)').firstMatch(raw);
+    if (cCMatch != null) {
+      deviceId = cCMatch.group(1);
+      print('Found deviceId: $deviceId');
+    }
+
+    // Extract the cM field content (everything between cM: and , cL:)
+    final cMMatch = RegExp(r'cM:\s*([^,]+?)(?:,\s*cL:)').firstMatch(raw);
+    if (cMMatch != null) {
+      final cMContent = cMMatch.group(1)!;
+      print('cM Content: $cMContent');
+
+      // Now parse the colon-separated values in cM content
+      // Split by spaces to get individual key-value pairs
+      final parts = cMContent.split(' ');
+
+      for (var part in parts) {
+        if (part.contains(':')) {
+          final colonIndex = part.indexOf(':');
+          final key = part.substring(0, colonIndex).trim();
+          var value = part.substring(colonIndex + 1).trim();
+
+          // Remove trailing colon if present (like in "TNP:100:")
+          if (value.endsWith(':')) {
+            value = value.substring(0, value.length - 1);
+          }
+
+
+          switch (key) {
+            case 'TNP':
+              level = double.tryParse(value);
+              break;
+            case 'PTN':
+              pressure = double.tryParse(value);
+              break;
+            case 'BAT':
+              battery = double.tryParse(value);
+              break;
+            case 'SOL':
+              solar = double.tryParse(value);
+              break;
+          }
+        }
+      }
+    }
+
+    final result = {
+      "deviceId": deviceId,
+      "level": level,
+      "pressure": pressure,
+      "battery": battery,
+      "solar": solar,
+    };
+
+    print('Parsed result: $result');
+    return result;
+  }
+
+
+  void _addSampleMarkers() {
+    // This will be populated from actual data when loaded
+    final tanksAsync = ref.read(tankDataListProvider);
+    tanksAsync.whenData((tanks) {
+      for (var tank in tanks) {
+        _markers.add(
+          Marker(
+            markerId: MarkerId(tank.deviceId),
+            position: LatLng(tank.latitude, tank.longitude),
+            infoWindow: InfoWindow(
+              title: tank.tankName,
+              snippet: 'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
+            ),
+          ),
+        );
+      }
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Safely watch streams
-    final tankStatusStream = ref.watch(mqttTopicStreamProvider(tankStatusTopic));
+    final userNameAsync = ref.watch(userNameProvider);
+    final userName = userNameAsync.value ?? 'User';
 
-    // Handle stream data safely
-    _handleStreamData(tankStatusStream);
-
-    final tanksData = ref.watch(tankProviderDashboard);
-    final alarmsData = ref.watch(alarmProviderDashboard);
+    // Watch the tank data
+    final tanksDataAsync = ref.watch(tankDataListProvider);
     final statistics = ref.watch(tankStatisticsProvider);
     final groupedTanks = ref.watch(groupedTanksProvider);
 
+    // ✅ CORRECT: ref.listen called directly in build method
+    ref.listen<AsyncValue<MqttMessage>>(
+      mqttTopicStreamProvider(tankStatusTopic),
+          (previous, next) {
+        next.whenData((message) {
+          _handleMqttMessage(message);
+        });
+      },
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            _buildHeader(),
-            const SizedBox(height: 24),
-
-            // Stats Cards with real data
-            _buildStatsCards(statistics),
-            const SizedBox(height: 24),
-
-            // Device List Header with Actions
-            _buildDeviceListHeader(),
-            const SizedBox(height: 16),
-
-            // Search and Filters
-            _buildSearchAndFilters(),
-            const SizedBox(height: 24),
-
-            // Map/List View Toggle
-            _buildViewToggle(),
-            const SizedBox(height: 16),
-
-            // Content based on view type
-            _isListView
-                ? _buildListView(groupedTanks)
-                : _buildMapView(tanksData),
-          ],
+      body: tanksDataAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
         ),
+        error: (error, stackTrace) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load tank data',
+                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(tankDataListProvider.notifier).refresh();
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+        data: (tanksData) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(userName),
+                const SizedBox(height: 24),
+                _buildStatsCards(statistics),
+                const SizedBox(height: 24),
+                _buildDeviceListHeader(),
+                const SizedBox(height: 16),
+                _buildSearchAndFilters(),
+                const SizedBox(height: 24),
+                _buildViewToggle(),
+                const SizedBox(height: 16),
+                _isListView
+                    ? _buildListView(groupedTanks, tanksData)
+                    : _buildMapView(tanksData),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-
+  Widget _buildHeader(String userName) {
+    final connectionState = ref.watch(mqttProvider);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome back, $userName!',
+              style: GoogleFonts.outfit(
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF111827),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Monitor your tank levels in real-time',
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: const Color(0xFF6B7280),
+              ),
+            ),
+          ],
+        ),
+        _buildConnectionStatus(connectionState),
+      ],
+    );
+  }
 
   Widget _buildConnectionStatus(MqttConnectionStateModel state) {
     return Container(
@@ -213,37 +336,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    final connectionState = ref.watch(mqttProvider);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome back, John!',
-              style: GoogleFonts.outfit(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF111827),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Monitor your tank levels in real-time',
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                color: const Color(0xFF6B7280),
-              ),
-            ),
-          ],
-        ),
-        _buildConnectionStatus(connectionState),
-      ],
     );
   }
 
@@ -636,7 +728,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
       // Search filter
       if (_searchController.text.isNotEmpty) {
         final searchLower = _searchController.text.toLowerCase();
-        return tank.name.toLowerCase().contains(searchLower) ||
+        return tank.tankName.toLowerCase().contains(searchLower) ||
             tank.siteName.toLowerCase().contains(searchLower);
       }
 
@@ -645,7 +737,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   }
 
 
-  Widget _buildListView(List<SiteGroup> groupedTanks) {
+  Widget _buildListView(List<SiteGroupModel> groupedTanks, List<TankDataModel> allTanks) {
     // Filter groups based on search and filters
     final filteredGroups = groupedTanks.map((group) {
       final filteredTanks = group.tanks.where((tank) {
@@ -662,14 +754,14 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
         // Search filter
         if (_searchController.text.isNotEmpty) {
           final searchLower = _searchController.text.toLowerCase();
-          return tank.name.toLowerCase().contains(searchLower) ||
+          return tank.tankName.toLowerCase().contains(searchLower) ||
               tank.siteName.toLowerCase().contains(searchLower);
         }
 
         return true;
       }).toList();
 
-      return SiteGroup(
+      return SiteGroupModel(
         siteName: group.siteName,
         siteLocation: group.siteLocation,
         tanks: filteredTanks,
@@ -732,12 +824,15 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             ),
             child: Row(
               children: [
-                Expanded(child: Text('SITE', style: _headerStyle())),
-                Expanded(child: Text('TANK NAME', style: _headerStyle())),
+                Expanded(child: Text('SITE-TANK NAME', style: _headerStyle())),
+                SizedBox(width: 200, child: Text('DEVICE ID', style: _headerStyle())),
                 Expanded(child: Text('LEVEL', style: _headerStyle(), textAlign: TextAlign.center)),
-                Expanded(child: Text('STATUS', style: _headerStyle(), textAlign: TextAlign.center)),
-                Expanded(child: Text('LAST UPDATE', style: _headerStyle(), textAlign: TextAlign.center)),
-                const SizedBox(width: 50),
+                SizedBox(width: 100, child: Text('PRESSURE', style: _headerStyle(), textAlign: TextAlign.center)),
+                SizedBox(width: 100, child: Text('BATTERY', style: _headerStyle(), textAlign: TextAlign.center)),
+                SizedBox(width: 80, child: Text('SOLAR', style: _headerStyle(), textAlign: TextAlign.center)),
+                SizedBox(width: 130,child: Text('STATUS', style: _headerStyle(), textAlign: TextAlign.center)),
+                SizedBox(width: 150,child: Text('LAST UPDATE', style: _headerStyle(), textAlign: TextAlign.center)),
+                const SizedBox(width: 45),
               ],
             ),
           ),
@@ -766,7 +861,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     );
   }
 
-  Widget _buildSiteGroup(SiteGroup site) {
+  Widget _buildSiteGroup(SiteGroupModel site) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -828,18 +923,19 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             child: Padding(
               padding: const EdgeInsets.only(left: 24),
               child: Text(
-                tank.siteName,
+                tank.tankName,
                 style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade600),
               ),
             ),
           ),
-          Expanded(
+          SizedBox(
+            width: 200,
             child: Row(
               children: [
                 Icon(Icons.opacity, size: 16, color: Colors.grey.shade400),
                 const SizedBox(width: 8),
                 Text(
-                  tank.name,
+                  tank.deviceId,
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -872,7 +968,47 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
               ],
             ),
           ),
-          Expanded(
+          SizedBox(
+            width: 100,
+            child: Center(
+              child: Text(
+                '${tank.pressure.toStringAsFixed(1)} bar',
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _getBatSolColor(tank.batteryV),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 100,
+            child: Center(
+              child: Text(
+                '${tank.batteryV.toStringAsFixed(1)} v',
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _getBatSolColor(tank.batteryV),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 80,
+            child: Center(
+              child: Text(
+                '${tank.solarV.toStringAsFixed(1)} v',
+                style: GoogleFonts.outfit(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: _getBatSolColor(tank.solarV),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 130,
             child: Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -905,7 +1041,8 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
               ),
             ),
           ),
-          Expanded(
+          SizedBox(
+            width: 150,
             child: Center(
               child: Text(
                 _formatDateTime(tank.lastUpdate),
@@ -914,7 +1051,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             ),
           ),
           SizedBox(
-            width: 50,
+            width: 45,
             child: PopupMenuButton(
               icon: const Icon(Icons.more_vert, size: 20),
               itemBuilder: (context) => [
@@ -927,6 +1064,12 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
         ],
       ),
     );
+  }
+
+  Color _getBatSolColor(double level) {
+    if (level <= 3) return Colors.red;
+    if (level <= 7) return Colors.orange;
+    return Colors.green;
   }
 
   Color _getLevelColor(double level) {
@@ -962,33 +1105,24 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     return '${diff.inDays}d ago';
   }
 
-  void _handleTankStatusUpdate(MqttMessage message) {
-    debugPrint('📊 Tank Status Update: ${message.data}');
-    // Update your UI or provider here
-    if (mounted) {
-      // Example: Update tank level in provider
-      // ref.read(tankProvider.notifier).updateTankLevel(message.data);
-    }
-  }
-
-
-
   @override
   void dispose() {
     _isDisposed = true;
-
-    // Dispose controllers
     _searchController.dispose();
 
-    // Unsubscribe from MQTT topics (only if needed)
-    // Note: The provider will handle cleanup, but we can explicitly unsubscribe
+    // Unsubscribe from MQTT topics
     try {
       final mqttNotifier = ref.read(mqttProvider.notifier);
-      mqttNotifier.unsubscribeFromTopic(tankStatusTopic);
+      for (var topic in _subscribedTopics) {
+        mqttNotifier.unsubscribeFromTopic(topic);
+      }
+      _subscribedTopics.clear();
     } catch (e) {
       // Ignore errors during disposal
+      print('Error during MQTT cleanup: $e');
     }
 
     super.dispose();
   }
+
 }
