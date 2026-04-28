@@ -5,7 +5,7 @@ class AlarmModel {
   final String id;
   final String type;
   final String message;
-  final String severity; // 'Critical', 'Warning', 'Info'
+  final String severity;
   final String tankId;
   final String tankName;
   final String siteName;

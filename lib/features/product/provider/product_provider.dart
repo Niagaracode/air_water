@@ -16,8 +16,7 @@ final productRepoProvider = Provider<ProductRepository>((ref) {
   return ProductRepositoryImpl(api);
 });
 
-final productListProvider =
-FutureProvider<List<Product>>((ref) {
+final productListProvider = FutureProvider<List<Product>>((ref) {
   final repo = ref.watch(productRepoProvider);
   return repo.getProducts();
 });

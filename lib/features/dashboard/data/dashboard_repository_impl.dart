@@ -1,18 +1,35 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:air_water/features/dashboard/data/tank_data_model.dart';
+import 'package:dio/dio.dart';
+
+import '../../../core/errors/app_exception.dart';
 import '../domain/dashboard_repository.dart';
-import '../presentation/model/tank_data_model.dart';
 import 'dashboard_api.dart';
-import '../../../core/network/api_client.dart';
 
 class DashboardRepositoryImpl implements DashboardRepository {
-  final Ref _ref;
+  final DashboardApi _api;
 
-  DashboardRepositoryImpl(this._ref);
+  DashboardRepositoryImpl(this._api);
 
   @override
-  Future<List<TankDataModel>> getTankStatus() async {
-    final client = _ref.read(apiClientProvider);
-    final api = DashboardApi(client);
-    return await api.getTankStatus();
+  Future<List<TankDataModel>> getTankData() async {
+
+    try {
+      final list = await _api.getTankData();
+      return list.map((e) => TankDataModel.fromJson(e)).toList();
+
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+
+      final message = data is Map && data['message'] != null
+          ? data['message'].toString()
+          : null;
+
+      if (status == 404) {
+        throw AppException(message ?? 'Products not found');
+      }
+
+      throw AppException(message ?? 'Failed to load products');
+    }
   }
 }

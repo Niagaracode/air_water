@@ -15,10 +15,7 @@ class ProductRepositoryImpl implements ProductRepository {
 
     try {
       final list = await _api.getProducts();
-
-      return list
-          .map((e) => Product.fromJson(e))
-          .toList();
+      return list.map((e) => Product.fromJson(e)).toList();
 
     } on DioException catch (e) {
       final status = e.response?.statusCode;
