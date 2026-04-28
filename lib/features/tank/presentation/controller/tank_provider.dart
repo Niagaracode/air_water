@@ -256,3 +256,8 @@ final tankRepositoryProvider = Provider<TankRepository>((ref) {
 final tankProvider = NotifierProvider<TankNotifier, TankState>(
   TankNotifier.new,
 );
+
+final allTanksProvider = FutureProvider<List<Tank>>((ref) {
+  final repo = ref.watch(tankRepositoryProvider);
+  return repo.getTanks();
+});

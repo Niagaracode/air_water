@@ -34,6 +34,7 @@ class CompanyAddressControllers {
 
 class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
   final _nameController = TextEditingController();
+  final _emailTemplateController = TextEditingController();
   List<CompanyAddressControllers> _addressRows = [];
   int _status = 1;
 
@@ -42,6 +43,7 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
     super.initState();
     if (widget.companyGroup != null && widget.initialAddress != null) {
       _nameController.text = widget.companyGroup!.name;
+      _emailTemplateController.text = widget.companyGroup!.emailTemplate ?? '';
       _status = widget.initialAddress!.status;
 
       final controllers = CompanyAddressControllers();
@@ -101,6 +103,9 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
       final row = _addressRows.first;
       final updateData = {
         'name': _nameController.text,
+        'email_template': _emailTemplateController.text.trim().isEmpty
+            ? null
+            : _emailTemplateController.text.trim(),
         'country': row.country,
         'state': row.state,
         'city': row.city,
@@ -136,6 +141,9 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
         name: _nameController.text,
         createdBy: 1,
         addresses: addresses,
+        emailTemplate: _emailTemplateController.text.trim().isEmpty
+            ? null
+            : _emailTemplateController.text.trim(),
       );
 
       final success = await ref
@@ -277,6 +285,16 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                             );
                             return companies.map((e) => e.name).toList();
                           },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Email Template
+                      _buildLabelField(
+                        'EMAIL',
+                        AppTextField(
+                          controller: _emailTemplateController,
+                          hint: 'e.g. alerts@company.com',
                         ),
                       ),
                       const SizedBox(height: 48),
@@ -625,6 +643,7 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailTemplateController.dispose();
     for (var controllers in _addressRows) {
       controllers.dispose();
     }

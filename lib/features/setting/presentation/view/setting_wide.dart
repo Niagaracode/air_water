@@ -25,13 +25,13 @@ class _SettingWideState extends ConsumerState<SettingWide> {
   final _scrollController = ScrollController();
   final _settingSearchController = TextEditingController();
 
-  Color _getStatusLabelColor(String? importance) {
-    if (importance == null) return const Color(0xFF6B7280);
-    final val = importance.trim().toLowerCase();
+  Color _getStatusLabelColor(String? statusLabel) {
+    if (statusLabel == null) return const Color(0xFF6B7280);
+    final val = statusLabel.trim().toLowerCase();
     if (val.contains('critical')) return const Color(0xFFDC2626);
-    if (val.contains('urgent')) return const Color(0xFF7C3AED);
-    if (val.contains('warning')) return const Color(0xFFD97706);
-    if (val.contains('info')) return const Color(0xFF2563EB);
+    if (val.contains('reorder')) return const Color(0xFFD97706);
+    if (val.contains('low')) return const Color(0xFFD97706);
+    if (val.contains('high')) return const Color(0xFF2563EB);
     return const Color(0xFF6B7280);
   }
 
@@ -396,7 +396,6 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             const AppTableHeaderCell('Tank', width: 100),
             const AppTableHeaderCell('Parameter', flex: 2),
             const AppTableHeaderCell('Condition', flex: 2),
-            const AppTableHeaderCell('Importance', width: 130),
             const SizedBox(width: 16),
             const AppTableHeaderCell('Status', width: 110),
           ],
@@ -609,7 +608,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                         style: GoogleFonts.outfit(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: _getStatusLabelColor(setting.importance),
+                          color: _getStatusLabelColor(setting.statusLabel),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -647,7 +646,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                         style: GoogleFonts.outfit(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: _getStatusLabelColor(setting.importance),
+                          color: _getStatusLabelColor(setting.statusLabel),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -655,11 +654,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                 ],
               ),
             ),
-            AppTableCell(
-              null,
-              width: 130,
-              child: AppImportanceBadge(importance: setting.importance),
-            ),
+
             const SizedBox(width: 16),
             AppTableCell(
               null,

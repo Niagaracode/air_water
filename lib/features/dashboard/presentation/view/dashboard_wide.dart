@@ -61,10 +61,10 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     }
   }
 
-  void _handleMqttMessage(MqttMessage message) {
+  void _handleMqttMessage(MqttMessageModel message) {
     try {
-      // Parse the MQTT message
-      final parsedData = parseMqtt(message.data.toString());
+      // Parse the MQTT message using rawPayload string
+      final parsedData = parseMqtt(message.rawPayload);
       print('Received MQTT update: $parsedData');
 
       // Update the tank data
@@ -209,7 +209,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     final groupedTanks = ref.watch(groupedTanksProvider);
 
     // ✅ CORRECT: ref.listen called directly in build method
-    ref.listen<AsyncValue<MqttMessage>>(
+    ref.listen<AsyncValue<MqttMessageModel>>(
       mqttTopicStreamProvider(tankStatusTopic),
           (previous, next) {
         next.whenData((message) {

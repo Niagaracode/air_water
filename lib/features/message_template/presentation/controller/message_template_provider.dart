@@ -196,3 +196,8 @@ final messageTemplateRepositoryProvider = Provider<MessageTemplateRepository>((r
 final messageTemplateProvider = NotifierProvider<MessageTemplateNotifier, MessageTemplateState>(
   MessageTemplateNotifier.new,
 );
+
+final activeTemplatesProvider = FutureProvider<List<MessageTemplate>>((ref) {
+  final repo = ref.watch(messageTemplateRepositoryProvider);
+  return repo.getActiveTemplates();
+});

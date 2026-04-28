@@ -37,7 +37,6 @@ class SettingRowData {
   final TextEditingController threshold2Controller;
   final TextEditingController threshold3Controller;
   final TextEditingController statusLabelController;
-  String importance;
   MessageTemplate? selectedTemplate;
   List<StrappingPoint> selectedPoints;
 
@@ -48,7 +47,6 @@ class SettingRowData {
     String threshold2 = '',
     String threshold3 = '',
     String statusLabel = '',
-    this.importance = 'Critical',
     this.selectedTemplate,
     List<StrappingPoint>? selectedPoints,
   }) : threshold1Controller = TextEditingController(text: threshold1),
@@ -108,7 +106,6 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
           threshold2: s.threshold2?.toString() ?? '0',
           threshold3: s.threshold_3?.toString() ?? '0',
           statusLabel: s.statusLabel ?? '',
-          importance: s.importance ?? 'Critical',
         ),
       );
     } else {
@@ -148,20 +145,20 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final templateRepo = ref.read(messageTemplateRepositoryProvider);
       final tankRepo = ref.read(tankRepositoryProvider);
 
-      final companiesResponse = await companyRepo.getGroupedCompanies(
-        limit: 1000,
-      );
-      final sitesResponse = await siteRepo.getSites(limit: 1000);
-      final tanksResponse = await tankRepo.getTanks();
-      final activeTemplates = await templateRepo.getActiveTemplates();
-      final products = await ref.read(productListProvider.future);
+      final results = await Future.wait([
+        companyRepo.getGroupedCompanies(limit: 1000),
+        siteRepo.getSites(limit: 1000),
+        ref.read(allTanksProvider.future),
+        ref.read(activeTemplatesProvider.future),
+        ref.read(productListProvider.future),
+      ]);
 
       setState(() {
-        _companyGroups = companiesResponse.data;
-        _sites = sitesResponse.data;
-        _tanks = tanksResponse;
-        _templates = activeTemplates;
-        _products = products;
+        _companyGroups = (results[0] as CompanyGroupedResponse).data;
+        _sites = (results[1] as SiteResponse).data;
+        _tanks = results[2] as List<Tank>;
+        _templates = results[3] as List<MessageTemplate>;
+        _products = results[4] as List<Product>;
 
         if (widget.initialSetting != null) {
           final s = widget.initialSetting!;
@@ -298,7 +295,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         'threshold_1': double.tryParse(row.threshold1Controller.text.trim()),
         'threshold_2': double.tryParse(row.threshold2Controller.text.trim()),
         'threshold_3': double.tryParse(row.threshold3Controller.text.trim()),
-        'importance': row.importance,
+
         'status_label': row.statusLabelController.text.trim().isEmpty
             ? null
             : row.statusLabelController.text.trim(),
@@ -327,19 +324,23 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       if (!silent) {
         final row1 = _rows.isNotEmpty ? _rows[0] : null;
         final paramType = (row1?.parameterType ?? '').toUpperCase().trim();
-        if ((paramType == 'LEVEL' ||
-                paramType == 'CAL TANK' ||
-                paramType == 'CAL KILO LITER' ||
-                paramType == 'SETCALBAR' ||
-                paramType == 'SETBAR' ||
-                paramType == 'SENSOR' ||
-                paramType == 'SENSOR RATING' ||
-                paramType == 'DATA INTERVAL' ||
-                paramType == 'BATTERY' ||
-                paramType == 'SOLAR' ||
-                paramType == 'MFACTOR' ||
-                paramType == 'CHART DATA') &&
-            _deviceIdController.text.isNotEmpty) {
+        final statusLabel = row1?.statusLabelController.text.trim() ?? '';
+        // For LEVEL: only send to device when status label is 'ReOrder'
+        final shouldSendToDevice = paramType == 'LEVEL'
+            ? (statusLabel.toLowerCase() == 'reorder' && _deviceIdController.text.isNotEmpty)
+            : ((paramType == 'CAL TANK' ||
+                    paramType == 'CAL KILO LITER' ||
+                    paramType == 'SETCALBAR' ||
+                    paramType == 'SETBAR' ||
+                    paramType == 'SENSOR' ||
+                    paramType == 'SENSOR RATING' ||
+                    paramType == 'DATA INTERVAL' ||
+                    paramType == 'BATTERY' ||
+                    paramType == 'SOLAR' ||
+                    paramType == 'MFACTOR' ||
+                    paramType == 'CHART DATA') &&
+                _deviceIdController.text.isNotEmpty);
+        if (shouldSendToDevice) {
           await _sendToDevice(skipSave: true);
           return true;
         }
@@ -404,7 +405,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final thresh1 = row1?.threshold1Controller.text.trim() ?? '0';
       final thresh2 = row1?.threshold2Controller.text.trim() ?? '0';
       final thresh3 = row1?.threshold3Controller.text.trim() ?? '0';
-      final importance1 = row1?.importance ?? 'N/A';
+
 
       final simNumber = _simNumberController.text.trim().isEmpty
           ? 'N/A'
@@ -443,12 +444,17 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         payload = '{"\"chartdata\"",$pointsData,9999,9999}';
       } else {
         payload =
-            '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$thresh3,$importance1,$deviceId,$simNumber,$allParams';
+            '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$thresh3,N/A,$deviceId,$simNumber,$allParams';
       }
 
       final response = await apiClient.post(
         '/mqtt/send-command',
-        data: {'deviceId': deviceId, 'sms': payload},
+        data: {
+          'deviceId': deviceId,
+          'sms': payload,
+          'parameter_type': param1,
+          'status_label': row1?.statusLabelController.text.trim() ?? '',
+        },
       );
 
       if (mounted) {
@@ -995,7 +1001,15 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               hint: 'Select Param',
                                               itemLabel: (v) => v,
                                                onChanged: (v) {
-                                                 setState(() => row.parameterType = v!);
+                                                 setState(() {
+                                                   final prevType = row.parameterType.toUpperCase().trim();
+                                                   row.parameterType = v!;
+                                                   // Reset status label when switching from LEVEL to another type
+                                                   // to avoid stale dropdown values appearing in the free-text field
+                                                   if (prevType == 'LEVEL' && v.toUpperCase().trim() != 'LEVEL') {
+                                                     row.statusLabelController.clear();
+                                                   }
+                                                 });
                                                  if (v == 'CHART DATA' && _selectedTank != null) {
                                                    _fetchFullTankDetails(_selectedTank!);
                                                  }
@@ -1034,11 +1048,37 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               flex: 4,
                                               child: _buildLabelField(
                                                 'STATUS LABEL (UI DISPLAY)',
-                                                AppTextField(
-                                                  controller:
-                                                      row.statusLabelController,
-                                                  hint: 'e.g. LOW LEVEL',
-                                                ),
+                                                // For LEVEL: use predefined dropdown; for other types: free text
+                                                row.parameterType.toUpperCase().trim() == 'LEVEL'
+                                                    ? AppDropdown<String>(
+                                                        value: () {
+                                                          const allowed = ['ReOrder', 'Critical', 'Low', 'High'];
+                                                          final current = row.statusLabelController.text;
+                                                          if (allowed.contains(current)) return current;
+                                                          // Mapping existing values to prevent crash
+                                                          final upper = current.toUpperCase();
+                                                          if (upper == 'REORDER') return 'ReOrder';
+                                                          if (upper == 'CRITICAL') return 'Critical';
+                                                          if (upper.contains('LOW')) return 'Low';
+                                                          if (upper.contains('HIGH')) return 'High';
+                                                          return null;
+                                                        }(),
+                                                        items: const [
+                                                          'ReOrder',
+                                                          'Critical',
+                                                          'Low',
+                                                          'High',
+                                                        ],
+                                                        hint: 'Select Label',
+                                                        itemLabel: (v) => v,
+                                                        onChanged: (v) => setState(
+                                                          () => row.statusLabelController.text = v ?? '',
+                                                        ),
+                                                      )
+                                                    : AppTextField(
+                                                        controller: row.statusLabelController,
+                                                        hint: 'e.g. LOW LEVEL',
+                                                      ),
                                               ),
                                             ),
                                           ],
@@ -1117,27 +1157,6 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             ),
                                           ),
                                         ],
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          flex: 2,
-                                          child: _buildLabelField(
-                                            'IMPORTANCE',
-                                            AppDropdown<String>(
-                                              value: row.importance,
-                                              items: const [
-                                                'Critical',
-                                                'Warning',
-                                                'Urgent',
-                                                'Info',
-                                              ],
-                                              hint: 'Select Importance',
-                                              itemLabel: (v) => v,
-                                              onChanged: (v) => setState(
-                                                () => row.importance = v!,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
                                       ],
                                     ),
                                     if (!isCustomer && !['CAL TANK', 'CAL KILO LITER', 'SENSOR', 'SENSOR RATING', 'MFACTOR', 'SETBAR', 'SETCALBAR', 'CHART DATA', 'DATA INTERVAL', 'SOLAR', 'TEMPERATURE', 'FLOW'].contains(row.parameterType.toUpperCase().trim())) ...[

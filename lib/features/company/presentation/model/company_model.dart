@@ -119,8 +119,14 @@ class CompanyGroup {
   final String name;
   final List<CompanyAddress> addresses;
   final String? createdAt;
+  final String? emailTemplate;
 
-  CompanyGroup({required this.name, required this.addresses, this.createdAt});
+  CompanyGroup({
+    required this.name,
+    required this.addresses,
+    this.createdAt,
+    this.emailTemplate,
+  });
 
   factory CompanyGroup.fromJson(Map<String, dynamic> json) {
     return CompanyGroup(
@@ -129,6 +135,7 @@ class CompanyGroup {
           .map((a) => CompanyAddress.fromJson(a as Map<String, dynamic>))
           .toList(),
       createdAt: json['created_at'] as String?,
+      emailTemplate: json['email_template'] as String?,
     );
   }
 
@@ -185,11 +192,13 @@ class CompanyCreateRequest {
   final String name;
   final int createdBy;
   final List<CompanyAddress> addresses;
+  final String? emailTemplate;
 
   CompanyCreateRequest({
     required this.name,
     required this.createdBy,
     required this.addresses,
+    this.emailTemplate,
   });
 
   Map<String, dynamic> toJson() {
@@ -197,6 +206,7 @@ class CompanyCreateRequest {
       'name': name,
       'created_by': createdBy,
       'addresses': addresses.map((a) => a.toJson()).toList(),
+      'email_template': emailTemplate,
     };
   }
 }

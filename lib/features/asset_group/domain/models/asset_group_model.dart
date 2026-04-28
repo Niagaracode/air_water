@@ -116,7 +116,7 @@ class AssetGroupUser {
 
   factory AssetGroupUser.fromJson(Map<String, dynamic> json) {
     return AssetGroupUser(
-      userId: json['user_id'],
+      userId: json['user_id'] is String ? int.parse(json['user_id']) : json['user_id'],
       username: json['username'] ?? '',
       firstName: json['first_name'],
       lastName: json['last_name'],
