@@ -169,6 +169,13 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
               .where((g) => g.addresses.any((a) => a.companyId == s.companyId))
               .firstOrNull;
 
+          // Fallback: match by company name when companyId match fails
+          if (_selectedCompanyGroup == null && s.companyName != null && s.companyName!.isNotEmpty) {
+            _selectedCompanyGroup = _companyGroups
+                .where((g) => g.name.trim().toLowerCase() == s.companyName!.trim().toLowerCase())
+                .firstOrNull;
+          }
+
           if (s.siteId != null) {
             _selectedSite = _sites
                 .where((p) => p.id == s.siteId)
@@ -740,7 +747,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                           value: _selectedCompanyGroup,
                                           items: _companyGroups,
                                           hint: 'Select Company',
-                                          itemLabel: (cg) => cg.name,
+                                          itemLabel: (cg) => cg.name.trim().isNotEmpty ? cg.name.trim() : '(Unnamed Company)',
                                           onChanged: (cg) => setState(() {
                                             _selectedCompanyGroup = cg;
                                             _selectedSite = null;
@@ -1133,7 +1140,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         ),
                                       ],
                                     ),
-                                    if (!isCustomer) ...[
+                                    if (!isCustomer && !['CAL TANK', 'CAL KILO LITER', 'SENSOR', 'SENSOR RATING', 'MFACTOR', 'SETBAR', 'SETCALBAR', 'CHART DATA', 'DATA INTERVAL', 'SOLAR', 'TEMPERATURE', 'FLOW'].contains(row.parameterType.toUpperCase().trim())) ...[
                                       const SizedBox(height: 20),
                                       Row(
                                         children: [

@@ -29,6 +29,8 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   late TextEditingController _descriptionController;
   bool _displayInTree = true;
   int _initialCriteriaCount = 0;
+  bool _didAutoAssign = false;
+  bool _isLoadingDetails = false;
 
   final List<String> _parameters = [
     'Asset Description', 'City', 'Country', 'Customer Name', 'DeviceID', 'Product Name', 'Site Name', 'State or Province', 'Tank Name'
@@ -40,19 +42,44 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   void initState() {
     super.initState();
     if (widget.group != null) {
-      _criteria = List.from(widget.group!.criteria);
-      _initialCriteriaCount = _criteria.length;
-      _assignedUsers = List.from(widget.group!.users ?? []);
       _nameController = TextEditingController(text: widget.group!.name);
       _descriptionController = TextEditingController(text: widget.group!.description);
       _displayInTree = widget.group!.displayInTree;
+      
+      Future.microtask(() => _loadFullDetails());
     } else {
       _nameController = TextEditingController();
       _descriptionController = TextEditingController();
       _displayInTree = true;
-    }
-    if (_criteria.isEmpty) {
       _addCriteria();
+    }
+    
+    // Load all users to show in the access control table
+    Future.microtask(() => ref.read(userProvider.notifier).loadUsers());
+  }
+
+  Future<void> _loadFullDetails() async {
+    setState(() => _isLoadingDetails = true);
+    try {
+      await ref.read(assetGroupProvider.notifier).loadGroupById(widget.group!.id!);
+      final fullGroup = ref.read(assetGroupProvider).currentGroup;
+      
+      if (fullGroup != null && mounted) {
+        setState(() {
+          _criteria = List.from(fullGroup.criteria);
+          _initialCriteriaCount = _criteria.length;
+          _assignedUsers = List.from(fullGroup.users ?? []);
+          if (_criteria.isEmpty) _addCriteria();
+          _isLoadingDetails = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingDetails = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load group details: $e')),
+        );
+      }
     }
   }
 
@@ -92,11 +119,11 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       description: _descriptionController.text.trim(),
       displayInTree: _displayInTree,
       criteria: _criteria,
+      users: _assignedUsers, // Pass users here for consistency
     );
 
     print('DEBUG: Number of criteria to save: ${_criteria.length}');
     print('DEBUG: Saving Group Data: ${jsonEncode(newGroup.toJson())}');
-    print('DEBUG: Assigned Users: ${jsonEncode(_assignedUsers.map((u) => u.toJson()).toList())}');
 
     final success = await ref.read(assetGroupProvider.notifier).saveGroup(newGroup, users: _assignedUsers);
     if (success && mounted) {
@@ -110,11 +137,6 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(assetGroupProvider);
-    final companyState = ref.watch(companyNotifierProvider);
-    final productState = ref.watch(productListProvider);
-    final siteState = ref.watch(siteNotifierProvider);
-    final deviceState = ref.watch(deviceProvider);
-    final tankState = ref.watch(tankProvider);
     final userState = ref.watch(userProvider);
 
     return Scaffold(
@@ -168,6 +190,34 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   }
 
   Widget _buildUserSection(UserState userState) {
+    final allGroupUsers = userState.users.where((u) {
+      final isCustomer = u.roleName?.toLowerCase() == 'customer';
+      return !isCustomer;
+    }).toList();
+
+    // Auto-assign "All" group users if the group is currently empty and not manually cleared
+    if (_assignedUsers.isEmpty && !_didAutoAssign && !userState.isLoading && allGroupUsers.isNotEmpty) {
+      _didAutoAssign = true; // Mark as attempted
+      for (var user in allGroupUsers) {
+        if (!_assignedUsers.any((au) => au.userId == user.userId)) {
+          _assignedUsers.add(AssetGroupUser(
+            userId: user.userId,
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            roleName: user.roleName,
+            groupNames: user.groupNames?.join(', '),
+          ));
+        }
+      }
+    }
+
+    final eligibleUsers = userState.users.where((u) {
+      final isAlreadyAssigned = _assignedUsers.any((au) => au.userId == u.userId);
+      final isCustomer = u.roleName?.toLowerCase() == 'customer';
+      return !isAlreadyAssigned && !isCustomer;
+    }).toList();
+
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -185,6 +235,30 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                 style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w800, color: const Color(0xFF111827)),
               ),
               const Spacer(),
+              if (eligibleUsers.isNotEmpty)
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      for (var user in eligibleUsers) {
+                        _assignedUsers.add(AssetGroupUser(
+                          userId: user.userId,
+                          username: user.username,
+                          firstName: user.firstName,
+                          lastName: user.lastName,
+                          roleName: user.roleName,
+                          groupNames: user.groupNames?.join(', '),
+                        ));
+                      }
+                    });
+                  },
+                  icon: const Icon(Icons.group_add_outlined, size: 18),
+                  label: const Text('ASSIGN ALL USERS'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF141E7A),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -211,18 +285,24 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             child: Row(
               children: [
                 Expanded(flex: 3, child: Text('USERNAME', style: _headerStyle)),
-                Expanded(flex: 1, child: Text('IS DEFAULT?', style: _headerStyle)),
+                Expanded(flex: 2, child: Text('GROUP NAME', style: _headerStyle)),
                 Expanded(flex: 2, child: Text('ROLE', style: _headerStyle)),
                 Expanded(flex: 2, child: Text('FIRST NAME', style: _headerStyle)),
                 Expanded(flex: 2, child: Text('LAST NAME', style: _headerStyle)),
-                Expanded(flex: 1, child: Center(child: Text('SECURITY', style: _headerStyle))),
                 const SizedBox(width: 48, child: Center(child: Icon(Icons.settings, size: 14, color: Color(0xFF6B7280)))),
               ],
             ),
           ),
 
           // User Rows
-          if (_assignedUsers.isEmpty)
+          if (_isLoadingDetails)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+              ),
+            )
+          else if (_assignedUsers.isEmpty)
             Container(
               padding: const EdgeInsets.all(32),
               width: double.infinity,
@@ -251,33 +331,47 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                   ),
                   child: Row(
                     children: [
+                      // USERNAME
                       Expanded(flex: 3, child: Text(user.username, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600))),
+                      
+                      // GROUP NAME
                       Expanded(
-                        flex: 1, 
-                        child: InkWell(
-                          onTap: () => setState(() => assignment.isDefault = !assignment.isDefault),
-                          child: Text(assignment.isDefault ? 'Yes' : 'No', style: GoogleFonts.inter(fontSize: 13, color: assignment.isDefault ? Colors.green : Colors.grey)),
-                        )
+                        flex: 2, 
+                        child: Builder(builder: (context) {
+                          final hasAll = user.groupNames?.any((n) => n.trim().toLowerCase() == 'all') ?? false;
+                          if (hasAll) {
+                            return Text('All', style: GoogleFonts.inter(fontSize: 13, color: Colors.blue));
+                          }
+                          
+                          final gNames = user.groupNames?.join(', ') ?? '';
+                          return Text(
+                            gNames,
+                            style: GoogleFonts.inter(fontSize: 13, color: Colors.blue),
+                          );
+                        })
                       ),
+
+                      // ROLE
                       Expanded(flex: 2, child: Text(user.roleName ?? 'User', style: GoogleFonts.inter(fontSize: 13))),
+                      
+                      // FIRST NAME
                       Expanded(flex: 2, child: Text(user.firstName ?? '-', style: GoogleFonts.inter(fontSize: 13))),
+                      
+                      // LAST NAME
                       Expanded(flex: 2, child: Text(user.lastName ?? '-', style: GoogleFonts.inter(fontSize: 13))),
-                      Expanded(
-                        flex: 1, 
-                        child: Center(
-                          child: Checkbox(
-                            value: assignment.defaultSecurity,
-                            onChanged: (v) => setState(() => assignment.defaultSecurity = v ?? false),
-                            activeColor: const Color(0xFF141E7A),
-                          ),
-                        )
-                      ),
+                      
+                      // REMOVE
                       SizedBox(
                         width: 48,
-                        child: IconButton(
-                          onPressed: () => setState(() => _assignedUsers.removeAt(index)),
-                          icon: const Icon(Icons.close, size: 18, color: Colors.grey),
-                        ),
+                        child: Builder(builder: (context) {
+                          final hasAll = user.groupNames?.any((n) => n.trim().toLowerCase() == 'all') ?? false;
+                          if (hasAll) return const SizedBox.shrink();
+                          
+                          return IconButton(
+                            onPressed: () => setState(() => _assignedUsers.removeAt(index)),
+                            icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                          );
+                        }),
                       )
                     ],
                   ),
@@ -295,11 +389,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                 child: DropdownButtonFormField<User>(
                   value: _selectedUserForAssignment,
                   hint: const Text('Select User'),
-                  items: userState.users.where((u) {
-                    final isAlreadyAssigned = _assignedUsers.any((au) => au.userId == u.userId);
-                    final isCustomer = u.roleName?.toLowerCase() == 'customer';
-                    return !isAlreadyAssigned && !isCustomer;
-                  }).map((u) {
+                  items: eligibleUsers.map((u) {
                     return DropdownMenuItem(value: u, child: Text(u.username, style: GoogleFonts.inter(fontSize: 13)));
                   }).toList(),
                   onChanged: (v) => setState(() => _selectedUserForAssignment = v),
@@ -318,6 +408,10 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                     _assignedUsers.add(AssetGroupUser(
                       userId: _selectedUserForAssignment!.userId,
                       username: _selectedUserForAssignment!.username,
+                      firstName: _selectedUserForAssignment!.firstName,
+                      lastName: _selectedUserForAssignment!.lastName,
+                      roleName: _selectedUserForAssignment!.roleName,
+                      groupNames: _selectedUserForAssignment!.groupNames?.join(', '),
                     ));
                     _selectedUserForAssignment = null;
                   });
@@ -419,90 +513,47 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF3F4FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.layers_rounded, color: Color(0xFF141E7A), size: 24),
+                child: const Icon(Icons.layers, color: Color(0xFF141E7A), size: 20),
               ),
               const SizedBox(width: 16),
               Text(
                 'General Information',
-                style: GoogleFonts.outfit(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF111827),
-                ),
+                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF111827)),
               ),
               const Spacer(),
               _buildTreeToggle(),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Group Name',
-                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF374151)),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _nameController,
-                      readOnly: widget.group != null,
-                      validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        color: widget.group != null ? const Color(0xFF6B7280) : const Color(0xFF111827),
-                        fontWeight: widget.group != null ? FontWeight.w500 : FontWeight.normal,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Enter group name...',
-                        border: const OutlineInputBorder(),
-                        filled: widget.group != null,
-                        fillColor: widget.group != null ? const Color(0xFFF9FAFB) : Colors.transparent,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Description',
-                      style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF374151)),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _descriptionController,
-                      readOnly: widget.group != null,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        color: widget.group != null ? const Color(0xFF6B7280) : const Color(0xFF111827),
-                        fontWeight: widget.group != null ? FontWeight.w500 : FontWeight.normal,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Describe the purpose of this group...',
-                        border: const OutlineInputBorder(),
-                        filled: widget.group != null,
-                        fillColor: widget.group != null ? const Color(0xFFF9FAFB) : Colors.transparent,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                    ),
-                  ],
+                child: _buildLabelField(
+                  'GROUP NAME',
+                  TextFormField(
+                    controller: _nameController,
+                    readOnly: widget.group != null,
+                    validator: (v) => v!.isEmpty ? 'Enter group name' : null,
+                    decoration: _inputDecoration('e.g. All Battery Tanks'),
+                  ),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 24),
+          _buildLabelField(
+            'DESCRIPTION',
+            TextFormField(
+              controller: _descriptionController,
+              readOnly: widget.group != null,
+              maxLines: 2,
+              decoration: _inputDecoration('Briefly describe this group...'),
+            ),
           ),
         ],
       ),
@@ -890,7 +941,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             child: DropdownButtonFormField<String>(
               value: rule.parameter,
               items: _parameters.map((p) => DropdownMenuItem(value: p, child: Text(p, style: GoogleFonts.inter(fontSize: 13)))).toList(),
-              onChanged: (v) {
+              onChanged: index < _initialCriteriaCount ? null : (v) {
                 setState(() {
                   rule.parameter = v!;
                   rule.value = ''; 
@@ -957,6 +1008,47 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           )
         ],
       ),
+    );
+  }
+
+  Widget _buildLabelField(String label, Widget field) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            color: const Color(0xFF141E7A),
+            letterSpacing: 1.1,
+          ),
+        ),
+        const SizedBox(height: 12),
+        field,
+      ],
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF9CA3AF)),
+      filled: true,
+      fillColor: const Color(0xFFF9FAFB),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF141E7A), width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 }

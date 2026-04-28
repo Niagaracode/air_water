@@ -422,12 +422,16 @@ class _SiteWideState extends ConsumerState<SiteWide> {
               child: Row(
                 children: [
                   const SizedBox(width: 8),
-                  Text(
-                    group.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1E40AF),
+                  Expanded(
+                    child: Text(
+                      group.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E40AF),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -453,6 +457,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                 ],
               ),
             ),
+            const SizedBox(width: 100), // Match ACTION column width
           ],
         ),
       ),

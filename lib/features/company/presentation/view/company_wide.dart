@@ -385,46 +385,99 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
         if (index > 0)
           const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
         // Group header row - light blue
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-          decoration: const BoxDecoration(
-            color: Color(0xFFEFF6FF),
-            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
-          ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 70,
-                child: Text(
-                  (index + 1).toString().padLeft(2, '0'),
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: const Color(0xFF374151),
+        InkWell(
+          onTap: () => notifier.toggleGroup(group.name),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            decoration: const BoxDecoration(
+              color: Color(0xFFEFF6FF),
+              border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 70,
+                  child: Text(
+                    (index + 1).toString().padLeft(2, '0'),
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: const Color(0xFF374151),
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  group.name,
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: const Color(0xFF1E40AF),
+                Expanded(
+                  flex: 2,
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          group.name,
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: const Color(0xFF1E40AF),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                        ),
+                        child: Text(
+                          '${group.addresses.length} Sites',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF2563EB),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const Expanded(flex: 2, child: SizedBox()),
-              const Expanded(flex: 2, child: SizedBox()),
-              const Expanded(flex: 2, child: SizedBox()),
-              const Expanded(flex: 2, child: SizedBox()),
-            ],
+                const Expanded(flex: 2, child: SizedBox()),
+                const Expanded(flex: 2, child: SizedBox()),
+                const Expanded(flex: 2, child: SizedBox()),
+                const Expanded(flex: 2, child: SizedBox()),
+                const Expanded(flex: 3, child: SizedBox()),
+                SizedBox(
+                  width: 100,
+                  child: Icon(
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: const Color(0xFF9CA3AF),
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         // Address rows
         if (isExpanded)
-          ...group.addresses.map((addr) {
+          if (group.addresses.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              child: Row(
+                children: [
+                  const SizedBox(width: 70),
+                  const AppTableCell('—', flex: 2),
+                  const AppTableCell('—', flex: 2),
+                  const AppTableCell('—', flex: 2),
+                  const AppTableCell('—', flex: 2),
+                  const Expanded(flex: 2, child: SizedBox()),
+                  const AppTableCell('No address registered', flex: 3),
+                  const SizedBox(width: 100),
+                ],
+              ),
+            )
+          else
+            ...group.addresses.map((addr) {
             return Column(
               children: [
                 const Divider(

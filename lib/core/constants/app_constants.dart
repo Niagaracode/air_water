@@ -11,5 +11,5 @@ class AppConstants {
       'wss://irrigationcare.niagaraautomation.com:9443/mqtt';
   static const int mqttWebPort = 9443;
   static const String mqttUserName = 'mqttuser';
-  static const String mqttPassword = 'Mqtt#456';
+  static const String mqttPassword = 'Mqtt@456';
 }

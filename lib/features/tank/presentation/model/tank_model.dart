@@ -32,6 +32,7 @@ class Tank {
   final int? companyId;
   final String? companyName;
   final String? deviceId;
+  final String? deviceName;
   final String? simNumber;
   final String? timeZone;
   final int status;
@@ -78,6 +79,7 @@ class Tank {
     this.volumeUnit,
     this.tankName,
     this.createdAt,
+    this.deviceName,
   });
 
   factory Tank.fromJson(Map<String, dynamic> json) {
@@ -113,6 +115,7 @@ class Tank {
       companyId: _toInt(json['company_id']),
       companyName: json['company_name'] as String?,
       deviceId: json['device_id'] as String?,
+      deviceName: json['device_name'] as String?,
       simNumber: json['sim_number'] as String?,
       timeZone: json['time_zone'] as String?,
       status: json['status'] ?? 1,
@@ -257,16 +260,46 @@ class TankGroup {
   }
 }
 
+class AssetGroupData {
+  final int id;
+  final String name;
+  final List<Tank> tanks;
+
+  AssetGroupData({
+    required this.id,
+    required this.name,
+    required this.tanks,
+  });
+
+  factory AssetGroupData.fromJson(Map<String, dynamic> json) {
+    return AssetGroupData(
+      id: json['asset_group_id'] as int,
+      name: json['asset_group_name'] as String,
+      tanks: (json['tanks'] as List? ?? [])
+          .map((i) => Tank.fromJson(i as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
 class TankGroupedResponse {
   final List<TankGroup> data;
+  final List<AssetGroupData> assetGroups;
   final Pagination pagination;
 
-  TankGroupedResponse({required this.data, required this.pagination});
+  TankGroupedResponse({
+    required this.data,
+    required this.assetGroups,
+    required this.pagination,
+  });
 
   factory TankGroupedResponse.fromJson(Map<String, dynamic> json) {
     return TankGroupedResponse(
       data: (json['data'] as List? ?? [])
           .map((i) => TankGroup.fromJson(i as Map<String, dynamic>))
+          .toList(),
+      assetGroups: (json['asset_groups'] as List? ?? [])
+          .map((i) => AssetGroupData.fromJson(i as Map<String, dynamic>))
           .toList(),
       pagination: Pagination.fromJson(
         json['pagination'] as Map<String, dynamic>? ?? {},

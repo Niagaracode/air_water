@@ -7,6 +7,7 @@ import '../../domain/repository/user_repository.dart';
 import '../model/user_model.dart';
 import '../../../site/presentation/model/site_model.dart';
 import '../../../tank/presentation/model/tank_model.dart';
+import '../../../../app_startup/app_startup.dart';
 
 class UserState {
   final List<User> users;
@@ -88,11 +89,18 @@ class UserNotifier extends Notifier<UserState> {
   @override
   UserState build() {
     ref.keepAlive();
-    // Load current user and initial list
-    Future.microtask(() async {
-      await _loadCurrentUser();
-      await loadUsers();
-    });
+    
+    // Watch authentication state
+    final authState = ref.watch(appStartupProvider).value;
+    
+    // Only fetch data if we are authenticated
+    if (authState == AppStartupState.authenticated) {
+      Future.microtask(() async {
+        await _loadCurrentUser();
+        await loadUsers();
+      });
+    }
+    
     return UserState(users: [], isLoading: false);
   }
 

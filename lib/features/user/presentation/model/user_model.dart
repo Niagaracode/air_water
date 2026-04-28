@@ -19,6 +19,7 @@ class User {
   final int? messageCategoryId;
   final String? messageCategoryName;
   final List<String>? rosters;
+  final List<String>? groupNames;
 
   User({
     required this.userId,
@@ -41,6 +42,7 @@ class User {
     this.messageCategoryId,
     this.messageCategoryName,
     this.rosters,
+    this.groupNames,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -71,6 +73,9 @@ class User {
       messageCategoryName: json['message_category_name'] as String?,
       rosters: json['rosters'] != null
           ? (json['rosters'] as List).map((e) => e as String).toList()
+          : null,
+      groupNames: json['group_names'] != null
+          ? (json['group_names'] as List).map((e) => e as String).toList()
           : null,
     );
   }

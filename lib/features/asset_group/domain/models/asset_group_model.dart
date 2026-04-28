@@ -101,6 +101,7 @@ class AssetGroupUser {
   final String? roleName;
   bool defaultSecurity;
   bool isDefault;
+  final String? groupNames;
 
   AssetGroupUser({
     required this.userId,
@@ -110,6 +111,7 @@ class AssetGroupUser {
     this.roleName,
     this.defaultSecurity = false,
     this.isDefault = false,
+    this.groupNames,
   });
 
   factory AssetGroupUser.fromJson(Map<String, dynamic> json) {
@@ -121,6 +123,7 @@ class AssetGroupUser {
       roleName: json['role_name'],
       defaultSecurity: json['default_security'] == 1,
       isDefault: json['is_default'] == 1,
+      groupNames: json['group_names'],
     );
   }
 

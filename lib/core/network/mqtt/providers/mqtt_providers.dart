@@ -32,7 +32,7 @@ final mqttProvider = StateNotifierProvider<MqttNotifier, MqttConnectionStateMode
 );
 
 // Provider to get last message for a specific topic
-final mqttLastMessageProvider = Provider.family<MqttMessage?, String>(
+final mqttLastMessageProvider = Provider.family<MqttMessageModel?, String>(
       (ref, topic) {
     final mqttNotifier = ref.watch(mqttProvider.notifier);
     return mqttNotifier.getLastMessage(topic);
@@ -40,9 +40,9 @@ final mqttLastMessageProvider = Provider.family<MqttMessage?, String>(
 );
 
 // Provider for subscribing to a topic and receiving real-time updates
-final mqttTopicStreamProvider = StreamProvider.family<MqttMessage, String>(
+final mqttTopicStreamProvider = StreamProvider.family<MqttMessageModel, String>(
       (ref, topic) {
-    final controller = StreamController<MqttMessage>.broadcast();
+    final controller = StreamController<MqttMessageModel>.broadcast();
 
     final mqttNotifier = ref.read(mqttProvider.notifier);
 

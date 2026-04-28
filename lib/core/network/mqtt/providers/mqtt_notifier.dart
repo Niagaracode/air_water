@@ -8,8 +8,8 @@ import '../mqtt_service.dart';
 
 class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
   final MqttService _mqttService;
-  final Map<String, MqttMessage> _lastMessages = {};
-  final Map<String, List<Function(MqttMessage)>> _topicCallbacks = {};
+  final Map<String, MqttMessageModel> _lastMessages = {};
+  final Map<String, List<Function(MqttMessageModel)>> _topicCallbacks = {};
   final Set<String> _subscribedTopics = {};
 
   bool _isInitialized = false;
@@ -43,7 +43,7 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
 
     // Handle incoming messages
     _mqttService.onMessageReceived = (payload, topic) {
-      final message = MqttMessage.fromJson(topic, payload);
+      final message = MqttMessageModel.fromJson(topic, payload);
       _lastMessages[topic] = message;
 
       if (_topicCallbacks.containsKey(topic)) {
@@ -88,7 +88,7 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
     _isInitialized = false;
   }
 
-  Future<void> subscribeToTopic(String topic, {Function(MqttMessage)? onMessage}) async {
+  Future<void> subscribeToTopic(String topic, {Function(MqttMessageModel)? onMessage}) async {
     // Track subscription
     _subscribedTopics.add(topic);
 
@@ -108,7 +108,7 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
     _topicCallbacks.remove(topic);
   }
 
-  MqttMessage? getLastMessage(String topic) {
+  MqttMessageModel? getLastMessage(String topic) {
     return _lastMessages[topic];
   }
 

@@ -7,6 +7,7 @@ import '../../../site/presentation/model/site_model.dart';
 
 class TankState {
   final List<TankGroup> groupedTanks;
+  final List<AssetGroupData> assetGroups;
   final bool isLoading;
   final bool isProcessing;
   final String? error;
@@ -21,6 +22,7 @@ class TankState {
 
   TankState({
     required this.groupedTanks,
+    this.assetGroups = const [],
     required this.isLoading,
     this.isProcessing = false,
     this.error,
@@ -36,6 +38,7 @@ class TankState {
 
   TankState copyWith({
     List<TankGroup>? groupedTanks,
+    List<AssetGroupData>? assetGroups,
     bool? isLoading,
     bool? isProcessing,
     String? error,
@@ -51,6 +54,7 @@ class TankState {
   }) {
     return TankState(
       groupedTanks: groupedTanks ?? this.groupedTanks,
+      assetGroups: assetGroups ?? this.assetGroups,
       isLoading: isLoading ?? this.isLoading,
       isProcessing: isProcessing ?? this.isProcessing,
       error: clearError ? null : (error ?? this.error),
@@ -117,6 +121,7 @@ class TankNotifier extends Notifier<TankState> {
 
       state = state.copyWith(
         groupedTanks: response.data,
+        assetGroups: response.assetGroups,
         isLoading: false,
         totalEntries: response.pagination.total,
         hasMore: response.pagination.page < response.pagination.totalPages,

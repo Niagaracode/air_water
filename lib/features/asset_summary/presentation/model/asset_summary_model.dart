@@ -23,15 +23,19 @@ class AssetSummaryReading {
 class AssetSummaryGroup {
   final int tankId;
   final String plantName;
+  final String? companyName;
   final String tankNumber;
   final String deviceId;
+  final String? deviceName;
   final List<AssetSummaryReading> readings;
 
   AssetSummaryGroup({
     required this.tankId,
     required this.plantName,
+    this.companyName,
     required this.tankNumber,
     required this.deviceId,
+    this.deviceName,
     required this.readings,
   });
 }

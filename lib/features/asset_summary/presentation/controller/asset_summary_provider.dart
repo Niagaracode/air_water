@@ -11,6 +11,7 @@ class AssetSummaryState {
   final bool isLoading;
   final String? error;
   final List<AssetSummaryGroup> groups;
+  final List<AssetGroupData> assetGroups;
   final String? plantFilter;
   final String? tankFilter;
   final String? importanceFilter;
@@ -21,6 +22,7 @@ class AssetSummaryState {
     this.isLoading = false,
     this.error,
     this.groups = const [],
+    this.assetGroups = const [],
     this.plantFilter,
     this.tankFilter,
     this.importanceFilter,
@@ -32,6 +34,7 @@ class AssetSummaryState {
     bool? isLoading,
     String? error,
     List<AssetSummaryGroup>? groups,
+    List<AssetGroupData>? assetGroups,
     String? plantFilter,
     String? tankFilter,
     String? importanceFilter,
@@ -42,6 +45,7 @@ class AssetSummaryState {
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       groups: groups ?? this.groups,
+      assetGroups: assetGroups ?? this.assetGroups,
       plantFilter: plantFilter ?? this.plantFilter,
       tankFilter: tankFilter ?? this.tankFilter,
       importanceFilter: importanceFilter ?? this.importanceFilter,
@@ -122,6 +126,9 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
       }
 
       final List<AssetSummaryGroup> newGroups = [];
+      final Set<int> processedTankIds = {};
+
+      // 1. Process Site Groups (Standard Hierarchy)
       for (final tankGroup in response.data) {
         // If technician, skip if the plant is not in authorized list
         if (isTechnician && !authorizedPlantIds.contains(tankGroup.siteId)) {
@@ -129,70 +136,97 @@ class AssetSummaryNotifier extends Notifier<AssetSummaryState> {
         }
 
         for (final tank in tankGroup.tanks) {
-          final deviceId = 'E10038${tank.tankId.toString().padLeft(2, '0')}';
+          if (processedTankIds.contains(tank.tankId)) continue;
+          
+          _addTankToGroups(tank, tankGroup.siteName, newGroups, allSettings, isTechnician, authorizedRosters);
+          processedTankIds.add(tank.tankId);
+        }
+      }
 
-          // Filter settings for this specific tank or its plant (if tank_id is null)
-          var tankSettings = allSettings
-              .where(
-                (r) =>
-                    r.tankId == tank.tankId ||
-                    (r.tankId == null && r.siteId == tank.siteId),
-              )
-              .toList();
+      // 2. Process Asset Groups (Dynamic Criteria)
+      for (final assetGroup in response.assetGroups) {
+        for (final tank in assetGroup.tanks) {
+          if (processedTankIds.contains(tank.tankId)) continue;
 
-          // If technician, further filter settings by roster/message category
-          if (isTechnician && authorizedRosters.isNotEmpty) {
-            tankSettings = tankSettings
-                .where(
-                  (s) =>
-                      s.rosterName != null &&
-                      authorizedRosters.contains(s.rosterName!.toLowerCase()),
-                )
-                .toList();
-          }
-
-          var readings = _generateReadingsWithSettings(
-            tank,
-            deviceId,
-            tankSettings,
-          );
-
-          if (state.importanceFilter != null) {
-            readings = readings
-                .where(
-                  (r) =>
-                      r.importance.toLowerCase() ==
-                      state.importanceFilter!.toLowerCase(),
-                )
-                .toList();
-          }
-
-          // Always add the tank — show default readings if no settings are configured
-          if (readings.isEmpty) {
-            readings = _generateDefaultReadings(tank);
-          }
-
-          newGroups.add(
-            AssetSummaryGroup(
-              tankId: tank.tankId,
-              plantName: tankGroup.siteName,
-              tankNumber: tank.tankNumber,
-              deviceId: deviceId,
-              readings: readings,
-            ),
-          );
-
+          _addTankToGroups(tank, assetGroup.name, newGroups, allSettings, isTechnician, authorizedRosters);
+          processedTankIds.add(tank.tankId);
         }
       }
 
       state = state.copyWith(
         isLoading: false,
         groups: refresh ? newGroups : [...state.groups, ...newGroups],
+        assetGroups: response.assetGroups,
         totalPages: response.pagination.totalPages,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
+  }
+
+  void _addTankToGroups(
+    Tank tank, 
+    String groupName, 
+    List<AssetSummaryGroup> groups, 
+    List<Setting> allSettings,
+    bool isTechnician,
+    Set<String> authorizedRosters
+  ) {
+    final deviceId = tank.deviceId ?? 'E10038${tank.tankId.toString().padLeft(2, '0')}';
+    final deviceName = tank.deviceName;
+
+    // Filter settings for this specific tank or its plant (if tank_id is null)
+    var tankSettings = allSettings
+        .where(
+          (r) =>
+              r.tankId == tank.tankId ||
+              (r.tankId == null && r.siteId == tank.siteId),
+        )
+        .toList();
+
+    // If technician, further filter settings by roster/message category
+    if (isTechnician && authorizedRosters.isNotEmpty) {
+      tankSettings = tankSettings
+          .where(
+            (s) =>
+                s.rosterName != null &&
+                authorizedRosters.contains(s.rosterName!.toLowerCase()),
+          )
+          .toList();
+    }
+
+    var readings = _generateReadingsWithSettings(
+      tank,
+      deviceId,
+      tankSettings,
+    );
+
+    if (state.importanceFilter != null) {
+      readings = readings
+          .where(
+            (r) =>
+                r.importance.toLowerCase() ==
+                state.importanceFilter!.toLowerCase(),
+          )
+          .toList();
+    }
+
+    // Always add the tank — show default readings if no settings are configured
+    if (readings.isEmpty) {
+      readings = _generateDefaultReadings(tank);
+    }
+
+    groups.add(
+      AssetSummaryGroup(
+        tankId: tank.tankId,
+        plantName: groupName,
+        companyName: tank.companyName,
+        tankNumber: tank.tankNumber,
+        deviceId: deviceId,
+        deviceName: deviceName,
+        readings: readings,
+      ),
+    );
   }
 
   List<AssetSummaryReading> _generateReadingsWithSettings(

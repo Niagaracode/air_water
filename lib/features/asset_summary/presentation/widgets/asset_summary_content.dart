@@ -31,13 +31,6 @@ class _AssetSummaryContentState extends ConsumerState<AssetSummaryContent> {
       final roleId = userState.currentUser?.roleId;
       _isCustomer = (roleId == 6);
       
-      // Customers start in Table View by default
-      if (_isCustomer) {
-        setState(() {
-          _isVisualView = false;
-        });
-      }
-      
       ref.read(assetSummaryProvider.notifier).loadData(refresh: true);
     });
   }
@@ -83,20 +76,22 @@ class _AssetSummaryContentState extends ConsumerState<AssetSummaryContent> {
             ),
             Row(
               children: [
-                if (_isCustomer && _isVisualView) ...[
-                   _buildActionButton(
-                    Icons.arrow_back,
-                    'Back to List',
-                    () => setState(() => _isVisualView = false),
+                if (!_isCustomer) ...[
+                  if (_isVisualView) ...[
+                    _buildActionButton(
+                      Icons.arrow_back,
+                      'Back to List',
+                      () => setState(() => _isVisualView = false),
+                    ),
+                    const SizedBox(width: 12),
+                  ],
+                  _buildActionButton(
+                    _isVisualView ? Icons.table_chart_outlined : Icons.dashboard_outlined,
+                    _isVisualView ? 'Table View' : 'Visual View',
+                    () => setState(() => _isVisualView = !_isVisualView),
                   ),
                   const SizedBox(width: 12),
                 ],
-                _buildActionButton(
-                  _isVisualView ? Icons.table_chart_outlined : Icons.dashboard_outlined,
-                  _isVisualView ? 'Table View' : 'Visual View',
-                  () => setState(() => _isVisualView = !_isVisualView),
-                ),
-                const SizedBox(width: 12),
                 _buildActionButton(Icons.refresh, 'Refresh', () {
                   ref
                       .read(assetSummaryProvider.notifier)
@@ -121,10 +116,12 @@ class _AssetSummaryContentState extends ConsumerState<AssetSummaryContent> {
             const Center(child: CircularProgressIndicator())
           else if (state.groups.isEmpty)
             const Center(child: Text('No assets found.'))
-          else
+          else if (_selectedGroupIndex < state.groups.length)
             DetailedAssetCard(
               group: state.groups[_selectedGroupIndex.clamp(0, state.groups.length - 1)],
-            ),
+            )
+          else
+             const Center(child: Text('Group not found.')),
         ] else ...[
           Text(
             'FILTER',

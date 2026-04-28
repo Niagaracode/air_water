@@ -348,12 +348,16 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
               flex: 2, // Align with DATE column
               child: Row(
                 children: [
-                  Text(
-                    group.siteName,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1E40AF),
+                  Expanded(
+                    child: Text(
+                      group.siteName,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E40AF),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -390,6 +394,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                     )
                   : const SizedBox.shrink(),
             ),
+            const SizedBox(width: 100), // Match ACTION column width
           ],
         ),
       ),

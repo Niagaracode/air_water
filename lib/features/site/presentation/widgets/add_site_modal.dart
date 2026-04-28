@@ -46,13 +46,11 @@ class AddressControllers {
 
 class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   final _nameController = TextEditingController();
-  final _orgCodeController = TextEditingController();
   CompanyGroup? _selectedGroup;
   List<CompanyGroup> _companyGroups = [];
   final List<AddressControllers> _addressRows = [AddressControllers()];
   int _status = 1;
   bool _isLoadingCompanies = false;
-  bool _showCompanyDropdown = true;
   final _timeZoneController = TextEditingController();
   String? _selectedSiteName;
 
@@ -61,7 +59,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
     super.initState();
     if (widget.initialSite != null) {
       _nameController.text = widget.initialSite!.name;
-      _orgCodeController.text = widget.initialSite!.siteOrganizationCode ?? '';
       _status = widget.initialSite!.status;
       _addressRows.first.addressController.text =
           widget.initialSite!.addressLine1 ?? '';
@@ -72,9 +69,13 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       _addressRows.first.country = widget.initialSite!.countryName;
       _addressRows.first.state = widget.initialSite!.stateName;
       _addressRows.first.city = widget.initialSite!.cityName;
-      _showCompanyDropdown = false;
       _selectedSiteName = widget.initialSite!.name;
-      _timeZoneController.text = widget.initialSite!.timeZone ?? '';
+      
+      String timeZone = widget.initialSite!.timeZone ?? '';
+      if (timeZone.isEmpty && widget.initialSite!.countryName == 'India') {
+        timeZone = 'Asia/Kolkata';
+      }
+      _timeZoneController.text = timeZone;
     }
     _nameController.addListener(_onNameChanged);
     Future.microtask(() => _loadInitialData());
@@ -84,7 +85,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
     if (_selectedSiteName != null &&
         _nameController.text != _selectedSiteName) {
       setState(() {
-        _showCompanyDropdown = true;
         _selectedSiteName = null;
       });
     }
@@ -97,8 +97,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       final response = await repository.getGroupedCompanies(limit: 1000);
       _companyGroups = response.data;
 
-      final roleAsync = ref.read(userRoleProvider);
-      final isSuperAdmin = roleAsync.asData?.value == UserRole.superAdmin;
+      // Explicitly wait for role if it's still loading
+      final roleAsync = await ref.read(userRoleProvider.future);
+      final isSuperAdmin = roleAsync == UserRole.superAdmin;
 
       if (_companyGroups.isNotEmpty && !isSuperAdmin) {
         _onCompanyChanged(_companyGroups.first);
@@ -129,18 +130,30 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   }
 
   void _onCompanyChanged(CompanyGroup? group) {
+    if (_selectedGroup == group) return;
+
     setState(() {
       _selectedGroup = group;
+
       for (var row in _addressRows) {
+        // ALWAYS clear selectedRegisteredAddress because it belongs to the PREVIOUS company.
         row.selectedRegisteredAddress = null;
-        row.addressController.clear();
-        row.pinCodeController.clear();
-        row.contactController.clear();
-        row.country = null;
-        row.state = null;
-        row.city = null;
+
+        // Only clear the actual text fields if we are creating a NEW site.
+        // If we are EDITING, we want to keep the physical location text.
+        if (widget.initialSite == null) {
+          row.addressController.clear();
+          row.pinCodeController.clear();
+          row.contactController.clear();
+          row.country = null;
+          row.state = null;
+          row.city = null;
+        }
       }
-      if (group != null &&
+
+      // For NEW sites, if the company has exactly one address, auto-select it.
+      if (widget.initialSite == null &&
+          group != null &&
           group.addresses.length == 1 &&
           _addressRows.isNotEmpty) {
         _addressRows.first.updateFromRegistered(group.addresses.first);
@@ -183,9 +196,22 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
     }
 
     final addresses = _addressRows.map((row) {
-      final resolvedCompanyId =
-          row.selectedRegisteredAddress?.companyId ??
-              _selectedGroup?.addresses.firstOrNull?.companyId;
+      // Determine correct company_id:
+      // 1. Explicitly selected branch address
+      // 2. Or, if we are editing and the group matches the site's current company group,
+      //    use the site's current companyId to preserve the specific branch.
+      // 3. Fallback to the first address in the selected group.
+      int? resolvedCompanyId = row.selectedRegisteredAddress?.companyId;
+
+      if (resolvedCompanyId == null && widget.initialSite != null && _selectedGroup != null) {
+        // Search if initial site belongs to this group
+        final belongsToGroup = _selectedGroup!.addresses.any((a) => a.companyId == widget.initialSite!.companyId);
+        if (belongsToGroup) {
+          resolvedCompanyId = widget.initialSite!.companyId;
+        }
+      }
+
+      resolvedCompanyId ??= _selectedGroup?.addresses.firstOrNull?.companyId;
 
       return CompanyAddress(
         addressLine1: row.addressController.text,
@@ -210,7 +236,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
 
     final request = SiteCreateRequest(
       name: _nameController.text,
-      orgCode: _orgCodeController.text,
+      orgCode: '', // Removed from UI
       companyId: primaryCompanyId,
       city: _addressRows.first.city,
       timeZone: _timeZoneController.text,
@@ -343,7 +369,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                 },
                                 onSelected: (site) {
                                   setState(() {
-                                    _showCompanyDropdown = false;
                                     _selectedSiteName = site.siteName;
                                     if (_addressRows.isNotEmpty) {
                                       final row = _addressRows.first;
@@ -379,22 +404,18 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                           ),
                           const SizedBox(width: 32),
                           Expanded(
-                            child: Visibility(
-                              visible: _showCompanyDropdown,
-                              maintainState: true,
-                              child: _buildLabelField(
-                                'OWNING COMPANY',
-                                _isLoadingCompanies
-                                    ? const LinearProgressIndicator(
-                                  minHeight: 2,
-                                )
-                                    : AppDropdown<CompanyGroup>(
-                                  value: _selectedGroup,
-                                  items: _companyGroups,
-                                  hint: 'Select Company',
-                                  itemLabel: (g) => g.name,
-                                  onChanged: _onCompanyChanged,
-                                ),
+                            child: _buildLabelField(
+                              'OWNING COMPANY',
+                              _isLoadingCompanies
+                                  ? const LinearProgressIndicator(
+                                minHeight: 2,
+                              )
+                                  : AppDropdown<CompanyGroup>(
+                                value: _selectedGroup,
+                                items: _companyGroups,
+                                hint: 'Select Company',
+                                itemLabel: (g) => g.name,
+                                onChanged: _onCompanyChanged,
                               ),
                             ),
                           ),
@@ -402,28 +423,15 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                       ),
                       const SizedBox(height: 48),
 
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildLabelField(
-                              'ORGANIZATION CODE',
-                              AppTextField(
-                                controller: _orgCodeController,
-                                hint: 'e.g. SITE-UNIT-001',
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 32),
-                          Expanded(
-                            child: _buildLabelField(
-                              'TIME ZONE REGION',
-                              _buildTimeZoneAutocomplete(),
-                            ),
-                          ),
-                        ],
+                      _buildLabelField(
+                        'TIME ZONE REGION',
+                        SizedBox(
+                          width: double.infinity,
+                          child: _buildTimeZoneAutocomplete(),
+                        ),
                       ),
 
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 32),
 
                       // Section: Location Details
                       Row(
@@ -808,57 +816,21 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
     );
   }
 
+
   Widget _buildTimeZoneAutocomplete() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return RawAutocomplete<String>(
-          textEditingController: _timeZoneController,
-          focusNode: FocusNode(),
-          optionsBuilder: (TextEditingValue textEditingValue) {
-            if (textEditingValue.text.isEmpty) {
-              return const Iterable<String>.empty();
-            }
-            return TimeZoneUtils.ianaTimeZones.where((String option) {
-              return option.toLowerCase().contains(
-                    textEditingValue.text.toLowerCase(),
-                  );
-            });
-          },
-          displayStringForOption: (String option) => option,
-          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return AppTextField(
-              controller: controller,
-              focusNode: focusNode,
-              hint: 'Search Time Zone (e.g. Asia/Kolkata)',
-            );
-          },
-          optionsViewBuilder: (context, onSelected, options) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                child: SizedBox(
-                  width: constraints.maxWidth,
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options.elementAt(index);
-                      return ListTile(
-                        title: Text(
-                          option,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        onTap: () => onSelected(option),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
-        );
+    return AppAutocomplete<String>(
+      controller: _timeZoneController,
+      hint: 'Search Time Zone (e.g. Asia/Kolkata)',
+      displayStringForOption: (option) => option,
+      optionsBuilder: (textEditingValue) async {
+        if (textEditingValue.text.isEmpty) {
+          return const Iterable<String>.empty();
+        }
+        return TimeZoneUtils.ianaTimeZones.where((String option) {
+          return option.toLowerCase().contains(
+                textEditingValue.text.toLowerCase(),
+              );
+        });
       },
     );
   }
@@ -866,7 +838,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   @override
   void dispose() {
     _nameController.dispose();
-    _orgCodeController.dispose();
     _timeZoneController.dispose();
     for (var controllers in _addressRows) {
       controllers.dispose();

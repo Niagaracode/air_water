@@ -81,9 +81,12 @@ class _AssetSummaryFilterBarState extends ConsumerState<AssetSummaryFilterBar> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            child: Row(
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 250,
                   child: _buildTextField(
                     label: 'Plant Name',
                     controller: _plantController,
@@ -91,8 +94,8 @@ class _AssetSummaryFilterBarState extends ConsumerState<AssetSummaryFilterBar> {
                     onChanged: (_) => _applyFilters(),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+                SizedBox(
+                  width: 200,
                   child: _buildTextField(
                     label: 'Tank Number',
                     controller: _tankController,
@@ -100,8 +103,8 @@ class _AssetSummaryFilterBarState extends ConsumerState<AssetSummaryFilterBar> {
                     onChanged: (_) => _applyFilters(),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
+                SizedBox(
+                  width: 180,
                   child: _buildDropdownField(
                     label: 'Importance',
                     value: _selectedImportance,

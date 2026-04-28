@@ -365,13 +365,24 @@ class _TankWideState extends ConsumerState<TankWide> {
       );
     }
 
-    // Generate linear list (Site Headers + Tank Rows)
+    // Generate linear list (Site Headers + Tank Rows + Asset Groups)
     final List<dynamic> items = [];
+    
+    // 1. Site Groups
     for (int i = 0; i < state.groupedTanks.length; i++) {
       final group = state.groupedTanks[i];
       items.add({'type': 'header', 'group': group, 'index': i + 1});
       for (final tank in group.tanks) {
         items.add({'type': 'row', 'tank': tank, 'group': group});
+      }
+    }
+
+    // 2. Asset Groups
+    for (int i = 0; i < state.assetGroups.length; i++) {
+      final group = state.assetGroups[i];
+      items.add({'type': 'asset_header', 'group': group, 'index': state.groupedTanks.length + i + 1});
+      for (final tank in group.tanks) {
+        items.add({'type': 'row', 'tank': tank, 'is_asset_group': true});
       }
     }
 
@@ -389,6 +400,12 @@ class _TankWideState extends ConsumerState<TankWide> {
             item['index'] as int,
             isLast,
           );
+        } else if (item['type'] == 'asset_header') {
+          return _buildAssetGroupHeader(
+            item['group'] as AssetGroupData,
+            item['index'] as int,
+            isLast,
+          );
         } else {
           return _buildTankRow(
             item['tank'] as Tank,
@@ -397,6 +414,66 @@ class _TankWideState extends ConsumerState<TankWide> {
           );
         }
       },
+    );
+  }
+
+  Widget _buildAssetGroupHeader(AssetGroupData group, int index, bool isLast) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F3FF), // Soft purple for Asset Groups
+        border: Border(
+          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          bottom: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 60,
+              child: Text(
+                index.toString().padLeft(2, '0'),
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF6D28D9), // Purple text
+                ),
+              ),
+            ),
+            const Icon(Icons.layers_rounded, size: 18, color: Color(0xFF6D28D9)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'ASSET GROUP: ${group.name.toUpperCase()}',
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF4C1D95),
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEDE9FE),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${group.tanks.length} TANKS',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF6D28D9),
+                ),
+              ),
+            ),
+            const SizedBox(width: 120), // Match ACTIONS column
+          ],
+        ),
+      ),
     );
   }
 
@@ -453,12 +530,16 @@ class _TankWideState extends ConsumerState<TankWide> {
             Expanded(
               child: Row(
                 children: [
-                  Text(
-                    group.siteName,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF1E40AF),
+                  Expanded(
+                    child: Text(
+                      group.siteName,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF1E40AF),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -494,6 +575,7 @@ class _TankWideState extends ConsumerState<TankWide> {
                 ],
               ),
             ),
+            const SizedBox(width: 120), // Match ACTIONS column
           ],
         ),
       ),

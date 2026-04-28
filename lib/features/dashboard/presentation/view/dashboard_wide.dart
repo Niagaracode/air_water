@@ -53,7 +53,7 @@ class DashboardWide extends ConsumerStatefulWidget {
 class _DashboardWideState extends ConsumerState<DashboardWide> {
   final String tankStatusTopic = 'tweet/864180050620884';
 
-  StreamSubscription<MqttMessage>? _tankSubscription;
+  StreamSubscription<MqttMessageModel>? _tankSubscription;
 
   // Flag to track if widget is disposed
   bool _isDisposed = false;
@@ -123,7 +123,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     }
   }
 
-  void _handleStreamData(AsyncValue<MqttMessage> tankStream) {
+  void _handleStreamData(AsyncValue<MqttMessageModel> tankStream) {
     // Handle tank status updates
     tankStream.whenData((message) {
       if (mounted && !_isDisposed) {
@@ -139,7 +139,12 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     final tankStatusStream = ref.watch(mqttTopicStreamProvider(tankStatusTopic));
 
     // Handle stream data safely
-    _handleStreamData(tankStatusStream);
+    // Listen to MQTT stream updates safely
+    ref.listen(mqttTopicStreamProvider(tankStatusTopic), (previous, next) {
+      next.whenData((message) {
+        _handleTankStatusUpdate(message);
+      });
+    });
 
     final tanksData = ref.watch(tankProviderDashboard);
     final alarmsData = ref.watch(alarmProviderDashboard);
@@ -782,12 +787,16 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             children: [
               const Icon(Icons.location_on, size: 18, color: Color(0xFF141E7A)),
               const SizedBox(width: 8),
-              Text(
-                site.siteName,
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF111827),
+              Expanded(
+                child: Text(
+                  site.siteName,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF111827),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
               const SizedBox(width: 12),
@@ -852,20 +861,31 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             child: Column(
               children: [
                 Text(
-                  '${tank.level.toStringAsFixed(1)}%',
+                  '${(tank.level ?? 0.0).toStringAsFixed(1)}%',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: _getLevelColor(tank.level),
+                    color: _getLevelColor(tank.level ?? 0.0),
                   ),
                 ),
+                if (tank.ptn != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'PTN: ${tank.ptn!.toStringAsFixed(1)}',
+                    style: GoogleFonts.outfit(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
-                    value: tank.level / 100,
+                    value: (tank.level ?? 0.0) / 100,
                     backgroundColor: Colors.grey.shade200,
-                    color: _getLevelColor(tank.level),
+                    color: _getLevelColor(tank.level ?? 0.0),
                     minHeight: 4,
                   ),
                 ),
@@ -908,7 +928,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
           Expanded(
             child: Center(
               child: Text(
-                _formatDateTime(tank.lastUpdate),
+                tank.lastUpdate != null ? _formatDateTime(tank.lastUpdate!) : 'Never',
                 style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade600),
               ),
             ),
@@ -962,7 +982,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     return '${diff.inDays}d ago';
   }
 
-  void _handleTankStatusUpdate(MqttMessage message) {
+  void _handleTankStatusUpdate(MqttMessageModel message) {
     debugPrint('📊 Tank Status Update: ${message.data}');
     // Update your UI or provider here
     if (mounted) {
