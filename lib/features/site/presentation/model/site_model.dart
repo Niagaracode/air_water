@@ -178,6 +178,7 @@ class SiteLocation {
   final String country;
   final String state;
   final String city;
+  final String? timeZone;
 
   SiteLocation({
     required this.address,
@@ -185,7 +186,9 @@ class SiteLocation {
     required this.country,
     required this.state,
     required this.city,
+    this.timeZone,
   });
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -194,7 +197,9 @@ class SiteLocation {
       'country': country,
       'state': state,
       'city': city,
+      'time_zone': timeZone,
     };
+
   }
 }
 

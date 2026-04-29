@@ -130,14 +130,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           _selectedProduct = foundProducts.isNotEmpty
               ? foundProducts.first
               : null;
-        } else {
-          // Default to first item for new tanks to show dimensions immediately
-          if ((data['tank_types'] as List).isNotEmpty) {
-            _selectedTankType = (data['tank_types'] as List).first;
-          }
-          if ((data['units'] as List).isNotEmpty) {
-            _selectedUnit = (data['units'] as List).first;
-          }
         }
       });
     } catch (e) {
@@ -164,20 +156,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
-    if (_selectedUnit == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Unit')),
-      );
-      return;
-    }
-
-    if (_selectedTankType == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Tank Type')),
-      );
-      return;
-    }
-
     if (_selectedProduct == null) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Please select a Product')),
@@ -185,87 +163,19 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
-    double? h = double.tryParse(_heightController.text);
-    double? w = double.tryParse(_widthController.text);
-    double? dh = double.tryParse(_dishHeightController.text);
-
-    String typeName = _selectedTankType?['name'] ?? '';
-    final List<String> requiredFields = _getDimensionFields(typeName);
-    
-    // Validation for dynamic dimension fields
-    if (requiredFields.isNotEmpty) {
-      if (_heightController.text.isEmpty) {
-        messenger.showSnackBar(SnackBar(content: Text('Please enter ${requiredFields[0]}')));
-        return;
-      }
-      if (requiredFields.length > 1 && _widthController.text.isEmpty) {
-        messenger.showSnackBar(SnackBar(content: Text('Please enter ${requiredFields[1]}')));
-        return;
-      }
-      if (requiredFields.length > 2 && _dishHeightController.text.isEmpty) {
-        messenger.showSnackBar(SnackBar(content: Text('Please enter ${requiredFields[2]}')));
-        return;
-      }
-    }
-
-    double? canLength, diameter, length, dishDepth, dishHeight, height, width, depth, coneLength;
-
-    switch (typeName) {
-      case 'Cyclinder':
-        height = h;
-        width = w;
-        dishHeight = dh;
-        break;
-      case 'Rectangle':
-      case 'Rectangular':
-        height = h;
-        width = w;
-        depth = dh;
-        break;
-      case 'Horizontal with 2:1 Ellipsoidal Ends':
-      case 'Horizontal with Hemispherical Ends':
-      case 'None':
-      case 'Spherical':
-      case 'Vertical with 2:1 Ellipsoidal Ends':
-      case 'Vertical with Flat Ends':
-      case 'Vertical with Hemispherical Ends':
-        canLength = h;
-        diameter = w;
-        break;
-      case 'Horizontal with Flat Ends':
-        length = h;
-        diameter = w;
-        break;
-      case 'Horizontal with Variable Dished Ends':
-      case 'Vertical with Variable Dished Ends':
-        canLength = h;
-        diameter = w;
-        dishDepth = dh;
-        break;
-      case 'Vertical with Conical Bottom End':
-        canLength = h;
-        diameter = w;
-        coneLength = dh;
-        break;
-      default:
-        height = h;
-        width = w;
-        dishHeight = dh;
-    }
-
     final request = TankCreateRequest(
       tankNumber: _tankNumberController.text,
-      height: height,
-      width: width,
-      dishHeight: dishHeight,
-      canLength: canLength,
-      diameter: diameter,
-      length: length,
-      dishDepth: dishDepth,
-      depth: depth,
-      coneLength: coneLength,
-      tonnes: double.tryParse(_tonnesController.text),
-      description: _descriptionController.text,
+      height: null,
+      width: null,
+      dishHeight: null,
+      canLength: null,
+      diameter: null,
+      length: null,
+      dishDepth: null,
+      depth: null,
+      coneLength: null,
+      tonnes: 0.0,
+      description: '',
       siteId: _selectedSite?.siteId ?? widget.initialTank?.siteId,
       unitId: _selectedUnit?['id'],
       tankTypeId: _selectedTankType?['id'],
@@ -303,6 +213,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -392,220 +303,32 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           const SizedBox(height: 32),
                           _buildInfoBar(),
                           const SizedBox(height: 48),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  'TANK NAME',
-                                  _buildTankAutocomplete(),
-                                ),
-                              ),
-                              const SizedBox(width: 32),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'MEASUREMENT UNIT',
-                                  _isLoadingDropdowns
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                          backgroundColor: Color(0xFFF3F4F6),
-                                          valueColor: AlwaysStoppedAnimation(
-                                            Color(0xFF141E7A),
-                                          ),
-                                        )
-                                      : AppDropdown<dynamic>(
-                                          value: _selectedUnit,
-                                          items: _dropdownData?['units'] ?? [],
-                                          itemLabel: (u) => u['name'],
-                                          hint: 'Select Unit',
-                                          onChanged: (v) =>
-                                              setState(() => _selectedUnit = v),
-                                        ),
-                                ),
-                              ),
-                            ],
+                          _buildLabelField(
+                            'TANK NAME',
+                            _buildTankAutocomplete(),
                           ),
                           const SizedBox(height: 32),
+                          _buildLabelField('SITE', _buildSiteAutocomplete()),
+                          const SizedBox(height: 32),
                           _buildLabelField(
-                            'SITE ASSOCIATION',
-                            _buildSiteAutocomplete(),
-                          ),
-                          const SizedBox(height: 40),
-                          // Section Title: Physical Specifications
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.straighten_rounded,
-                                size: 18,
-                                color: Color(0xFF141E7A),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'PHYSICAL SPECIFICATIONS',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Divider(
-                            height: 32,
-                            thickness: 1,
-                            color: Color(0xFFF3F4F6),
-                          ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildImageUploadArea(),
-                              const SizedBox(width: 40),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildLabelField(
-                                            'TANK TYPE',
-                                            _isLoadingDropdowns
-                                                ? const LinearProgressIndicator(
-                                                    minHeight: 2,
-                                                  )
-                                                : AppDropdown<dynamic>(
-                                                    value: _selectedTankType,
-                                                    items:
-                                                        _dropdownData?['tank_types'] ??
-                                                        [],
-                                                    itemLabel: (tt) =>
-                                                        tt['name'],
-                                                    hint: 'Select Type',
-                                                    onChanged: (v) => setState(
-                                                      () =>
-                                                          _selectedTankType = v,
-                                                    ),
-                                                  ),
-                                          ),
-                                        ),
-                                      ],
+                            'ASSIGNED PRODUCT',
+                            _isLoadingDropdowns
+                                ? const LinearProgressIndicator(
+                                    minHeight: 2,
+                                  )
+                                : AppDropdown<dynamic>(
+                                    value: _selectedProduct,
+                                    items: _products,
+                                    itemLabel: (p) => p is TankProduct
+                                        ? p.productName
+                                        : p['product_name'],
+                                    hint: 'Select Product',
+                                    onChanged: (v) => setState(
+                                      () => _selectedProduct = v,
                                     ),
-                                    const SizedBox(height: 32),
-                                    if (_selectedTankType != null) ...[
-                                      Builder(
-                                        builder: (context) {
-                                          final fields = _getDimensionFields(_selectedTankType['name']);
-                                          return Row(
-                                            children: List.generate(fields.length, (index) {
-                                              return Expanded(
-                                                child: Padding(
-                                                  padding: EdgeInsets.only(
-                                                    right: index < fields.length - 1 ? 16 : 0,
-                                                  ),
-                                                  child: _buildLabelField(
-                                                    fields[index],
-                                                    AppTextField(
-                                                      controller: index == 0
-                                                          ? _heightController
-                                                          : index == 1
-                                                              ? _widthController
-                                                              : _dishHeightController,
-                                                      hint: '0.00',
-                                                    ),
-                                                  ),
-                                                ),
-                                              );
-                                            }),
-                                          );
-                                        },
-                                      ),
-                                    ] else ...[
-                                      Center(
-                                        child: Text(
-                                          'Select Tank Type to Enter Dimensions',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 14,
-                                            color: const Color(0xFF6B7280),
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 40),
-                          // Section Title: Content Details
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.opacity_rounded,
-                                size: 18,
-                                color: Color(0xFF141E7A),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'CONTENT DETAILS',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Divider(
-                            height: 32,
-                            thickness: 1,
-                            color: Color(0xFFF3F4F6),
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  'ASSIGNED PRODUCT',
-                                  _isLoadingDropdowns
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                        )
-                                      : AppDropdown<dynamic>(
-                                          value: _selectedProduct,
-                                          items: _products,
-                                          itemLabel: (p) => p is TankProduct
-                                              ? p.productName
-                                              : p['product_name'],
-                                          hint: 'Select Product',
-                                          onChanged: (v) => setState(
-                                            () => _selectedProduct = v,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(width: 32),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'TOTAL TONNES',
-                                  AppTextField(
-                                    controller: _tonnesController,
-                                    hint: '0.00',
                                   ),
-                                ),
-                              ),
-                            ],
                           ),
                           const SizedBox(height: 32),
-                          _buildLabelField(
-                            'DESCRIPTION / NOTES',
-                            AppTextField(
-                              controller: _descriptionController,
-                              hint: 'Enter any additional details...',
-                              maxLines: 3,
-                            ),
-                          ),
-                          const SizedBox(height: 48),
                           // Status toggle - redesigned
                           Container(
                             padding: const EdgeInsets.all(24),
@@ -622,7 +345,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'RECORD STATUS',
+                                      'STATUS',
                                       style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12,
@@ -655,6 +378,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                               ],
                             ),
                           ),
+
                           const SizedBox(height: 64),
                           SizedBox(
                             width: double.infinity,

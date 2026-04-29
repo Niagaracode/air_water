@@ -9,7 +9,9 @@ class CompanyAddress {
   final String? contactNumber;
   final int status;
   final int? companyId;
+  final String? timeZone;
   final String? createdAt;
+
 
   CompanyAddress({
     this.addressLine1,
@@ -22,8 +24,10 @@ class CompanyAddress {
     this.contactNumber,
     required this.status,
     this.companyId,
+    this.timeZone,
     this.createdAt,
   });
+
 
   factory CompanyAddress.fromJson(Map<String, dynamic> json) {
     return CompanyAddress(
@@ -37,8 +41,10 @@ class CompanyAddress {
       contactNumber: json['contact_number'] as String?,
       status: (json['status'] as num?)?.toInt() ?? 1,
       companyId: json['company_id'] as int?,
+      timeZone: json['time_zone'] as String?,
       createdAt: json['created_at'] as String?,
     );
+
   }
 
   Map<String, dynamic> toJson() {
@@ -53,8 +59,10 @@ class CompanyAddress {
       'contact_number': contactNumber,
       'status': status,
       'company_id': companyId,
+      'time_zone': timeZone,
       'created_at': createdAt,
     };
+
   }
 
   String get fullAddress {
