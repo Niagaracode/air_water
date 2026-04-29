@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/user_config/user_role_provider.dart';
-import '../widgets/dashboard_header.dart';
 
 class DashboardMiddle extends ConsumerWidget {
   const DashboardMiddle({super.key});
@@ -17,8 +16,7 @@ class DashboardMiddle extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const DashboardHeader(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 10),
             roleAsync.when(
               data: (role) {
                 return const Center(

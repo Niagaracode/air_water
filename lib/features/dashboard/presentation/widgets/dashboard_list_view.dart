@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../controller/provider/sidebar_provider.dart';
 import '../../data/tank_data_model.dart';
 import '../model/site_group_model.dart';
 
-class DashboardListView extends StatelessWidget {
+class DashboardListView extends ConsumerWidget {
   const DashboardListView({
     super.key,
     required this.groupedTanks,
@@ -17,8 +19,6 @@ class DashboardListView extends StatelessWidget {
     this.emptyStateTitle = 'No devices found',
     this.emptyStateSubtitle = 'Try adjusting your filters',
     this.showHeader = true,
-    this.tableHeaderHeight = 12,
-    this.rowHeight = 60,
   });
 
   final List<SiteGroupModel> groupedTanks;
@@ -32,12 +32,12 @@ class DashboardListView extends StatelessWidget {
   final String emptyStateTitle;
   final String emptyStateSubtitle;
   final bool showHeader;
-  final double tableHeaderHeight;
-  final double rowHeight;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final filteredGroups = _getFilteredGroups();
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isExpanded = ref.watch(sidebarExpandedProvider);
 
     if (filteredGroups.isEmpty) {
       return _buildEmptyState();
@@ -49,19 +49,18 @@ class DashboardListView extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Column(
-        children: [
-          if (showHeader) _buildTableHeader(),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredGroups.length,
-            itemBuilder: (context, index) {
-              final site = filteredGroups[index];
-              return _buildSiteGroup(site);
-            },
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: isExpanded ? screenWidth - 300 : screenWidth - 120,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (showHeader) _buildTableHeader(),
+              ...filteredGroups.map((site) => _buildSiteGroup(site)),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -69,24 +68,18 @@ class DashboardListView extends StatelessWidget {
   List<SiteGroupModel> _getFilteredGroups() {
     return groupedTanks.map((group) {
       final filteredTanks = group.tanks.where((tank) {
-        // Region filter
         if (selectedRegion != 'All Regions' && tank.region != selectedRegion) {
           return false;
         }
-
-        // Status filter
         if (selectedStatus != 'All Status' && tank.status != selectedStatus) {
           return false;
         }
-
-        // Search filter
         if (searchQuery.isNotEmpty) {
           final searchLower = searchQuery.toLowerCase();
           return tank.tankName.toLowerCase().contains(searchLower) ||
               tank.siteName.toLowerCase().contains(searchLower) ||
               tank.deviceId.toLowerCase().contains(searchLower);
         }
-
         return true;
       }).toList();
 
@@ -138,7 +131,7 @@ class DashboardListView extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF141E7A).withValues(alpha: 0.7),
+        color: const Color(0xFF141E7A).withOpacity(0.7),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(10),
           topRight: Radius.circular(10),
@@ -146,14 +139,36 @@ class DashboardListView extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Expanded(child: Text('SITE-TANK NAME', style: _headerStyle())),
-          SizedBox(width: 200, child: Text('DEVICE ID', style: _headerStyle())),
-          Expanded(child: Text('LEVEL', style: _headerStyle(), textAlign: TextAlign.center)),
-          SizedBox(width: 100, child: Text('PRESSURE', style: _headerStyle(), textAlign: TextAlign.center)),
-          SizedBox(width: 100, child: Text('BATTERY', style: _headerStyle(), textAlign: TextAlign.center)),
-          SizedBox(width: 80, child: Text('SOLAR', style: _headerStyle(), textAlign: TextAlign.center)),
-          SizedBox(width: 130, child: Text('STATUS', style: _headerStyle(), textAlign: TextAlign.center)),
-          SizedBox(width: 150, child: Text('LAST UPDATE', style: _headerStyle(), textAlign: TextAlign.center)),
+          Expanded(
+            child: Text('SITE / TANK', style: _headerStyle()),
+          ),
+          SizedBox(
+            width: 200,
+            child: Text('DEVICE ID', style: _headerStyle()),
+          ),
+          Expanded(
+            child: Text('LEVEL', style: _headerStyle(), textAlign: TextAlign.center),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text('PRESSURE', style: _headerStyle(), textAlign: TextAlign.center),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text('BATTERY', style: _headerStyle(), textAlign: TextAlign.center),
+          ),
+          SizedBox(
+            width: 80,
+            child: Text('SOLAR', style: _headerStyle(), textAlign: TextAlign.center),
+          ),
+          SizedBox(
+            width: 100,
+            child: Text('STATUS', style: _headerStyle(), textAlign: TextAlign.center),
+          ),
+          SizedBox(
+            width: 150,
+            child: Text('LAST UPDATE', style: _headerStyle(), textAlign: TextAlign.center),
+          ),
           const SizedBox(width: 45),
         ],
       ),
@@ -178,7 +193,7 @@ class DashboardListView extends StatelessWidget {
           onTap: () => onSiteTap?.call(site),
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
@@ -187,16 +202,15 @@ class DashboardListView extends StatelessWidget {
               children: [
                 const Icon(Icons.location_on, size: 18, color: Color(0xFF141E7A)),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    site.siteName,
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF111827),
-                    ),
+                Text(
+                  site.siteName,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF111827),
                   ),
                 ),
+                const SizedBox(width: 5),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
@@ -216,7 +230,6 @@ class DashboardListView extends StatelessWidget {
             ),
           ),
         ),
-        // Tanks
         ...site.tanks.map((tank) => _buildTankRow(tank)),
       ],
     );
@@ -226,7 +239,7 @@ class DashboardListView extends StatelessWidget {
     return GestureDetector(
       onTap: () => onTankTap?.call(tank),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
         decoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
         ),
@@ -238,27 +251,23 @@ class DashboardListView extends StatelessWidget {
                 child: Text(
                   tank.tankName,
                   style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade600),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
+            // Device ID
             SizedBox(
               width: 200,
-              child: Row(
-                children: [
-                  Icon(Icons.opacity, size: 16, color: Colors.grey.shade400),
-                  const SizedBox(width: 8),
-                  Text(
-                    tank.deviceId,
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+              child: Text(
+                tank.deviceId,
+                style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            // Level
             Expanded(
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     '${tank.level.toStringAsFixed(1)}%',
@@ -281,11 +290,22 @@ class DashboardListView extends StatelessWidget {
                 ],
               ),
             ),
+            // Pressure
             SizedBox(
               width: 100,
               child: Center(
                 child: Text(
-                  '${tank.pressure.toStringAsFixed(1)} bar',
+                  tank.pressure.toStringAsFixed(1),
+                  style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+            // Battery
+            SizedBox(
+              width: 100,
+              child: Center(
+                child: Text(
+                  '${tank.batteryV.toStringAsFixed(1)}v',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -294,24 +314,12 @@ class DashboardListView extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(
-              width: 100,
-              child: Center(
-                child: Text(
-                  '${tank.batteryV.toStringAsFixed(1)} v',
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: _getBatSolColor(tank.batteryV),
-                  ),
-                ),
-              ),
-            ),
+            // Solar
             SizedBox(
               width: 80,
               child: Center(
                 child: Text(
-                  '${tank.solarV.toStringAsFixed(1)} v',
+                  '${tank.solarV.toStringAsFixed(1)}v',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -320,8 +328,9 @@ class DashboardListView extends StatelessWidget {
                 ),
               ),
             ),
+            // Status
             SizedBox(
-              width: 130,
+              width: 100,
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -354,6 +363,7 @@ class DashboardListView extends StatelessWidget {
                 ),
               ),
             ),
+            // Last Update
             SizedBox(
               width: 150,
               child: Center(
@@ -363,6 +373,7 @@ class DashboardListView extends StatelessWidget {
                 ),
               ),
             ),
+            // Actions Menu
             SizedBox(
               width: 45,
               child: PopupMenuButton(
@@ -396,28 +407,21 @@ class DashboardListView extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'active':
-        return Colors.green;
-      case 'warning':
-        return Colors.orange;
-      case 'critical':
-        return Colors.red;
-      case 'offline':
-        return Colors.grey;
-      case 'out of order':
-        return Colors.purple;
-      default:
-        return Colors.blue;
+      case 'active': return Colors.green;
+      case 'warning': return Colors.orange;
+      case 'critical': return Colors.red;
+      case 'offline': return Colors.grey;
+      case 'out of order': return Colors.purple;
+      default: return Colors.blue;
     }
   }
 
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
-
     if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
+    if (diff.inHours < 24) return '${diff.inHours} hrs ago';
+    return '${diff.inDays} day ago';
   }
 }

@@ -1,5 +1,5 @@
 class TankDataModel {
-  final String id;
+  final int id;
   final String tankName;
   final String siteName;
   final String deviceId;
@@ -111,7 +111,7 @@ class TankDataModel {
     }
 
     return TankDataModel(
-      id: json['id'].toString(),
+      id: json['id'],
       tankName: json['name'] ?? 'Unknown',
       siteName: json['siteName'] ?? 'Unknown Site',
       deviceId: json['device_id'] ?? 'Unknown id',

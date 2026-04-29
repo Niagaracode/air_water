@@ -54,7 +54,7 @@ class _DashboardMapViewState extends State<DashboardMapView> {
       if (tank.latitude != 0.0 && tank.longitude != 0.0) {
         _markers.add(
           Marker(
-            markerId: MarkerId(tank.id),
+            markerId: MarkerId("${tank.id}"),
             position: LatLng(tank.latitude, tank.longitude),
             infoWindow: InfoWindow(
               title: tank.tankName,

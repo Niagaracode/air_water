@@ -1,5 +1,7 @@
+import 'package:air_water/features/tank/presentation/view/tank_details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../../core/network/mqtt/models/mqtt_message.dart';
 import '../../../../core/network/mqtt/providers/mqtt_providers.dart';
@@ -7,7 +9,6 @@ import '../../data/tank_data_model.dart';
 import '../../provider/dashboard_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_list_view.dart';
 import '../widgets/dashboard_map_view.dart';
 import '../widgets/device_list_header.dart';
@@ -203,7 +204,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
   @override
   Widget build(BuildContext context) {
-
     // Watch the tank data
     final tanksDataAsync = ref.watch(tankDataListProvider);
     final statistics = ref.watch(tankStatisticsProvider);
@@ -221,25 +221,19 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: tanksDataAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
               const SizedBox(height: 16),
-              Text(
-                'Failed to load tank data',
-                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
+              Text('Failed to load tank data',
+                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey.shade600),
-                textAlign: TextAlign.center,
-              ),
+              Text(error.toString(),
+                  style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey.shade600),
+                  textAlign: TextAlign.center),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
@@ -256,12 +250,11 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                DashboardHeader(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 10),
                 StatisticsCards(statistics: statistics),
                 const SizedBox(height: 24),
-                DeviceListHeader(),
-                const SizedBox(height: 16),
+                const DeviceListHeader(),
+                const SizedBox(height: 8),
                 SearchAndFilters(
                   onSearchChanged: (String value) {
                     setState(() {
@@ -293,7 +286,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                   selectedRegion: _selectedRegion,
                   selectedStatus: _selectedStatus,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 ViewToggle(
                   currentView: _currentViewType,
                   onViewChanged: (ViewType value) {
@@ -302,9 +295,42 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                     });
                   },
                 ),
-                const SizedBox(height: 16),
-                _isListView
-                    ? DashboardListView(groupedTanks: groupedTanks, filteredTanks: tanksData)
+                const SizedBox(height: 12),
+                _isListView ? DashboardListView(
+                  groupedTanks: groupedTanks,
+                  filteredTanks: tanksData,
+                  selectedRegion: _selectedRegion,
+                  selectedStatus: _selectedStatus,
+                  searchQuery: _searchQuery,
+                  onTankTap: (tank) {
+                    print('Tapped on tank: ${tank.tankName}');
+                  },
+                  onSiteTap: (site) {
+                    print('Tapped on site: ${site.siteName}');
+                  },
+                  onMenuTap: (tank, action) async {
+                    print('Menu action: $action for tank: ${tank.tankName}');
+
+                    // Handle View Details action
+                    if (action == 'view') {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TankDetailsView(tankId: tank.id),
+                        ),
+                      );
+                    } else if (action == 'edit') {
+                      // Handle edit action
+                      print('Edit tank: ${tank.tankName}');
+                    } else if (action == 'alerts') {
+                      // Handle alerts action
+                      print('Set alerts for: ${tank.tankName}');
+                    } else if (action == 'history') {
+                      // Handle history action
+                      print('View history for: ${tank.tankName}');
+                    }
+                  },
+                )
                     : DashboardMapView(tanksData: tanksData),
               ],
             ),

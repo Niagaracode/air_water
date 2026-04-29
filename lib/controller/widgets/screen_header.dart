@@ -9,6 +9,9 @@ import '../../features/auth/presentation/controllers/auth_providers.dart';
 
 import '../../core/user_config/user_role.dart';
 import '../../core/user_config/user_role_provider.dart';
+import '../../features/dashboard/presentation/widgets/mqtt_connection_status.dart';
+import '../../features/dashboard/presentation/widgets/sync_button.dart';
+import '../../features/dashboard/provider/dashboard_provider.dart';
 
 class ScreenHeader extends ConsumerWidget {
   const ScreenHeader({super.key});
@@ -17,6 +20,7 @@ class ScreenHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userNameAsync = ref.watch(userNameProvider);
     final roleAsync = ref.watch(userRoleProvider);
+    final userName = userNameAsync.value ?? 'User';
     
     final isCustomer = roleAsync.when(
       data: (role) => role == UserRole.customer,
@@ -41,43 +45,26 @@ class ScreenHeader extends ConsumerWidget {
           child: Row(
             children: [
 
-              /// ── Search bar ────────────────────────────────────
-              Expanded(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 380),
-                  child: Container(
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.black.withValues(alpha: 0.15)),
-                    ),
-                    child: TextField(
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: const Color(0xFF1A1A2E),
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Search anything...',
-                        hintStyle: GoogleFonts.inter(
-                          color: const Color(0xFF9CA3AF),
-                          fontSize: 13,
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.search_rounded,
-                          size: 18,
-                          color: Color(0xFF9CA3AF),
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-                        isDense: true,
-                      ),
-                    ),
-                  ),
+              Text(
+                'Welcome back, $userName!',
+                style: GoogleFonts.outfit(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black45,
                 ),
               ),
 
               const Spacer(),
+
+              const MqttConnectionStatus(),
+              const SizedBox(width: 16),
+
+              SyncButton(
+                onSync: () async {
+                  await _refreshData(ref, context);
+                },
+              ),
+              const SizedBox(width: 16),
 
               /// ── Notification icon ────────────────────────────
               Container(
@@ -104,8 +91,7 @@ class ScreenHeader extends ConsumerWidget {
                   ),
                 ),
               ),
-
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
 
               /// ── User menu ─────────────────────────────────────
               PopupMenuButton<String>(
@@ -125,83 +111,33 @@ class ScreenHeader extends ConsumerWidget {
                     context.go('/profile');
                   }
                 },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                child: userNameAsync.when(
+                  data: (name) => CircleAvatar(
+                    radius: 16,
+                    backgroundColor: primary,
+                    child: Text(
+                      (name ?? 'U').isNotEmpty ? (name ?? 'U')[0].toUpperCase() : 'U',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  loading: () => CircleAvatar(
+                    radius: 16,
+                    backgroundColor: primary.withValues(alpha: 0.2),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      userNameAsync.when(
-                        data: (name) => CircleAvatar(
-                          radius: 16,
-                          backgroundColor: primary,
-                          child: Text(
-                            (name ?? 'U').isNotEmpty
-                                ? (name ?? 'U')[0].toUpperCase()
-                                : 'U',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        loading: () => CircleAvatar(
-                          radius: 16,
-                          backgroundColor: primary.withValues(alpha: 0.2),
-                        ),
-                        error: (_, __) => CircleAvatar(
-                          radius: 16,
-                          backgroundColor: primary,
-                          child: Text(
-                            'U',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
+                  error: (_, __) => CircleAvatar(
+                    radius: 16,
+                    backgroundColor: primary,
+                    child: Text('U',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                       ),
-                      const SizedBox(width: 10),
-                      userNameAsync.when(
-                        data: (name) => Text(
-                          name ?? 'User',
-                          style: GoogleFonts.inter(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: const Color(0xFF1A1A2E),
-                          ),
-                        ),
-                        loading: () => Text(
-                          'Loading...',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: const Color(0xFF9CA3AF),
-                          ),
-                        ),
-                        error: (_, __) => Text(
-                          'User',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 18,
-                        color: Color(0xFF9CA3AF),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
                 itemBuilder: (context) => [
@@ -266,10 +202,70 @@ class ScreenHeader extends ConsumerWidget {
                   ),
                 ],
               ),
+              const SizedBox(width: 12),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _refreshData(WidgetRef ref, BuildContext context) async {
+    try {
+      // Refresh the tank data from server
+      await ref.read(tankDataListProvider.notifier).refresh();
+
+      // Invalidate related providers to refresh UI
+      ref.invalidate(tankStatisticsProvider);
+      ref.invalidate(groupedTanksProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  'Data synced successfully!',
+                  style: GoogleFonts.outfit(fontSize: 14),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Failed to sync: ${e.toString()}',
+                    style: GoogleFonts.outfit(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 }
