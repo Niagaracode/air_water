@@ -1,22 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/product_model.dart';
+import '../../provider/product_provider.dart';
 
-class ProductEditView extends StatelessWidget {
+class ProductEditView extends ConsumerStatefulWidget {
   final Product product;
 
   const ProductEditView({super.key, required this.product});
 
   @override
-  Widget build(BuildContext context) {
-    final nameCtrl = TextEditingController(text: product.name);
-    final descCtrl = TextEditingController(text: product.description);
-    final gravityCtrl =
-    TextEditingController(text: product.specificGravity.toString());
-    final scmCtrl =
-    TextEditingController(text: product.scmM3.toString());
+  ConsumerState<ProductEditView> createState() => _ProductEditViewState();
+}
 
+class _ProductEditViewState extends ConsumerState<ProductEditView> {
+  late TextEditingController nameCtrl;
+  late TextEditingController descCtrl;
+  late TextEditingController gravityCtrl;
+  late TextEditingController scmCtrl;
+  bool isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    nameCtrl = TextEditingController(text: widget.product.name);
+    descCtrl = TextEditingController(text: widget.product.description);
+    gravityCtrl = TextEditingController(text: widget.product.specificGravity.toString());
+    scmCtrl = TextEditingController(text: widget.product.scmM3.toString());
+  }
+
+  @override
+  void dispose() {
+    nameCtrl.dispose();
+    descCtrl.dispose();
+    gravityCtrl.dispose();
+    scmCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveChanges() async {
+    if (nameCtrl.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Product name is required")),
+      );
+      return;
+    }
+
+    setState(() => isSaving = true);
+
+    final data = {
+      'product_name': nameCtrl.text.trim(),
+      'description': descCtrl.text.trim(),
+      'specificgravity': double.tryParse(gravityCtrl.text) ?? 0.0,
+      'scm_m3': double.tryParse(scmCtrl.text) ?? 0.0,
+    };
+
+    final success = widget.product.id == 0
+        ? await ref.read(productNotifierProvider.notifier).createProduct(data)
+        : await ref
+            .read(productNotifierProvider.notifier)
+            .updateProduct(widget.product.id, data);
+
+    if (mounted) {
+      setState(() => isSaving = false);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(widget.product.id == 0
+                  ? "Product created successfully"
+                  : "Product updated successfully")),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to update product: ${ref.read(productNotifierProvider).error}")),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
         color: Colors.grey.shade100,
@@ -24,7 +89,6 @@ class ProductEditView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// HEADER
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -42,7 +106,6 @@ class ProductEditView extends StatelessWidget {
                 )
               ],
             ),
-
             const SizedBox(height: 16),
 
             /// CARD FORM
@@ -56,8 +119,6 @@ class ProductEditView extends StatelessWidget {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-
-                      /// ROW 1
                       Row(
                         children: [
                           Expanded(
@@ -82,10 +143,7 @@ class ProductEditView extends StatelessWidget {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 18),
-
-                      /// ROW 2
                       Row(
                         children: [
                           Expanded(
@@ -106,15 +164,12 @@ class ProductEditView extends StatelessWidget {
                                 controller: scmCtrl,
                                 hint: "SCM/M3",
                                 keyboardType: TextInputType.number,
-                              )
+                              ),
                             ),
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 18),
-
-                      /// ROW 3
                       Row(
                         children: [
                           Expanded(
@@ -132,18 +187,24 @@ class ProductEditView extends StatelessWidget {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 28),
-
-                      /// SAVE BUTTON
                       SizedBox(
                         width: double.infinity,
                         height: 44,
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text("Save Changes"),
+                          onPressed: isSaving ? null : _saveChanges,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF141E7A),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: isSaving
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2),
+                                )
+                              : const Text("Save Changes"),
                         ),
                       )
                     ],
@@ -156,8 +217,6 @@ class ProductEditView extends StatelessWidget {
       ),
     );
   }
-
-  /// ---------- UI HELPERS ----------
 
   Widget _field({required String label, required Widget child}) {
     return Column(
@@ -176,7 +235,6 @@ class ProductEditView extends StatelessWidget {
     );
   }
 
-
   Widget _dropdown(List<String> items) {
     return DropdownButtonFormField<String>(
       value: items.first,
@@ -191,8 +249,7 @@ class ProductEditView extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
         ),
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       ),
     );
   }

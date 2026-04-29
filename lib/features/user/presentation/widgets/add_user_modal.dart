@@ -639,7 +639,8 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
 
   Widget _buildCompanyAutocomplete() {
     final currentUser = ref.read(userProvider).currentUser;
-    if (currentUser?.roleId != 1) {
+    // Allow both Super Admin (1) and Company Admin (2) to edit the company
+    if (currentUser?.roleId != 1 && currentUser?.roleId != 2) {
       return AppTextField(
         controller: _companyAutocompleteController,
         readOnly: true,

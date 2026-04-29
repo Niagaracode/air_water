@@ -15,7 +15,6 @@ import '../widgets/search_and_filters.dart';
 import '../widgets/statistics_cards.dart';
 import '../widgets/view_toggle.dart';
 
-
 class DashboardWide extends ConsumerStatefulWidget {
   const DashboardWide({super.key});
 
@@ -76,7 +75,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
       // Update markers if needed (for map view)
       _updateMarkerFromMqtt(parsedData);
-
     } catch (e) {
       print('Error handling MQTT message: $e');
     }
@@ -90,7 +88,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     final tanksAsync = ref.read(tankDataListProvider);
     tanksAsync.whenData((tanks) {
       final tank = tanks.firstWhere(
-            (t) => t.deviceId == deviceId,
+        (t) => t.deviceId == deviceId,
         orElse: () => null as TankDataModel,
       );
 
@@ -103,7 +101,8 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
               position: LatLng(tank.latitude, tank.longitude),
               infoWindow: InfoWindow(
                 title: tank.tankName,
-                snippet: 'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
+                snippet:
+                    'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
               ),
             ),
           );
@@ -149,7 +148,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             value = value.substring(0, value.length - 1);
           }
 
-
           switch (key) {
             case 'TNP':
               level = double.tryParse(value);
@@ -191,7 +189,8 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             position: LatLng(tank.latitude, tank.longitude),
             infoWindow: InfoWindow(
               title: tank.tankName,
-              snippet: 'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
+              snippet:
+                  'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
             ),
           ),
         );
@@ -200,10 +199,8 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
-
     // Watch the tank data
     final tanksDataAsync = ref.watch(tankDataListProvider);
     final statistics = ref.watch(tankStatisticsProvider);
@@ -211,7 +208,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
     ref.listen<AsyncValue<MqttMessageModel>>(
       mqttTopicStreamProvider(tankStatusTopic),
-          (previous, next) {
+      (previous, next) {
         next.whenData((message) {
           _handleMqttMessage(message);
         });
@@ -221,9 +218,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       body: tanksDataAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -232,12 +227,18 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
               const SizedBox(height: 16),
               Text(
                 'Failed to load tank data',
-                style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w600),
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 error.toString(),
-                style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey.shade600),
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -304,7 +305,10 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                 ),
                 const SizedBox(height: 16),
                 _isListView
-                    ? DashboardListView(groupedTanks: groupedTanks, filteredTanks: tanksData)
+                    ? DashboardListView(
+                        groupedTanks: groupedTanks,
+                        filteredTanks: tanksData,
+                      )
                     : DashboardMapView(tanksData: tanksData),
               ],
             ),
@@ -330,5 +334,4 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
     super.dispose();
   }
-
 }
