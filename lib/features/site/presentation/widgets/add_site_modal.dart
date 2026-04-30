@@ -25,7 +25,9 @@ class AddressControllers {
   final addressController = TextEditingController();
   final pinCodeController = TextEditingController();
   final contactController = TextEditingController();
+  final timeZoneController = TextEditingController();
   String? country;
+
   String? state;
   String? city;
   CompanyAddress? selectedRegisteredAddress;
@@ -35,7 +37,9 @@ class AddressControllers {
     addressController.dispose();
     pinCodeController.dispose();
     contactController.dispose();
+    timeZoneController.dispose();
   }
+
 
   void updateFromRegistered(CompanyAddress addr) {
     isProgrammaticUpdate = true;
@@ -51,8 +55,8 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   final List<AddressControllers> _addressRows = [AddressControllers()];
   int _status = 1;
   bool _isLoadingCompanies = false;
-  final _timeZoneController = TextEditingController();
   String? _selectedSiteName;
+
 
   @override
   void initState() {
@@ -69,15 +73,11 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       _addressRows.first.country = widget.initialSite!.countryName;
       _addressRows.first.state = widget.initialSite!.stateName;
       _addressRows.first.city = widget.initialSite!.cityName;
+      _addressRows.first.timeZoneController.text = widget.initialSite!.timeZone ?? '';
       _selectedSiteName = widget.initialSite!.name;
-      
-      String timeZone = widget.initialSite!.timeZone ?? '';
-      if (timeZone.isEmpty && widget.initialSite!.countryName == 'India') {
-        timeZone = 'Asia/Kolkata';
-      }
-      _timeZoneController.text = timeZone;
     }
     _nameController.addListener(_onNameChanged);
+
     Future.microtask(() => _loadInitialData());
   }
 
@@ -114,8 +114,8 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
               .where(
                 (g) => g.addresses.any(
                   (a) => a.companyId == widget.initialSite!.companyId,
-            ),
-          )
+                ),
+              )
               .firstOrNull;
           if (initialGroup != null) {
             _selectedGroup = initialGroup;
@@ -203,9 +203,13 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       // 3. Fallback to the first address in the selected group.
       int? resolvedCompanyId = row.selectedRegisteredAddress?.companyId;
 
-      if (resolvedCompanyId == null && widget.initialSite != null && _selectedGroup != null) {
+      if (resolvedCompanyId == null &&
+          widget.initialSite != null &&
+          _selectedGroup != null) {
         // Search if initial site belongs to this group
-        final belongsToGroup = _selectedGroup!.addresses.any((a) => a.companyId == widget.initialSite!.companyId);
+        final belongsToGroup = _selectedGroup!.addresses.any(
+          (a) => a.companyId == widget.initialSite!.companyId,
+        );
         if (belongsToGroup) {
           resolvedCompanyId = widget.initialSite!.companyId;
         }
@@ -222,6 +226,10 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         contactNumber: row.contactController.text,
         status: _status,
         companyId: resolvedCompanyId,
+        timeZone: row.timeZoneController.text.isNotEmpty
+            ? row.timeZoneController.text
+            : null,
+
       );
     }).toList();
 
@@ -239,8 +247,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       orgCode: '', // Removed from UI
       companyId: primaryCompanyId,
       city: _addressRows.first.city,
-      timeZone: _timeZoneController.text,
+      timeZone: null,
       addresses: addresses,
+
     );
 
     final bool success;
@@ -264,330 +273,325 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
     final siteState = ref.watch(siteNotifierProvider);
 
     return Align(
-        alignment: Alignment.centerRight,
-        child: Material(
-            color: Colors.white,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              bottomLeft: Radius.circular(20),
-            ),
-            child: SizedBox(
-                width: 600,
-                height: MediaQuery.of(context).size.height,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                  // Top accent bar
-                  Container(
-                  height: 4,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF141E7A),
-                    borderRadius: BorderRadius.only(topLeft: Radius.circular(20)),
-                  ),
+      alignment: Alignment.centerRight,
+      child: Material(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          bottomLeft: Radius.circular(20),
+        ),
+        child: SizedBox(
+          width: 600,
+          height: MediaQuery.of(context).size.height,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Top accent bar
+              Container(
+                height: 4,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF141E7A),
+                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20)),
                 ),
-                Expanded(
-                  child: Stack(
-                    children: [
-                  SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 48,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.initialSite != null
-                                      ? 'Edit Site Details'
-                                      : 'Register New Site',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF111827),
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Manage manufacturing units and operational sites.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: const Color(0xFF6B7280),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close_rounded, size: 22),
-                            color: const Color(0xFF6B7280),
-                            style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xFFF3F4F6),
-                              padding: const EdgeInsets.all(12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ],
+              ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 48,
                       ),
-                      const SizedBox(height: 32),
-                      _buildInfoBar(),
-                      const SizedBox(height: 48),
-
-                      Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: _buildLabelField(
-                              'SITE IDENTIFIER',
-                              AppAutocomplete<SiteAutocompleteInfo>(
-                                controller: _nameController,
-                                hint: 'e.g. South Site Unit A',
-                                displayStringForOption: (site) =>
-                                site.siteName,
-                                subtitleBuilder: (site) =>
-                                site.companyName ?? '',
-                                optionsBuilder: (textEditingValue) async {
-                                  if (textEditingValue.text.isEmpty) {
-                                    return const Iterable<
-                                        SiteAutocompleteInfo
-                                    >.empty();
-                                  }
-                                  return await ref
-                                      .read(siteNotifierProvider.notifier)
-                                      .searchSites(textEditingValue.text);
-                                },
-                                onSelected: (site) {
-                                  setState(() {
-                                    _selectedSiteName = site.siteName;
-                                    if (_addressRows.isNotEmpty) {
-                                      final row = _addressRows.first;
-
-                                      // Also select the company and registered address if available
-                                      if (site.companyId != null) {
-                                        final group = _companyGroups
-                                            .where(
-                                              (g) => g.addresses.any(
-                                                (a) =>
-                                            a.companyId ==
-                                                site.companyId,
-                                          ),
-                                        )
-                                            .firstOrNull;
-                                        if (group != null) {
-                                          _selectedGroup = group;
-                                          row.selectedRegisteredAddress =
-                                              group.addresses
-                                                  .where(
-                                                    (a) =>
-                                                a.companyId ==
-                                                    site.companyId,
-                                              )
-                                                  .firstOrNull;
-                                        }
-                                      }
-                                    }
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 32),
-                          Expanded(
-                            child: _buildLabelField(
-                              'OWNING COMPANY',
-                              _isLoadingCompanies
-                                  ? const LinearProgressIndicator(
-                                minHeight: 2,
-                              )
-                                  : AppDropdown<CompanyGroup>(
-                                value: _selectedGroup,
-                                items: _companyGroups,
-                                hint: 'Select Company',
-                                itemLabel: (g) => g.name,
-                                onChanged: _onCompanyChanged,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 48),
-
-                      _buildLabelField(
-                        'TIME ZONE REGION',
-                        SizedBox(
-                          width: double.infinity,
-                          child: _buildTimeZoneAutocomplete(),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // Section: Location Details
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
+                          // Header
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const Icon(
-                                Icons.location_on_rounded,
-                                size: 18,
-                                color: Color(0xFF141E7A),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.initialSite != null
+                                          ? 'Edit Site Details'
+                                          : 'Register New Site',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF111827),
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Manage manufacturing units and operational sites.',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        color: const Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'SITE LOCATIONS',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.2,
+                              IconButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                icon: const Icon(Icons.close_rounded, size: 22),
+                                color: const Color(0xFF6B7280),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF3F4F6),
+                                  padding: const EdgeInsets.all(12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          if (widget.initialSite == null)
-                            TextButton.icon(
-                              onPressed: _addAddressRow,
-                              icon: const Icon(
-                                Icons.add_circle_outline_rounded,
-                                size: 16,
-                              ),
-                              label: Text(
-                                'ADD SITE',
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w600,
+                          const SizedBox(height: 32),
+                          _buildInfoBar(),
+                          const SizedBox(height: 48),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildLabelField(
+                                  'SITE NAME',
+                                  AppAutocomplete<SiteAutocompleteInfo>(
+                                    controller: _nameController,
+                                    hint: 'e.g. South Site Unit A',
+                                    displayStringForOption: (site) =>
+                                        site.siteName,
+                                    subtitleBuilder: (site) =>
+                                        site.companyName ?? '',
+                                    optionsBuilder: (textEditingValue) async {
+                                      if (textEditingValue.text.isEmpty) {
+                                        return const Iterable<
+                                          SiteAutocompleteInfo
+                                        >.empty();
+                                      }
+                                      return await ref
+                                          .read(siteNotifierProvider.notifier)
+                                          .searchSites(textEditingValue.text);
+                                    },
+                                    onSelected: (site) {
+                                      setState(() {
+                                        _selectedSiteName = site.siteName;
+                                        if (_addressRows.isNotEmpty) {
+                                          final row = _addressRows.first;
+
+                                          // Also select the company and registered address if available
+                                          if (site.companyId != null) {
+                                            final group = _companyGroups
+                                                .where(
+                                                  (g) => g.addresses.any(
+                                                    (a) =>
+                                                        a.companyId ==
+                                                        site.companyId,
+                                                  ),
+                                                )
+                                                .firstOrNull;
+                                            if (group != null) {
+                                              _selectedGroup = group;
+                                              row.selectedRegisteredAddress =
+                                                  group.addresses
+                                                      .where(
+                                                        (a) =>
+                                                            a.companyId ==
+                                                            site.companyId,
+                                                      )
+                                                      .firstOrNull;
+                                            }
+                                          }
+                                        }
+                                      });
+                                    },
+                                  ),
                                 ),
                               ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF141E7A),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                              const SizedBox(width: 32),
+                              Expanded(
+                                child: _buildLabelField(
+                                  'SELECT COMPANY',
+                                  _isLoadingCompanies
+                                      ? const LinearProgressIndicator(
+                                          minHeight: 2,
+                                        )
+                                      : AppDropdown<CompanyGroup>(
+                                          value: _selectedGroup,
+                                          items: _companyGroups,
+                                          hint: 'Select Company',
+                                          itemLabel: (g) => g.name,
+                                          onChanged: _onCompanyChanged,
+                                        ),
                                 ),
+                              ),
+                            ],
+                          ),
+
+
+
+
+                          const SizedBox(height: 32),
+
+                          // Section: Location Details
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  // const Icon(
+                                  //   Icons.location_on_rounded,
+                                  //   size: 18,
+                                  //   color: Color(0xFF141E7A),
+                                  // ),
+                                  // const SizedBox(width: 8),
+                                  // Text(
+                                  //   'SITE LOCATIONS',
+                                  //   style: GoogleFonts.outfit(
+                                  //     fontSize: 13,
+                                  //     fontWeight: FontWeight.w700,
+                                  //     color: const Color(0xFF141E7A),
+                                  //     letterSpacing: 1.2,
+                                  //   ),
+                                  // ),
+                                ],
+                              ),
+                              if (widget.initialSite == null)
+                                TextButton.icon(
+                                  onPressed: _addAddressRow,
+                                  icon: const Icon(
+                                    Icons.add_circle_outline_rounded,
+                                    size: 16,
+                                  ),
+                                  label: Text(
+                                    'ADD NEW ADDRESS',
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: const Color(0xFF141E7A),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const Divider(
+                            height: 32,
+                            thickness: 1,
+                            color: Color(0xFFF3F4F6),
+                          ),
+
+                          ...List.generate(
+                            _addressRows.length,
+                            (index) => _buildAddressRow(index),
+                          ),
+                          const SizedBox(height: 40),
+
+                          // Status Selector
+                          Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF9FAFB),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFF3F4F6),
                               ),
                             ),
-                        ],
-                      ),
-                      const Divider(
-                        height: 32,
-                        thickness: 1,
-                        color: Color(0xFFF3F4F6),
-                      ),
-
-                      ...List.generate(
-                        _addressRows.length,
-                            (index) => _buildAddressRow(index),
-                      ),
-                      const SizedBox(height: 40),
-
-                      // Status Selector
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0xFFF3F4F6),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
                               children: [
-                                Text(
-                                  'SITE STATUS',
-                                  style: GoogleFonts.outfit(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                    color: const Color(0xFF141E7A),
-                                    letterSpacing: 1.1,
-                                  ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'STATUS',
+                                      style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                        color: const Color(0xFF141E7A),
+                                        letterSpacing: 1.1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Set the operational status of this site.',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: const Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Set the operational status of this site.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: const Color(0xFF6B7280),
-                                  ),
+                                const Spacer(),
+                                _buildStatusToggle(
+                                  1,
+                                  'Active',
+                                  const Color(0xFF10B981),
+                                ),
+                                const SizedBox(width: 12),
+                                _buildStatusToggle(
+                                  0,
+                                  'Inactive',
+                                  const Color(0xFF6B7280),
                                 ),
                               ],
                             ),
-                            const Spacer(),
-                            _buildStatusToggle(
-                              1,
-                              'Active',
-                              const Color(0xFF10B981),
-                            ),
-                            const SizedBox(width: 12),
-                            _buildStatusToggle(
-                              0,
-                              'Inactive',
-                              const Color(0xFF6B7280),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 64),
+                          ),
+                          const SizedBox(height: 64),
 
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: siteState.isProcessing ? null : _save,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF141E7A),
-                            foregroundColor: Colors.white,
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: siteState.isProcessing ? null : _save,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF141E7A),
+                                foregroundColor: Colors.white,
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: siteState.isProcessing
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                  : Text(
+                                      widget.initialSite != null
+                                          ? 'UPDATE SITE'
+                                          : 'REGISTER SITE',
+                                      style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                             ),
                           ),
-                          child: siteState.isProcessing
-                              ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                              : Text(
-                            widget.initialSite != null
-                                ? 'UPDATE SITE'
-                                : 'REGISTER SITE',
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                            ),
+                        ],
+                      ),
+                    ),
+                    if (siteState.isProcessing) ...[
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black12,
+                          child: const Center(
+                            child: CircularProgressIndicator(),
                           ),
                         ),
                       ),
                     ],
-                  ),
-                ),
-                if (siteState.isProcessing) ...[
-        Positioned.fill(
-        child: Container(
-        color: Colors.black12,
-            child: const Center(  child: CircularProgressIndicator(),
-            ),
-        ),
-        ),
-                ],
-                    ],
-                  ),
-                ),
                   ],
                 ),
-            ),
+              ),
+            ],
+          ),
         ),
+      ),
     );
   }
 
@@ -713,7 +717,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'SITE #${index + 1}',
+                'ADDRESS #${index + 1}',
                 style: GoogleFonts.outfit(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -759,7 +763,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
               Expanded(
                 flex: 2,
                 child: _buildLabelField(
-                  'STREET ADDRESS',
+                  'ADDRESS',
                   AppTextField(
                     controller: controllers.addressController,
                     hint: 'Address Line 1',
@@ -811,15 +815,20 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
               setState(() => controllers.city = value);
             },
           ),
+          const SizedBox(height: 24),
+          _buildLabelField(
+            'TIME ZONE REGION',
+            _buildTimeZoneAutocomplete(controllers.timeZoneController),
+          ),
         ],
       ),
     );
+
   }
 
-
-  Widget _buildTimeZoneAutocomplete() {
+  Widget _buildTimeZoneAutocomplete(TextEditingController controller) {
     return AppAutocomplete<String>(
-      controller: _timeZoneController,
+      controller: controller,
       hint: 'Search Time Zone (e.g. Asia/Kolkata)',
       displayStringForOption: (option) => option,
       optionsBuilder: (textEditingValue) async {
@@ -828,21 +837,21 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         }
         return TimeZoneUtils.ianaTimeZones.where((String option) {
           return option.toLowerCase().contains(
-                textEditingValue.text.toLowerCase(),
-              );
+            textEditingValue.text.toLowerCase(),
+          );
         });
       },
     );
   }
 
+
   @override
   void dispose() {
     _nameController.dispose();
-    _timeZoneController.dispose();
     for (var controllers in _addressRows) {
+
       controllers.dispose();
     }
     super.dispose();
   }
 }
-

@@ -16,7 +16,6 @@ import '../widgets/search_and_filters.dart';
 import '../widgets/statistics_cards.dart';
 import '../widgets/view_toggle.dart';
 
-
 class DashboardWide extends ConsumerStatefulWidget {
   const DashboardWide({super.key});
 
@@ -77,7 +76,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
       // Update markers if needed (for map view)
       _updateMarkerFromMqtt(parsedData);
-
     } catch (e) {
       print('Error handling MQTT message: $e');
     }
@@ -91,7 +89,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     final tanksAsync = ref.read(tankDataListProvider);
     tanksAsync.whenData((tanks) {
       final tank = tanks.firstWhere(
-            (t) => t.deviceId == deviceId,
+        (t) => t.deviceId == deviceId,
         orElse: () => null as TankDataModel,
       );
 
@@ -104,7 +102,8 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
               position: LatLng(tank.latitude, tank.longitude),
               infoWindow: InfoWindow(
                 title: tank.tankName,
-                snippet: 'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
+                snippet:
+                    'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
               ),
             ),
           );
@@ -150,7 +149,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             value = value.substring(0, value.length - 1);
           }
 
-
           switch (key) {
             case 'TNP':
               level = double.tryParse(value);
@@ -192,7 +190,8 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             position: LatLng(tank.latitude, tank.longitude),
             infoWindow: InfoWindow(
               title: tank.tankName,
-              snippet: 'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
+              snippet:
+                  'Level: ${tank.level.toStringAsFixed(1)}% | Status: ${tank.status}',
             ),
           ),
         );
@@ -200,7 +199,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
       if (mounted) setState(() {});
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +209,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
     ref.listen<AsyncValue<MqttMessageModel>>(
       mqttTopicStreamProvider(tankStatusTopic),
-          (previous, next) {
+      (previous, next) {
         next.whenData((message) {
           _handleMqttMessage(message);
         });
@@ -228,12 +226,22 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
             children: [
               Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
               const SizedBox(height: 16),
-              Text('Failed to load tank data',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w600)),
+              Text(
+                'Failed to load tank data',
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text(error.toString(),
-                  style: GoogleFonts.outfit(fontSize: 14, color: Colors.grey.shade600),
-                  textAlign: TextAlign.center),
+              Text(
+                error.toString(),
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                ),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
@@ -295,42 +303,12 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                     });
                   },
                 ),
-                const SizedBox(height: 12),
-                _isListView ? DashboardListView(
-                  groupedTanks: groupedTanks,
-                  filteredTanks: tanksData,
-                  selectedRegion: _selectedRegion,
-                  selectedStatus: _selectedStatus,
-                  searchQuery: _searchQuery,
-                  onTankTap: (tank) {
-                    print('Tapped on tank: ${tank.tankName}');
-                  },
-                  onSiteTap: (site) {
-                    print('Tapped on site: ${site.siteName}');
-                  },
-                  onMenuTap: (tank, action) async {
-                    print('Menu action: $action for tank: ${tank.tankName}');
-
-                    // Handle View Details action
-                    if (action == 'view') {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TankDetailsView(tankId: tank.id),
-                        ),
-                      );
-                    } else if (action == 'edit') {
-                      // Handle edit action
-                      print('Edit tank: ${tank.tankName}');
-                    } else if (action == 'alerts') {
-                      // Handle alerts action
-                      print('Set alerts for: ${tank.tankName}');
-                    } else if (action == 'history') {
-                      // Handle history action
-                      print('View history for: ${tank.tankName}');
-                    }
-                  },
-                )
+                const SizedBox(height: 16),
+                _isListView
+                    ? DashboardListView(
+                        groupedTanks: groupedTanks,
+                        filteredTanks: tanksData,
+                      )
                     : DashboardMapView(tanksData: tanksData),
               ],
             ),
@@ -351,10 +329,9 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
       }
       _subscribedTopics.clear();
     } catch (e) {
-      print('Error during MQTT cleanup: $e');
+      print('Error during MQTT cleanup message: $e');
     }
 
     super.dispose();
   }
-
 }

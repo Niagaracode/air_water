@@ -35,8 +35,10 @@ class CompanyAddressControllers {
 class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
   final _nameController = TextEditingController();
   final _emailTemplateController = TextEditingController();
+  final _passwordController = TextEditingController();
   List<CompanyAddressControllers> _addressRows = [];
   int _status = 1;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -106,6 +108,9 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
         'email_template': _emailTemplateController.text.trim().isEmpty
             ? null
             : _emailTemplateController.text.trim(),
+        'password': _passwordController.text.trim().isEmpty
+            ? null
+            : _passwordController.text.trim(),
         'country': row.country,
         'state': row.state,
         'city': row.city,
@@ -144,6 +149,9 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
         emailTemplate: _emailTemplateController.text.trim().isEmpty
             ? null
             : _emailTemplateController.text.trim(),
+        password: _passwordController.text.trim().isEmpty
+            ? null
+            : _passwordController.text.trim(),
       );
 
       final success = await ref
@@ -243,107 +251,109 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
 
                       // Company Name
                       _buildLabelField(
-                        'COMPANY ENTITY NAME',
+                        'COMPANY NAME',
                         widget.initialAddress != null
-                            ? TextField(
-                          controller: _nameController,
-                          enabled: true,
-                          decoration: InputDecoration(
-                            hintText: 'Enter Company name',
-                            filled: true,
-                            fillColor: const Color(0xFFF9FAFB),
-                            border: OutlineInputBorder(
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE5E7EB),
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                          ),
-                        )
+                            ? AppTextField(
+                                controller: _nameController,
+                                hint: 'Enter Company name',
+                                readOnly: false,
+                              )
                             : AppAutocomplete<String>(
-                          controller: _nameController,
-                          hint: 'e.g. Acme Corp Industries',
-                          displayStringForOption: (option) => option,
-                          optionsBuilder: (textEditingValue) async {
-                            if (textEditingValue.text.isEmpty) {
-                              return const Iterable<String>.empty();
-                            }
-                            final companies = await ref
-                                .read(companyRepositoryProvider)
-                                .getCompanyAutocomplete(
-                              q: textEditingValue.text,
-                            );
-                            return companies.map((e) => e.name).toList();
-                          },
-                        ),
+                                controller: _nameController,
+                                hint: 'e.g. Acme Corp Industries',
+                                displayStringForOption: (option) => option,
+                                optionsBuilder: (textEditingValue) async {
+                                  if (textEditingValue.text.isEmpty) {
+                                    return const Iterable<String>.empty();
+                                  }
+                                  final companies = await ref
+                                      .read(companyRepositoryProvider)
+                                      .getCompanyAutocomplete(
+                                        q: textEditingValue.text,
+                                      );
+                                  return companies.map((e) => e.name).toList();
+                                },
+                              ),
                       ),
                       const SizedBox(height: 24),
 
                       // Email Template
                       _buildLabelField(
-                        'EMAIL',
+                        'SENDER EMAIL',
                         AppTextField(
                           controller: _emailTemplateController,
                           hint: 'e.g. alerts@company.com',
                         ),
                       ),
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 24),
+
+                      // Password
+                      _buildLabelField(
+                        'SENDER PASSWORD',
+                        AppTextField(
+                          controller: _passwordController,
+                          hint: 'Enter password',
+                          obscureText: _obscurePassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: const Color(0xFF6B7280),
+                            ),
+                            onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // const SizedBox(height: 48),
 
                       // Location Details section header
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on_rounded,
-                                size: 18,
-                                color: Color(0xFF141E7A),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'REGISTERED ADDRESSES',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (widget.initialAddress == null)
-                            TextButton.icon(
-                              onPressed: _addAddressRow,
-                              icon: const Icon(
-                                Icons.add_circle_outline_rounded,
-                                size: 16,
-                              ),
-                              label: Text(
-                                'ADD ADDRESS',
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF141E7A),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //   children: [
+                      //     Row(
+                      //       children: [
+                      //         const Icon(
+                      //           Icons.location_on_rounded,
+                      //           size: 18,
+                      //           color: Color(0xFF141E7A),
+                      //         ),
+                      //         const SizedBox(width: 8),
+                      //         Text(
+                      //           'ADDRESS',
+                      //           style: GoogleFonts.outfit(
+                      //             fontSize: 13,
+                      //             fontWeight: FontWeight.w700,
+                      //             color: const Color(0xFF141E7A),
+                      //             letterSpacing: 1.2,
+                      //           ),
+                      //         ),
+                      //       ],
+                      //     ),
+                      //     // if (widget.initialAddress == null)
+                      //     //   TextButton.icon(
+                      //     //     onPressed: _addAddressRow,
+                      //     //     icon: const Icon(
+                      //     //       Icons.add_circle_outline_rounded,
+                      //     //       size: 16,
+                      //     //     ),
+                      //     //     label: Text(
+                      //     //       'ADD ADDRESS',
+                      //     //       style: GoogleFonts.outfit(
+                      //     //         fontWeight: FontWeight.w600,
+                      //     //       ),
+                      //     //     ),
+                      //     //     style: TextButton.styleFrom(
+                      //     //       foregroundColor: const Color(0xFF141E7A),
+                      //     //       padding: const EdgeInsets.symmetric(
+                      //     //         horizontal: 12,
+                      //     //       ),
+                      //     //     ),
+                      //     //   ),
+                      //   ],
+                      // ),
                       const Divider(
                         height: 32,
                         thickness: 1,
@@ -352,9 +362,9 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                       const SizedBox(height: 8),
                       ...List.generate(
                         _addressRows.length,
-                            (index) => _buildAddressRow(index),
+                        (index) => _buildAddressRow(index),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 15),
 
                       // Status Selector
                       Container(
@@ -371,7 +381,7 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'ENTITY STATUS',
+                                    'STATUS',
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 12,
@@ -540,78 +550,53 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
     final controllers = _addressRows[index];
 
     return Container(
-        margin: const EdgeInsets.only(bottom: 24),
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFF3F4F6)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          key: ValueKey(controllers),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        key: ValueKey(controllers),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'ADDRESS #${index + 1}',
-              style: GoogleFonts.outfit(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF9CA3AF),
-                letterSpacing: 1.5,
-              ),
-            ),
-            if (_addressRows.length > 1 && widget.initialAddress == null)
-              IconButton(
-                onPressed: () => _removeAddressRow(index),
-                icon: const Icon(
-                  Icons.delete_outline_rounded,
-                  size: 18,
-                  color: Colors.redAccent,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Text(
+              //   'ADDRESS #${index + 1}',
+              //   style: GoogleFonts.outfit(
+              //     fontSize: 11,
+              //     fontWeight: FontWeight.w800,
+              //     color: const Color(0xFF9CA3AF),
+              //     letterSpacing: 1.5,
+              //   ),
+              // ),
+              if (_addressRows.length > 1 && widget.initialAddress == null)
+                IconButton(
+                  onPressed: () => _removeAddressRow(index),
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    size: 18,
+                    color: Colors.redAccent,
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.red.withValues(alpha: 0.05),
+                    padding: const EdgeInsets.all(8),
+                  ),
                 ),
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.red.withValues(alpha: 0.05),
-                  padding: const EdgeInsets.all(8),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: _buildLabelField(
-                'STREET ADDRESS',
-                AppTextField(
-                  controller: controllers.addressController,
-                  hint: 'Address Line 1',
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildLabelField(
-                'POSTAL CODE',
-                AppTextField(
-                  controller: controllers.pinCodeController,
-                  hint: 'PIN Code',
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        LocationPicker(
+            ],
+          ),
+          const SizedBox(height: 20),
+          LocationPicker(
             key: ValueKey(
               'loc_${controllers.country}_${controllers.state}_${controllers.city}',
             ),
@@ -625,18 +610,44 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                 controllers.city = null;
               });
             },
-          onStateChanged: (value) {
-            setState(() {
-              controllers.state = value;
-              controllers.city = null;
-            });
-          },
-          onCityChanged: (value) {
-            setState(() => controllers.city = value);
-          },
-        ),
-          ],
-        ),
+            onStateChanged: (value) {
+              setState(() {
+                controllers.state = value;
+                controllers.city = null;
+              });
+            },
+            onCityChanged: (value) {
+              setState(() => controllers.city = value);
+            },
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: _buildLabelField(
+                  'ADDRESS',
+                  AppTextField(
+                    controller: controllers.addressController,
+                    hint: 'Enter Address',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildLabelField(
+                  'POSTAL CODE',
+                  AppTextField(
+                    controller: controllers.pinCodeController,
+                    hint: 'PIN Code',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 
@@ -644,8 +655,9 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
   void dispose() {
     _nameController.dispose();
     _emailTemplateController.dispose();
-    for (var controllers in _addressRows) {
-      controllers.dispose();
+    _passwordController.dispose();
+    for (var row in _addressRows) {
+      row.dispose();
     }
     super.dispose();
   }

@@ -9,7 +9,9 @@ class CompanyAddress {
   final String? contactNumber;
   final int status;
   final int? companyId;
+  final String? timeZone;
   final String? createdAt;
+
 
   CompanyAddress({
     this.addressLine1,
@@ -22,8 +24,10 @@ class CompanyAddress {
     this.contactNumber,
     required this.status,
     this.companyId,
+    this.timeZone,
     this.createdAt,
   });
+
 
   factory CompanyAddress.fromJson(Map<String, dynamic> json) {
     return CompanyAddress(
@@ -37,8 +41,10 @@ class CompanyAddress {
       contactNumber: json['contact_number'] as String?,
       status: (json['status'] as num?)?.toInt() ?? 1,
       companyId: json['company_id'] as int?,
+      timeZone: json['time_zone'] as String?,
       createdAt: json['created_at'] as String?,
     );
+
   }
 
   Map<String, dynamic> toJson() {
@@ -53,8 +59,10 @@ class CompanyAddress {
       'contact_number': contactNumber,
       'status': status,
       'company_id': companyId,
+      'time_zone': timeZone,
       'created_at': createdAt,
     };
+
   }
 
   String get fullAddress {
@@ -120,12 +128,14 @@ class CompanyGroup {
   final List<CompanyAddress> addresses;
   final String? createdAt;
   final String? emailTemplate;
+  final String? password;
 
   CompanyGroup({
     required this.name,
     required this.addresses,
     this.createdAt,
     this.emailTemplate,
+    this.password,
   });
 
   factory CompanyGroup.fromJson(Map<String, dynamic> json) {
@@ -136,6 +146,7 @@ class CompanyGroup {
           .toList(),
       createdAt: json['created_at'] as String?,
       emailTemplate: json['email_template'] as String?,
+      password: json['password'] as String?,
     );
   }
 
@@ -193,12 +204,14 @@ class CompanyCreateRequest {
   final int createdBy;
   final List<CompanyAddress> addresses;
   final String? emailTemplate;
+  final String? password;
 
   CompanyCreateRequest({
     required this.name,
     required this.createdBy,
     required this.addresses,
     this.emailTemplate,
+    this.password,
   });
 
   Map<String, dynamic> toJson() {
@@ -207,6 +220,7 @@ class CompanyCreateRequest {
       'created_by': createdBy,
       'addresses': addresses.map((a) => a.toJson()).toList(),
       'email_template': emailTemplate,
+      'password': password,
     };
   }
 }

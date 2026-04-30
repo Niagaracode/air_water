@@ -32,4 +32,30 @@ class ProductRepositoryImpl implements ProductRepository {
       throw AppException(message ?? 'Failed to load products');
     }
   }
+
+  @override
+  Future<void> updateProduct(int id, Map<String, dynamic> data) async {
+    try {
+      await _api.updateProduct(id, data);
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final message = data is Map && data['message'] != null
+          ? data['message'].toString()
+          : 'Failed to update product';
+      throw AppException(message);
+    }
+  }
+
+  @override
+  Future<int> createProduct(Map<String, dynamic> data) async {
+    try {
+      return await _api.createProduct(data);
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final message = data is Map && data['message'] != null
+          ? data['message'].toString()
+          : 'Failed to create product';
+      throw AppException(message);
+    }
+  }
 }

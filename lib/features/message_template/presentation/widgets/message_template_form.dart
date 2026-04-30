@@ -303,7 +303,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                         _buildTextFieldWithPlaceholders(
                           label: 'BODY CONTENT (HTML SUPPORTED)',
                           controller: _bodyController,
-                          hint: 'Enter template body with HTML formatting...\n\nExample:\n<h2>{site_name} Alert</h2>\n<p>Dear {customer_name},</p>\n<p>Tank {tank_name} has reached {Tank_display_level} at {last_reading_time}</p>\n<p>Event: {event_message}</p>',
+                          hint: 'Enter template body with HTML formatting...\n\nExample:\n<h2>{site_name} Alert</h2>\n<p>Dear {customer_name},</p>\n<p>Tank {tank_name} has reached {Tank_display_level} at {last_reading_time}</p>',
                           icon: Icons.code,
                           maxLines: 10,
                         ),

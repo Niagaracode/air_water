@@ -77,15 +77,15 @@ const userMenu = [
     icon: Icons.person_rounded,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),
+  // SidebarMenuItem(
+  //   key: 'Group',
+  //   label: 'Group',
+  //   icon: Icons.groups_rounded,
+  //   allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+  // ),
   SidebarMenuItem(
     key: 'Group',
     label: 'Group',
-    icon: Icons.groups_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
-  ),
-  SidebarMenuItem(
-    key: 'Asset Group',
-    label: 'Asset Group',
     icon: Icons.layers_outlined,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),
@@ -103,10 +103,7 @@ const eventsMenu = [
     key: 'Rule',
     label: 'Rule',
     icon: Icons.gavel_rounded,
-    allowedRoles: [
-      UserRole.superAdmin, 
-      UserRole.companyAdmin,
-    ],
+    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),
   SidebarMenuItem(
     key: 'Alarm',
@@ -123,18 +120,13 @@ const eventsMenu = [
     key: 'Event',
     label: 'Event',
     icon: Icons.event_note_rounded,
-    allowedRoles: [
-      UserRole.technician,
-      UserRole.customer,
-    ],
+    allowedRoles: [UserRole.technician, UserRole.customer],
   ),
   SidebarMenuItem(
     key: 'Setting',
     label: 'Setting',
     icon: Icons.settings_rounded,
-    allowedRoles: [
-      UserRole.customer,
-    ],
+    allowedRoles: [UserRole.customer],
   ),
   SidebarMenuItem(
     key: 'Roaster',
@@ -147,7 +139,7 @@ const eventsMenu = [
     label: 'Report',
     icon: Icons.assessment_rounded,
     allowedRoles: [
-      UserRole.superAdmin, 
+      UserRole.superAdmin,
       UserRole.companyAdmin,
       UserRole.technician,
       UserRole.customer,
