@@ -49,9 +49,8 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       _mobileController.text = widget.user!.mobileNumber ?? '';
       _companyAutocompleteController.text = widget.user!.companyName ?? '';
       _status = widget.user!.status;
-      final h = widget.user!.sessionHours ?? 24;
-      final m = widget.user!.sessionMinutes ?? 0;
-      _timeoutController.text = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
+      _timeoutController.text = (widget.user!.sessionHours ?? 24).toString();
+
 
       if (widget.user!.companyId != null && widget.user!.companyName != null) {
         _selectedCompany = CompanyAutocomplete(
@@ -60,8 +59,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
         );
       }
     } else {
-      _timeoutController.text = '24:00';
+      _timeoutController.text = '24';
     }
+
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final currentUser = ref.read(userProvider).currentUser;
@@ -97,46 +97,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       debugPrint('Error loading roles: $e');
     } finally {
       if (mounted) setState(() => _isLoadingRoles = false);
-    }
-  }
-
-  Future<void> _selectTime() async {
-    final currentText = _timeoutController.text;
-    TimeOfDay? initialTime;
-
-    if (currentText.contains(':')) {
-      final parts = currentText.split(':');
-      final h = int.tryParse(parts[0]) ?? 24;
-      final m = int.tryParse(parts[1]) ?? 0;
-      initialTime = TimeOfDay(hour: h % 24, minute: m % 60);
-    } else {
-      initialTime = const TimeOfDay(hour: 0, minute: 0);
-    }
-
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: initialTime,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF141E7A),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF111827),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      if (mounted) {
-        setState(() {
-          _timeoutController.text =
-              '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-        });
-      }
     }
   }
 
@@ -189,8 +149,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           ? null
           : _mobileController.text,
       status: _status,
-      sessionHours: int.tryParse(_timeoutController.text.split(':')[0]) ?? 24,
-      sessionMinutes: int.tryParse(_timeoutController.text.split(':').length > 1 ? _timeoutController.text.split(':')[1] : '0') ?? 0,
+      sessionHours: int.tryParse(_timeoutController.text) ?? 24,
+      sessionMinutes: 0,
+
     );
 
     final userNotifier = ref.read(userProvider.notifier);
@@ -418,22 +379,14 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                               const SizedBox(width: 16),
                               Expanded(
                                 child: _buildLabelField(
-                                  'TIMEOUT',
+                                  'TIMEOUT (HOURS)',
                                   AppTextField(
                                     controller: _timeoutController,
-                                    hint: '24:00',
-                                    suffixIcon: IconButton(
-                                      icon: const Icon(
-                                        Icons.access_time_rounded,
-                                        size: 20,
-                                        color: Color(0xFF141E7A),
-                                      ),
-                                      onPressed: _selectTime,
-                                    ),
-                                    onTap: _selectTime,
-                                    readOnly: true,
+                                    hint: 'e.g. 24',
+                                    keyboardType: TextInputType.number,
                                   ),
                                 ),
+
                               ),
                             ],
                           ),

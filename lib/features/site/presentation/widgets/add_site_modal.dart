@@ -15,14 +15,18 @@ import '../../../../shared/utils/time_zones.dart';
 
 class AddSiteModal extends ConsumerStatefulWidget {
   final Site? initialSite;
-  const AddSiteModal({super.key, this.initialSite});
+  final int? targetAddressId;
+  const AddSiteModal({super.key, this.initialSite, this.targetAddressId});
+
 
   @override
   ConsumerState<AddSiteModal> createState() => _AddSiteModalState();
 }
 
 class AddressControllers {
+  int? id;
   final addressController = TextEditingController();
+
   final pinCodeController = TextEditingController();
   final contactController = TextEditingController();
   final timeZoneController = TextEditingController();
@@ -44,8 +48,17 @@ class AddressControllers {
   void updateFromRegistered(CompanyAddress addr) {
     isProgrammaticUpdate = true;
     selectedRegisteredAddress = addr;
+    addressController.text = addr.addressLine1 ?? '';
+    pinCodeController.text = addr.pincode ?? '';
+
+    contactController.text = addr.contactNumber ?? '';
+    timeZoneController.text = addr.timeZone ?? '';
+    country = addr.country;
+    state = addr.state;
+    city = addr.city;
     isProgrammaticUpdate = false;
   }
+
 }
 
 class _AddSiteModalState extends ConsumerState<AddSiteModal> {
@@ -110,6 +123,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       if (mounted) {
         setState(() => _isLoadingCompanies = false);
         if (widget.initialSite != null) {
+          // Find initial group
           final initialGroup = _companyGroups
               .where(
                 (g) => g.addresses.any(
@@ -119,13 +133,61 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
               .firstOrNull;
           if (initialGroup != null) {
             _selectedGroup = initialGroup;
-            _addressRows.first.selectedRegisteredAddress = initialGroup
-                .addresses
-                .where((a) => a.companyId == widget.initialSite!.companyId)
-                .firstOrNull;
+          }
+
+          // Fetch ALL addresses for this plant
+          try {
+            final siteRepo = ref.read(siteRepositoryProvider);
+            final addressesData = await siteRepo.getSiteWithAddresses(widget.initialSite!.id);
+            
+            if (addressesData.isNotEmpty) {
+              setState(() {
+                // Dispose existing rows first
+                for (var row in _addressRows) {
+                  row.dispose();
+                }
+                _addressRows.clear();
+                
+                // If targetAddressId is provided, filter to show only that address
+                var finalAddresses = addressesData;
+                if (widget.targetAddressId != null) {
+                  finalAddresses = addressesData
+                      .where((a) => a['address_id'].toString() == widget.targetAddressId.toString())
+                      .toList();
+
+
+                }
+
+                for (var addrJson in finalAddresses) {
+                  final controllers = AddressControllers();
+                  controllers.id = addrJson['address_id'] as int?;
+
+                  controllers.addressController.text = addrJson['address_line_1'] ?? '';
+                  controllers.pinCodeController.text = addrJson['pincode'] ?? '';
+                  controllers.contactController.text = addrJson['contact_number'] ?? '';
+                  controllers.timeZoneController.text = addrJson['time_zone'] ?? '';
+                  controllers.country = addrJson['country_name'];
+                  controllers.state = addrJson['state_name'];
+                  controllers.city = addrJson['city_name'];
+                  
+                  // Try to find if this matches a registered address in the selected group
+                  if (_selectedGroup != null) {
+                    controllers.selectedRegisteredAddress = _selectedGroup!.addresses
+                        .where((a) => a.companyId == addrJson['company_id'])
+                        .firstOrNull;
+                  }
+                  
+                  _addressRows.add(controllers);
+                }
+
+              });
+            }
+          } catch (e) {
+            debugPrint('Error fetching plant addresses: $e');
           }
         }
       }
+
     }
   }
 
@@ -163,9 +225,15 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
 
   void _addAddressRow() {
     setState(() {
-      _addressRows.add(AddressControllers());
+      final newRow = AddressControllers();
+      // If we have an existing row, maybe default the timezone?
+      if (_addressRows.isNotEmpty) {
+        newRow.timeZoneController.text = _addressRows.first.timeZoneController.text;
+      }
+      _addressRows.add(newRow);
     });
   }
+
 
   void _removeAddressRow(int index) {
     if (_addressRows.length > 1) {
@@ -218,6 +286,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       resolvedCompanyId ??= _selectedGroup?.addresses.firstOrNull?.companyId;
 
       return CompanyAddress(
+        id: row.id,
         addressLine1: row.addressController.text,
         pincode: row.pinCodeController.text,
         country: row.country ?? '',
@@ -231,6 +300,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
             : null,
 
       );
+
     }).toList();
 
     final primaryCompanyId = addresses.first.companyId;
@@ -247,10 +317,11 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       orgCode: '', // Removed from UI
       companyId: primaryCompanyId,
       city: _addressRows.first.city,
-      timeZone: null,
+      timeZone: '--',
       addresses: addresses,
-
+      isPartialUpdate: widget.targetAddressId != null,
     );
+
 
     final bool success;
     if (widget.initialSite != null) {
@@ -441,27 +512,11 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(
-                                children: [
-                                  // const Icon(
-                                  //   Icons.location_on_rounded,
-                                  //   size: 18,
-                                  //   color: Color(0xFF141E7A),
-                                  // ),
-                                  // const SizedBox(width: 8),
-                                  // Text(
-                                  //   'SITE LOCATIONS',
-                                  //   style: GoogleFonts.outfit(
-                                  //     fontSize: 13,
-                                  //     fontWeight: FontWeight.w700,
-                                  //     color: const Color(0xFF141E7A),
-                                  //     letterSpacing: 1.2,
-                                  //   ),
-                                  // ),
-                                ],
+                                children: [],
                               ),
-                              if (widget.initialSite == null)
-                                TextButton.icon(
-                                  onPressed: _addAddressRow,
+                              TextButton.icon(
+                                onPressed: _addAddressRow,
+
                                   icon: const Icon(
                                     Icons.add_circle_outline_rounded,
                                     size: 16,
@@ -811,6 +866,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                 controllers.city = null;
               });
             },
+
             onCityChanged: (value) {
               setState(() => controllers.city = value);
             },
@@ -831,7 +887,13 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       controller: controller,
       hint: 'Search Time Zone (e.g. Asia/Kolkata)',
       displayStringForOption: (option) => option,
+      onSelected: (String selection) {
+        controller.text = selection;
+        setState(() {});
+      },
       optionsBuilder: (textEditingValue) async {
+        // If text is empty and we have an initial value in controller, show all or filtered?
+        // Actually, just follow standard behavior.
         if (textEditingValue.text.isEmpty) {
           return const Iterable<String>.empty();
         }
@@ -842,6 +904,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         });
       },
     );
+
   }
 
 

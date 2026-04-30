@@ -1,4 +1,6 @@
 class CompanyAddress {
+  final int? id;
+
   final String? addressLine1;
   final String? addressLine2;
   final String? addressLine3;
@@ -13,7 +15,9 @@ class CompanyAddress {
   final String? createdAt;
 
 
+
   CompanyAddress({
+    this.id,
     this.addressLine1,
     this.addressLine2,
     this.addressLine3,
@@ -29,8 +33,10 @@ class CompanyAddress {
   });
 
 
+
   factory CompanyAddress.fromJson(Map<String, dynamic> json) {
     return CompanyAddress(
+      id: json['id'] as int?,
       addressLine1: json['address_line_1'] as String?,
       addressLine2: json['address_line_2'] as String?,
       addressLine3: json['address_line_3'] as String?,
@@ -47,8 +53,10 @@ class CompanyAddress {
 
   }
 
+
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'address_line_1': addressLine1,
       'address_line_2': addressLine2,
       'address_line_3': addressLine3,
@@ -64,6 +72,7 @@ class CompanyAddress {
     };
 
   }
+
 
   String get fullAddress {
     final parts = [

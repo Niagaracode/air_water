@@ -64,7 +64,8 @@ class SiteRepositoryImpl implements SiteRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> getSiteWithAddresses(int id) async {
+  Future<List<Map<String, dynamic>>> getSiteWithAddresses(int id) async {
     return await _api.getSiteWithAddresses(id);
   }
 }
+

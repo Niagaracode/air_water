@@ -16,8 +16,8 @@ final companyRepositoryProvider = Provider<CompanyRepository>(
 
 class CompanyState {
   final List<CompanyGroup> groupedCompanies;
-  final Set<String> expandedGroups;
   final bool isLoading;
+
   final bool hasMore;
   final int page;
   final int totalEntries;
@@ -29,8 +29,8 @@ class CompanyState {
 
   CompanyState({
     this.groupedCompanies = const [],
-    this.expandedGroups = const {},
     this.isLoading = false,
+
     this.isProcessing = false,
     this.hasMore = true,
     this.page = 1,
@@ -43,8 +43,8 @@ class CompanyState {
 
   CompanyState copyWith({
     List<CompanyGroup>? groupedCompanies,
-    Set<String>? expandedGroups,
     bool? isLoading,
+
     bool? hasMore,
     int? page,
     int? totalEntries,
@@ -58,8 +58,8 @@ class CompanyState {
   }) {
     return CompanyState(
       groupedCompanies: groupedCompanies ?? this.groupedCompanies,
-      expandedGroups: expandedGroups ?? this.expandedGroups,
       isLoading: isLoading ?? this.isLoading,
+
       isProcessing: isProcessing ?? this.isProcessing,
       hasMore: hasMore ?? this.hasMore,
       page: page ?? this.page,
@@ -120,19 +120,18 @@ class CompanyNotifier extends Notifier<CompanyState> {
       if (timestamp != _lastRequestTimestamp) return;
 
       final updatedGroupedCompanies = _filterCompanies(response.data);
-      final expandedGroups = updatedGroupedCompanies.map((g) => g.name).toSet();
       
       // Calculate how many were filtered to adjust total count if needed
+
       final filteredOutCount = response.data.length - updatedGroupedCompanies.length;
 
       state = state.copyWith(
         groupedCompanies: updatedGroupedCompanies,
         isLoading: false,
-        hasMore: response.pagination.page < response.pagination.totalPages,
         page: 1,
         totalEntries: response.pagination.total - filteredOutCount,
-        expandedGroups: expandedGroups,
       );
+
     } catch (e) {
       if (timestamp != _lastRequestTimestamp) return;
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -156,16 +155,15 @@ class CompanyNotifier extends Notifier<CompanyState> {
       );
       
       final filteredNew = _filterCompanies(response.data);
-      final newExpanded = filteredNew.map((g) => g.name).toSet();
+
 
       state = state.copyWith(
         groupedCompanies: [...state.groupedCompanies, ...filteredNew],
         isLoading: false,
-        hasMore: response.pagination.page < response.pagination.totalPages,
         page: nextPage,
         totalEntries: state.totalEntries + filteredNew.length,
-        expandedGroups: {...state.expandedGroups, ...newExpanded},
       );
+
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
@@ -208,18 +206,8 @@ class CompanyNotifier extends Notifier<CompanyState> {
     loadGroupedCompanies(isReload: true);
   }
 
-  void toggleGroup(String companyName) {
-    final expanded = Set<String>.from(state.expandedGroups);
-    if (expanded.contains(companyName)) {
-      expanded.clear();
-    } else {
-      expanded.clear();
-      expanded.add(companyName);
-    }
-    state = state.copyWith(expandedGroups: expanded);
-  }
-
   Future<bool> createCompany(CompanyCreateRequest request) async {
+
     state = state.copyWith(isProcessing: true, error: null);
     try {
       final repository = ref.read(companyRepositoryProvider);
@@ -233,11 +221,10 @@ class CompanyNotifier extends Notifier<CompanyState> {
     }
   }
 
-  /// Reload data from API but keep the current expanded groups intact.
+  /// Reload data from API
   Future<void> _reloadKeepingState() async {
-    final currentExpanded = Set<String>.from(state.expandedGroups);
-
     try {
+
       final repository = ref.read(companyRepositoryProvider);
       final response = await repository.getGroupedCompanies(
         page: state.page,
@@ -249,22 +236,15 @@ class CompanyNotifier extends Notifier<CompanyState> {
 
       final filtered = _filterCompanies(response.data);
       final filteredOutCount = response.data.length - filtered.length;
-
-      // Keep expanded groups that still exist in the new data
-      final newNames = filtered.map((g) => g.name).toSet();
-      final preserved = currentExpanded.intersection(newNames);
-      if (preserved.isEmpty && filtered.isNotEmpty) {
-        preserved.add(filtered.first.name);
-      }
-
       state = state.copyWith(
         groupedCompanies: filtered,
         isLoading: false,
-        hasMore: response.pagination.page < response.pagination.totalPages,
         page: 1,
         totalEntries: response.pagination.total - filteredOutCount,
-        expandedGroups: preserved,
       );
+
+
+
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
