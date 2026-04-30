@@ -55,8 +55,8 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   final List<AddressControllers> _addressRows = [AddressControllers()];
   int _status = 1;
   bool _isLoadingCompanies = false;
-  final _timeZoneController = TextEditingController();
   String? _selectedSiteName;
+
 
   @override
   void initState() {
@@ -75,15 +75,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       _addressRows.first.city = widget.initialSite!.cityName;
       _addressRows.first.timeZoneController.text = widget.initialSite!.timeZone ?? '';
       _selectedSiteName = widget.initialSite!.name;
-
-
-      String timeZone = widget.initialSite!.timeZone ?? '';
-      if (timeZone.isEmpty && widget.initialSite!.countryName == 'India') {
-        timeZone = 'Asia/Kolkata';
-      }
-      _timeZoneController.text = timeZone;
     }
     _nameController.addListener(_onNameChanged);
+
     Future.microtask(() => _loadInitialData());
   }
 
@@ -234,7 +228,8 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         companyId: resolvedCompanyId,
         timeZone: row.timeZoneController.text.isNotEmpty
             ? row.timeZoneController.text
-            : _timeZoneController.text,
+            : null,
+
       );
     }).toList();
 
@@ -252,8 +247,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       orgCode: '', // Removed from UI
       companyId: primaryCompanyId,
       city: _addressRows.first.city,
-      timeZone: _timeZoneController.text,
+      timeZone: null,
       addresses: addresses,
+
     );
 
     final bool success;
@@ -434,15 +430,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 48),
 
-                          _buildLabelField(
-                            'TIME ZONE REGION',
-                            SizedBox(
-                              width: double.infinity,
-                              child: _buildTimeZoneAutocomplete(),
-                            ),
-                          ),
+
+
 
                           const SizedBox(height: 32),
 
@@ -836,9 +826,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
 
   }
 
-  Widget _buildTimeZoneAutocomplete([TextEditingController? controller]) {
+  Widget _buildTimeZoneAutocomplete(TextEditingController controller) {
     return AppAutocomplete<String>(
-      controller: controller ?? _timeZoneController,
+      controller: controller,
       hint: 'Search Time Zone (e.g. Asia/Kolkata)',
       displayStringForOption: (option) => option,
       optionsBuilder: (textEditingValue) async {
@@ -858,8 +848,8 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   @override
   void dispose() {
     _nameController.dispose();
-    _timeZoneController.dispose();
     for (var controllers in _addressRows) {
+
       controllers.dispose();
     }
     super.dispose();

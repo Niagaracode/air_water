@@ -640,9 +640,9 @@ class _TankWideState extends ConsumerState<TankWide> {
                 ],
               ),
             ),
-            AppTableCell(tank.productName ?? '-', flex: 3),
+            AppTableCell(tank.productName ?? '--', flex: 3),
 
-            AppTableCell(tank.unitName ?? '-', flex: 1),
+            AppTableCell(tank.unitName ?? '--', flex: 1),
             Expanded(
               flex: 1,
               child: Align(

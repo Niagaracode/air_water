@@ -331,8 +331,8 @@ class _SiteWideState extends ConsumerState<SiteWide> {
           AppTableHeaderCell('Company', flex: 2),
           AppTableHeaderCell('State', flex: 2),
           AppTableHeaderCell('Country', flex: 2),
-          AppTableHeaderCell('Time Zone', flex: 2),
           AppTableHeaderCell('Status', flex: 2),
+
           AppTableHeaderCell('Address', flex: 3),
           AppTableHeaderCell('Action', width: 100),
         ],
@@ -491,19 +491,18 @@ class _SiteWideState extends ConsumerState<SiteWide> {
         child: Row(
           children: [
             const AppTableCell(null, width: 70), // SI.NO spacing
-            AppTableCell(site.city ?? '—', flex: 2),
-            AppTableCell(site.createdAt?.split('T')[0] ?? '—', flex: 2),
+            AppTableCell(site.city ?? '--', flex: 2),
+            AppTableCell(site.createdAt?.split('T')[0] ?? '--', flex: 2),
             AppTableCell(
-              site.companyName ?? '—',
+              site.companyName ?? '--',
               flex: 2,
               bold: true,
               fontSize: 13,
               color: const Color(0xFF111827),
             ),
             const SizedBox(width: 16),
-            AppTableCell(site.state ?? '—', flex: 2),
-            AppTableCell(site.country ?? '—', flex: 2),
-            AppTableCell(site.timeZone ?? '—', flex: 2),
+            AppTableCell(site.state ?? '--', flex: 2),
+            AppTableCell(site.country ?? '--', flex: 2),
             AppTableCell(
               null,
               flex: 2,
