@@ -19,10 +19,12 @@ import '../controller/user_controller/technician/technician_desktop.dart';
 import '../controller/user_controller/technician/technician_mobile.dart';
 import '../controller/user_controller/technician/technician_tablet.dart';
 import '../core/responsive/screen_layout_builder.dart';
+import '../core/user_config/user_role.dart';
 
 
 class SuperAdminLayout extends ScreenLayoutBuilder {
-  const SuperAdminLayout({super.key, required super.child});
+  const SuperAdminLayout({super.key, required super.child, required this.userRole});
+  final UserRole userRole;
 
   @override
   Widget buildNarrow(BuildContext context) =>
@@ -38,22 +40,21 @@ class SuperAdminLayout extends ScreenLayoutBuilder {
 }
 
 class CompanyAdminLayout extends ScreenLayoutBuilder {
-  const CompanyAdminLayout({super.key, required super.child});
+  const CompanyAdminLayout({super.key, required super.child, required this.userRole});
+  final UserRole userRole;
 
   @override
-  Widget buildNarrow(BuildContext context) {
-    return const CompanyAdminMobile();
-  }
+  Widget buildNarrow(BuildContext context) =>
+      CompanyAdminMobile(child: child);
 
   @override
-  Widget buildMiddle(BuildContext context) {
-    return const CompanyAdminTablet();
-  }
+  Widget buildMiddle(BuildContext context) =>
+      CompanyAdminTablet(child: child);
 
   @override
-  Widget buildWide(BuildContext context) {
-    return const CompanyAdminDesktop();
-  }
+  Widget buildWide(BuildContext context) =>
+      CompanyAdminDesktop(child: child);
+
 }
 
 class DistributorLayout extends ScreenLayoutBuilder {

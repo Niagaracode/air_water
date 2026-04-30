@@ -17,7 +17,7 @@ class ViewToggle extends StatelessWidget {
     this.mapLabel = 'Map View',
     this.activeColor = const Color(0xFF141E7A),
     this.backgroundColor = Colors.grey,
-    this.borderRadius = 12,
+    this.borderRadius = 10,
     this.animationDuration = const Duration(milliseconds: 300),
   });
 
@@ -41,7 +41,7 @@ class ViewToggle extends StatelessWidget {
       curve: Curves.easeInOutCubic,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
       child: Row(

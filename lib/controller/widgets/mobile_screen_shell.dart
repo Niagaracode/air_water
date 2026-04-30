@@ -2,17 +2,19 @@ import 'package:air_water/controller/widgets/screen_header.dart';
 import 'package:air_water/controller/widgets/screen_sidebar.dart';
 import 'package:flutter/material.dart';
 
+import '../../core/user_config/user_role.dart';
+
 class MobileScreenShell extends StatelessWidget {
   final Widget child;
-
-  const MobileScreenShell({super.key, required this.child});
+  final UserRole userRole;
+  const MobileScreenShell({super.key, required this.child, required this.userRole});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
         children: [
-          const ScreenSidebar(),
+          ScreenSidebar(userRole: userRole),
           Expanded(
             child: Column(
               children: [

@@ -59,22 +59,36 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
     final success = widget.product.id == 0
         ? await ref.read(productNotifierProvider.notifier).createProduct(data)
         : await ref
-            .read(productNotifierProvider.notifier)
-            .updateProduct(widget.product.id, data);
+        .read(productNotifierProvider.notifier)
+        .updateProduct(widget.product.id, data);
 
     if (mounted) {
       setState(() => isSaving = false);
+
       if (success) {
+        // Show SnackBar first, then pop (or pop then show SnackBar on parent)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(widget.product.id == 0
-                  ? "Product created successfully"
-                  : "Product updated successfully")),
+            backgroundColor: Colors.green,
+            content: Text(widget.product.id == 0
+                ? "Product created successfully"
+                : "Product updated successfully"),
+            duration: const Duration(seconds: 2),
+          ),
         );
-        Navigator.pop(context);
+
+        // Wait a bit for SnackBar to be visible, then pop
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (mounted) {
+          Navigator.pop(context); // Only ONE pop
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to update product: ${ref.read(productNotifierProvider).error}")),
+          SnackBar(
+            backgroundColor: Colors.red,
+            content: Text("Failed to save product: ${ref.read(productNotifierProvider).error}"),
+          ),
         );
       }
     }

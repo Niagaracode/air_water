@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/router/sidebar_routes.dart';
 import '../../core/user_config/user_role.dart';
-import '../../core/user_config/user_role_provider.dart';
 import '../provider/sidebar_provider.dart';
 import '../widgets/sidebar_header.dart';
 import 'sidebar_menu_config.dart';
@@ -13,77 +12,66 @@ import 'sidebar_menu_item.dart';
 import 'nave_menu.dart';
 
 class ScreenSidebar extends ConsumerWidget {
-  const ScreenSidebar({super.key});
+  const ScreenSidebar({super.key, required this.userRole});
+  final UserRole userRole;
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isExpanded = ref.watch(sidebarExpandedProvider);
     final location = GoRouterState.of(context).uri.toString();
-    final roleAsync = ref.watch(userRoleProvider);
 
-    return roleAsync.when(
-      loading: () => const SizedBox(),
-      error: (_, __) => const SizedBox(),
-      data: (role) {
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeInOut,
-          width: isExpanded ? 250 : 72,
-          child: Material(
-            color: primary.withValues(alpha: 0.075),
-            elevation: 0,
-            child: Column(
-              children: [
-                SidebarHeader(isExpanded: isExpanded),
-                Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Colors.black.withValues(alpha: 0.15),
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    children: [
-                      _buildGroup(
-                        title: 'MAIN MENU',
-                        items: mainMenu,
-                        location: location,
-                        isExpanded: isExpanded,
-                        context: context,
-                        role: role,
-                      ),
-                      _buildGroup(
-                        title: 'CONFIGURATION',
-                        items: configurationMenu,
-                        location: location,
-                        isExpanded: isExpanded,
-                        context: context,
-                        role: role,
-                      ),
-                      _buildGroup(
-                        title: 'USER',
-                        items: userMenu,
-                        location: location,
-                        isExpanded: isExpanded,
-                        context: context,
-                        role: role,
-                      ),
-                      _buildGroup(
-                        title: 'EVENTS',
-                        items: eventsMenu,
-                        location: location,
-                        isExpanded: isExpanded,
-                        context: context,
-                        role: role,
-                      ),
-                    ],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeInOut,
+      width: isExpanded ? 250 : 72,
+      child: Material(
+        color: primary.withValues(alpha: 0.075),
+        child: Column(
+          children: [
+            //SidebarHeader(isExpanded: isExpanded),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                children: [
+                  _buildGroup(
+                    title: 'MAIN MENU',
+                    items: mainMenu,
+                    location: location,
+                    isExpanded: isExpanded,
+                    context: context,
+                    role: userRole,
                   ),
-                ),
-              ],
+                  _buildGroup(
+                    title: 'CONFIGURATION',
+                    items: configurationMenu,
+                    location: location,
+                    isExpanded: isExpanded,
+                    context: context,
+                    role: userRole,
+                  ),
+                  _buildGroup(
+                    title: 'USER',
+                    items: userMenu,
+                    location: location,
+                    isExpanded: isExpanded,
+                    context: context,
+                    role: userRole,
+                  ),
+                  _buildGroup(
+                    title: 'EVENTS',
+                    items: eventsMenu,
+                    location: location,
+                    isExpanded: isExpanded,
+                    context: context,
+                    role: userRole,
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 

@@ -1,24 +1,30 @@
 import 'package:flutter/material.dart';
 
 import '../../../../controller/widgets/screen_header.dart';
+import '../../core/app_theme/app_theme.dart';
+import '../../core/user_config/user_role.dart';
 import 'screen_sidebar.dart';
 
 class DesktopScreenShell extends StatelessWidget {
   final Widget child;
+  final UserRole userRole;
 
-  const DesktopScreenShell({super.key, required this.child});
+  const DesktopScreenShell({super.key, required this.child, required this.userRole});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const ScreenSidebar(),
+          const ScreenHeader(),
           Expanded(
-            child: Column(
+            child: Row(
               children: [
-                const ScreenHeader(),
-                Expanded(child: child),
+                ScreenSidebar(userRole: userRole),
+                Expanded(
+                  child: child,
+                ),
               ],
             ),
           ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CompanyAdminMobile extends StatelessWidget {
-  const CompanyAdminMobile({super.key});
+  const CompanyAdminMobile({super.key, required this.child});
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
