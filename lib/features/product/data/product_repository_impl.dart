@@ -58,4 +58,20 @@ class ProductRepositoryImpl implements ProductRepository {
       throw AppException(message);
     }
   }
+
+  @override
+  Future<void> deleteProduct(int id) async {
+    try {
+      final response = await _api.deleteProduct(id);
+      if (response['statuscode'] != 200) {
+        throw AppException(response['message'] ?? 'Failed to delete product');
+      }
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      final message = data is Map && data['message'] != null
+          ? data['message'].toString()
+          : 'Failed to delete product';
+      throw AppException(message);
+    }
+  }
 }

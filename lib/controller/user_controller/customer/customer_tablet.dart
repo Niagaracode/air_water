@@ -1,6 +1,8 @@
 import 'package:air_water/controller/widgets/tablet_screen_shell.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/user_config/user_role.dart';
+
 class CustomerTablet extends StatelessWidget {
   final Widget child;
 
@@ -8,6 +10,7 @@ class CustomerTablet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TabletScreenShell(child: child);
+    return TabletScreenShell(userRole: UserRole.customer,
+    child: child);
   }
 }

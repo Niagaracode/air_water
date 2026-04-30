@@ -216,7 +216,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.grey.withValues(alpha: 0.095),
       body: tanksDataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => Center(

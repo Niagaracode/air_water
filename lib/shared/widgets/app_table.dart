@@ -8,13 +8,21 @@ class AppTableHeaderCell extends StatelessWidget {
   final String label;
   final int? flex;
   final double? width;
+  final TextAlign? textAlign; // Add text alignment
 
-  const AppTableHeaderCell(this.label, {super.key, this.flex, this.width});
+  const AppTableHeaderCell(
+      this.label, {
+        super.key,
+        this.flex,
+        this.width,
+        this.textAlign, // Optional text alignment
+      });
 
   @override
   Widget build(BuildContext context) {
     final child = Text(
       label.toUpperCase(),
+      textAlign: textAlign ?? TextAlign.left,
       style: GoogleFonts.outfit(
         fontWeight: FontWeight.w600,
         fontSize: 12,
@@ -22,7 +30,10 @@ class AppTableHeaderCell extends StatelessWidget {
         letterSpacing: 0.8,
       ),
     );
-    if (width != null) return SizedBox(width: width, child: child);
+
+    if (width != null) {
+      return SizedBox(width: width, child: child);
+    }
     return Expanded(flex: flex ?? 1, child: child);
   }
 }
@@ -83,35 +94,34 @@ class AppTableCell extends StatelessWidget {
   final Color? color;
   final double? fontSize;
   final TextAlign? textAlign;
+  final int? maxLines; // Add maxLines control
 
   const AppTableCell(
-    this.text, {
-    super.key,
-    this.child,
-    this.flex,
-    this.width,
-    this.bold = false,
-    this.color,
-    this.fontSize,
-    this.textAlign,
-  });
+      this.text, {
+        super.key,
+        this.child,
+        this.flex,
+        this.width,
+        this.bold = false,
+        this.color,
+        this.fontSize,
+        this.textAlign,
+        this.maxLines = 2, // Default to 2 lines
+      });
 
   @override
   Widget build(BuildContext context) {
-    Widget content =
-        child ??
-        Text(
-          text ?? '',
-          style: GoogleFonts.inter(
-            fontSize: fontSize ?? 14,
-            fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
-            color:
-                color ??
-                (bold ? const Color(0xFF111827) : const Color(0xFF374151)),
-          ),
-          textAlign: textAlign,
-          overflow: TextOverflow.ellipsis,
-        );
+    Widget content = child ?? Text(
+      text ?? '',
+      style: GoogleFonts.inter(
+        fontSize: fontSize ?? 14,
+        fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+        color: color ?? (bold ? const Color(0xFF111827) : const Color(0xFF374151)),
+      ),
+      textAlign: textAlign,
+      overflow: TextOverflow.ellipsis,
+      maxLines: maxLines,
+    );
 
     if (width != null) {
       return SizedBox(width: width, child: content);
@@ -342,25 +352,22 @@ class AppTableActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Icon(icon, size: 17, color: color),
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        icon: Icon(icon, size: 17, color: color),
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(),
+        splashRadius: 20,
+        splashColor: color.withValues(alpha: 0.2),
+        highlightColor: color.withValues(alpha: 0.1),
+        tooltip: icon == Icons.delete ? 'Delete' : 'Edit',
       ),
     );
   }

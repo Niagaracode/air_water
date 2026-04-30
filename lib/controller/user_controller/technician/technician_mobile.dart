@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:air_water/controller/widgets/mobile_screen_shell.dart';
+import '../../../core/user_config/user_role.dart';
 
 class TechnicianMobile extends StatelessWidget {
   final Widget child;
@@ -8,6 +9,7 @@ class TechnicianMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MobileScreenShell(child: child);
+    return MobileScreenShell(userRole: UserRole.technician,
+    child: child);
   }
 }

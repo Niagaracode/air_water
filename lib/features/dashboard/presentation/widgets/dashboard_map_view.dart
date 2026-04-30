@@ -86,9 +86,9 @@ class _DashboardMapViewState extends State<DashboardMapView> {
     return Container(
       height: widget.height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),

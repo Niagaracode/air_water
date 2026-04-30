@@ -23,10 +23,12 @@ class LayoutSelector extends StatelessWidget {
   ScreenLayoutBuilder getScreenLayout(Widget child) {
     switch (userRole) {
       case UserRole.superAdmin:
-        return SuperAdminLayout(child: child);
+        return SuperAdminLayout(userRole: userRole,
+        child: child);
 
       case UserRole.companyAdmin:
-        return CompanyAdminLayout(child: child);
+        return CompanyAdminLayout(userRole: userRole,
+        child: child);
 
       case UserRole.distributor:
         return DistributorLayout(child: child);

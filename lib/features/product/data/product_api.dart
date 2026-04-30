@@ -20,4 +20,9 @@ class ProductApi {
     final res = await _client.post('/products', data: data);
     return res.data['data']['id'] as int;
   }
+
+  Future<Map<String, dynamic>> deleteProduct(int id) async {
+    final res = await _client.delete('/products/$id');
+    return res.data;
+  }
 }
