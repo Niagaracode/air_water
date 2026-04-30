@@ -6,7 +6,7 @@ class DashboardApi {
   DashboardApi(this._client);
 
   Future<List<dynamic>> getTankData() async {
-    final res = await _client.get('/dashboard/tank-status');
+    final res = await _client.get('/dashboard/site-info');
 
     print('DATA: ${res.data}');
 
