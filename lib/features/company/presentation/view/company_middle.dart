@@ -312,8 +312,16 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
       );
     }
 
+    // Flatten all addresses from all groups
+    final List<({CompanyGroup group, CompanyAddress addr})> flatItems = [];
+    for (var group in state.groupedCompanies) {
+      for (var addr in group.addresses) {
+        flatItems.add((group: group, addr: addr));
+      }
+    }
+
     return SliverList.builder(
-      itemCount: state.groupedCompanies.length + 1,
+      itemCount: flatItems.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
           // Table header
@@ -330,6 +338,7 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
             child: Row(
               children: [
                 _tableHeaderCell('SI.NO', width: 60),
+                _tableHeaderCell('Company', flex: 2),
                 _tableHeaderCell('City', flex: 2),
                 _tableHeaderCell('Date', flex: 2),
                 _tableHeaderCell('State', flex: 2),
@@ -341,10 +350,9 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
           );
         }
 
-        final groupIndex = index - 1;
-        final group = state.groupedCompanies[groupIndex];
-        final isExpanded = state.expandedGroups.contains(group.name);
-        final isLast = groupIndex == state.groupedCompanies.length - 1;
+        final itemIndex = index - 1;
+        final item = flatItems[itemIndex];
+        final isLast = itemIndex == flatItems.length - 1;
 
         return Container(
           decoration: BoxDecoration(
@@ -354,7 +362,7 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
               right: BorderSide(color: Colors.grey.shade200),
               bottom: isLast
                   ? BorderSide(color: Colors.grey.shade200)
-                  : BorderSide.none,
+                  : BorderSide(color: Colors.grey.shade100),
             ),
             borderRadius: isLast
                 ? const BorderRadius.only(
@@ -363,11 +371,10 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
                   )
                 : BorderRadius.zero,
           ),
-          child: _buildGroupSection(
-            index: groupIndex,
-            group: group,
-            isExpanded: isExpanded,
-            notifier: notifier,
+          child: _buildFlatRow(
+            index: itemIndex,
+            group: item.group,
+            addr: item.addr,
           ),
         );
       },
@@ -385,153 +392,128 @@ class _CompanyMiddleState extends ConsumerState<CompanyMiddle> {
     return Expanded(flex: flex ?? 1, child: child);
   }
 
-  Widget _buildGroupSection({
+
+  Widget _buildFlatRow({
     required int index,
     required CompanyGroup group,
-    required bool isExpanded,
-    required CompanyNotifier notifier,
+    required CompanyAddress addr,
   }) {
-    return Column(
-      children: [
-        if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
-        // Group header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: Colors.grey.shade50,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 60,
-                child: Text(
-                  (index + 1).toString().padLeft(2, '0'),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 10,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 60,
+            child: Text(
+              (index + 1).toString().padLeft(2, '0'),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
               ),
-              Expanded(
-                child: Text(
-                  group.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-        // Address rows
-        if (isExpanded)
-          ...group.addresses.map((addr) {
-            return Column(
+          Expanded(
+            flex: 2,
+            child: Text(
+              group.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: Color(0xFF1E40AF),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              addr.city ?? '',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              addr.createdAt?.split('T').first ?? '',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              addr.state ?? '',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              addr.country ?? '',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Row(
               children: [
-                Divider(height: 1, color: Colors.grey.shade100),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 60),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.city ?? '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.createdAt?.split('T').first ?? '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.state ?? '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          addr.country ?? '',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: addr.status == 1
-                                  ? Colors.green
-                                  : Colors.grey,
-                              size: 14,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              addr.status == 1 ? 'Active' : 'Inactive',
-                              style: TextStyle(
-                                color: addr.status == 1
-                                    ? Colors.green
-                                    : Colors.grey,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                addr.fullAddress,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.blue,
-                                size: 16,
-                              ),
-                              onPressed: () => _showEditModal(group, addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                                size: 16,
-                              ),
-                              onPressed: () => _confirmDelete(addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                Icon(
+                  Icons.check_circle,
+                  color: addr.status == 1 ? Colors.green : Colors.grey,
+                  size: 14,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  addr.status == 1 ? 'Active' : 'Inactive',
+                  style: TextStyle(
+                    color: addr.status == 1 ? Colors.green : Colors.grey,
+                    fontSize: 11,
                   ),
                 ),
               ],
-            );
-          }),
-      ],
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    addr.fullAddress,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.edit,
+                    color: Colors.blue,
+                    size: 16,
+                  ),
+                  onPressed: () => _showEditModal(group, addr),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Colors.red,
+                    size: 16,
+                  ),
+                  onPressed: () => _confirmDelete(addr),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
+
 
   void _showEditModal(CompanyGroup group, CompanyAddress addr) {
     showGeneralDialog(

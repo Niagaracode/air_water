@@ -22,5 +22,6 @@ abstract class SiteRepository {
   Future<void> updateSite(int id, SiteCreateRequest request);
   Future<void> deleteSite(int id);
   Future<List<SiteAutocompleteInfo>> getSiteAutocomplete({String? q});
-  Future<Map<String, dynamic>> getSiteWithAddresses(int id);
+  Future<List<Map<String, dynamic>>> getSiteWithAddresses(int id);
 }
+

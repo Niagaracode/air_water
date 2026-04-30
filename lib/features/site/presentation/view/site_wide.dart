@@ -76,12 +76,9 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                         Expanded(
                           child:
                               siteState.isLoading &&
-                                      siteState.groupedSites.isEmpty
-                               ? const AppTableInitialLoader()
-                               : _buildVirtualizedTable(
-                                   siteState,
-                                   siteNotifier,
-                                 ),
+                                  siteState.groupedSites.isEmpty
+                              ? const AppTableInitialLoader()
+                              : _buildVirtualizedTable(siteState, siteNotifier),
                         ),
                         if (siteState.isLoading &&
                             siteState.groupedSites.isNotEmpty)
@@ -143,16 +140,16 @@ class _SiteWideState extends ConsumerState<SiteWide> {
           const SizedBox(height: 10),
           _buildFilterRow(notifier, state),
           const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Showing ${state.totalEntries} entries',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF),
-                fontSize: 12,
-              ),
-            ),
-          ),
+          // Align(
+          //   alignment: Alignment.centerRight,
+          //   child: Text(
+          //     'Showing ${state.totalEntries} entries',
+          //     style: GoogleFonts.inter(
+          //       color: const Color(0xFF9CA3AF),
+          //       fontSize: 12,
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -295,7 +292,11 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                   child: child,
                 );
               },
-            );
+            ).then((_) {
+              ref
+                  .read(siteNotifierProvider.notifier)
+                  .loadGroupedSites(isReload: true);
+            });
           },
           style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
           icon: const Icon(Icons.add, size: 18),
@@ -327,12 +328,11 @@ class _SiteWideState extends ConsumerState<SiteWide> {
         children: [
           AppTableHeaderCell('SI.NO', width: 70),
           AppTableHeaderCell('City', flex: 2),
-          AppTableHeaderCell('Date', flex: 2),
+
           AppTableHeaderCell('Company', flex: 2),
           AppTableHeaderCell('State', flex: 2),
           AppTableHeaderCell('Country', flex: 2),
           AppTableHeaderCell('Status', flex: 2),
-
           AppTableHeaderCell('Address', flex: 3),
           AppTableHeaderCell('Action', width: 100),
         ],
@@ -457,18 +457,13 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                 ],
               ),
             ),
-            const SizedBox(width: 100), // Match ACTION column width
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSiteRow(
-    SiteGroupAddress site,
-    SiteGroup group,
-    bool isLast,
-  ) {
+  Widget _buildSiteRow(SiteGroupAddress site, SiteGroup group, bool isLast) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -492,7 +487,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
           children: [
             const AppTableCell(null, width: 70), // SI.NO spacing
             AppTableCell(site.city ?? '--', flex: 2),
-            AppTableCell(site.createdAt?.split('T')[0] ?? '--', flex: 2),
+
             AppTableCell(
               site.companyName ?? '--',
               flex: 2,
@@ -511,6 +506,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                 child: AppStatusBadge(status: site.status ?? 1),
               ),
             ),
+
             AppTableCell(site.fullAddress, flex: 3),
             AppTableCell(
               null,
@@ -521,8 +517,10 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                     icon: Icons.edit_outlined,
                     color: const Color(0xFF2563EB),
                     bg: const Color(0xFFEFF6FF),
-                    onTap: () => _showEditModal(site.toSite()),
+                    onTap: () =>
+                        _showEditModal(site.toSite(), targetAddressId: site.id),
                   ),
+
                   const SizedBox(width: 8),
                   AppTableActionButton(
                     icon: Icons.delete_outline_rounded,
@@ -539,14 +537,18 @@ class _SiteWideState extends ConsumerState<SiteWide> {
     );
   }
 
-  void _showEditModal(Site site) {
+  void _showEditModal(Site site, {int? targetAddressId}) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: '',
       pageBuilder: (context, anim1, anim2) {
-        return AddSiteModal(initialSite: site);
+        return AddSiteModal(
+          initialSite: site,
+          targetAddressId: targetAddressId,
+        );
       },
+
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
           position: Tween<Offset>(
@@ -556,7 +558,9 @@ class _SiteWideState extends ConsumerState<SiteWide> {
           child: child,
         );
       },
-    );
+    ).then((_) {
+      ref.read(siteNotifierProvider.notifier).loadGroupedSites(isReload: true);
+    });
   }
 
   Future<void> _showDeleteDialog(Site site) async {

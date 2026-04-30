@@ -22,6 +22,8 @@ class Site {
   final String? companyAddressLine1;
   final String? companyPincode;
   final String? timeZone;
+  final int? addressId;
+
 
   Site({
     required this.id,
@@ -45,7 +47,9 @@ class Site {
     this.companyAddressLine1,
     this.companyPincode,
     this.timeZone,
+    this.addressId,
   });
+
 
   factory Site.fromJson(Map<String, dynamic> json) {
     return Site(
@@ -70,7 +74,9 @@ class Site {
       companyAddressLine1: json['company_address_line_1'] as String?,
       companyPincode: json['company_pincode'] as String?,
       timeZone: json['time_zone'] as String?,
+      addressId: json['address_id'] as int?,
     );
+
   }
 
   Map<String, dynamic> toJson() {
@@ -204,7 +210,9 @@ class SiteLocation {
 }
 
 class SiteGroupAddress {
+  final int? id;
   final int? siteId;
+
   final String? siteName;
   final String? city;
   final String? state;
@@ -226,7 +234,9 @@ class SiteGroupAddress {
   final String? createdAt;
 
   SiteGroupAddress({
+    this.id,
     this.siteId,
+
     this.siteName,
     this.city,
     this.state,
@@ -250,7 +260,9 @@ class SiteGroupAddress {
 
   factory SiteGroupAddress.fromJson(Map<String, dynamic> json) {
     return SiteGroupAddress(
+      id: json['address_id'] as int?,
       siteId: json['plant_id'] as int?,
+
       siteName: json['plant_name'] as String?,
       city: json['city'] as String?,
       state: json['state'] as String?,
@@ -336,7 +348,9 @@ class SiteGroupAddress {
       companyAddressLine1: companyAddressLine1,
       companyPincode: companyPincode,
       timeZone: timeZone,
+      addressId: id,
     );
+
   }
 }
 
@@ -366,7 +380,13 @@ class SiteGroup {
           .toList(),
     );
   }
+
+  Site toSite() {
+    final primaryAddr = addresses.first;
+    return primaryAddr.toSite();
+  }
 }
+
 
 class SiteGroupedResponse {
   final List<SiteGroup> data;
@@ -395,6 +415,8 @@ class SiteCreateRequest {
   final String? city;
   final String? timeZone;
   final List<CompanyAddress> addresses;
+  final bool isPartialUpdate;
+
 
   SiteCreateRequest({
     required this.name,
@@ -405,7 +427,9 @@ class SiteCreateRequest {
     this.city,
     this.timeZone,
     required this.addresses,
+    this.isPartialUpdate = false,
   });
+
 
   Map<String, dynamic> toJson() {
     return {
@@ -417,7 +441,9 @@ class SiteCreateRequest {
       'city': city,
       'time_zone': timeZone,
       'addresses': addresses.map((a) => a.toJson()).toList(),
+      'is_partial_update': isPartialUpdate,
     };
+
   }
 }
 

@@ -79,8 +79,9 @@ class SiteApi {
         .toList();
   }
 
-  Future<Map<String, dynamic>> getSiteWithAddresses(int id) async {
+  Future<List<Map<String, dynamic>>> getSiteWithAddresses(int id) async {
     final response = await _client.get('/plants/$id/addresses');
-    return Map<String, dynamic>.from(response.data['data']);
+    return List<Map<String, dynamic>>.from(response.data['data']);
   }
 }
+

@@ -297,8 +297,16 @@ class _CompanyNarrowState extends ConsumerState<CompanyNarrow> {
       );
     }
 
+    // Flatten all addresses from all groups
+    final List<({CompanyGroup group, CompanyAddress addr})> flatItems = [];
+    for (var group in state.groupedCompanies) {
+      for (var addr in group.addresses) {
+        flatItems.add((group: group, addr: addr));
+      }
+    }
+
     return SliverList.builder(
-      itemCount: state.groupedCompanies.length + 1,
+      itemCount: flatItems.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
           // Table header
@@ -324,6 +332,13 @@ class _CompanyNarrowState extends ConsumerState<CompanyNarrow> {
                 Expanded(
                   flex: 2,
                   child: Text(
+                    'Company',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
                     'City',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
                   ),
@@ -340,10 +355,9 @@ class _CompanyNarrowState extends ConsumerState<CompanyNarrow> {
           );
         }
 
-        final groupIndex = index - 1;
-        final group = state.groupedCompanies[groupIndex];
-        final isExpanded = state.expandedGroups.contains(group.name);
-        final isLast = groupIndex == state.groupedCompanies.length - 1;
+        final itemIndex = index - 1;
+        final item = flatItems[itemIndex];
+        final isLast = itemIndex == flatItems.length - 1;
 
         return Container(
           decoration: BoxDecoration(
@@ -353,7 +367,7 @@ class _CompanyNarrowState extends ConsumerState<CompanyNarrow> {
               right: BorderSide(color: Colors.grey.shade200),
               bottom: isLast
                   ? BorderSide(color: Colors.grey.shade200)
-                  : BorderSide.none,
+                  : BorderSide(color: Colors.grey.shade100),
             ),
             borderRadius: isLast
                 ? const BorderRadius.only(
@@ -362,124 +376,104 @@ class _CompanyNarrowState extends ConsumerState<CompanyNarrow> {
                   )
                 : BorderRadius.zero,
           ),
-          child: _buildGroupSection(
-            index: groupIndex,
-            group: group,
-            isExpanded: isExpanded,
-            notifier: notifier,
+          child: _buildFlatRow(
+            index: itemIndex,
+            group: item.group,
+            addr: item.addr,
           ),
         );
       },
     );
   }
 
-  Widget _buildGroupSection({
+  Widget _buildFlatRow({
     required int index,
     required CompanyGroup group,
-    required bool isExpanded,
-    required CompanyNotifier notifier,
+    required CompanyAddress addr,
   }) {
-    return Column(
-      children: [
-        if (index > 0) Divider(height: 1, color: Colors.grey.shade200),
-        // Group header
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          color: Colors.grey.shade50,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 40,
-                child: Text(
-                  (index + 1).toString().padLeft(2, '0'),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 8,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 40,
+            child: Text(
+              (index + 1).toString().padLeft(2, '0'),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
               ),
-              Expanded(
-                child: Text(
-                  group.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-        // Address rows
-        if (isExpanded)
-          ...group.addresses.map((addr) {
-            return Column(
+          Expanded(
+            flex: 2,
+            child: Text(
+              group.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                color: Color(0xFF1E40AF),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Divider(height: 1, color: Colors.grey.shade100),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                Text(
+                  addr.city ?? '',
+                  style: const TextStyle(fontSize: 11),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '${addr.state ?? ''}, ${addr.country ?? ''}',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.grey.shade600,
                   ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 40),
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              addr.city ?? '',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            Text(
-                              '${addr.state ?? ''}, ${addr.country ?? ''}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.grey.shade600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.blue,
-                                size: 16,
-                              ),
-                              onPressed: () => _showEditModal(group, addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            const SizedBox(width: 4),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                                size: 16,
-                              ),
-                              onPressed: () => _confirmDelete(addr),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
-            );
-          }),
-      ],
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.edit,
+                    color: Colors.blue,
+                    size: 16,
+                  ),
+                  onPressed: () => _showEditModal(group, addr),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Colors.red,
+                    size: 16,
+                  ),
+                  onPressed: () => _confirmDelete(addr),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
+
 
   void _showEditModal(CompanyGroup group, CompanyAddress addr) {
     showGeneralDialog(
