@@ -1,8 +1,8 @@
 import '../../presentation/model/site_model.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 
 class SiteApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   SiteApi(this._client);
 

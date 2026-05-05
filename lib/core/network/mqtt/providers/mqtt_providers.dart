@@ -10,45 +10,33 @@ import '../models/mqtt_connection_state.dart';
 // Singleton provider for MQTT service - persists across app lifecycle
 final mqttServiceProvider = Provider<MqttService>((ref) {
   final service = MqttService.instance;
-
-  // Initialize on first access
   service.initialize();
-
-  // Don't dispose - keep alive throughout app lifecycle
   ref.onDispose(() {
-    // Only disconnect, don't destroy the service
     service.disconnect();
   });
-
   return service;
 });
 
 // StateNotifier provider - also persists
-final mqttProvider = StateNotifierProvider<MqttNotifier, MqttConnectionStateModel>(
-      (ref) {
+final mqttProvider = StateNotifierProvider<MqttNotifier, MqttConnectionStateModel>((ref) {
     final service = ref.watch(mqttServiceProvider);
     return MqttNotifier(service);
   },
 );
 
 // Provider to get last message for a specific topic
-final mqttLastMessageProvider = Provider.family<MqttMessageModel?, String>(
-      (ref, topic) {
+final mqttLastMessageProvider = Provider.family<MqttMessageModel?, String>((ref, topic) {
     final mqttNotifier = ref.watch(mqttProvider.notifier);
     return mqttNotifier.getLastMessage(topic);
   },
 );
 
 // Provider for subscribing to a topic and receiving real-time updates
-final mqttTopicStreamProvider = StreamProvider.family<MqttMessageModel, String>(
-      (ref, topic) {
+final mqttTopicStreamProvider = StreamProvider.family<MqttMessageModel, String>((ref, topic) {
     final controller = StreamController<MqttMessageModel>.broadcast();
-
     final mqttNotifier = ref.read(mqttProvider.notifier);
-
     ref.onDispose(() {
       controller.close();
-      // Unsubscribe but don't disconnect
       mqttNotifier.unsubscribeFromTopic(topic);
     });
 
@@ -64,9 +52,3 @@ final mqttTopicStreamProvider = StreamProvider.family<MqttMessageModel, String>(
     return controller.stream;
   },
 );
-
-// Provider to check connection status
-final mqttConnectionStatusProvider = Provider<bool>((ref) {
-  final connectionState = ref.watch(mqttProvider);
-  return connectionState.isConnected;
-});

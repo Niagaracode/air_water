@@ -3,7 +3,7 @@ import '../model/site_model.dart';
 import '../../data/api/site_api.dart';
 import '../../domain/repository/site_repository.dart';
 import '../../data/repository/site_repository_impl.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../../../features/company/presentation/controller/company_provider.dart';
 import '../../../../features/company/presentation/model/company_model.dart';
 

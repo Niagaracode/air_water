@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../domain/models/asset_group_model.dart';
 
 class AssetGroupState {

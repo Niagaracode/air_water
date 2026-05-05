@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../presentation/model/tank_model.dart';
 import '../../../site/presentation/model/site_model.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 
 class TankApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   TankApi(this._client);
 

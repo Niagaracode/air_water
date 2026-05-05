@@ -1,7 +1,7 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/http/api_service.dart';
 
 class ProductApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   ProductApi(this._client);
 
@@ -19,5 +19,10 @@ class ProductApi {
   Future<int> createProduct(Map<String, dynamic> data) async {
     final res = await _client.post('/products', data: data);
     return res.data['data']['id'] as int;
+  }
+
+  Future<Map<String, dynamic>> deleteProduct(int id) async {
+    final res = await _client.delete('/products/$id');
+    return res.data;
   }
 }

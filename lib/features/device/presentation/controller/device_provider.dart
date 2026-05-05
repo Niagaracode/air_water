@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../data/api/device_api.dart';
 import '../../data/repository/device_repository_impl.dart';
 import '../model/device_model.dart';

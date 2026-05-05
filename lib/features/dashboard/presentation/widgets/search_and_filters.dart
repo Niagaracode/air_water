@@ -57,7 +57,7 @@ class _SearchAndFiltersState extends State<SearchAndFilters> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: Colors.grey.shade300),
             ),
             child: TextField(
               controller: _searchController,
@@ -76,6 +76,7 @@ class _SearchAndFiltersState extends State<SearchAndFilters> {
         // Region Filter
         Expanded(
           child: FilterDropdown<String>(
+            borderColor: Colors.grey.shade300,
             value: widget.selectedRegion,
             items: widget.regions,
             onChanged: (value) {
@@ -89,6 +90,7 @@ class _SearchAndFiltersState extends State<SearchAndFilters> {
         // Status Filter
         Expanded(
           child: FilterDropdown<String>(
+            borderColor: Colors.grey.shade300,
             value: widget.selectedStatus,
             items: widget.statuses,
             onChanged: (value) {

@@ -7,7 +7,7 @@ import '../presentation/controller/roaster_provider.dart';
 import '../../message_template/presentation/controller/message_template_provider.dart';
 import '../../message_template/presentation/model/message_template_model.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../core/network/http/api_service.dart';
 import '../../../../shared/widgets/app_table.dart';
 
 // ─── Parameter options ──────────────────────────────────────────────────────

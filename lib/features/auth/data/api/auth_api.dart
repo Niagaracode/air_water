@@ -1,8 +1,8 @@
 
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 
 class AuthApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   AuthApi(this._client);
 

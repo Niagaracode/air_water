@@ -29,6 +29,7 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
   bool _isOpen = false;
   late DateTime _currentMonth;
   DateTime? _tempSelected;
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -49,13 +50,17 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
   }
 
   void _open() {
+    if (_isDisposed) return;
+
     _currentMonth = DateTime(
       (widget.selectedDate ?? DateTime.now()).year,
       (widget.selectedDate ?? DateTime.now()).month,
     );
     _tempSelected = widget.selectedDate;
 
-    final renderBox = context.findRenderObject() as RenderBox;
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+
     final size = renderBox.size;
 
     _overlayEntry = OverlayEntry(
@@ -90,8 +95,10 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
                     lastDate: widget.lastDate,
                     onCancel: _close,
                     onConfirm: (date) {
-                      widget.onDateChanged(date);
-                      _close();
+                      if (!_isDisposed && mounted) {
+                        widget.onDateChanged(date);
+                        _close();
+                      }
                     },
                   ),
                 ),
@@ -103,17 +110,26 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
     );
 
     Overlay.of(context).insert(_overlayEntry!);
-    setState(() => _isOpen = true);
+
+    if (mounted && !_isDisposed) {
+      setState(() => _isOpen = true);
+    }
   }
 
   void _close() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    setState(() => _isOpen = false);
+    if (mounted && !_isDisposed) {
+      _overlayEntry?.remove();
+      _overlayEntry = null;
+      setState(() => _isOpen = false);
+    } else {
+      _overlayEntry?.remove();
+      _overlayEntry = null;
+    }
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
     _close();
     super.dispose();
   }
@@ -157,7 +173,9 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
               if (widget.selectedDate != null)
                 GestureDetector(
                   onTap: () {
-                    widget.onDateChanged(null);
+                    if (mounted && !_isDisposed) {
+                      widget.onDateChanged(null);
+                    }
                   },
                   child: const Padding(
                     padding: EdgeInsets.only(right: 8),
@@ -208,6 +226,7 @@ class _DatePickerCalendar extends StatefulWidget {
 class _DatePickerCalendarState extends State<_DatePickerCalendar> {
   late DateTime _currentMonth;
   DateTime? _selectedDate;
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -217,15 +236,25 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
   }
 
   void _previousMonth() {
-    setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
-    });
+    if (mounted && !_isDisposed) {
+      setState(() {
+        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+      });
+    }
   }
 
   void _nextMonth() {
-    setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
-    });
+    if (mounted && !_isDisposed) {
+      setState(() {
+        _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 
   @override
@@ -246,7 +275,11 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
             children: [
               Expanded(
                 child: TextButton(
-                  onPressed: widget.onCancel,
+                  onPressed: () {
+                    if (!_isDisposed && mounted) {
+                      widget.onCancel();
+                    }
+                  },
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF6B7280),
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -266,7 +299,11 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () => widget.onConfirm(_selectedDate),
+                  onPressed: () {
+                    if (!_isDisposed && mounted) {
+                      widget.onConfirm(_selectedDate);
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF141E7A),
                     foregroundColor: Colors.white,
@@ -337,18 +374,18 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
       children: weekdays
           .map(
             (label) => Expanded(
-              child: Center(
-                child: Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
               ),
             ),
-          )
+          ),
+        ),
+      )
           .toList(),
     );
   }
@@ -407,32 +444,45 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
   }
 
   Widget _buildDayCell(int day, {required bool isCurrentMonth}) {
+    // Calculate the actual date for this cell
+    int monthOffset = 0;
+    if (!isCurrentMonth) {
+      // Determine if this is from previous or next month
+      if (day > 20) {
+        monthOffset = -1; // Previous month
+      } else {
+        monthOffset = 1; // Next month
+      }
+    }
+
     final date = DateTime(
       _currentMonth.year,
-      _currentMonth.month + (isCurrentMonth ? 0 : (day > 20 ? -1 : 1)),
+      _currentMonth.month + monthOffset,
       day,
     );
-    final isSelected =
-        _selectedDate != null &&
+
+    final isSelected = _selectedDate != null &&
         date.year == _selectedDate!.year &&
         date.month == _selectedDate!.month &&
         date.day == _selectedDate!.day &&
         isCurrentMonth;
-    final isToday =
-        DateTime.now().year == date.year &&
+
+    final isToday = DateTime.now().year == date.year &&
         DateTime.now().month == date.month &&
         DateTime.now().day == date.day;
 
-    final bool isDisabled =
-        date.isBefore(widget.firstDate) || date.isAfter(widget.lastDate);
+    final bool isDisabled = date.isBefore(widget.firstDate) ||
+        date.isAfter(widget.lastDate);
 
     return GestureDetector(
       onTap: (isCurrentMonth && !isDisabled)
           ? () {
-              setState(() {
-                _selectedDate = date;
-              });
-            }
+        if (mounted && !_isDisposed) {
+          setState(() {
+            _selectedDate = date;
+          });
+        }
+      }
           : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -451,8 +501,8 @@ class _DatePickerCalendarState extends State<_DatePickerCalendar> {
                   ? Colors.white
                   : isCurrentMonth
                   ? (isDisabled
-                        ? const Color(0xFFD1D5DB)
-                        : const Color(0xFF111827))
+                  ? const Color(0xFFD1D5DB)
+                  : const Color(0xFF111827))
                   : const Color(0xFFE5E7EB),
               fontWeight: isSelected || isToday
                   ? FontWeight.w700

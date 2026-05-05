@@ -1,10 +1,10 @@
+import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../provider/product_provider.dart';
 import '../../data/product_model.dart';
-import '../widgets/product_table.dart';
 import '../view/product_edit_view.dart';
 import '../../../../shared/widgets/app_table.dart';
 
@@ -16,13 +16,7 @@ class ProductWide extends ConsumerStatefulWidget {
 }
 
 class _ProductWideState extends ConsumerState<ProductWide> {
-  final ScrollController _scrollController = ScrollController();
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,67 +29,17 @@ class _ProductWideState extends ConsumerState<ProductWide> {
             padding: const EdgeInsets.all(24),
             child: _buildHeader(context),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: _buildFixedTableHeader(),
-          ),
           Expanded(
-            child: Builder(builder: (context) {
-              if (state.isLoading && state.products.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(48.0),
-                    child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                  ),
-                );
-              }
-              if (state.error != null && state.products.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40.0),
-                    child: Text(
-                      state.error!,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
-                );
-              }
-              return SingleChildScrollView(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: ProductTable(state.products, showHeader: false),
-              );
-            }),
-          ),
-          const SizedBox(height: 24),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 50),
+              child: _buildDataTable(context, state.products),
+            ),
+          )
         ],
       ),
     );
   }
 
-  Widget _buildFixedTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        border: Border(
-          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          const AppTableHeaderCell('SI.NO', width: 60),
-          const AppTableHeaderCell('Product Name', flex: 2),
-          const AppTableHeaderCell('Description', flex: 3),
-          const AppTableHeaderCell('SCM / M3', flex: 1),
-          const AppTableHeaderCell('Specific Gravity', flex: 1),
-          const AppTableHeaderCell('Action', width: 80),
-        ],
-      ),
-    );
-  }
 
   Widget _buildHeader(BuildContext context) {
     return Container(
@@ -137,7 +81,7 @@ class _ProductWideState extends ConsumerState<ProductWide> {
                 ],
               ),
               ElevatedButton.icon(
-                onPressed: () => _showProductSideSheet(context),
+                onPressed: () => _showAddProductSideSheet(context),
                 icon: const Icon(Icons.add, color: Colors.white, size: 18),
                 label: Text(
                   'Add Product',
@@ -162,7 +106,84 @@ class _ProductWideState extends ConsumerState<ProductWide> {
     );
   }
 
-  void _showProductSideSheet(BuildContext context) {
+  Widget _buildDataTable(BuildContext context, List<Product> list) {
+    return DataTable2(
+      border: TableBorder(
+        bottom: BorderSide(color: Colors.black12, width: 0.6),
+        left: BorderSide(color: Colors.black12, width: 0.6),
+        right: BorderSide(color: Colors.black12, width: 0.6),
+      ),
+      columnSpacing: 12,
+      horizontalMargin: 12,
+      minWidth: 800,
+      headingRowHeight: 45,
+      dataRowHeight: 50,
+      dividerThickness: 0.4,
+      headingRowColor: WidgetStateProperty.all(const Color(0xFF141E7A)),
+      headingTextStyle: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.bold,
+      ),
+
+      columns: [
+        DataColumn2(
+          label: AppTableHeaderCell('SI.NO'),
+          size: ColumnSize.S,
+        ),
+        const DataColumn2(
+          label: AppTableHeaderCell('Product Name'),
+          size: ColumnSize.L,
+        ),
+        const DataColumn2(
+          label: AppTableHeaderCell('Description'),
+          size: ColumnSize.L,
+        ),
+        const DataColumn2(
+          label: AppTableHeaderCell('Scm / m3'),
+          fixedWidth: 150.0,
+        ),
+        const DataColumn2(
+          label: AppTableHeaderCell('Specific gravity'),
+          fixedWidth: 150.0,
+        ),
+        const DataColumn2(
+          label: AppTableHeaderCell('Action'),
+          fixedWidth: 100.0,
+        ),
+      ],
+
+      rows: List.generate(list.length, (index) {
+        final p = list[index];
+        return DataRow(
+          cells: [
+            DataCell(AppTableCell((index + 1).toString().padLeft(2, '0'), textAlign: TextAlign.center)),
+            DataCell(AppTableCell(p.name, bold: true)),
+            DataCell(AppTableCell(p.description, textAlign: TextAlign.left)),
+            DataCell(AppTableCell(p.scmM3.toStringAsFixed(2), textAlign: TextAlign.center)),
+            DataCell(AppTableCell(p.specificGravity.toStringAsFixed(3))),
+            DataCell(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, color: Color(0xFF2563EB)),
+                    onPressed: () => _showProductSideSheet(context, p),
+                  ),
+                  SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteProduct(context, ref, p),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  void _showAddProductSideSheet(BuildContext context) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -200,5 +221,83 @@ class _ProductWideState extends ConsumerState<ProductWide> {
         );
       },
     );
+  }
+
+  void _showProductSideSheet(BuildContext context, Product product) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Edit Product",
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            elevation: 8,
+            child: SizedBox(
+              width: 600,
+              height: double.infinity,
+              child: ProductEditView(product: product),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final tween = Tween(begin: const Offset(1, 0), end: Offset.zero);
+        return SlideTransition(
+          position: tween.animate(animation),
+          child: child,
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteProduct(BuildContext context, WidgetRef ref, Product product) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) =>
+          AlertDialog(
+            title: const Text('Delete Product'),
+            content: const Text(
+                'Are you sure you want to delete this product? This action cannot be undone.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+    );
+
+    if (confirm != true) return;
+
+    final success = await ref
+        .read(productNotifierProvider.notifier)
+        .deleteProduct(product.id);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.green,
+          content: Text("Product deleted successfully"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text("Failed to delete product: ${ref
+              .read(productNotifierProvider)
+              .error}"),
+        ),
+      );
+    }
   }
 }

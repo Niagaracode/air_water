@@ -3,7 +3,7 @@ import '../model/setting_model.dart';
 import '../../data/api/setting_api.dart';
 import '../../domain/repository/setting_repository.dart';
 import '../../data/repository/setting_repository_impl.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 
 class SettingState {
   final List<SettingGroup> groupedSettings;

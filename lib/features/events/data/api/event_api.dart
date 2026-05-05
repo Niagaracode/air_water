@@ -1,9 +1,9 @@
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../presentation/model/event_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class EventApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   EventApi(this._client);
 

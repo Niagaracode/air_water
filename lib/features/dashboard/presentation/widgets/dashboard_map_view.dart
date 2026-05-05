@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../../data/tank_data_model.dart';
+import '../../data/models/tank_data_model.dart';
+
 
 class DashboardMapView extends StatefulWidget {
   const DashboardMapView({
@@ -86,9 +87,9 @@ class _DashboardMapViewState extends State<DashboardMapView> {
     return Container(
       height: widget.height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade300),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),

@@ -1,8 +1,8 @@
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../presentation/model/setting_model.dart';
 
 class SettingApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   SettingApi(this._client);
 

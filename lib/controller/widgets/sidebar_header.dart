@@ -13,11 +13,12 @@ class SidebarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      color: Colors.white,
+    return SizedBox(
+      height: 65,
+      width: isExpanded ? 250 : 70,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 63,
+        height: 65,
         padding: EdgeInsets.symmetric(
           horizontal: isExpanded ? 16 : 0,
         ),

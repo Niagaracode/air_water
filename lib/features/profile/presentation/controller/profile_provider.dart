@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../data/api/profile_api.dart';
 import '../../data/repository/profile_repository_impl.dart';
 import '../../domain/repository/profile_repository.dart';

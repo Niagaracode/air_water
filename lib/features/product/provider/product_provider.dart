@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-import '../../../core/network/api_client.dart';
+import '../../../core/network/http/api_service.dart';
 import '../data/product_api.dart';
 import '../data/product_model.dart';
 import '../data/product_repository.dart';
@@ -50,6 +50,17 @@ class ProductNotifier extends StateNotifier<ProductState> {
     }
   }
 
+  Future<bool> createProduct(Map<String, dynamic> data) async {
+    try {
+      await _repo.createProduct(data);
+      await loadProducts();
+      return true;
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      return false;
+    }
+  }
+
   Future<bool> updateProduct(int id, Map<String, dynamic> data) async {
     try {
       await _repo.updateProduct(id, data);
@@ -61,9 +72,9 @@ class ProductNotifier extends StateNotifier<ProductState> {
     }
   }
 
-  Future<bool> createProduct(Map<String, dynamic> data) async {
+  Future<bool> deleteProduct(int id) async {
     try {
-      await _repo.createProduct(data);
+      await _repo.deleteProduct(id);
       await loadProducts();
       return true;
     } catch (e) {

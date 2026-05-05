@@ -1,8 +1,8 @@
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../presentation/model/profile_model.dart';
 
 class ProfileApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   ProfileApi(this._client);
 

@@ -3,7 +3,7 @@ import '../model/roaster_model.dart';
 import '../../data/api/roaster_api.dart';
 import '../../domain/repository/roaster_repository.dart';
 import '../../data/repository/roaster_repository_impl.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 
 final roasterApiProvider = Provider(
   (ref) => RosterApi(ref.read(apiClientProvider)),
