@@ -44,7 +44,7 @@ class _DetailedAssetCardState extends ConsumerState<DetailedAssetCard> {
   double _levelPerc = 0.0;
   bool _hasReceivedData = false;
 
-  late final String _mqttTopic;
+  late String _mqttTopic;
   StreamSubscription<AsyncValue<MqttMessageModel>>? _streamSub;
 
   @override
@@ -62,6 +62,37 @@ class _DetailedAssetCardState extends ConsumerState<DetailedAssetCard> {
     });
   }
 
+  @override
+  void didUpdateWidget(DetailedAssetCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.group.deviceId != widget.group.deviceId) {
+      // Topic changed! Unsubscribe old, reset state, and subscribe new
+      _unsubscribeFromTopic('tweet/${oldWidget.group.deviceId}');
+      
+      setState(() {
+        _mqttTopic = 'tweet/${widget.group.deviceId}';
+        _hasReceivedData = false;
+        _gas = '--';
+        _pressure = '--';
+        _level = '--';
+        _kl = '--';
+        _cubicMeter = '--';
+        _ton = '--';
+        _batteryVolt = '--';
+        _solarVolt = '--';
+        _levelPerc = 0.0;
+      });
+
+      _initMqtt();
+    }
+  }
+
+  void _unsubscribeFromTopic(String topic) {
+    try {
+      ref.read(mqttProvider.notifier).unsubscribeFromTopic(topic);
+    } catch (_) {}
+  }
+
   void _initMqtt() {
     // Ensure MQTT is connected
     final mqttNotifier = ref.read(mqttProvider.notifier);
@@ -77,6 +108,10 @@ class _DetailedAssetCardState extends ConsumerState<DetailedAssetCard> {
 
     final data = message.data;
     final cm = (data['cM'] as String? ?? '').trim();
+    
+    // Skip status-only messages that don't contain sensor data
+    if (cm.contains('DATA DELAY')) return;
+
     final parsed = _parseCm(cm);
 
     // Extract GAS type from cM field (GAS:1 means Oxygen typically, or use product name)
