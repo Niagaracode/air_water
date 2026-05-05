@@ -1042,14 +1042,14 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               ),
                                             ),
                                           ),
-                                          if (row.parameterType.toUpperCase().trim() != 'BATTERY' && row.parameterType.toUpperCase().trim() != 'SOLAR') ...[
+                                          if (row.parameterType.toUpperCase().trim() != 'SOLAR') ...[
                                             const SizedBox(width: 16),
                                             Expanded(
                                               flex: 4,
                                               child: _buildLabelField(
                                                 'STATUS LABEL (UI DISPLAY)',
-                                                // For LEVEL: use predefined dropdown; for other types: free text
-                                                row.parameterType.toUpperCase().trim() == 'LEVEL'
+                                                // For LEVEL & BATTERY: use predefined dropdown; for other types: free text
+                                                (row.parameterType.toUpperCase().trim() == 'LEVEL' || row.parameterType.toUpperCase().trim() == 'BATTERY')
                                                     ? AppDropdown<String>(
                                                         value: () {
                                                           const allowed = ['ReOrder', 'Critical', 'Low', 'High'];
@@ -1063,12 +1063,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                           if (upper.contains('HIGH')) return 'High';
                                                           return null;
                                                         }(),
-                                                        items: const [
-                                                          'ReOrder',
-                                                          'Critical',
-                                                          'Low',
-                                                          'High',
-                                                        ],
+                                                        items: (row.parameterType.toUpperCase().trim() == 'BATTERY')
+                                                            ? const ['Critical', 'Low', 'High']
+                                                            : const ['ReOrder', 'Critical', 'Low', 'High'],
                                                         hint: 'Select Label',
                                                         itemLabel: (v) => v,
                                                         onChanged: (v) => setState(
