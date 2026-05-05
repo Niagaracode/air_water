@@ -161,6 +161,8 @@ class _AlarmWideState extends ConsumerState<AlarmWide> {
           AppTableHeaderCell('Importance', width: 90),
           const SizedBox(width: 16),
           AppTableHeaderCell('Status', width: 80),
+          const SizedBox(width: 16),
+          AppTableHeaderCell('Email', width: 60),
         ],
       ),
     );
@@ -320,8 +322,119 @@ class _AlarmWideState extends ConsumerState<AlarmWide> {
               child: AppStatusBadge(status: alarm.status == 'Active' ? 1 : 0),
             ),
           ),
+          const SizedBox(width: 16),
+          // Email
+          SizedBox(
+            width: 60,
+            child: Center(
+              child: alarm.sentTo != null
+                  ? IconButton(
+                      icon: const Icon(Icons.email_outlined,
+                          color: Color(0xFF141E7A), size: 20),
+                      onPressed: () => _showEmailDialog(context, alarm),
+                      tooltip: 'View Sent Email',
+                    )
+                  : Text(
+                      '-',
+                      style: GoogleFonts.inter(
+                          color: const Color(0xFF9CA3AF), fontSize: 12),
+                    ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  void _showEmailDialog(BuildContext context, Alarm alarm) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.email_outlined, color: Color(0xFF141E7A)),
+            const SizedBox(width: 12),
+            Text(
+              'Email Record',
+              style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 500,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildEmailDetail('Sent To:', alarm.sentTo ?? 'N/A'),
+                const Divider(height: 24),
+                _buildEmailDetail('Subject:', alarm.emailSubject ?? 'N/A'),
+                const Divider(height: 24),
+                Text(
+                  'Message Body:',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: const Color(0xFF6B7280),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Text(
+                    alarm.emailBody ?? 'N/A',
+                    style: GoogleFonts.inter(fontSize: 13, height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'CLOSE',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF141E7A),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailDetail(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            color: const Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF111827),
+          ),
+        ),
+      ],
     );
   }
 

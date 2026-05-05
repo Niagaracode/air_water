@@ -84,8 +84,8 @@ const userMenu = [
   //   allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   // ),
   SidebarMenuItem(
-    key: 'Group',
-    label: 'Group',
+    key: 'User Group',
+    label: 'User Group',
     icon: Icons.layers_outlined,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),

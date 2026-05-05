@@ -485,7 +485,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         child: Row(
           children: [
-            const AppTableCell(null, width: 70), // SI.NO spacing
+            const AppTableCell(null, width: 70),
             AppTableCell(site.city ?? '--', flex: 2),
 
             AppTableCell(
