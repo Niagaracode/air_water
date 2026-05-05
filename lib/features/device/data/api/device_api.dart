@@ -1,9 +1,9 @@
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../presentation/model/device_model.dart';
 import '../../../site/presentation/model/site_model.dart';
 
 class DeviceApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   DeviceApi(this._client);
 

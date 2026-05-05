@@ -1,7 +1,7 @@
-import '../../../core/network/api_client.dart';
+import '../../../core/network/http/api_service.dart';
 
 class ProductApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   ProductApi(this._client);
 

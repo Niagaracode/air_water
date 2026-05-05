@@ -1,9 +1,9 @@
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../presentation/model/group_model.dart';
 import '../../../site/presentation/model/site_model.dart';
 
 class GroupApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   GroupApi(this._client);
 

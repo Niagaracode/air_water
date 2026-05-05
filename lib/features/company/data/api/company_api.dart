@@ -1,8 +1,8 @@
 import '../../presentation/model/company_model.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 
 class CompanyApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   CompanyApi(this._client);
 

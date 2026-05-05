@@ -1,10 +1,10 @@
 import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../config/env.dart';
-import '../storage/secure_storage.dart';
-import 'interceptors/auth_interceptor.dart';
-import '../../app_startup/app_startup.dart';
+import '../../config/env.dart';
+import '../../storage/secure_storage.dart';
+import '../interceptors/auth_interceptor.dart';
+import '../../../app_startup/app_startup.dart';
 
 class DioClient {
   final Dio _dio;

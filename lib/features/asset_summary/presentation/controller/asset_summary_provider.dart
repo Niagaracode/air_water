@@ -4,7 +4,7 @@ import '../../../tank/data/api/tank_api.dart';
 import '../../../setting/data/api/setting_api.dart';
 import '../../../setting/presentation/model/setting_model.dart';
 import '../../../user/presentation/controller/user_provider.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../model/asset_summary_model.dart';
 
 class AssetSummaryState {

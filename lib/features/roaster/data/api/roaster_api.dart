@@ -1,8 +1,8 @@
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../presentation/model/roaster_model.dart';
 
 class RosterApi {
-  final ApiClient _client;
+  final ApiService _client;
   RosterApi(this._client);
 
   Future<RosterResponse> getRosters({int page = 1, int limit = 10, String? search}) async {

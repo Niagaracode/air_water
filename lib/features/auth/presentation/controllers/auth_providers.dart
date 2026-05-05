@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../../../core/storage/secure_storage.dart';
 import '../../data/api/auth_api.dart';
 import '../../data/repository/auth_repository_impl.dart';

@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dio_client.dart';
 
 
-class ApiClient {
+class ApiService {
   final Dio _dio;
 
-  ApiClient(this._dio);
+  ApiService(this._dio);
 
   Future<Response> get(String endpoint, {Map<String, dynamic>? query}) {
     print("endpoint:$endpoint, query:$query");
@@ -27,5 +27,4 @@ class ApiClient {
   }
 }
 
-final apiClientProvider =
-Provider<ApiClient>((ref) => ApiClient(ref.read(dioProvider)));
+final apiClientProvider = Provider<ApiService>((ref) => ApiService(ref.read(dioProvider)));

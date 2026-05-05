@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../data/api/user_api.dart';
 import '../../data/repository/user_repository_impl.dart';
 import '../../domain/repository/user_repository.dart';

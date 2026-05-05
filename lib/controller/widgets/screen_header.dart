@@ -204,61 +204,13 @@ class ScreenHeader extends ConsumerWidget {
   }
 
   Future<void> _refreshData(WidgetRef ref, BuildContext context) async {
-    try {
-      // Refresh the tank data from server
-      await ref.read(tankDataListProvider.notifier).refresh();
+    // Refresh the tank data from server
+    ref.read(tankDataProvider.notifier).refresh();
+
+    /*await ref.read(tankDataListProvider.notifier).refresh();
 
       // Invalidate related providers to refresh UI
       ref.invalidate(tankStatisticsProvider);
-      ref.invalidate(groupedTanksProvider);
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Text(
-                  'Data synced successfully!',
-                  style: GoogleFonts.outfit(fontSize: 14),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Failed to sync: ${e.toString()}',
-                    style: GoogleFonts.outfit(fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-    }
+      ref.invalidate(groupedTanksProvider);*/
   }
 }

@@ -3,7 +3,7 @@ import '../model/message_template_model.dart';
 import '../../data/api/message_template_api.dart';
 import '../../domain/repository/message_template_repository.dart';
 import '../../data/repository/message_template_repository_impl.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 
 class MessageTemplateState {
   final List<MessageTemplate> templates;

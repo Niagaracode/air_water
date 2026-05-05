@@ -3,7 +3,7 @@ import '../model/company_model.dart';
 import '../../data/api/company_api.dart';
 import '../../domain/repository/company_repository.dart';
 import '../../data/repository/company_repository_impl.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 
 final companyApiProvider = Provider(

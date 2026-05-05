@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import '../../../tank/data/api/tank_api.dart';
 import '../../../setting/data/api/setting_api.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../model/asset_schedule_model.dart';
 

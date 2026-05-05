@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../controller/provider/sidebar_provider.dart';
-import '../../data/tank_data_model.dart';
-import '../model/site_group_model.dart';
+import '../../data/models/site_group_model.dart';
+import '../../data/models/tank_data_model.dart';
 
 class DashboardListView extends ConsumerWidget {
   const DashboardListView({
@@ -85,7 +85,7 @@ class DashboardListView extends ConsumerWidget {
 
       return SiteGroupModel(
         siteName: group.siteName,
-        siteLocation: group.siteLocation,
+        city: group.city,
         tanks: filteredTanks,
       );
     }).where((group) => group.tanks.isNotEmpty).toList();
@@ -129,7 +129,7 @@ class DashboardListView extends ConsumerWidget {
 
   Widget _buildTableHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF141E7A).withOpacity(0.7),
         borderRadius: const BorderRadius.only(
@@ -203,7 +203,7 @@ class DashboardListView extends ConsumerWidget {
                 const Icon(Icons.location_on, size: 18, color: Color(0xFF141E7A)),
                 const SizedBox(width: 8),
                 Text(
-                  site.siteName,
+                  '${site.siteName} - ${site.city}',
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
-import '../../../core/network/api_client.dart';
+import '../../../core/network/http/api_service.dart';
 import '../data/product_api.dart';
 import '../data/product_model.dart';
 import '../data/product_repository.dart';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../../data/tank_data_model.dart';
+import '../../data/models/tank_data_model.dart';
+
 
 class DashboardMapView extends StatefulWidget {
   const DashboardMapView({

@@ -1,8 +1,8 @@
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 import '../../presentation/model/alarm_model.dart';
 
 class AlarmApi {
-  final ApiClient _client;
+  final ApiService _client;
 
   AlarmApi(this._client);
 

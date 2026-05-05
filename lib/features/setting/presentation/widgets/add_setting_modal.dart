@@ -19,7 +19,7 @@ import '../../../tank/presentation/model/tank_model.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../product/data/product_model.dart';
 import '../../../product/provider/product_provider.dart';
-import '../../../../core/network/api_client.dart';
+import '../../../../core/network/http/api_service.dart';
 
 class AddSettingModal extends ConsumerStatefulWidget {
   final Setting? initialSetting;
