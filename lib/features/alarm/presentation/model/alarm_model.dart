@@ -12,6 +12,10 @@ class Alarm {
   final DateTime triggeredAt;
   final String status; // Active, Resolved
 
+  final String? sentTo;
+  final String? emailSubject;
+  final String? emailBody;
+
   Alarm({
     required this.id,
     required this.ruleName,
@@ -25,6 +29,9 @@ class Alarm {
     required this.importance,
     required this.triggeredAt,
     this.status = 'Active',
+    this.sentTo,
+    this.emailSubject,
+    this.emailBody,
   });
 
   factory Alarm.fromJson(Map<String, dynamic> json) {
@@ -48,6 +55,9 @@ class Alarm {
       importance: json['importance'] as String? ?? 'Medium',
       triggeredAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
       status: json['status'] as String? ?? 'Active',
+      sentTo: json['sent_to'] as String?,
+      emailSubject: json['email_subject'] as String?,
+      emailBody: json['email_body'] as String?,
     );
   }
 }

@@ -192,7 +192,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   Widget _buildUserSection(UserState userState) {
     final allGroupUsers = userState.users.where((u) {
       final isCustomer = u.roleName?.toLowerCase() == 'customer';
-      return !isCustomer;
+      final isSuperAdmin = u.roleName?.toLowerCase().contains('super admin') ?? false;
+      final isCompanyAdmin = u.roleName?.toLowerCase().contains('company admin') ?? false;
+      return !isCustomer && !isSuperAdmin && !isCompanyAdmin;
     }).toList();
 
     // Auto-assign "All" group users if the group is currently empty and not manually cleared
@@ -215,7 +217,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     final eligibleUsers = userState.users.where((u) {
       final isAlreadyAssigned = _assignedUsers.any((au) => au.userId == u.userId);
       final isCustomer = u.roleName?.toLowerCase() == 'customer';
-      return !isAlreadyAssigned && !isCustomer;
+      final isSuperAdmin = u.roleName?.toLowerCase().contains('super admin') ?? false;
+      final isCompanyAdmin = u.roleName?.toLowerCase().contains('company admin') ?? false;
+      return !isAlreadyAssigned && !isCustomer && !isSuperAdmin && !isCompanyAdmin;
     }).toList();
 
     return Container(
