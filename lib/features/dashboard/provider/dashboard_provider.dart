@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../core/network/http/api_service.dart';
+import '../../../shared/utils/app_helper.dart';
 import '../data/dashboard_api.dart';
 import '../data/dashboard_repository_Impl.dart';
 import '../data/models/site_group_model.dart';
@@ -55,11 +56,17 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
       final now = DateTime.now();
 
       final active = tanks.where((t) {
-        return now.difference(t.lastUpdate).inMinutes <= 10;
+        final th = t.thresholdValues;
+        final minutes = durationToMinutes(th.duration);
+
+        return now.difference(t.lastUpdate).inMinutes <= minutes;
       }).length;
 
       final offline = tanks.where((t) {
-        return now.difference(t.lastUpdate).inMinutes > 10;
+        final th = t.thresholdValues;
+        final minutes = durationToMinutes(th.duration);
+
+        return now.difference(t.lastUpdate).inMinutes > minutes;
       }).length;
 
       final lowBattery = tanks.where((t) {
@@ -108,36 +115,3 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
     },
   );
 });
-
-/*
-final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
-  final tankAsync = ref.watch(tankDataProvider);
-  return tankAsync.when(
-    data: (tanks) {
-      return {
-        'total': tanks.length,
-        'active': tanks.where((t) => t.status == 'Active').length,
-        'offline': tanks.where((t) => t.status == 'Offline').length,
-        'lowLevel': tanks.where((t) => t.status == 'LowLevel').length,
-        'lowBattery': tanks.where((t) => t.status == 'LowBattery').length,
-        'reorder': tanks.where((t) => t.status == 'Reorder').length,
-      };
-    },
-    loading: () => {
-      'total': 0,
-      'active': 0,
-      'offline': 0,
-      'lowLevel': 0,
-      'lowBattery': 0,
-      'reorder': 0,
-    },
-    error: (_, __) => {
-      'total': 0,
-      'active': 0,
-      'offline': 0,
-      'lowLevel': 0,
-      'lowBattery': 0,
-      'reorder': 0,
-    },
-  );
-});*/

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../controller/provider/sidebar_provider.dart';
+import '../../../../shared/utils/app_helper.dart';
 import '../../data/models/site_group_model.dart';
 import '../../data/models/tank_data_model.dart';
 
@@ -71,8 +72,37 @@ class DashboardListView extends ConsumerWidget {
         if (selectedRegion != 'All Regions' && tank.region != selectedRegion) {
           return false;
         }
-        if (selectedStatus != 'All Status' && tank.status != selectedStatus) {
-          return false;
+        if (selectedStatus != 'All Status') {
+          final th = tank.thresholdValues;
+
+          final isLowLevel = tank.level < th.level;
+          final isLowBattery = tank.batteryV < th.battery;
+          final isCritical = tank.level < th.reorder;
+          final isOffline =
+              DateTime.now().difference(tank.lastUpdate).inMinutes >
+                  durationToMinutes(th.duration);
+
+          switch (selectedStatus) {
+            case 'Active':
+              if (isOffline) return false;
+              break;
+
+            case 'Offline':
+              if (!isOffline) return false;
+              break;
+
+            case 'Low Level':
+              if (!isLowLevel) return false;
+              break;
+
+            case 'Critical':
+              if (!isCritical) return false;
+              break;
+
+            case 'Reorder':
+              if (!isCritical) return false;
+              break;
+          }
         }
         if (searchQuery.isNotEmpty) {
           final searchLower = searchQuery.toLowerCase();

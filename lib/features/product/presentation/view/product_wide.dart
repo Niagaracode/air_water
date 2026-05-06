@@ -23,15 +23,16 @@ class _ProductWideState extends ConsumerState<ProductWide> {
     final state = ref.watch(productNotifierProvider);
 
     return Scaffold(
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(10),
             child: _buildHeader(context),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 50),
+              padding: const EdgeInsets.symmetric(horizontal: 45),
               child: _buildDataTable(context, state.products),
             ),
           )
@@ -45,7 +46,7 @@ class _ProductWideState extends ConsumerState<ProductWide> {
     return Container(
       padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 32),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: Colors.transparent,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
@@ -108,6 +109,7 @@ class _ProductWideState extends ConsumerState<ProductWide> {
 
   Widget _buildDataTable(BuildContext context, List<Product> list) {
     return DataTable2(
+      dataRowColor: WidgetStateProperty.all(Colors.white),
       border: TableBorder(
         bottom: BorderSide(color: Colors.black12, width: 0.6),
         left: BorderSide(color: Colors.black12, width: 0.6),

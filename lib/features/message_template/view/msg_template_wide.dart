@@ -49,20 +49,17 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
     final notifier = ref.read(messageTemplateProvider.notifier);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
-      body: Container(
-        color: Colors.white,
-        child: Column(
-          children: [
-            _buildHeader(state, notifier),
-            if (!state.isLoading || state.templates.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: _buildTableBody(state, notifier),
-              ),
-            const SizedBox(height: 48),
-          ],
-        ),
+      backgroundColor: Colors.grey.withOpacity(0.1),
+      body: Column(
+        children: [
+          _buildHeader(state, notifier),
+          if (!state.isLoading || state.templates.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: _buildTableBody(state, notifier),
+            ),
+          const SizedBox(height: 48),
+        ],
       ),
     );
   }
@@ -70,9 +67,9 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
   Widget _buildHeader(MessageTemplateState state, MessageTemplateNotifier notifier) {
     return Container(
       padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 16),
-      margin: const EdgeInsets.all(24),
+      margin: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(

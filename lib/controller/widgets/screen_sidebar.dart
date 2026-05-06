@@ -1,4 +1,3 @@
-import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../core/router/sidebar_routes.dart';
 import '../../core/user_config/user_role.dart';
 import '../provider/sidebar_provider.dart';
-import '../widgets/sidebar_header.dart';
 import 'sidebar_menu_config.dart';
 import 'sidebar_menu_item.dart';
 import 'nave_menu.dart';
@@ -20,63 +18,6 @@ class ScreenSidebar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isExpanded = ref.watch(sidebarExpandedProvider);
     final location = GoRouterState.of(context).uri.toString();
-
-    /*return AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeInOut,
-      width: isExpanded ? 250 : 72,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 5),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              right: BorderSide(
-                color: Colors.black12,
-                width: 1,
-              ),
-            ),
-          ),
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            children: [
-              _buildGroup(
-                title: 'MAIN MENU',
-                items: mainMenu,
-                location: location,
-                isExpanded: isExpanded,
-                context: context,
-                role: userRole,
-              ),
-              _buildGroup(
-                title: 'CONFIGURATION',
-                items: configurationMenu,
-                location: location,
-                isExpanded: isExpanded,
-                context: context,
-                role: userRole,
-              ),
-              _buildGroup(
-                title: 'USER',
-                items: userMenu,
-                location: location,
-                isExpanded: isExpanded,
-                context: context,
-                role: userRole,
-              ),
-              _buildGroup(
-                title: 'EVENTS',
-                items: eventsMenu,
-                location: location,
-                isExpanded: isExpanded,
-                context: context,
-                role: userRole,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );*/
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),

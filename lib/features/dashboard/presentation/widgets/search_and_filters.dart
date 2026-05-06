@@ -12,8 +12,8 @@ class SearchAndFilters extends StatefulWidget {
     required this.onClearFilters,
     this.selectedRegion = 'All Regions',
     this.selectedStatus = 'All Status',
-    this.regions = const ['All Regions', 'Arizona', 'New Mexico', 'Texas', 'Oklahoma'],
-    this.statuses = const ['All Status', 'Active', 'Warning', 'Critical', 'Offline', 'Out of Order'],
+    this.regions = const ['All Regions', 'Tamil Nadu', 'New Mexico', 'Texas', 'Oklahoma'],
+    this.statuses = const ['All Status', 'Active', 'Low Level', 'Critical', 'Offline', 'Reorder'],
     this.searchHint = 'Search devices...',
   });
 

@@ -1,4 +1,11 @@
 class TankDataModel {
+
+  static double _toDouble(dynamic value) {
+    if (value == null) return 0;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString()) ?? 0;
+  }
+
   final int id;
   final String tankName;
   final String siteName;
@@ -40,10 +47,10 @@ class TankDataModel {
       siteName: json['siteName'] ?? 'Unknown',
       deviceId: json['device_id'] ?? '',
       city: json['city'] ?? '',
-      level: (json['level'] ?? 0).toDouble(),
-      pressure: (json['ptn'] ?? 0).toDouble(),
-      batteryV: (json['bat'] ?? 0).toDouble(),
-      solarV: (json['sol'] ?? 0).toDouble(),
+      level: _toDouble(json['level']),
+      pressure: _toDouble(json['ptn']),
+      batteryV: _toDouble(json['bat']),
+      solarV: _toDouble(json['sol']),
       thresholds: json['thresholds'] ?? '00:00_3.5_25.0_1.0_20.0',
       status: json['status'] ?? 'Unknown',
       lastUpdate: DateTime.tryParse(json['lastUpdate'] ?? '') ?? DateTime.now(),
@@ -81,15 +88,18 @@ class TankDataModel {
       longitude: longitude,
     );
   }
+
 }
 
 class TankThreshold {
+  final String duration;
   final double battery;
   final double level;
   final double pressure;
   final double reorder;
 
   TankThreshold({
+    required this.duration,
     required this.battery,
     required this.level,
     required this.pressure,
@@ -99,6 +109,7 @@ class TankThreshold {
   factory TankThreshold.fromString(String? value) {
     if (value == null || value.isEmpty) {
       return TankThreshold(
+        duration: '00:00',//hh:mm
         battery: 0,
         level: 0,
         pressure: 0,
@@ -110,6 +121,7 @@ class TankThreshold {
 
     if (parts.length < 5) {
       return TankThreshold(
+        duration: '00:00',
         battery: 0,
         level: 0,
         pressure: 0,
@@ -118,6 +130,7 @@ class TankThreshold {
     }
 
     return TankThreshold(
+      duration: parts[0],
       battery: double.tryParse(parts[1]) ?? 0,
       level: double.tryParse(parts[2]) ?? 0,
       pressure: double.tryParse(parts[3]) ?? 0,
