@@ -63,7 +63,7 @@ class _UserWideState extends ConsumerState<UserWide> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.withOpacity(0.1),
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Column(
         children: [
           Padding(
@@ -110,84 +110,64 @@ class _UserWideState extends ConsumerState<UserWide> {
   }
 
   Widget _buildHeader(UserState state, UserNotifier notifier) {
-    return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'USER MANAGEMENT',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF111827),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Centralize user information including identification, roles, access, and status management.',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF6B7280),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _showAddModal(),
-                style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  'ADD USER',
-                  style: GoogleFonts.inter(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'USER MANAGEMENT',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.8,
+                    color: const Color(0xFF111827),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'FILTER',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF374151),
-              letterSpacing: 1.0,
+                const SizedBox(height: 6),
+                Text(
+                  'Centralize user information including identification, roles, access, and status management.',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 10),
-          _buildFilterRow(state, notifier),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Showing ${state.users.length} of ${state.totalEntries} entries',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF),
-                fontSize: 12,
+            ElevatedButton.icon(
+              onPressed: () => _showAddModal(),
+              style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(
+                'ADD USER',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'FILTER',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF374151),
+            letterSpacing: 1.0,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        _buildFilterRow(state, notifier),
+        const SizedBox(height: 10),
+      ],
     );
   }
 

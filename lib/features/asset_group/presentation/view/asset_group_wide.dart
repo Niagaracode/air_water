@@ -58,14 +58,20 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     final state = ref.watch(assetGroupProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withOpacity(0.1),
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Column(
         children: [
-          _buildHeader(state),
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: _buildHeader(state),
+          ),
           Expanded(
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF141E7A)))
-                : _buildTable(state),
+                : Padding(
+                  padding: const EdgeInsets.only(left: 24, right: 24, bottom: 8),
+                  child: _buildTable(state),
+                ),
           ),
         ],
       ),
@@ -73,73 +79,69 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
   }
 
   Widget _buildHeader(AssetGroupState state) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ASSET GROUP MANAGER',
-                    style: GoogleFonts.outfit(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF111827),
-                    ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'ASSET GROUP MANAGER',
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111827),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Define dynamic grouping rules based on asset parameters and assign users.',
-                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6B7280)),
-                  ),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _showAddDialog(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF141E7A),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                icon: const Icon(Icons.add, size: 20),
-                label: const Text('CREATE GROUP'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search groups by description...',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: const Color(0xFFF3F4F6),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  onChanged: (v) {
-                    // Implement local filter or call provider filter
-                  },
+                const SizedBox(height: 8),
+                Text(
+                  'Define dynamic grouping rules based on asset parameters and assign users.',
+                  style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6B7280)),
                 ),
+              ],
+            ),
+            ElevatedButton.icon(
+              onPressed: () => _showAddDialog(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF141E7A),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const SizedBox(width: 16),
-              AppClearButton(onPressed: () => _searchController.clear()),
-            ],
-          ),
-        ],
-      ),
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text('CREATE GROUP'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search groups by description...',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: const Color(0xFFF3F4F6),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: (v) {
+                  // Implement local filter or call provider filter
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            AppClearButton(onPressed: () => _searchController.clear()),
+          ],
+        ),
+      ],
     );
   }
 

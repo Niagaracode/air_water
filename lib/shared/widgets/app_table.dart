@@ -6,6 +6,37 @@ import 'package:google_fonts/google_fonts.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class AppTableHeaderCell extends StatelessWidget {
   final String label;
+  final int? flex;  // You can remove this if not needed elsewhere
+  final double? width;
+  final TextAlign? textAlign;
+
+  const AppTableHeaderCell(
+      this.label, {
+        super.key,
+        this.flex,
+        this.width,
+        this.textAlign,
+      });
+
+  @override
+  Widget build(BuildContext context) {
+    final child = Text(
+      label.toUpperCase(),
+      textAlign: textAlign ?? TextAlign.left,
+      style: GoogleFonts.outfit(
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+        color: Colors.white.withValues(alpha: 0.90),
+        letterSpacing: 0.8,
+      ),
+    );
+
+    // Just return the Text directly - let DataTable2 handle sizing
+    return child;
+  }
+}
+/*class AppTableHeaderCell extends StatelessWidget {
+  final String label;
   final int? flex;
   final double? width;
   final TextAlign? textAlign; // Add text alignment
@@ -36,7 +67,7 @@ class AppTableHeaderCell extends StatelessWidget {
     }
     return Expanded(flex: flex ?? 1, child: child);
   }
-}
+}*/
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AppTableCell  — regular data cell (fixed width or flex)

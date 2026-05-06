@@ -28,7 +28,7 @@ class _ProductWideState extends ConsumerState<ProductWide> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             child: _buildHeader(context),
           ),
           Expanded(
@@ -41,7 +41,6 @@ class _ProductWideState extends ConsumerState<ProductWide> {
       ),
     );
   }
-
 
   Widget _buildHeader(BuildContext context) {
     return Container(

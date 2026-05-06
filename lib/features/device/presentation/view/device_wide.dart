@@ -53,95 +53,71 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
   }
 
   Widget _buildHeader(DeviceState state, DeviceNotifier notifier) {
-    return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'DEVICE MANAGEMENT',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF111827),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Monitor and configure your water monitoring hardware across various sites.',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF6B7280),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _showAddModal(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF141E7A),
-                  foregroundColor: Colors.white,
-                ),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  'ADD DEVICE',
-                  style: GoogleFonts.inter(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'DEVICE MANAGEMENT',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.8,
+                    color: const Color(0xFF111827),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'FILTER',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF374151),
-              letterSpacing: 1.0,
+                const SizedBox(height: 6),
+                Text(
+                  'Monitor and configure your water monitoring hardware across various sites.',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          _buildFilterRow(state, notifier),
-          if (state.error != null) ...[
-            const SizedBox(height: 16),
-            _buildErrorBanner(state.error!, notifier),
+            ElevatedButton.icon(
+              onPressed: () => _showAddModal(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF141E7A),
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(
+                'ADD DEVICE',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
           ],
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Showing ${state.groupedDevices.fold<int>(0, (sum, g) => sum + g.devices.length)} of ${state.totalEntries} entries',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF),
-                fontSize: 12,
-              ),
-            ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'FILTER',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF374151),
+            letterSpacing: 1.0,
           ),
+        ),
+        const SizedBox(height: 12),
+        _buildFilterRow(state, notifier),
+        if (state.error != null) ...[
+          const SizedBox(height: 16),
+          _buildErrorBanner(state.error!, notifier),
         ],
-      ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -201,7 +177,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     final notifier = ref.read(deviceProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withOpacity(0.1),
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Column(
         children: [
           Padding(

@@ -48,92 +48,68 @@ class _TankWideState extends ConsumerState<TankWide> {
   }
 
   Widget _buildHeader(TankState state, TankNotifier notifier) {
-    return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'TANK MANAGEMENT',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF111827),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Centralize tank information including dimensions, types, products and site associations.',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF6B7280),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _showAddDialog(),
-                style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  'ADD TANK',
-                  style: GoogleFonts.inter(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TANK MANAGEMENT',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.8,
+                    color: const Color(0xFF111827),
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'FILTER',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF374151),
-              letterSpacing: 1.0,
+                const SizedBox(height: 6),
+                Text(
+                  'Centralize tank information including dimensions, types, products and site associations.',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          _buildFilterRow(state, notifier),
-          if (state.error != null) ...[
-            const SizedBox(height: 16),
-            _buildErrorBanner(state.error!),
+            ElevatedButton.icon(
+              onPressed: () => _showAddDialog(),
+              style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(
+                'ADD TANK',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
           ],
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Showing ${state.groupedTanks.fold<int>(0, (sum, g) => sum + g.tanks.length)} of ${state.totalEntries} entries',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF),
-                fontSize: 12,
-              ),
-            ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'FILTER',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF374151),
+            letterSpacing: 1.0,
           ),
+        ),
+        const SizedBox(height: 12),
+        _buildFilterRow(state, notifier),
+        if (state.error != null) ...[
+          const SizedBox(height: 16),
+          _buildErrorBanner(state.error!),
         ],
-      ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 

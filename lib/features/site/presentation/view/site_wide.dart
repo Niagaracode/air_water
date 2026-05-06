@@ -47,7 +47,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
     final siteNotifier = ref.read(siteNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withOpacity(0.1),
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Column(
         children: [
           Padding(
@@ -98,61 +98,51 @@ class _SiteWideState extends ConsumerState<SiteWide> {
   }
 
   Widget _buildHeader(SiteState state, SiteNotifier notifier) {
-    return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'SITE MANAGEMENT',
+          style: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.8,
+            color: const Color(0xFF111827),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'SITE MANAGEMENT',
-            style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-              color: const Color(0xFF111827),
-            ),
+        const SizedBox(height: 6),
+        Text(
+          'Centralize site information including identification, locations, and status management.',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF6B7280),
+            fontSize: 13,
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Centralize site information including identification, locations, and status management.',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF6B7280),
-              fontSize: 13,
-            ),
+        ),
+        const SizedBox(height: 20),
+        // Filter label
+        Text(
+          'FILTER',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF374151),
+            letterSpacing: 1.0,
           ),
-          const SizedBox(height: 20),
-          // Filter label
-          Text(
-            'FILTER',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF374151),
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 10),
-          _buildFilterRow(notifier, state),
-          const SizedBox(height: 10),
-          // Align(
-          //   alignment: Alignment.centerRight,
-          //   child: Text(
-          //     'Showing ${state.totalEntries} entries',
-          //     style: GoogleFonts.inter(
-          //       color: const Color(0xFF9CA3AF),
-          //       fontSize: 12,
-          //     ),
-          //   ),
-          // ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        _buildFilterRow(notifier, state),
+        const SizedBox(height: 10),
+        // Align(
+        //   alignment: Alignment.centerRight,
+        //   child: Text(
+        //     'Showing ${state.totalEntries} entries',
+        //     style: GoogleFonts.inter(
+        //       color: const Color(0xFF9CA3AF),
+        //       fontSize: 12,
+        //     ),
+        //   ),
+        // ),
+      ],
     );
   }
 

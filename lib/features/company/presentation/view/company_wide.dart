@@ -48,7 +48,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     final companyNotifier = ref.read(companyNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withOpacity(0.1),
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Stack(
         children: [
           Column(
@@ -107,50 +107,30 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
   }
 
   Widget _buildHeader(CompanyState state, CompanyNotifier notifier) {
-    return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'COMPANY MANAGEMENT',
+          style: GoogleFonts.outfit(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.8,
+            color: const Color(0xFF111827),
+          ),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'COMPANY MANAGEMENT',
-            style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-              color: const Color(0xFF111827),
-            ),
+        const SizedBox(height: 6),
+        Text(
+          'Centralize company information including identification, locations, and status management.',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF6B7280),
+            fontSize: 13,
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Centralize company information including identification, locations, and status management.',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF6B7280),
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildFilterRow(notifier, state),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              'Showing ${state.totalEntries} entries',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF),
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24),
+        _buildFilterRow(notifier, state),
+        const SizedBox(height: 10),
+      ],
     );
   }
 
@@ -318,12 +298,11 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
           AppTableHeaderCell('SI.NO', width: 70),
           AppTableHeaderCell('Company', flex: 2),
           AppTableHeaderCell('City', flex: 2),
-          AppTableHeaderCell('Date', flex: 2),
           AppTableHeaderCell('State', flex: 2),
           AppTableHeaderCell('Country', flex: 2),
           AppTableHeaderCell('Status', flex: 2),
-          AppTableHeaderCell('Address', flex: 3),
-          AppTableHeaderCell('Actions', width: 100),
+          AppTableHeaderCell('Address', flex: 4),
+          AppTableHeaderCell('Actions', width: 80),
 
         ],
       ),
@@ -411,10 +390,6 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
           ),
 
           AppTableCell(addr.city ?? '—', flex: 2),
-          AppTableCell(
-            addr.createdAt?.split('T').first ?? '—',
-            flex: 2,
-          ),
           AppTableCell(addr.state ?? '—', flex: 2),
           AppTableCell(addr.country ?? '—', flex: 2),
           Expanded(
@@ -424,9 +399,9 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
               child: AppStatusBadge(status: addr.status),
             ),
           ),
-          AppTableCell(addr.fullAddress, flex: 3),
+          AppTableCell(addr.fullAddress, flex: 4),
           SizedBox(
-            width: 100,
+            width: 80,
             child: Row(
               children: [
                 AppTableActionButton(
