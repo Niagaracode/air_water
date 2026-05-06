@@ -193,9 +193,12 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
           ),
           ...state.groups.asMap().entries.map((entry) {
             final group = entry.value;
-            final criteriaStr = group.criteria.isEmpty 
-                ? 'No criteria (Includes all)' 
-                : group.criteria.map((c) => '${c.parameter} ${c.logic} ${c.value}').join(' ${group.criteria.first.operator} ');
+            final isAllGroup = group.name.toLowerCase() == 'all';
+            final criteriaStr = isAllGroup 
+                ? 'Includes all assets'
+                : group.criteria.isEmpty 
+                    ? 'No criteria' 
+                    : group.criteria.map((c) => '${c.parameter} ${c.logic} ${c.value}').join(' ${group.criteria.first.operator} ');
 
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

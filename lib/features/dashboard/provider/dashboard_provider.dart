@@ -8,6 +8,7 @@ import '../data/models/site_group_model.dart';
 import '../data/models/tank_data_model.dart';
 import '../domain/dashboard_repository.dart';
 import 'tank_data_notifier.dart';
+import '../../user/presentation/controller/user_provider.dart';
 
 final dashboardApiProvider = Provider((ref) {
   return DashboardApi(ref.watch(apiClientProvider));
@@ -19,7 +20,20 @@ final dashboardRepoProvider = Provider<DashboardRepository>((ref) {
 
 final tankDataProvider = StateNotifierProvider<
     TankDataNotifier, AsyncValue<List<TankDataModel>>>((ref) {
-  return TankDataNotifier(ref.watch(dashboardRepoProvider));
+  final user = ref.watch(userProvider).currentUser;
+  final notifier = TankDataNotifier(
+    ref.watch(dashboardRepoProvider),
+    shouldInit: user != null,
+  );
+  
+  // Refresh dashboard data when user profile is loaded
+  ref.listen(userProvider, (previous, next) {
+    if (previous?.currentUser == null && next.currentUser != null) {
+      notifier.refresh();
+    }
+  });
+
+  return notifier;
 });
 
 

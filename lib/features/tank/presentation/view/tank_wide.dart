@@ -469,7 +469,6 @@ class _TankWideState extends ConsumerState<TankWide> {
           AppTableHeaderCell('SI.NO', width: 60),
           AppTableHeaderCell('Tank Number', flex: 3),
           AppTableHeaderCell('Product', flex: 3),
-          AppTableHeaderCell('Unit', flex: 1),
           AppTableHeaderCell('Status', flex: 1),
           AppTableHeaderCell('Actions', width: 120),
         ],
@@ -617,7 +616,6 @@ class _TankWideState extends ConsumerState<TankWide> {
             ),
             AppTableCell(tank.productName ?? '--', flex: 3),
 
-            AppTableCell(tank.unitName ?? '--', flex: 1),
             Expanded(
               flex: 1,
               child: Align(

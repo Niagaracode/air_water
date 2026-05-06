@@ -33,11 +33,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   final _companyFocusNode = FocusNode();
 
   List<Role>? _roles;
-  List<CompanyAutocomplete>? _companies;
   Role? _selectedRole;
   CompanyAutocomplete? _selectedCompany;
   bool _isLoadingRoles = false;
-  bool _isLoadingCompanies = false;
   int _status = 1;
 
   @override
@@ -81,30 +79,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     });
 
     _loadRoles();
-    _loadCompanies();
-  }
-
-  Future<void> _loadCompanies() async {
-    final currentUser = ref.read(userProvider).currentUser;
-    // Only Super Admin (1) and Company Admin (2) need to see the dropdown/load companies
-    if (currentUser?.roleId != 1 && currentUser?.roleId != 2) return;
-
-    setState(() => _isLoadingCompanies = true);
-    try {
-      final companies = await ref.read(userProvider.notifier).searchCompanies('');
-      setState(() {
-        _companies = companies;
-        if (widget.user != null) {
-          _selectedCompany = companies
-              .where((c) => c.id == widget.user!.companyId)
-              .firstOrNull;
-        }
-      });
-    } catch (e) {
-      debugPrint('Error loading companies: $e');
-    } finally {
-      if (mounted) setState(() => _isLoadingCompanies = false);
-    }
   }
 
   Future<void> _loadRoles() async {
@@ -652,14 +626,58 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       );
     }
 
-    return _isLoadingCompanies
-        ? const LinearProgressIndicator(minHeight: 2)
-        : AppDropdown<CompanyAutocomplete>(
-            value: _selectedCompany,
-            items: _companies ?? [],
-            itemLabel: (c) => c.name,
-            onChanged: (v) => setState(() => _selectedCompany = v),
-            hint: 'Select Company',
-          );
+    return LayoutBuilder(
+      builder: (context, constraints) => RawAutocomplete<CompanyAutocomplete>(
+        focusNode: _companyFocusNode,
+        textEditingController: _companyAutocompleteController,
+        optionsBuilder: (TextEditingValue v) => v.text.isEmpty
+            ? <CompanyAutocomplete>[]
+            : ref.read(userProvider.notifier).searchCompanies(v.text),
+        displayStringForOption: (o) => o.name,
+        fieldViewBuilder: (context, controller, focus, onSubmitted) =>
+            AppTextField(
+              controller: controller,
+              focusNode: focus,
+              hint: 'Search Company...',
+            ),
+        onSelected: (o) => setState(() => _selectedCompany = o),
+        optionsViewBuilder: (context, onSelected, options) => Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: constraints.maxWidth,
+              constraints: const BoxConstraints(maxHeight: 300),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, i) {
+                  final option = options.elementAt(i);
+                  return ListTile(
+                    hoverColor: const Color(0xFFF3F4F6),
+                    title: Text(
+                      option.name,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    onTap: () => onSelected(option),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

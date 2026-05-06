@@ -215,13 +215,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         }
       }
 
-      // For NEW sites, if the company has exactly one address, auto-select it.
-      if (widget.initialSite == null &&
-          group != null &&
-          group.addresses.length == 1 &&
-          _addressRows.isNotEmpty) {
-        _addressRows.first.updateFromRegistered(group.addresses.first);
-      }
+      // Auto-fill logic removed as per user request
     });
   }
 
@@ -452,33 +446,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                     onSelected: (site) {
                                       setState(() {
                                         _selectedSiteName = site.siteName;
-                                        if (_addressRows.isNotEmpty) {
-                                          final row = _addressRows.first;
-
-                                          // Also select the company and registered address if available
-                                          if (site.companyId != null) {
-                                            final group = _companyGroups
-                                                .where(
-                                                  (g) => g.addresses.any(
-                                                    (a) =>
-                                                        a.companyId ==
-                                                        site.companyId,
-                                                  ),
-                                                )
-                                                .firstOrNull;
-                                            if (group != null) {
-                                              _selectedGroup = group;
-                                              row.selectedRegisteredAddress =
-                                                  group.addresses
-                                                      .where(
-                                                        (a) =>
-                                                            a.companyId ==
-                                                            site.companyId,
-                                                      )
-                                                      .firstOrNull;
-                                            }
-                                          }
-                                        }
                                       });
                                     },
                                   ),
@@ -804,23 +771,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
             ],
           ),
           const SizedBox(height: 20),
-          if (_selectedGroup != null &&
-              _selectedGroup!.addresses.length > 1) ...[
-            _buildLabelField(
-              'REGISTERED ADDRESS',
-              AppDropdown<CompanyAddress>(
-                value: controllers.selectedRegisteredAddress,
-                items: _selectedGroup?.addresses ?? [],
-                hint: 'Select Company Location',
-                itemLabel: (a) => a.fullAddress,
-                onChanged: (a) {
-                  if (a != null)
-                    setState(() => controllers.updateFromRegistered(a));
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
           Row(
             children: [
               Expanded(
@@ -829,7 +779,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                   'ADDRESS',
                   AppTextField(
                     controller: controllers.addressController,
-                    hint: 'Address Line 1',
+                    hint: 'Enter Address',
                   ),
                 ),
               ),

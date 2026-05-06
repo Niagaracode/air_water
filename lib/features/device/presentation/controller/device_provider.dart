@@ -4,6 +4,7 @@ import '../../data/api/device_api.dart';
 import '../../data/repository/device_repository_impl.dart';
 import '../model/device_model.dart';
 import '../../../site/presentation/model/site_model.dart';
+import '../../../user/presentation/controller/user_provider.dart';
 
 class DeviceState {
   final List<DeviceGroup> groupedDevices;
@@ -69,8 +70,20 @@ class DeviceNotifier extends Notifier<DeviceState> {
   @override
   DeviceState build() {
     ref.keepAlive();
-    // Initial load will be handled asynchronously
-    Future.microtask(() => loadGroupedDevices());
+    
+    // Listen to user changes to trigger reload when current user data becomes available
+    ref.listen(userProvider, (previous, next) {
+      if (previous?.currentUser == null && next.currentUser != null) {
+        loadGroupedDevices();
+      }
+    });
+
+    // Initial load only if user is already available
+    final currentUser = ref.read(userProvider).currentUser;
+    if (currentUser != null) {
+      Future.microtask(() => loadGroupedDevices());
+    }
+
     return DeviceState(
       groupedDevices: [],
       isLoading: false,
@@ -107,6 +120,9 @@ class DeviceNotifier extends Notifier<DeviceState> {
   }
 
   Future<void> loadGroupedDevices() async {
+    // Auth Guard: Don't fetch if no user is logged in (prevents 401 during logout)
+    if (ref.read(userProvider).currentUser == null) return;
+
     state = state.copyWith(isLoading: true, page: 1, groupedDevices: []);
     try {
       final repository = ref.read(deviceRepositoryProvider);

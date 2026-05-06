@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/network/http/api_service.dart';
 import '../../domain/models/asset_group_model.dart';
+import '../../../../features/user/presentation/controller/user_provider.dart';
 
 class AssetGroupState {
   final List<AssetGroupModel> groups;
@@ -42,11 +43,28 @@ class AssetGroupState {
 class AssetGroupNotifier extends Notifier<AssetGroupState> {
   @override
   AssetGroupState build() {
-    Future.microtask(() => loadGroups());
+    ref.keepAlive();
+    
+    // Listen to user changes to trigger reload when current user data becomes available
+    ref.listen(userProvider, (previous, next) {
+      if (previous?.currentUser == null && next.currentUser != null) {
+        loadGroups();
+      }
+    });
+
+    // Initial load only if user is already available
+    final currentUser = ref.read(userProvider).currentUser;
+    if (currentUser != null) {
+      Future.microtask(() => loadGroups());
+    }
+    
     return AssetGroupState();
   }
 
   Future<void> loadGroups() async {
+    // Auth Guard: Don't fetch if no user is logged in (prevents 401 during logout)
+    if (ref.read(userProvider).currentUser == null) return;
+
     state = state.copyWith(isLoading: true, error: null);
     try {
       final client = ref.read(apiClientProvider);

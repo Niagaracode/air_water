@@ -6,6 +6,7 @@ import '../../data/repository/site_repository_impl.dart';
 import '../../../../core/network/http/api_service.dart';
 import '../../../../features/company/presentation/controller/company_provider.dart';
 import '../../../../features/company/presentation/model/company_model.dart';
+import '../../../../features/user/presentation/controller/user_provider.dart';
 
 final siteApiProvider = Provider(
   (ref) => SiteApi(ref.read(apiClientProvider)),
@@ -81,11 +82,27 @@ class SiteNotifier extends Notifier<SiteState> {
   @override
   SiteState build() {
     ref.keepAlive();
-    Future.microtask(() => loadGroupedSites());
+    
+    // Listen to user changes to trigger reload when current user data becomes available
+    ref.listen(userProvider, (previous, next) {
+      if (previous?.currentUser == null && next.currentUser != null) {
+        loadGroupedSites(isReload: true);
+      }
+    });
+
+    // Initial load only if user is already available
+    final currentUser = ref.read(userProvider).currentUser;
+    if (currentUser != null) {
+      Future.microtask(() => loadGroupedSites());
+    }
+    
     return SiteState();
   }
 
   Future<void> loadGroupedSites({bool isReload = false}) async {
+    // Auth Guard: Don't fetch if no user is logged in (prevents 401 during logout)
+    if (ref.read(userProvider).currentUser == null) return;
+
     if (state.isLoading) return;
 
     if (state.groupedSites.isEmpty || isReload) {

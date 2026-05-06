@@ -7,8 +7,8 @@ class TankDataNotifier
     extends StateNotifier<AsyncValue<List<TankDataModel>>> {
   final DashboardRepository _repo;
 
-  TankDataNotifier(this._repo) : super(const AsyncValue.loading()) {
-    _init();
+  TankDataNotifier(this._repo, {bool shouldInit = false}) : super(const AsyncValue.loading()) {
+    if (shouldInit) _init();
   }
 
   Future<void> _init() async {

@@ -4,6 +4,7 @@ import '../../data/api/tank_api.dart';
 import '../../data/repository/tank_repository_impl.dart';
 import '../model/tank_model.dart';
 import '../../../site/presentation/model/site_model.dart';
+import '../../../user/presentation/controller/user_provider.dart';
 
 class TankState {
   final List<TankGroup> groupedTanks;
@@ -76,8 +77,21 @@ class TankNotifier extends Notifier<TankState> {
   @override
   TankState build() {
     ref.keepAlive();
-    // Initial load will be handled by the UI or via Future.microtask
-    Future.microtask(() => loadGroupedTanks());
+    
+    // Listen to user changes to trigger reload when current user data becomes available
+    ref.listen(userProvider, (previous, next) {
+      // Only reload if we transition from no user to a logged-in user
+      if (previous?.currentUser == null && next.currentUser != null) {
+        loadGroupedTanks();
+      }
+    });
+
+    // Initial load only if user is already available
+    final currentUser = ref.read(userProvider).currentUser;
+    if (currentUser != null) {
+      Future.microtask(() => loadGroupedTanks());
+    }
+
     return TankState(groupedTanks: [], isLoading: false, expandedGroups: {});
   }
 
@@ -104,6 +118,9 @@ class TankNotifier extends Notifier<TankState> {
   }
 
   Future<void> loadGroupedTanks() async {
+    // Auth Guard: Don't fetch if no user is logged in (prevents 401 during logout)
+    if (ref.read(userProvider).currentUser == null) return;
+
     state = state.copyWith(isLoading: true, page: 1, groupedTanks: []);
     try {
       final repository = ref.read(tankRepositoryProvider);

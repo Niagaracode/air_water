@@ -118,7 +118,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       name: _nameController.text.trim(),
       description: _descriptionController.text.trim(),
       displayInTree: _displayInTree,
-      criteria: _criteria,
+      criteria: _nameController.text.trim().toLowerCase() == 'all' ? [] : _criteria,
       users: _assignedUsers, // Pass users here for consistency
     );
 
@@ -192,7 +192,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   }
 
   Widget _buildUserSection(UserState userState) {
-    final allGroupUsers = userState.users.toList();
+    final allGroupUsers = userState.users.where((u) => u.roleId != 1 && u.roleId != 2).toList();
 
     // Auto-assign "All" group users if the group is currently empty and not manually cleared
     if (_assignedUsers.isEmpty && !_didAutoAssign && !userState.isLoading && allGroupUsers.isNotEmpty) {
@@ -213,7 +213,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
     final eligibleUsers = userState.users.where((u) {
       final isAlreadyAssigned = _assignedUsers.any((au) => au.userId == u.userId);
-      return !isAlreadyAssigned;
+      // Exclude Super Admin (1) and Company Admin (2)
+      final isRestrictedRole = u.roleId == 1 || u.roleId == 2;
+      return !isAlreadyAssigned && !isRestrictedRole;
     }).toList();
 
     return Container(
@@ -389,7 +391,10 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                   value: _selectedUserForAssignment,
                   hint: const Text('Select User'),
                   items: eligibleUsers.map((u) {
-                    return DropdownMenuItem(value: u, child: Text(u.fullName, style: GoogleFonts.inter(fontSize: 13)));
+                    return DropdownMenuItem(
+                      value: u, 
+                      child: Text('${u.fullName} (${u.roleName ?? "User"})', style: GoogleFonts.inter(fontSize: 13))
+                    );
                   }).toList(),
                   onChanged: (v) => setState(() => _selectedUserForAssignment = v),
                   decoration: const InputDecoration(

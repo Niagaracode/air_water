@@ -17,6 +17,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _displayInTree = true;
+  String _groupType = 'Other';
 
   @override
   void initState() {
@@ -25,6 +26,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       _nameController.text = widget.initialGroup!.name;
       _descriptionController.text = widget.initialGroup!.description;
       _displayInTree = widget.initialGroup!.displayInTree;
+      _groupType = widget.initialGroup!.name == 'All' ? 'All' : 'Other';
     }
   }
 
@@ -38,7 +40,8 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   Future<void> _save() async {
     final messenger = ScaffoldMessenger.of(context);
 
-    if (_nameController.text.isEmpty) {
+    final groupName = _groupType == 'All' ? 'All' : _nameController.text.trim();
+    if (_groupType == 'Other' && groupName.isEmpty) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Please enter Group Name')),
       );
@@ -47,10 +50,10 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
 
     final newGroup = AssetGroupModel(
       id: widget.initialGroup?.id,
-      name: _nameController.text,
+      name: groupName,
       description: _descriptionController.text,
       displayInTree: _displayInTree,
-      criteria: widget.initialGroup?.criteria ?? [],
+      criteria: _groupType == 'All' ? [] : (widget.initialGroup?.criteria ?? []),
       users: widget.initialGroup?.users,
     );
 
@@ -149,13 +152,30 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                             ),
                           ],
                         ),
-                        _buildLabelField(
-                          'GROUP NAME',
-                          AppTextField(
-                            controller: _nameController,
-                            hint: 'e.g. All Battery Tanks',
+                        const SizedBox(height: 32),
+                        if (!state.groups.any((g) => g.name == 'All')) ...[
+                          _buildLabelField(
+                            'GROUP TYPE',
+                            Row(
+                              children: [
+                                Expanded(child: _buildRadioOption('All', 'Includes all assets automatically')),
+                                const SizedBox(width: 16),
+                                Expanded(child: _buildRadioOption('Other', 'Define custom criteria for this group')),
+                              ],
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 32),
+                        ],
+                        if (_groupType == 'Other') ...[
+                          const SizedBox(height: 32),
+                          _buildLabelField(
+                            'GROUP NAME',
+                            AppTextField(
+                              controller: _nameController,
+                              hint: 'e.g. Battery Tanks',
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 32),
                         _buildLabelField(
                           'DETAILED DESCRIPTION',
@@ -249,6 +269,57 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
             activeColor: const Color(0xFF141E7A),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRadioOption(String value, String subtitle) {
+    final isSelected = _groupType == value;
+    return InkWell(
+      onTap: () => setState(() => _groupType = value),
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF141E7A).withValues(alpha: 0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF141E7A) : const Color(0xFFE5E7EB),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected ? [
+            BoxShadow(color: const Color(0xFF141E7A).withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))
+          ] : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  value.toUpperCase(),
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: isSelected ? const Color(0xFF141E7A) : const Color(0xFF374151),
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(Icons.check_circle, color: Color(0xFF141E7A), size: 20),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: isSelected ? const Color(0xFF141E7A).withValues(alpha: 0.7) : const Color(0xFF6B7280),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
