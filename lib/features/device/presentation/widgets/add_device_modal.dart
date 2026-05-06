@@ -21,22 +21,15 @@ class AddDeviceModal extends ConsumerStatefulWidget {
 
 class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
   final _deviceIdController = TextEditingController();
-  final _notesController = TextEditingController();
   final _simNumberController = TextEditingController();
   final _siteAutocompleteController = TextEditingController();
   final _tankAutocompleteController = TextEditingController();
-  final _startHourController = TextEditingController();
-  final _durationController = TextEditingController();
+  final _siteFocusNode = FocusNode();
+  final _tankFocusNode = FocusNode();
 
   SiteAutocompleteInfo? _selectedSite;
   int? _selectedTankId;
-  Map<String, dynamic>? _dropdownData;
-  bool _isLoadingDropdowns = false;
-
-  dynamic _selectedCategory;
-  dynamic _selectedUnit;
   String? _selectedPowerSource;
-  bool _autoSync = false;
   int _status = 1;
 
   double? _latitude;
@@ -47,55 +40,26 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     super.initState();
     if (widget.device != null) {
       _deviceIdController.text = widget.device!.deviceId;
-      _notesController.text = widget.device!.notes ?? '';
       _simNumberController.text = widget.device!.simNumber ?? '';
       _siteAutocompleteController.text = widget.device!.siteName ?? '';
       _tankAutocompleteController.text = widget.device!.tankName ?? '';
       _status = widget.device!.status;
       _selectedPowerSource = widget.device!.powerSource;
-      _autoSync = widget.device!.lastSync == '1';
       _selectedTankId = widget.device!.tankId;
       _latitude = widget.device!.latitude;
       _longitude = widget.device!.longitude;
-      _startHourController.text = widget.device!.startHour?.toString() ?? '';
-      _durationController.text = widget.device!.duration?.toString() ?? '';
     }
-    _loadDropdownData();
   }
 
-  Future<void> _loadDropdownData() async {
-    setState(() => _isLoadingDropdowns = true);
-    try {
-      final data = await ref.read(deviceProvider.notifier).getDeviceDropdowns();
-      setState(() {
-        _dropdownData = data;
-        if (widget.device != null) {
-          _selectedCategory = (data['categories'] as List).firstWhere(
-            (c) => c['id'] == widget.device!.category,
-            orElse: () => null,
-          );
-          _selectedUnit = (data['units'] as List).firstWhere(
-            (u) => u['id'].toString() == widget.device!.unitId,
-            orElse: () => null,
-          );
-        }
-      });
-    } catch (e) {
-      debugPrint('Error loading dropdowns: $e');
-    } finally {
-      setState(() => _isLoadingDropdowns = false);
-    }
-  }
 
   @override
   void dispose() {
     _deviceIdController.dispose();
-    _notesController.dispose();
     _simNumberController.dispose();
     _siteAutocompleteController.dispose();
     _tankAutocompleteController.dispose();
-    _startHourController.dispose();
-    _durationController.dispose();
+    _siteFocusNode.dispose();
+    _tankFocusNode.dispose();
     super.dispose();
   }
 
@@ -109,20 +73,6 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
       return;
     }
 
-    if (_selectedCategory == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Category')),
-      );
-      return;
-    }
-
-    if (_selectedUnit == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Unit')),
-      );
-      return;
-    }
-
     if (_selectedTankId == null) {
       messenger.showSnackBar(const SnackBar(content: Text('Invalid Tank')));
       return;
@@ -130,22 +80,20 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
 
     final request = DeviceCreateRequest(
       deviceId: _deviceIdController.text,
-      notes: _notesController.text,
+      notes: null, // Default to null as requested
       simNumber: _simNumberController.text,
-      category: _selectedCategory is String
-          ? _selectedCategory
-          : _selectedCategory['id'],
+      category: 'Controller', // Default to Controller as requested
       siteId: _selectedSite?.siteId ?? widget.device?.siteId,
       companyId: _selectedSite?.companyId ?? widget.device?.companyId,
       tankId: _selectedTankId,
-      unitId: _selectedUnit['id'].toString(),
+      unitId: '9', // Default to 'm' (ID 9) as requested
       powerSource: _selectedPowerSource,
       status: _status,
-      lastSync: _autoSync ? '1' : '0',
+      lastSync: '1',
       latitude: _latitude,
       longitude: _longitude,
-      startHour: int.tryParse(_startHourController.text),
-      duration: int.tryParse(_durationController.text),
+      startHour: 0,
+      duration: 24,
     );
 
     final success = widget.device != null
@@ -264,49 +212,6 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                             ),
                           ),
                           const SizedBox(height: 32),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  'CATEGORY',
-                                  _isLoadingDropdowns
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                        )
-                                      : AppDropdown<dynamic>(
-                                          value: _selectedCategory,
-                                          items:
-                                              _dropdownData?['categories'] ??
-                                              [],
-                                          itemLabel: (v) => v['name'],
-                                          hint: 'Select Category',
-                                          onChanged: (v) => setState(
-                                            () => _selectedCategory = v,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(width: 32),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'MEASUREMENT UNIT',
-                                  _isLoadingDropdowns
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                        )
-                                      : AppDropdown<dynamic>(
-                                          value: _selectedUnit,
-                                          items: _dropdownData?['units'] ?? [],
-                                          itemLabel: (u) => u['name'],
-                                          hint: 'Select Unit',
-                                          onChanged: (v) =>
-                                              setState(() => _selectedUnit = v),
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
                           _buildLabelField('SITE', _buildSiteAutocomplete()),
                           const SizedBox(height: 32),
                           _buildLabelField('TANK', _buildTankAutocomplete()),
@@ -411,102 +316,6 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
 
                           const SizedBox(height: 40),
 
-                          // Section: Additional Info
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.note_alt_rounded,
-                                size: 18,
-                                color: Color(0xFF141E7A),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'ADDITIONAL INFORMATION',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Divider(
-                            height: 32,
-                            thickness: 1,
-                            color: Color(0xFFF3F4F6),
-                          ),
-
-                          _buildLabelField(
-                            'CONFIGURATION NOTES',
-                            AppTextField(
-                              controller: _notesController,
-                              hint: 'Enter technical notes...',
-                              maxLines: 3,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFFE5E7EB),
-                              ),
-                            ),
-                            child: SwitchListTile(
-                              title: Text(
-                                'AUTO SYNC',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'Enable independent daily sync at scheduled start hour.',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  color: const Color(0xFF6B7280),
-                                ),
-                              ),
-                              value: _autoSync,
-                              activeColor: const Color(0xFF141E7A),
-                              onChanged: (v) => setState(() => _autoSync = v),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  'START HOUR (0-23)',
-                                  AppTextField(
-                                    controller: _startHourController,
-                                    hint: 'e.g. 10',
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 32),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'DURATION (HOURS)',
-                                  AppTextField(
-                                    controller: _durationController,
-                                    hint: 'e.g. 2',
-                                    keyboardType: TextInputType.number,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
                           const SizedBox(height: 40),
 
                           // Status Selector
@@ -635,9 +444,9 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
       builder: (context, constraints) {
         return RawAutocomplete<Map<String, dynamic>>(
           textEditingController: _tankAutocompleteController,
-          focusNode: FocusNode(),
+          focusNode: _tankFocusNode,
           optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty) {
+            if (_selectedSite == null && widget.device == null) {
               return const Iterable<Map<String, dynamic>>.empty();
             }
             return await ref
@@ -654,6 +463,13 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
               controller: controller,
               focusNode: focusNode,
               hint: 'Search Tank by Name',
+              onChanged: (value) {
+                if (value.isEmpty) {
+                  setState(() {
+                    _selectedTankId = null;
+                  });
+                }
+              },
             );
           },
           optionsViewBuilder: (context, onSelected, options) {
@@ -709,7 +525,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
       builder: (context, constraints) {
         return RawAutocomplete<SiteAutocompleteInfo>(
           textEditingController: _siteAutocompleteController,
-          focusNode: FocusNode(),
+          focusNode: _siteFocusNode,
           optionsBuilder: (TextEditingValue textEditingValue) async {
             if (textEditingValue.text.isEmpty) {
               return const Iterable<SiteAutocompleteInfo>.empty();
@@ -725,6 +541,15 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
               controller: controller,
               focusNode: focusNode,
               hint: 'Search Site by Name',
+              onChanged: (value) {
+                if (value.isEmpty) {
+                  setState(() {
+                    _selectedSite = null;
+                    _selectedTankId = null;
+                    _tankAutocompleteController.clear();
+                  });
+                }
+              },
             );
           },
           optionsViewBuilder: (context, onSelected, options) {
@@ -756,7 +581,12 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                         ),
                         onTap: () {
                           onSelected(option);
-                          setState(() => _selectedSite = option);
+                          setState(() {
+                            _selectedSite = option;
+                            // Clear tank selection when site changes
+                            _selectedTankId = null;
+                            _tankAutocompleteController.clear();
+                          });
                         },
                       );
                     },

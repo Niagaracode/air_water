@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/asset_group_model.dart';
 import '../controller/asset_group_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../view/asset_group_edit_page.dart';
 
 class AddAssetGroupModal extends ConsumerStatefulWidget {
   final AssetGroupModel? initialGroup;
@@ -205,31 +204,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                                   ),
                           ),
                         ),
-                          if (widget.initialGroup != null) ...[
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 56,
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => AssetGroupEditPage(group: widget.initialGroup),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.settings_suggest_outlined),
-                                label: const Text('EDIT GROUP CRITERIA & USERS'),
-                                style: OutlinedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                  side: const BorderSide(color: Color(0xFF141E7A)),
-                                  foregroundColor: const Color(0xFF141E7A),
-                                ),
-                              ),
-                            ),
-                        ],
                       ],
                     ),
                   ),
@@ -276,12 +250,12 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'DISPLAY IN TREE',
+                  'STATUS',
                   style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 12, color: const Color(0xFF141E7A)),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Show this group in navigation.',
+                  'Toggle group active/inactive status.',
                   style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
                 ),
               ],

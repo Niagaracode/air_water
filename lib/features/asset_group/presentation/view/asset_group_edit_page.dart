@@ -165,12 +165,14 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGeneralSection(),
-              const SizedBox(height: 32),
-              _buildCriteriaSection(),
+              if (_nameController.text.trim().toLowerCase() != 'all') ...[
+                const SizedBox(height: 32),
+                _buildCriteriaSection(),
+              ],
               const SizedBox(height: 32),
               _buildUserSection(userState),
               const SizedBox(height: 48),
-              if (widget.group?.id != null)
+              if (widget.group?.id != null && _nameController.text.trim().toLowerCase() != 'all')
                 Center(
                   child: OutlinedButton.icon(
                     onPressed: _showPreviewDialog,
@@ -367,15 +369,10 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                       // REMOVE
                       SizedBox(
                         width: 48,
-                        child: Builder(builder: (context) {
-                          final hasAll = user.groupNames?.any((n) => n.trim().toLowerCase() == 'all') ?? false;
-                          if (hasAll) return const SizedBox.shrink();
-                          
-                          return IconButton(
-                            onPressed: () => setState(() => _assignedUsers.removeAt(index)),
-                            icon: const Icon(Icons.close, size: 18, color: Colors.grey),
-                          );
-                        }),
+                        child: IconButton(
+                          onPressed: () => setState(() => _assignedUsers.removeAt(index)),
+                          icon: const Icon(Icons.close, size: 18, color: Colors.grey),
+                        ),
                       )
                     ],
                   ),
@@ -394,7 +391,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                   value: _selectedUserForAssignment,
                   hint: const Text('Select User'),
                   items: eligibleUsers.map((u) {
-                    return DropdownMenuItem(value: u, child: Text(u.username, style: GoogleFonts.inter(fontSize: 13)));
+                    return DropdownMenuItem(value: u, child: Text(u.fullName, style: GoogleFonts.inter(fontSize: 13)));
                   }).toList(),
                   onChanged: (v) => setState(() => _selectedUserForAssignment = v),
                   decoration: const InputDecoration(
@@ -584,7 +581,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             ),
             const SizedBox(width: 6),
             Text(
-              _displayInTree ? 'VISIBLE IN TREE' : 'HIDDEN IN TREE',
+              _displayInTree ? 'ACTIVE' : 'INACTIVE',
               style: GoogleFonts.inter(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
@@ -616,7 +613,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           ),
           const SizedBox(width: 4),
           Text(
-            visible ? 'VISIBLE IN TREE' : 'HIDDEN IN TREE',
+            visible ? 'ACTIVE' : 'INACTIVE',
             style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w800,

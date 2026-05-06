@@ -1,6 +1,6 @@
 class AppConstants {
   static const String apiUrl =
-      'https://sight-polyphonic-creature-depends.trycloudflare.com/api';
+      'https://pharmaceutical-touched-consequence-average.trycloudflare.com/api';
   static const String googleMapsApiKey =
       'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
 
