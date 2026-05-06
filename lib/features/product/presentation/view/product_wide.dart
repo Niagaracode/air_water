@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/app_theme/app_theme.dart';
 import '../../provider/product_provider.dart';
 import '../../data/product_model.dart';
 import '../view/product_edit_view.dart';
@@ -23,7 +24,7 @@ class _ProductWideState extends ConsumerState<ProductWide> {
     final state = ref.watch(productNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withValues(alpha: 0.1),
+      backgroundColor: primary.withValues(alpha: 0.04),
       body: Column(
         children: [
           Padding(
