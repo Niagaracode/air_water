@@ -58,7 +58,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     final state = ref.watch(assetGroupProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.grey.withOpacity(0.1),
       body: Column(
         children: [
           _buildHeader(state),

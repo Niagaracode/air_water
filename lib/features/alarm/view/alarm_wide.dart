@@ -25,7 +25,7 @@ class _AlarmWideState extends ConsumerState<AlarmWide> {
     final state = ref.watch(alarmProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F4F6),
+      backgroundColor: Colors.grey.withOpacity(0.1),
       body: Stack(
         children: [
           CustomScrollView(

@@ -47,6 +47,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
     final siteNotifier = ref.read(siteNotifierProvider.notifier);
 
     return Scaffold(
+      backgroundColor: Colors.grey.withOpacity(0.1),
       body: Column(
         children: [
           Padding(

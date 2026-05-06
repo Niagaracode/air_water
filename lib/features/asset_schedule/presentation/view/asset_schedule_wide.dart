@@ -27,7 +27,7 @@ class _AssetScheduleWideState extends ConsumerState<AssetScheduleWide> {
     final state = ref.watch(assetScheduleProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.grey.withOpacity(0.1),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

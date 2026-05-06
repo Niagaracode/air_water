@@ -201,7 +201,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     final notifier = ref.read(deviceProvider.notifier);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.grey.withOpacity(0.1),
       body: Column(
         children: [
           Padding(
@@ -309,7 +309,6 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
           AppTableHeaderCell('Date', flex: 2),
           AppTableHeaderCell('Device ID', flex: 3),
           AppTableHeaderCell('Company', flex: 2),
-          AppTableHeaderCell('Category', flex: 2),
           AppTableHeaderCell('Sim Number', flex: 2),
           AppTableHeaderCell('Tank', flex: 2),
           AppTableHeaderCell('Status', flex: 2),
@@ -427,7 +426,6 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             AppTableCell(device.createdAt?.split('T')[0] ?? '—', flex: 2),
             AppTableCell(device.deviceId, flex: 3, bold: true),
             AppTableCell(device.companyName ?? '—', flex: 2),
-            AppTableCell(device.category ?? '—', flex: 2),
             AppTableCell(device.simNumber ?? '—', flex: 2),
             AppTableCell(device.tankName ?? '—', flex: 2),
             AppTableCell(
