@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/app_theme/app_theme.dart';
 import '../../core/router/sidebar_routes.dart';
 import '../../core/user_config/user_role.dart';
 import '../provider/sidebar_provider.dart';
@@ -23,57 +24,54 @@ class ScreenSidebar extends ConsumerWidget {
       duration: const Duration(milliseconds: 150),
       curve: Curves.easeInOut,
       width: isExpanded ? 250 : 72,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 5),
-        child: Material(
-          color: Colors.white,
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.transparent,
-              border: Border(
-                right: BorderSide(
-                  color: Colors.black12,
-                  width: 1,
-                ),
+      child: Material(
+        color: primary.withValues(alpha: 0.07),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            border: Border(
+              right: BorderSide(
+                color: primary.withValues(alpha: 0.1),
+                width: 1,
               ),
             ),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              children: [
-                _buildGroup(
-                  title: 'MAIN MENU',
-                  items: mainMenu,
-                  location: location,
-                  isExpanded: isExpanded,
-                  context: context,
-                  role: userRole,
-                ),
-                _buildGroup(
-                  title: 'CONFIGURATION',
-                  items: configurationMenu,
-                  location: location,
-                  isExpanded: isExpanded,
-                  context: context,
-                  role: userRole,
-                ),
-                _buildGroup(
-                  title: 'USER',
-                  items: userMenu,
-                  location: location,
-                  isExpanded: isExpanded,
-                  context: context,
-                  role: userRole,
-                ),
-                _buildGroup(
-                  title: 'EVENTS',
-                  items: eventsMenu,
-                  location: location,
-                  isExpanded: isExpanded,
-                  context: context,
-                  role: userRole,
-                ),
-              ],
-            ),
+          ),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            children: [
+              _buildGroup(
+                title: 'MAIN MENU',
+                items: mainMenu,
+                location: location,
+                isExpanded: isExpanded,
+                context: context,
+                role: userRole,
+              ),
+              _buildGroup(
+                title: 'CONFIGURATION',
+                items: configurationMenu,
+                location: location,
+                isExpanded: isExpanded,
+                context: context,
+                role: userRole,
+              ),
+              _buildGroup(
+                title: 'USER',
+                items: userMenu,
+                location: location,
+                isExpanded: isExpanded,
+                context: context,
+                role: userRole,
+              ),
+              _buildGroup(
+                title: 'EVENTS',
+                items: eventsMenu,
+                location: location,
+                isExpanded: isExpanded,
+                context: context,
+                role: userRole,
+              ),
+            ],
           ),
         ),
       ),
