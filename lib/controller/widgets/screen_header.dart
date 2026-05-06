@@ -49,8 +49,7 @@ class ScreenHeader extends ConsumerWidget {
             Text(
               'Welcome back, $userName!',
               style: GoogleFonts.outfit(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
+                fontSize: 20,
                 color: Colors.black54,
               ),
             ),
