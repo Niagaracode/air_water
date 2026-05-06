@@ -33,7 +33,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   bool _isLoadingDetails = false;
 
   final List<String> _parameters = [
-    'Asset Description', 'City', 'Country', 'Customer Name', 'DeviceID', 'Product Name', 'Site Name', 'State or Province', 'Tank Name'
+    'City', 'Country', 'Customer Name', 'DeviceID', 'Product Name', 'Site Name', 'State or Province', 'Tank Name'
   ];
   final List<String> _logics = ['Like', '=', '!=', 'Is Empty'];
   final List<String> _operators = ['And', 'Or', 'None'];
@@ -93,7 +93,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
   void _addCriteria() {
     setState(() {
-      _criteria.add(AssetCriteria(parameter: 'Asset Description', logic: 'Like', value: '', operator: 'And'));
+      _criteria.add(AssetCriteria(parameter: 'City', logic: 'Like', value: '', operator: 'And'));
     });
   }
 
@@ -101,7 +101,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     if (_criteria.length <= 1) {
       // If last rule, just reset it instead of removing
       setState(() {
-        _criteria[0] = AssetCriteria(parameter: 'Asset Description', logic: 'Like', value: '', operator: 'And');
+        _criteria[0] = AssetCriteria(parameter: 'City', logic: 'Like', value: '', operator: 'And');
       });
       return;
     }

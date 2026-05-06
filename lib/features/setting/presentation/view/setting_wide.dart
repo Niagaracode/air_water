@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
-import '../../../../shared/widgets/app_clear_button.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../controller/setting_provider.dart';
 import '../model/setting_model.dart';
@@ -190,17 +188,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                 ),
             ],
           ),
-          const SizedBox(height: 20),
-          Text(
-            'FILTER',
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF374151),
-              letterSpacing: 1.0,
-            ),
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           _buildFilterRow(state, notifier, isCustomer),
           const SizedBox(height: 10),
           Align(
@@ -225,6 +213,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
   ) {
     return Row(
       children: [
+        // Rule/Setting name search — dashboard style
         Expanded(
           flex: 2,
           child: RawAutocomplete<SettingAutocompleteInfo>(
@@ -246,17 +235,29 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                       controller.text.isEmpty) {
                     controller.text = _settingSearchController.text;
                   }
-                  return AppTextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    hint: isCustomer
-                        ? 'Search By Setting Name'
-                        : 'Search By Rule Name',
-                    onSubmitted: (value) {
-                      _settingSearchController.text = value;
-                      notifier.setSearchName(value);
-                      notifier.loadSettings(isReload: true);
-                    },
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+                      decoration: InputDecoration(
+                        hintText: isCustomer ? 'Search settings...' : 'Search rules...',
+                        hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(14),
+                      ),
+                      onSubmitted: (value) {
+                        _settingSearchController.text = value;
+                        notifier.setSearchName(value);
+                        notifier.loadSettings(isReload: true);
+                      },
+                    ),
                   );
                 },
             optionsViewBuilder: (context, onSelected, options) {
@@ -300,52 +301,83 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             },
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
+        // Site dropdown — dashboard style
         Expanded(
           flex: 1,
-          child: AppDropdown<int>(
-            value: state.selectedSiteId,
-            items: ref
-                .watch(siteNotifierProvider.select((s) => s.groupedSites))
-                .where(
-                  (e) =>
-                      e.addresses.isNotEmpty &&
-                      e.addresses.first.siteId != null,
-                )
-                .map((e) => e.addresses.first.siteId!)
-                .toList(),
-            hint: 'Site',
-            itemLabel: (v) {
-              final sites = ref.read(siteNotifierProvider).groupedSites;
-              try {
-                final group = sites.firstWhere(
-                  (p) => p.addresses.any((a) => a.siteId == v),
-                );
-                return group.name;
-              } catch (_) {
-                return 'Unassigned';
-              }
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: AppDropdown<int>(
+                value: state.selectedSiteId,
+                items: ref
+                    .watch(siteNotifierProvider.select((s) => s.groupedSites))
+                    .where(
+                      (e) =>
+                          e.addresses.isNotEmpty &&
+                          e.addresses.first.siteId != null,
+                    )
+                    .map((e) => e.addresses.first.siteId!)
+                    .toList(),
+                hint: 'All Sites',
+                itemLabel: (v) {
+                  final sites = ref.read(siteNotifierProvider).groupedSites;
+                  try {
+                    final group = sites.firstWhere(
+                      (p) => p.addresses.any((a) => a.siteId == v),
+                    );
+                    return group.name;
+                  } catch (_) {
+                    return 'Unassigned';
+                  }
+                },
+                onChanged: (v) => notifier.setSiteId(v),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Status dropdown — dashboard style
+        Expanded(
+          flex: 1,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: AppDropdown<int>(
+                value: state.selectedStatus,
+                items: const [1, 0],
+                hint: 'All Status',
+                itemLabel: (v) => v == 1 ? 'Active' : 'Inactive',
+                onChanged: (v) => notifier.setSelectedStatus(v),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Filter/Clear icon — dashboard style
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF141E7A).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.filter_list, color: Color(0xFF141E7A)),
+            tooltip: 'Clear all filters',
+            onPressed: () {
+              _settingSearchController.clear();
+              notifier.clearFilters();
             },
-            onChanged: (v) => notifier.setSiteId(v),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          flex: 1,
-          child: AppDropdown<int>(
-            value: state.selectedStatus,
-            items: const [1, 0],
-            hint: 'Status',
-            itemLabel: (v) => v == 1 ? 'Active' : 'Inactive',
-            onChanged: (v) => notifier.setSelectedStatus(v),
-          ),
-        ),
-        const SizedBox(width: 16),
-        AppClearButton(
-          onPressed: () {
-            _settingSearchController.clear();
-            notifier.clearFilters();
-          },
         ),
       ],
     );

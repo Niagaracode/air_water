@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../shared/widgets/app_table.dart';
-import '../../../../../shared/widgets/app_clear_button.dart';
 import '../controller/user_provider.dart';
 import '../model/user_model.dart';
 import '../widgets/add_user_modal.dart';
@@ -154,17 +153,7 @@ class _UserWideState extends ConsumerState<UserWide> {
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        Text(
-          'FILTER',
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF374151),
-            letterSpacing: 1.0,
-          ),
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 16),
         _buildFilterRow(state, notifier),
         const SizedBox(height: 10),
       ],
@@ -174,58 +163,68 @@ class _UserWideState extends ConsumerState<UserWide> {
   Widget _buildFilterRow(UserState state, UserNotifier notifier) {
     return Row(
       children: [
+        // Username search — dashboard style
         Expanded(flex: 2, child: _buildUserNameAutocomplete(notifier)),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
+        // Company search — dashboard style
         Expanded(flex: 2, child: _buildCompanyField(state, notifier)),
-        const SizedBox(width: 16),
+        const SizedBox(width: 12),
+        // Status dropdown — dashboard style
         Expanded(
           flex: 1,
           child: Container(
-            height: 45,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE0E0E0)),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
             ),
-            child: DropdownButton<int>(
-              value: state.status,
-              hint: Text(
-                'Status',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: const Color(0xFF9CA3AF),
-                ),
-              ),
-              underline: const SizedBox(),
-              isExpanded: true,
-              items: [
-                DropdownMenuItem(
-                  value: 1,
-                  child: Text('Active', style: GoogleFonts.inter(fontSize: 14)),
-                ),
-                DropdownMenuItem(
-                  value: 0,
-                  child: Text(
-                    'Inactive',
-                    style: GoogleFonts.inter(fontSize: 14),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: state.status,
+                isExpanded: true,
+                hint: Text(
+                  'All Status',
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    color: Colors.grey.shade400,
                   ),
                 ),
-              ],
-              onChanged: (value) {
-                notifier.setStatus(value);
-                notifier.loadUsers();
-              },
+                icon: Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey.shade600),
+                items: [
+                  DropdownMenuItem(
+                    value: 1,
+                    child: Text('Active', style: GoogleFonts.outfit(fontSize: 14)),
+                  ),
+                  DropdownMenuItem(
+                    value: 0,
+                    child: Text('Inactive', style: GoogleFonts.outfit(fontSize: 14)),
+                  ),
+                ],
+                onChanged: (value) {
+                  notifier.setStatus(value);
+                  notifier.loadUsers();
+                },
+              ),
             ),
           ),
         ),
-        const SizedBox(width: 16),
-        AppClearButton(
-          onPressed: () {
-            _searchController.clear();
-            _companySearchController.clear();
-            notifier.clearFilters();
-          },
+        const SizedBox(width: 12),
+        // Filter/Clear icon — dashboard style
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF141E7A).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.filter_list, color: Color(0xFF141E7A)),
+            tooltip: 'Clear all filters',
+            onPressed: () {
+              _searchController.clear();
+              _companySearchController.clear();
+              notifier.clearFilters();
+            },
+          ),
         ),
       ],
     );
@@ -364,41 +363,32 @@ class _UserWideState extends ConsumerState<UserWide> {
             notifier.loadUsers();
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return TextField(
-              controller: controller,
-              focusNode: focusNode,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                color: const Color(0xFF1A1A2E),
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
               ),
-              decoration: InputDecoration(
-                hintText: 'Search By Name',
-                hintStyle: GoogleFonts.inter(
-                  color: const Color(0xFF9CA3AF),
-                  fontSize: 14,
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                onChanged: (v) {
+                  notifier.setSearchQuery(v);
+                  if (v.isEmpty) notifier.loadUsers();
+                },
+                style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+                decoration: InputDecoration(
+                  hintText: 'Search users...',
+                  hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(14),
                 ),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  size: 20,
-                  color: Color(0xFF6B7280),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(
-                    color: Color(0xFF141E7A),
-                    width: 2,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                onSubmitted: (v) {
+                  notifier.setSearchQuery(v);
+                  notifier.loadUsers();
+                },
               ),
-              onSubmitted: (v) {
-                notifier.setSearchQuery(v);
-                notifier.loadUsers();
-              },
             );
           },
           optionsViewBuilder: (context, onSelected, options) {
@@ -434,33 +424,26 @@ class _UserWideState extends ConsumerState<UserWide> {
   }
 
   Widget _buildCompanyField(UserState state, UserNotifier notifier) {
-    return TextField(
-      controller: _companySearchController,
-      style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF1A1A2E)),
-      decoration: InputDecoration(
-        hintText: 'Search By Company',
-        hintStyle: GoogleFonts.inter(
-          color: const Color(0xFF9CA3AF),
-          fontSize: 14,
-        ),
-        prefixIcon: const Icon(
-          Icons.business_outlined,
-          size: 20,
-          color: Color(0xFF6B7280),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF141E7A), width: 2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
       ),
-      onSubmitted: (v) {
-        notifier.loadUsers();
-      },
+      child: TextField(
+        controller: _companySearchController,
+        style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+        decoration: InputDecoration(
+          hintText: 'Search By Company',
+          hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(14),
+        ),
+        onSubmitted: (v) {
+          notifier.loadUsers();
+        },
+      ),
     );
   }
 

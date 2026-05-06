@@ -162,7 +162,9 @@ class SiteNotifier extends Notifier<SiteState> {
   Future<List<CompanyAutocompleteInfo>> searchCompanies(String query) async {
     try {
       final repository = ref.read(companyRepositoryProvider);
-      return await repository.getCompanyAutocomplete(q: query);
+      final results = await repository.getCompanyAutocomplete(q: query);
+      // Filter out Super Admin company (ID 1)
+      return results.where((c) => c.companyId != 1).toList();
     } catch (e) {
       return [];
     }

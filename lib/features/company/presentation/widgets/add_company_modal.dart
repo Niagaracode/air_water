@@ -595,31 +595,7 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                 ),
             ],
           ),
-          const SizedBox(height: 20),
-          LocationPicker(
-            key: ValueKey(
-              'loc_${controllers.country}_${controllers.state}_${controllers.city}',
-            ),
-            currentCountry: controllers.country,
-            currentState: controllers.state,
-            currentCity: controllers.city,
-            onCountryChanged: (value) {
-              setState(() {
-                controllers.country = value;
-                controllers.state = null;
-                controllers.city = null;
-              });
-            },
-            onStateChanged: (value) {
-              setState(() {
-                controllers.state = value;
-                controllers.city = null;
-              });
-            },
-            onCityChanged: (value) {
-              setState(() => controllers.city = value);
-            },
-          ),
+
           const SizedBox(height: 24),
           Row(
             children: [
@@ -644,6 +620,31 @@ class _AddCompanyModalState extends ConsumerState<AddCompanyModal> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 20),
+          LocationPicker(
+            key: ValueKey(
+              'loc_${controllers.country}_${controllers.state}_${controllers.city}',
+            ),
+            currentCountry: controllers.country,
+            currentState: controllers.state,
+            currentCity: controllers.city,
+            onCountryChanged: (value) {
+              setState(() {
+                controllers.country = value;
+                controllers.state = null;
+                controllers.city = null;
+              });
+            },
+            onStateChanged: (value) {
+              setState(() {
+                controllers.state = value;
+                controllers.city = null;
+              });
+            },
+            onCityChanged: (value) {
+              setState(() => controllers.city = value);
+            },
           ),
           const SizedBox(height: 24),
         ],

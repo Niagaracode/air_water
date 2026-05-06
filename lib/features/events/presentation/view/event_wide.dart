@@ -149,7 +149,7 @@ class _EventWideState extends ConsumerState<EventWide> {
         color: Color(0xFF141E7A),
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      child: const Row(
+      child: Row(
         children: [
           AppTableHeaderCell('SI.NO', width: 60),
           AppTableHeaderCell('Time', flex: 2),

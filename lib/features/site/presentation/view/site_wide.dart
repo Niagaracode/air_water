@@ -315,11 +315,10 @@ class _SiteWideState extends ConsumerState<SiteWide> {
           right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
         ),
       ),
-      child: const Row(
+      child: Row(
         children: [
           AppTableHeaderCell('SI.NO', width: 70),
           AppTableHeaderCell('City', flex: 2),
-
           AppTableHeaderCell('Company', flex: 2),
           AppTableHeaderCell('State', flex: 2),
           AppTableHeaderCell('Country', flex: 2),

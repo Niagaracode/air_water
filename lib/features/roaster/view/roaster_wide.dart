@@ -306,7 +306,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                 color: Color(0xFF141E7A),
                 // Header is not rounded anymore because it's part of the list
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   AppTableHeaderCell('SI.NO', width: 60),
                   AppTableHeaderCell('GROUP NAME', flex: 2),

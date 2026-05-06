@@ -270,7 +270,9 @@ class UserNotifier extends Notifier<UserState> {
   Future<List<CompanyAutocomplete>> searchCompanies(String query) async {
     try {
       final repository = ref.read(userRepositoryProvider);
-      return await repository.searchCompanies(query);
+      final results = await repository.searchCompanies(query);
+      // Filter out Super Admin company (ID 1)
+      return results.where((c) => c.id != 1).toList();
     } catch (e) {
       return [];
     }

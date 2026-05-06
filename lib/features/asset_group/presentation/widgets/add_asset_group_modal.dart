@@ -17,7 +17,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _displayInTree = true;
-  String _groupType = 'All'; // 'All' or 'Other'
 
   @override
   void initState() {
@@ -26,7 +25,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       _nameController.text = widget.initialGroup!.name;
       _descriptionController.text = widget.initialGroup!.description;
       _displayInTree = widget.initialGroup!.displayInTree;
-      _groupType = widget.initialGroup!.name.toLowerCase() == 'all' ? 'All' : 'Other';
     }
   }
 
@@ -39,10 +37,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
 
   Future<void> _save() async {
     final messenger = ScaffoldMessenger.of(context);
-
-    if (_groupType == 'All') {
-      _nameController.text = 'All';
-    }
 
     if (_nameController.text.isEmpty) {
       messenger.showSnackBar(
@@ -155,26 +149,14 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 48),
-                        // Radio Buttons for Group Type
-                        Row(
-                          children: [
-                            _buildRadioOption('All', 'Includes all assets by default'),
-                            const SizedBox(width: 24),
-                            _buildRadioOption('Other', 'Define a custom group name'),
-                          ],
+                        _buildLabelField(
+                          'GROUP NAME',
+                          AppTextField(
+                            controller: _nameController,
+                            hint: 'e.g. All Battery Tanks',
+                          ),
                         ),
                         const SizedBox(height: 32),
-                        if (_groupType == 'Other') ...[
-                          _buildLabelField(
-                            'GROUP NAME',
-                            AppTextField(
-                              controller: _nameController,
-                              hint: 'e.g. All Battery Tanks',
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                        ],
                         _buildLabelField(
                           'DETAILED DESCRIPTION',
                           AppTextField(
@@ -267,77 +249,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
             activeColor: const Color(0xFF141E7A),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildRadioOption(String value, String subtitle) {
-    final isSelected = _groupType == value;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _groupType = value),
-        borderRadius: BorderRadius.circular(16),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFFF3F4FF) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected ? const Color(0xFF141E7A) : const Color(0xFFE5E7EB),
-              width: 1.5,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFF141E7A) : const Color(0xFF9CA3AF),
-                        width: 2,
-                      ),
-                    ),
-                    child: isSelected
-                        ? Center(
-                            child: Container(
-                              width: 10,
-                              height: 10,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF141E7A),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    value,
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? const Color(0xFF141E7A) : const Color(0xFF374151),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                subtitle,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: isSelected ? const Color(0xFF6366F1).withOpacity(0.8) : const Color(0xFF6B7280),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

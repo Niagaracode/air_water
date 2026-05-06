@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_table.dart';
-import '../../../../shared/widgets/app_clear_button.dart';
 import '../controller/asset_group_provider.dart';
 import '../../domain/models/asset_group_model.dart';
 import 'asset_group_edit_page.dart';
@@ -120,25 +119,42 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
         Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search groups by description...',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
                 ),
-                onChanged: (v) {
-                  // Implement local filter or call provider filter
+                child: TextField(
+                  controller: _searchController,
+                  style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+                  decoration: InputDecoration(
+                    hintText: 'Search groups by description...',
+                    hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.all(14),
+                  ),
+                  onChanged: (v) {
+                    // Implement local filter or call provider filter
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF141E7A).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.filter_list, color: Color(0xFF141E7A)),
+                tooltip: 'Clear all filters',
+                onPressed: () {
+                  _searchController.clear();
                 },
               ),
             ),
-            const SizedBox(width: 16),
-            AppClearButton(onPressed: () => _searchController.clear()),
           ],
         ),
       ],
@@ -164,7 +180,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
               color: Color(0xFF141E7A),
               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 AppTableHeaderCell('Group Name', flex: 3),
                 AppTableHeaderCell('Criteria & Description', flex: 4),

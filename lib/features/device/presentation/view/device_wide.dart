@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../shared/widgets/app_table.dart';
-import '../../../../../shared/widgets/app_clear_button.dart';
 import '../controller/device_provider.dart';
 import '../model/device_model.dart';
 import '../../../site/presentation/model/site_model.dart';
@@ -100,17 +99,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        Text(
-          'FILTER',
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF374151),
-            letterSpacing: 1.0,
-          ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _buildFilterRow(state, notifier),
         if (state.error != null) ...[
           const SizedBox(height: 16),
@@ -124,16 +113,33 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
   Widget _buildFilterRow(DeviceState state, DeviceNotifier notifier) {
     return Row(
       children: [
-        Expanded(flex: 2, child: _buildSiteAutocomplete(notifier)),
-        const SizedBox(width: 16),
-        Expanded(flex: 2, child: _buildDeviceAutocomplete(notifier)),
-        const SizedBox(width: 16),
-        AppClearButton(
-          onPressed: () {
-            _siteSearchController.clear();
-            _searchController.clear();
-            notifier.clearFilters();
-          },
+        // Site search — dashboard style
+        Expanded(
+          flex: 2,
+          child: _buildSiteAutocomplete(notifier),
+        ),
+        const SizedBox(width: 12),
+        // Device search — dashboard style
+        Expanded(
+          flex: 2,
+          child: _buildDeviceAutocomplete(notifier),
+        ),
+        const SizedBox(width: 12),
+        // Filter/Clear icon button — dashboard style
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF141E7A).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.filter_list, color: Color(0xFF141E7A)),
+            tooltip: 'Clear all filters',
+            onPressed: () {
+              _siteSearchController.clear();
+              _searchController.clear();
+              notifier.clearFilters();
+            },
+          ),
         ),
       ],
     );
@@ -279,7 +285,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
           right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
         ),
       ),
-      child: const Row(
+      child: Row(
         children: [
           AppTableHeaderCell('SI.NO', width: 70),
           AppTableHeaderCell('Date', flex: 2),
@@ -457,28 +463,32 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             notifier.loadGroupedDevices();
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return TextField(
-              controller: controller,
-              focusNode: focusNode,
-              style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF1A1A2E)),
-              decoration: InputDecoration(
-                hintText: 'Filter By Site Name',
-                hintStyle: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 14),
-                prefixIcon: const Icon(Icons.location_on_outlined, size: 20, color: Color(0xFF6B7280)),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF141E7A), width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
               ),
-              onSubmitted: (v) {
-                notifier.setSearchSite(v);
-                notifier.loadGroupedDevices();
-              },
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                onChanged: (v) {
+                  notifier.setSearchSite(v);
+                  if (v.isEmpty) notifier.loadGroupedDevices();
+                },
+                style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+                decoration: InputDecoration(
+                  hintText: 'Filter By Site Name',
+                  hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(14),
+                ),
+                onSubmitted: (v) {
+                  notifier.setSearchSite(v);
+                  notifier.loadGroupedDevices();
+                },
+              ),
             );
           },
           optionsViewBuilder: (context, onSelected, options) {
@@ -533,28 +543,32 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             notifier.loadGroupedDevices();
           },
           fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return TextField(
-              controller: controller,
-              focusNode: focusNode,
-              style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF1A1A2E)),
-              decoration: InputDecoration(
-                hintText: 'Search By Device ID / Name',
-                hintStyle: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 14),
-                prefixIcon: const Icon(Icons.search_rounded, size: 20, color: Color(0xFF6B7280)),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Color(0xFF141E7A), width: 2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
               ),
-              onSubmitted: (v) {
-                notifier.setSearchDevice(v);
-                notifier.loadGroupedDevices();
-              },
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                onChanged: (v) {
+                  notifier.setSearchDevice(v);
+                  if (v.isEmpty) notifier.loadGroupedDevices();
+                },
+                style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+                decoration: InputDecoration(
+                  hintText: 'Search devices...',
+                  hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.all(14),
+                ),
+                onSubmitted: (v) {
+                  notifier.setSearchDevice(v);
+                  notifier.loadGroupedDevices();
+                },
+              ),
             );
           },
           optionsViewBuilder: (context, onSelected, options) {

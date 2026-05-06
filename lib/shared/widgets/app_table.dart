@@ -31,8 +31,10 @@ class AppTableHeaderCell extends StatelessWidget {
       ),
     );
 
-    // Just return the Text directly - let DataTable2 handle sizing
-    return child;
+    if (width != null) {
+      return SizedBox(width: width, child: child);
+    }
+    return Expanded(flex: flex ?? 1, child: child);
   }
 }
 /*class AppTableHeaderCell extends StatelessWidget {
@@ -112,7 +114,7 @@ class AppDataTableCell extends StatelessWidget {
       return SizedBox(width: width, child: content);
     }
 
-    return content;
+    return Expanded(flex: flex ?? 1, child: content);
   }
 }
 

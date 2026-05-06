@@ -206,6 +206,16 @@ class CompanyAutocompleteInfo {
       organizationCode: json['organization_code'] as String?,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CompanyAutocompleteInfo &&
+          runtimeType == other.runtimeType &&
+          companyId == other.companyId;
+
+  @override
+  int get hashCode => companyId.hashCode;
 }
 
 class CompanyCreateRequest {
