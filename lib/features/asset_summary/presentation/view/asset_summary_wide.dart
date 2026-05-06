@@ -6,9 +6,9 @@ class AssetSummaryWide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFF9FAFB),
-      body: SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: Colors.grey.withOpacity(0.1),
+      body: const SingleChildScrollView(
         padding: EdgeInsets.all(32),
         child: AssetSummaryContent(),
       ),

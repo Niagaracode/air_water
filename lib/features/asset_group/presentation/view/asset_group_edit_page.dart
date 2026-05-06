@@ -192,12 +192,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   }
 
   Widget _buildUserSection(UserState userState) {
-    final allGroupUsers = userState.users.where((u) {
-      final isCustomer = u.roleName?.toLowerCase() == 'customer';
-      final isSuperAdmin = u.roleName?.toLowerCase().contains('super admin') ?? false;
-      final isCompanyAdmin = u.roleName?.toLowerCase().contains('company admin') ?? false;
-      return !isCustomer && !isSuperAdmin && !isCompanyAdmin;
-    }).toList();
+    final allGroupUsers = userState.users.toList();
 
     // Auto-assign "All" group users if the group is currently empty and not manually cleared
     if (_assignedUsers.isEmpty && !_didAutoAssign && !userState.isLoading && allGroupUsers.isNotEmpty) {
@@ -218,10 +213,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
     final eligibleUsers = userState.users.where((u) {
       final isAlreadyAssigned = _assignedUsers.any((au) => au.userId == u.userId);
-      final isCustomer = u.roleName?.toLowerCase() == 'customer';
-      final isSuperAdmin = u.roleName?.toLowerCase().contains('super admin') ?? false;
-      final isCompanyAdmin = u.roleName?.toLowerCase().contains('company admin') ?? false;
-      return !isAlreadyAssigned && !isCustomer && !isSuperAdmin && !isCompanyAdmin;
+      return !isAlreadyAssigned;
     }).toList();
 
     return Container(
@@ -328,10 +320,16 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                 final assignment = _assignedUsers[index];
                 final user = userState.users.firstWhere((u) => u.userId == assignment.userId, orElse: () => User(userId: assignment.userId, username: assignment.username, email: '', roleId: 0, status: 1));
                 
+                final role = user.roleName?.toLowerCase() ?? '';
+                final isRestricted = role == 'customer' || 
+                                    role.contains('super admin') || 
+                                    role.contains('company admin');
+                
                 return Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  decoration: const BoxDecoration(
-                    border: Border(
+                  decoration: BoxDecoration(
+                    color: isRestricted ? const Color(0xFFF3F4F6) : Colors.white,
+                    border: const Border(
                       bottom: BorderSide(color: Color(0xFFE5E7EB)),
                     ),
                   ),

@@ -63,6 +63,7 @@ class _UserWideState extends ConsumerState<UserWide> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.grey.withOpacity(0.1),
       body: Column(
         children: [
           Padding(

@@ -57,6 +57,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
             final parsed = _parseMqtt(msg.data);
 
+            if (!mounted) return;
             ref.read(tankDataProvider.notifier).updateFromMqtt(parsed);
           },
         );

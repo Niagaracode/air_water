@@ -48,6 +48,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     final companyNotifier = ref.read(companyNotifierProvider.notifier);
 
     return Scaffold(
+      backgroundColor: Colors.grey.withOpacity(0.1),
       body: Stack(
         children: [
           Column(

@@ -309,7 +309,7 @@ class _TankWideState extends ConsumerState<TankWide> {
     final notifier = ref.read(tankProvider.notifier);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF9FAFB),
+      backgroundColor: Colors.grey.withOpacity(0.1),
       body: Column(
         children: [
           Padding(
