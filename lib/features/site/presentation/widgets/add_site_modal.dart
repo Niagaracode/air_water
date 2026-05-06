@@ -63,6 +63,7 @@ class AddressControllers {
 
 class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   final _nameController = TextEditingController();
+  final _companyNameController = TextEditingController();
   CompanyGroup? _selectedGroup;
   List<CompanyGroup> _companyGroups = [];
   final List<AddressControllers> _addressRows = [AddressControllers()];
@@ -196,6 +197,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
 
     setState(() {
       _selectedGroup = group;
+      _companyNameController.text = group?.name ?? '';
 
       for (var row in _addressRows) {
         // ALWAYS clear selectedRegisteredAddress because it belongs to the PREVIOUS company.
@@ -490,13 +492,19 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                       ? const LinearProgressIndicator(
                                           minHeight: 2,
                                         )
-                                      : AppDropdown<CompanyGroup>(
-                                          value: _selectedGroup,
-                                          items: _companyGroups,
-                                          hint: 'Select Company',
-                                          itemLabel: (g) => g.name,
-                                          onChanged: _onCompanyChanged,
-                                        ),
+                                      : (ref.watch(userRoleProvider).value == UserRole.superAdmin)
+                                          ? AppDropdown<CompanyGroup>(
+                                              value: _selectedGroup,
+                                              items: _companyGroups,
+                                              hint: 'Select Company',
+                                              itemLabel: (g) => g.name,
+                                              onChanged: _onCompanyChanged,
+                                            )
+                                          : AppTextField(
+                                              readOnly: true,
+                                              controller: _companyNameController,
+                                              hint: 'Company',
+                                            ),
                                 ),
                               ),
                             ],
@@ -911,6 +919,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   @override
   void dispose() {
     _nameController.dispose();
+    _companyNameController.dispose();
     for (var controllers in _addressRows) {
 
       controllers.dispose();
