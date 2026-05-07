@@ -9,6 +9,8 @@ class AssetGroupModel {
   final List<AssetCriteria> criteria;
   final int? userCount;
   final List<AssetGroupUser>? users;
+  final int? companyId;
+  final String? companyName;
 
   AssetGroupModel({
     this.id,
@@ -19,6 +21,8 @@ class AssetGroupModel {
     required this.criteria,
     this.userCount,
     this.users,
+    this.companyId,
+    this.companyName,
   });
 
   factory AssetGroupModel.fromJson(Map<String, dynamic> json) {
@@ -46,6 +50,8 @@ class AssetGroupModel {
       users: json['users'] != null 
           ? (json['users'] as List).map((u) => AssetGroupUser.fromJson(u)).toList()
           : null,
+      companyId: json['company_id'],
+      companyName: json['company_name'],
     );
   }
 
@@ -57,6 +63,7 @@ class AssetGroupModel {
       'display_in_tree': displayInTree ? 1 : 0,
       'criteria': criteria.map((c) => c.toJson()).toList(),
       'users': users?.map((u) => u.toJson()).toList(),
+      if (companyId != null) 'company_id': companyId,
     };
   }
 }

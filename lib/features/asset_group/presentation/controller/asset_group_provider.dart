@@ -113,6 +113,8 @@ class AssetGroupNotifier extends Notifier<AssetGroupState> {
 
       state = state.copyWith(isProcessing: false);
       await loadGroups();
+      // Reload users to update the counts in the manager list
+      await ref.read(userProvider.notifier).loadUsers();
       return true;
     } on DioException catch (e) {
       final errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? e.message;

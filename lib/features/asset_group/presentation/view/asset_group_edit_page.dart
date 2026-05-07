@@ -7,6 +7,7 @@ import '../../domain/models/asset_group_model.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
 import '../../../company/presentation/controller/company_provider.dart';
+import '../../../company/presentation/model/company_model.dart';
 import '../../../product/provider/product_provider.dart';
 import '../../../site/presentation/controller/site_provider.dart';
 import '../../../device/presentation/controller/device_provider.dart';
@@ -31,6 +32,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   int _initialCriteriaCount = 0;
   bool _didAutoAssign = false;
   bool _isLoadingDetails = false;
+  int? _selectedCompanyId;
+  List<CompanyAutocompleteInfo> _companies = [];
+  bool _isLoadingCompanies = false;
 
   final List<String> _parameters = [
     'City',
@@ -64,7 +68,28 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     }
 
     // Load all users to show in the access control table
-    Future.microtask(() => ref.read(userProvider.notifier).loadUsers());
+    Future.microtask(() {
+      ref.read(userProvider.notifier).loadUsers();
+      _checkSuperAdminAndLoadCompanies();
+    });
+  }
+
+  Future<void> _checkSuperAdminAndLoadCompanies() async {
+    final user = ref.read(userProvider).currentUser;
+    if (user != null && user.roleId == 1) {
+      setState(() => _isLoadingCompanies = true);
+      final results = await ref.read(companyNotifierProvider.notifier).searchCompanies('');
+      if (mounted) {
+        setState(() {
+          _companies = results;
+          _isLoadingCompanies = false;
+          // If editing existing, ensure selected company is in the list
+          if (widget.group?.companyId != null && !_companies.any((c) => c.companyId == widget.group!.companyId)) {
+             // We might need to fetch this specific company if it's not in the first 10
+          }
+        });
+      }
+    }
   }
 
   Future<void> _loadFullDetails() async {
@@ -89,6 +114,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           }
           _initialCriteriaCount = _criteria.length;
           _assignedUsers = List.from(fullGroup.users ?? []);
+          _selectedCompanyId = fullGroup.companyId;
           if (_criteria.isEmpty) _addCriteria();
           _isLoadingDetails = false;
         });
@@ -153,6 +179,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           ? []
           : _criteria,
       users: _assignedUsers, // Pass users here for consistency
+      companyId: _selectedCompanyId,
     );
 
     print('DEBUG: Number of criteria to save: ${_criteria.length}');
@@ -735,6 +762,25 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             ],
           ),
           const SizedBox(height: 32),
+          if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
+            _buildLabelField(
+              'TARGET COMPANY',
+              DropdownButtonFormField<int>(
+                value: _selectedCompanyId,
+                hint: const Text('Select Company'),
+                items: _companies.map<DropdownMenuItem<int>>((c) {
+                  return DropdownMenuItem<int>(
+                    value: c.companyId,
+                    child: Text(c.name, style: GoogleFonts.inter(fontSize: 14)),
+                  );
+                }).toList(),
+                onChanged: widget.group != null ? null : (v) => setState(() => _selectedCompanyId = v),
+                validator: (v) => v == null ? 'Please select a company' : null,
+                decoration: _inputDecoration('Which company does this group belong to?'),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
           Row(
             children: [
               Expanded(

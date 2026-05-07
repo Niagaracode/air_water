@@ -24,6 +24,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     super.initState();
     Future.microtask(() {
       ref.read(userProvider.notifier).loadUsers();
+      ref.read(productNotifierProvider.notifier).loadProducts();
     });
   }
 
@@ -197,7 +198,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                 AppTableHeaderCell('Group Name', flex: 3),
                 AppTableHeaderCell('Criteria & Description', flex: 4),
                 AppTableHeaderCell('Users', width: 100),
-                AppTableHeaderCell('Domain', width: 120),
+                AppTableHeaderCell('Company', width: 150),
                 AppTableHeaderCell('Display', width: 100),
                 AppTableHeaderCell('Action', width: 100),
               ],
@@ -218,15 +219,17 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                       if (c.parameter == 'Product Name') {
                         final productId = int.tryParse(c.value);
                         if (productId != null) {
-                          final product = productState.products.firstWhere(
-                            (p) => p.id == productId,
-                            orElse: () => productState.products.firstWhere(
-                              (p) => p.id.toString() == c.value, 
-                              orElse: () => productState.products.isEmpty ? null as dynamic : null
-                            ),
-                          );
+                          final productList = productState.products;
+                          final product = productList.isEmpty 
+                              ? null 
+                              : productList.cast<dynamic>().firstWhere(
+                                  (p) => p.id == productId || p.id.toString() == c.value,
+                                  orElse: () => null,
+                                );
                           if (product != null) {
-                            displayValue = product.productCode;
+                            displayValue = product.productCode != null && product.productCode.isNotEmpty 
+                                ? product.productCode 
+                                : product.name;
                           }
                         }
                       }
@@ -240,6 +243,11 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                   }();
 
             final displayUserCount = userState.users.where((u) {
+              // If group is scoped to a company, only count users from that company
+              if (group.companyId != null && u.companyId != group.companyId) {
+                return false;
+              }
+
               final isInAllGroup = u.groupNames?.any((n) => n.trim().toLowerCase() == 'all') ?? false;
               if (isAllGroup) return isInAllGroup;
               
@@ -272,11 +280,14 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                             ),
                           ),
                           if (group.description.isNotEmpty)
-                            Text(
-                              group.description,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(fontSize: 11, color: Colors.grey),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 1),
+                              child: Text(
+                                group.description,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(fontSize: 11, color: Colors.grey),
+                              ),
                             ),
                         ],
                       ),
@@ -293,7 +304,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                     ),
                   ),
                   AppTableCell(displayUserCount.toString(), width: 100, textAlign: TextAlign.center),
-                  AppTableCell(group.domain, width: 120),
+                  AppTableCell(group.companyName ?? '-', width: 150),
                   SizedBox(
                     width: 100,
                     child: Switch(
