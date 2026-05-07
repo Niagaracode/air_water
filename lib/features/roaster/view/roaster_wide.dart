@@ -12,9 +12,7 @@ import '../../../../shared/widgets/app_table.dart';
 
 // ─── Parameter options ──────────────────────────────────────────────────────
 const _kParameters = [
-  'LEVEL', 'BATTERY', 'PRESSURE', 'TEMPERATURE', 'FLOW',
-  'Cal Tank', 'Cal Kilo Liter', 'sensor', 'setbar',
-  'setcalbar', 'mfactor', 'Data Interval', 'Chart Data', 'OTHER',
+  'LEVEL', 'BATTERY', 'PRESSURE',
 ];
 
 class RoasterWide extends ConsumerStatefulWidget {

@@ -6,6 +6,8 @@ import '../controller/asset_group_provider.dart';
 import '../../domain/models/asset_group_model.dart';
 import 'asset_group_edit_page.dart';
 import '../widgets/add_asset_group_modal.dart';
+import '../../../user/presentation/controller/user_provider.dart';
+import '../../../product/provider/product_provider.dart';
 
 class AssetGroupWide extends ConsumerStatefulWidget {
   const AssetGroupWide({super.key});
@@ -16,6 +18,14 @@ class AssetGroupWide extends ConsumerStatefulWidget {
 
 class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
   final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(userProvider.notifier).loadUsers();
+    });
+  }
 
   @override
   void dispose() {
@@ -55,6 +65,8 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(assetGroupProvider);
+    final userState = ref.watch(userProvider);
+    final productState = ref.watch(productNotifierProvider);
 
     return Scaffold(
       backgroundColor: Colors.grey.withValues(alpha: 0.1),
@@ -69,7 +81,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF141E7A)))
                 : Padding(
                   padding: const EdgeInsets.only(left: 24, right: 24, bottom: 8),
-                  child: _buildTable(state),
+                  child: _buildTable(state, userState, productState),
                 ),
           ),
         ],
@@ -161,7 +173,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     );
   }
 
-  Widget _buildTable(AssetGroupState state) {
+  Widget _buildTable(AssetGroupState state, UserState userState, ProductState productState) {
     if (state.groups.isEmpty) {
       return const AppTableEmptyState(
         icon: Icons.layers_outlined,
@@ -196,9 +208,44 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
             final isAllGroup = group.name.toLowerCase() == 'all';
             final criteriaStr = isAllGroup 
                 ? 'Includes all assets'
-                : group.criteria.isEmpty 
-                    ? 'No criteria' 
-                    : group.criteria.map((c) => '${c.parameter} ${c.logic} ${c.value}').join(' ${group.criteria.first.operator} ');
+                : () {
+                    final buffer = StringBuffer();
+                    for (int i = 0; i < group.criteria.length; i++) {
+                      final c = group.criteria[i];
+                      String displayValue = c.value;
+                      
+                      // Resolve Product ID to Name if parameter is Product Name
+                      if (c.parameter == 'Product Name') {
+                        final productId = int.tryParse(c.value);
+                        if (productId != null) {
+                          final product = productState.products.firstWhere(
+                            (p) => p.id == productId,
+                            orElse: () => productState.products.firstWhere(
+                              (p) => p.id.toString() == c.value, 
+                              orElse: () => productState.products.isEmpty ? null as dynamic : null
+                            ),
+                          );
+                          if (product != null) {
+                            displayValue = product.productCode;
+                          }
+                        }
+                      }
+                      
+                      buffer.write('${c.parameter} ${c.logic} $displayValue');
+                      if (i < group.criteria.length - 1) {
+                        buffer.write(' ${c.operator} ');
+                      }
+                    }
+                    return buffer.toString();
+                  }();
+
+            final displayUserCount = userState.users.where((u) {
+              final isInAllGroup = u.groupNames?.any((n) => n.trim().toLowerCase() == 'all') ?? false;
+              if (isAllGroup) return isInAllGroup;
+              
+              final isInThisGroup = u.groupNames?.contains(group.name) ?? false;
+              return isInThisGroup && !isInAllGroup;
+            }).length;
 
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -245,7 +292,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                       style: GoogleFonts.inter(fontSize: 12, color: Colors.blueGrey, fontWeight: FontWeight.w500),
                     ),
                   ),
-                  AppTableCell(group.userCount?.toString() ?? '0', width: 100, textAlign: TextAlign.center),
+                  AppTableCell(displayUserCount.toString(), width: 100, textAlign: TextAlign.center),
                   AppTableCell(group.domain, width: 120),
                   SizedBox(
                     width: 100,
