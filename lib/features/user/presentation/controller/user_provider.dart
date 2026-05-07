@@ -136,7 +136,7 @@ class UserNotifier extends Notifier<UserState> {
   }
 
   Future<void> loadUsers() async {
-    state = state.copyWith(isLoading: true, page: 1, users: []);
+    state = state.copyWith(isLoading: true, page: 1, users: [], error: null);
     try {
       final repository = ref.read(userRepositoryProvider);
       final response = await repository.searchUsers(
@@ -155,8 +155,8 @@ class UserNotifier extends Notifier<UserState> {
       final filteredUsers = state.currentUser != null
           ? response.data
                 .where((user) {
-                  // If current user is SuperAdmin (roleId 1), show everyone
-                  if (state.currentUser!.roleId == 1) return true;
+                  // If current user is SuperAdmin (roleId 1) or Company Admin (roleId 2), show everyone in their scope
+                  if (state.currentUser!.roleId == 1 || state.currentUser!.roleId == 2) return true;
                   // Otherwise, hide themselves
                   return user.userId != state.currentUser!.userId;
                 })

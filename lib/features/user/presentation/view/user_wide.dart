@@ -90,7 +90,33 @@ class _UserWideState extends ConsumerState<UserWide> {
                                   child: CircularProgressIndicator(color: Color(0xFF141E7A)),
                                 )
                               : state.error != null
-                              ? Center(child: Text(state.error!))
+                              ? Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'Failed to load users',
+                                          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          state.error!,
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.inter(color: Colors.grey.shade600),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        ElevatedButton(
+                                          onPressed: () => notifier.loadUsers(),
+                                          child: const Text('RETRY'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
                               : _buildVirtualizedTable(state, notifier),
                         ),
                         if (state.isLoading && state.users.isNotEmpty)

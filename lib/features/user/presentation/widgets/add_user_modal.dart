@@ -131,6 +131,28 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       return;
     }
 
+    if (_emailController.text.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Email address is required')),
+      );
+      return;
+    }
+
+    if (widget.user == null && _passwordController.text.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Password is required for new users')),
+      );
+      return;
+    }
+
+    if (_passwordController.text.isNotEmpty &&
+        _passwordController.text != _confirmPasswordController.text) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
+
     final request = UserCreateRequest(
       username: _usernameController.text,
       email: _emailController.text,
@@ -151,7 +173,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       status: _status,
       sessionHours: int.tryParse(_timeoutController.text) ?? 24,
       sessionMinutes: 0,
-
     );
 
     final userNotifier = ref.read(userProvider.notifier);
@@ -256,11 +277,13 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                           const SizedBox(height: 32),
                           _buildInfoBar(),
                           const SizedBox(height: 48),
-                          _buildLabelField(
-                            'PRIMARY COMPANY',
-                            _buildCompanyAutocomplete(),
-                          ),
-                          const SizedBox(height: 24),
+                          if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
+                            _buildLabelField(
+                              'PRIMARY COMPANY',
+                              _buildCompanyAutocomplete(),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
 
                           _buildLabelField(
                             'USERNAME*',
@@ -333,7 +356,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                             children: [
                               Expanded(
                                 child: _buildLabelField(
-                                  'EMAIL ADDRESS',
+                                  'EMAIL ADDRESS*',
                                   AppTextField(
                                     controller: _emailController,
                                     hint: 'john@example.com',
@@ -358,7 +381,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                             children: [
                               Expanded(
                                 child: _buildLabelField(
-                                  'PASSWORD',
+                                  widget.user != null ? 'PASSWORD' : 'PASSWORD*',
                                   AppTextField(
                                     controller: _passwordController,
                                     hint: '••••••••',
@@ -369,7 +392,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                               const SizedBox(width: 16),
                               Expanded(
                                 child: _buildLabelField(
-                                  'CONFIRM PASSWORD',
+                                  widget.user != null ? 'CONFIRM PASSWORD' : 'CONFIRM PASSWORD*',
                                   AppTextField(
                                     controller: _confirmPasswordController,
                                     hint: '••••••••',
