@@ -578,7 +578,12 @@ class _SettingWideState extends ConsumerState<SettingWide> {
         ) // Remove trailing .0
         .toList();
 
-    if (activeThresholds.isNotEmpty) {
+    if (paramType == 'DATA INTERVAL') {
+      final hh = setting.threshold1?.toInt() ?? 0;
+      final mm = setting.threshold2?.toInt() ?? 0;
+      final hhStr = hh > 0 ? '${hh.toString().padLeft(2, '0')} Hours ' : '';
+      conditionText = '$hhStr${mm.toString().padLeft(2, '0')} Minutes';
+    } else if (activeThresholds.isNotEmpty) {
       if (setting.conditionType == 'BETWEEN' && activeThresholds.length >= 2) {
         conditionText = '${activeThresholds[0]} - ${activeThresholds[1]}';
       } else if (paramType == 'CAL TANK' ||
@@ -587,7 +592,6 @@ class _SettingWideState extends ConsumerState<SettingWide> {
           paramType == 'M FACTOR' ||
           paramType == 'SENSOR' ||
           paramType == 'SENSOR RATING' ||
-          paramType == 'DATA INTERVAL' ||
           paramType == 'SOLAR' ||
           paramType == 'CHART DATA') {
         conditionText = activeThresholds.join(', ');

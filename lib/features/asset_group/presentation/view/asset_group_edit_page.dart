@@ -78,14 +78,17 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     final user = ref.read(userProvider).currentUser;
     if (user != null && user.roleId == 1) {
       setState(() => _isLoadingCompanies = true);
-      final results = await ref.read(companyNotifierProvider.notifier).searchCompanies('');
+      final results = await ref
+          .read(companyNotifierProvider.notifier)
+          .searchCompanies('');
       if (mounted) {
         setState(() {
           _companies = results;
           _isLoadingCompanies = false;
           // If editing existing, ensure selected company is in the list
-          if (widget.group?.companyId != null && !_companies.any((c) => c.companyId == widget.group!.companyId)) {
-             // We might need to fetch this specific company if it's not in the first 10
+          if (widget.group?.companyId != null &&
+              !_companies.any((c) => c.companyId == widget.group!.companyId)) {
+            // We might need to fetch this specific company if it's not in the first 10
           }
         });
       }
@@ -270,7 +273,12 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
   Widget _buildUserSection(UserState userState) {
     final allGroupUsers = userState.users
-        .where((u) => u.roleId != 1 && u.roleId != 2)
+        .where(
+          (u) =>
+              u.roleId != 1 &&
+              u.roleId != 2 &&
+              u.companyId == _selectedCompanyId,
+        )
         .toList();
 
     // Auto-assign "All" group users if the group is currently empty and not manually cleared
@@ -310,7 +318,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           u.groupNames?.any((n) => n.trim().toLowerCase() == 'all') ?? false;
       if (!isEditingAllGroup && isInAllGroupGlobally) return false;
 
-      return !isAlreadyAssigned && !isRestrictedRole;
+      final isCorrectCompany = u.companyId == _selectedCompanyId;
+
+      return !isAlreadyAssigned && !isRestrictedRole && isCorrectCompany;
     }).toList();
 
     return Container(
@@ -764,7 +774,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           const SizedBox(height: 32),
           if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
             _buildLabelField(
-              'TARGET COMPANY',
+              'COMPANY',
               DropdownButtonFormField<int>(
                 value: _selectedCompanyId,
                 hint: const Text('Select Company'),
@@ -774,9 +784,13 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                     child: Text(c.name, style: GoogleFonts.inter(fontSize: 14)),
                   );
                 }).toList(),
-                onChanged: widget.group != null ? null : (v) => setState(() => _selectedCompanyId = v),
+                onChanged: widget.group != null
+                    ? null
+                    : (v) => setState(() => _selectedCompanyId = v),
                 validator: (v) => v == null ? 'Please select a company' : null,
-                decoration: _inputDecoration('Which company does this group belong to?'),
+                decoration: _inputDecoration(
+                  'Which company does this group belong to?',
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -1457,7 +1471,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           Expanded(
             flex: 2,
             child: DropdownButtonFormField<String>(
-              value: _logics.contains(rule.logic) ? rule.logic : (_logics.contains('=') ? '=' : _logics.first),
+              value: _logics.contains(rule.logic)
+                  ? rule.logic
+                  : (_logics.contains('=') ? '=' : _logics.first),
               items: _logics
                   .map(
                     (l) => DropdownMenuItem(
@@ -1483,7 +1499,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           Expanded(
             flex: 3,
             child: DropdownButtonFormField<String>(
-              value: _operators.contains(rule.operator) ? rule.operator : _operators.first,
+              value: _operators.contains(rule.operator)
+                  ? rule.operator
+                  : _operators.first,
               items: _operators
                   .map(
                     (o) => DropdownMenuItem(

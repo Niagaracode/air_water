@@ -102,9 +102,16 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
               ? 'MFACTOR'
               : (s.parameterType ?? 'LEVEL'),
           conditionType: s.conditionType ?? '>',
-          threshold1: s.threshold1?.toString() ?? '0',
-          threshold2: s.threshold2?.toString() ?? '0',
-          threshold3: s.threshold_3?.toString() ?? '0',
+          threshold1: (s.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
+              ? (s.threshold1?.toInt().toString().padLeft(2, '0') ?? '00')
+              : (s.threshold1?.toString().replaceAll(RegExp(r'\.0$'), '') ??
+                  '0'),
+          threshold2: (s.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
+              ? (s.threshold2?.toInt().toString().padLeft(2, '0') ?? '00')
+              : (s.threshold2?.toString().replaceAll(RegExp(r'\.0$'), '') ??
+                  '0'),
+          threshold3: s.threshold_3?.toString().replaceAll(RegExp(r'\.0$'), '') ??
+              '0',
           statusLabel: s.statusLabel ?? '',
         ),
       );
@@ -117,7 +124,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
 
   Future<void> _fetchFullTankDetails(Tank t) async {
     if (t.strappingPoints != null && t.strappingPoints!.isNotEmpty) return;
-    
+
     setState(() => _isLoadingData = true);
     try {
       final tankRepo = ref.read(tankRepositoryProvider);
@@ -149,7 +156,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         companyRepo.getGroupedCompanies(limit: 1000),
         siteRepo.getSites(limit: 1000),
         ref.read(allTanksProvider.future),
-        ref.read(activeTemplatesProvider.future),
+        ref.refresh(activeTemplatesProvider.future),
         ref.read(productListProvider.future),
       ]);
 
@@ -167,16 +174,20 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
               .firstOrNull;
 
           // Fallback: match by company name when companyId match fails
-          if (_selectedCompanyGroup == null && s.companyName != null && s.companyName!.isNotEmpty) {
+          if (_selectedCompanyGroup == null &&
+              s.companyName != null &&
+              s.companyName!.isNotEmpty) {
             _selectedCompanyGroup = _companyGroups
-                .where((g) => g.name.trim().toLowerCase() == s.companyName!.trim().toLowerCase())
+                .where(
+                  (g) =>
+                      g.name.trim().toLowerCase() ==
+                      s.companyName!.trim().toLowerCase(),
+                )
                 .firstOrNull;
           }
 
           if (s.siteId != null) {
-            _selectedSite = _sites
-                .where((p) => p.id == s.siteId)
-                .firstOrNull;
+            _selectedSite = _sites.where((p) => p.id == s.siteId).firstOrNull;
           }
 
           if (s.tankId != null) {
@@ -212,8 +223,16 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
           // New Setting Mode: Auto-select if only one tank is available
           if (_tanks.length == 1) {
             _selectedTank = _tanks[0];
-            _selectedSite = _sites.where((p) => p.id == _selectedTank!.siteId).firstOrNull;
-            _selectedCompanyGroup = _companyGroups.where((g) => g.addresses.any((a) => a.companyId == _selectedTank!.companyId)).firstOrNull;
+            _selectedSite = _sites
+                .where((p) => p.id == _selectedTank!.siteId)
+                .firstOrNull;
+            _selectedCompanyGroup = _companyGroups
+                .where(
+                  (g) => g.addresses.any(
+                    (a) => a.companyId == _selectedTank!.companyId,
+                  ),
+                )
+                .firstOrNull;
             _deviceIdController.text = _selectedTank?.deviceId ?? '';
             _simNumberController.text = _selectedTank?.simNumber ?? '';
             _timeZoneController.text = _selectedTank?.timeZone ?? '';
@@ -327,19 +346,20 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         final statusLabel = row1?.statusLabelController.text.trim() ?? '';
         // For LEVEL: only send to device when status label is 'ReOrder'
         final shouldSendToDevice = paramType == 'LEVEL'
-            ? (statusLabel.toLowerCase() == 'reorder' && _deviceIdController.text.isNotEmpty)
+            ? (statusLabel.toLowerCase() == 'reorder' &&
+                  _deviceIdController.text.isNotEmpty)
             : ((paramType == 'CAL TANK' ||
-                    paramType == 'CAL KILO LITER' ||
-                    paramType == 'SETCALBAR' ||
-                    paramType == 'SETBAR' ||
-                    paramType == 'SENSOR' ||
-                    paramType == 'SENSOR RATING' ||
-                    paramType == 'DATA INTERVAL' ||
-                    paramType == 'BATTERY' ||
-                    paramType == 'SOLAR' ||
-                    paramType == 'MFACTOR' ||
-                    paramType == 'CHART DATA') &&
-                _deviceIdController.text.isNotEmpty);
+                      paramType == 'CAL KILO LITER' ||
+                      paramType == 'SETCALBAR' ||
+                      paramType == 'SETBAR' ||
+                      paramType == 'SENSOR' ||
+                      paramType == 'SENSOR RATING' ||
+                      paramType == 'DATA INTERVAL' ||
+                      paramType == 'BATTERY' ||
+                      paramType == 'SOLAR' ||
+                      paramType == 'MFACTOR' ||
+                      paramType == 'CHART DATA') &&
+                  _deviceIdController.text.isNotEmpty);
         if (shouldSendToDevice) {
           await _sendToDevice(skipSave: true);
           return true;
@@ -406,7 +426,6 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final thresh2 = row1?.threshold2Controller.text.trim() ?? '0';
       final thresh3 = row1?.threshold3Controller.text.trim() ?? '0';
 
-
       final simNumber = _simNumberController.text.trim().isEmpty
           ? 'N/A'
           : _simNumberController.text.trim();
@@ -426,18 +445,24 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         payload = 'SETCALIBBAR,1,$thresh1';
       } else if (param1.toUpperCase().trim() == 'MFACTOR') {
         payload = 'MRATIO,1,$thresh1,$thresh2,$thresh3';
-      } else if (param1.toUpperCase().trim() == 'SENSOR' || param1.toUpperCase().trim() == 'SENSOR RATING') {
+      } else if (param1.toUpperCase().trim() == 'SENSOR' ||
+          param1.toUpperCase().trim() == 'SENSOR RATING') {
         final productCode = _selectedProduct?.productCode ?? 'N/A';
         final tonnes = (_selectedTank?.tonnes ?? 0.0).toStringAsFixed(2);
         payload = 'SENSORRATING,1,$thresh1,$productCode,$thresh2,$tonnes,0';
       } else if (param1.toUpperCase().trim() == 'DATA INTERVAL') {
-        payload = 'DATAINTERVAL,$thresh1$thresh2';
+        final hh = int.tryParse(thresh1) ?? 0;
+        final mm = int.tryParse(thresh2) ?? 0;
+        final hhStr = hh.toString().padLeft(2, '0');
+        final mmStr = mm.toString().padLeft(2, '0');
+        payload = 'DATAINTERVAL,$hhStr$mmStr';
       } else if (param1.toUpperCase().trim() == 'BATTERY') {
         payload = 'BATVOLTCAL,1,$thresh1';
       } else if (param1.toUpperCase().trim() == 'SOLAR') {
         payload = 'SOLARVOLTCAL,1,$thresh1';
       } else if (param1.toUpperCase().trim() == 'CHART DATA') {
-        final pointsData = row1?.selectedPoints
+        final pointsData =
+            row1?.selectedPoints
                 .map((p) => '${p.levelMm.toInt()},${p.volumeM3.toInt()}')
                 .join(',') ??
             '';
@@ -684,56 +709,67 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               )
                                             : AppDropdown<Tank>(
                                                 value: _selectedTank,
-                                                items: (_selectedSite == null && !isCustomer)
+                                                items:
+                                                    (_selectedSite == null &&
+                                                        !isCustomer)
                                                     ? []
                                                     : _tanks
                                                           .where(
                                                             (t) =>
                                                                 isCustomer ||
-                                                                _selectedSite == null ||
+                                                                _selectedSite ==
+                                                                    null ||
                                                                 t.siteId ==
-                                                                _selectedSite!
-                                                                    .id,
+                                                                    _selectedSite!
+                                                                        .id,
                                                           )
                                                           .toList(),
-                                                hint: (_selectedSite == null && !isCustomer)
+                                                hint:
+                                                    (_selectedSite == null &&
+                                                        !isCustomer)
                                                     ? 'Select Site First'
                                                     : 'Select Tank',
                                                 itemLabel: (t) => t.tankNumber,
-                                                onChanged: (_selectedSite == null && !isCustomer)
+                                                onChanged:
+                                                    (_selectedSite == null &&
+                                                        !isCustomer)
                                                     ? null
-                                                     : (t) {
-                                                         setState(() {
-                                                           _selectedTank = t;
-                                                           if (t != null) {
-                                                             _deviceIdController
-                                                                     .text =
-                                                                 t.deviceId ?? '';
-                                                             _simNumberController
-                                                                     .text =
-                                                                 t.simNumber ?? '';
-                                                             _timeZoneController
-                                                                     .text =
-                                                                 t.timeZone ?? '';
-                                                             if (t.productId !=
-                                                                     null &&
-                                                                 t.productId !=
-                                                                     0) {
-                                                               _selectedProduct =
-                                                                   _products
-                                                                       .where(
-                                                                         (p) =>
-                                                                             p.id ==
-                                                                             t.productId,
-                                                                       )
-                                                                       .firstOrNull;
-                                                             }
-                                                           }
-                                                         });
-                                                         if (t != null) {
-                                                           _fetchFullTankDetails(t);
-                                                         }
-                                                       },
+                                                    : (t) {
+                                                        setState(() {
+                                                          _selectedTank = t;
+                                                          if (t != null) {
+                                                            _deviceIdController
+                                                                    .text =
+                                                                t.deviceId ??
+                                                                '';
+                                                            _simNumberController
+                                                                    .text =
+                                                                t.simNumber ??
+                                                                '';
+                                                            _timeZoneController
+                                                                    .text =
+                                                                t.timeZone ??
+                                                                '';
+                                                            if (t.productId !=
+                                                                    null &&
+                                                                t.productId !=
+                                                                    0) {
+                                                              _selectedProduct = _products
+                                                                  .where(
+                                                                    (p) =>
+                                                                        p.id ==
+                                                                        t.productId,
+                                                                  )
+                                                                  .firstOrNull;
+                                                            }
+                                                          }
+                                                        });
+                                                        if (t != null) {
+                                                          _fetchFullTankDetails(
+                                                            t,
+                                                          );
+                                                        }
+                                                      },
                                               ),
                                       ),
                                     ),
@@ -753,7 +789,10 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                           value: _selectedCompanyGroup,
                                           items: _companyGroups,
                                           hint: 'Select Company',
-                                          itemLabel: (cg) => cg.name.trim().isNotEmpty ? cg.name.trim() : '(Unnamed Company)',
+                                          itemLabel: (cg) =>
+                                              cg.name.trim().isNotEmpty
+                                              ? cg.name.trim()
+                                              : '(Unnamed Company)',
                                           onChanged: (cg) => setState(() {
                                             _selectedCompanyGroup = cg;
                                             _selectedSite = null;
@@ -815,7 +854,8 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                     if (t != null) {
                                                       _deviceIdController.text =
                                                           t.deviceId ?? '';
-                                                      _simNumberController.text =
+                                                      _simNumberController
+                                                              .text =
                                                           t.simNumber ?? '';
                                                       _timeZoneController.text =
                                                           t.timeZone ?? '';
@@ -1000,24 +1040,47 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               ],
                                               hint: 'Select Param',
                                               itemLabel: (v) => v,
-                                               onChanged: (v) {
-                                                 setState(() {
-                                                   final prevType = row.parameterType.toUpperCase().trim();
-                                                   row.parameterType = v!;
-                                                   // Reset status label when switching from LEVEL to another type
-                                                   // to avoid stale dropdown values appearing in the free-text field
-                                                   if (prevType == 'LEVEL' && v.toUpperCase().trim() != 'LEVEL') {
-                                                     row.statusLabelController.clear();
-                                                   }
-                                                 });
-                                                 if (v == 'CHART DATA' && _selectedTank != null) {
-                                                   _fetchFullTankDetails(_selectedTank!);
-                                                 }
-                                               },
+                                              onChanged: (v) {
+                                                setState(() {
+                                                  final prevType = row
+                                                      .parameterType
+                                                      .toUpperCase()
+                                                      .trim();
+                                                  row.parameterType = v!;
+                                                  // Reset status label when switching from LEVEL to another type
+                                                  // to avoid stale dropdown values appearing in the free-text field
+                                                  if (prevType == 'LEVEL' &&
+                                                      v.toUpperCase().trim() !=
+                                                          'LEVEL') {
+                                                    row.statusLabelController
+                                                        .clear();
+                                                  }
+                                                });
+                                                if (v == 'CHART DATA' &&
+                                                    _selectedTank != null) {
+                                                  _fetchFullTankDetails(
+                                                    _selectedTank!,
+                                                  );
+                                                }
+                                              },
                                             ),
                                           ),
                                         ),
-                                        if (!['CAL TANK', 'CAL KILO LITER', 'SENSOR', 'SENSOR RATING', 'MFACTOR', 'SETBAR', 'SETCALBAR', 'CHART DATA', 'DATA INTERVAL'].contains(row.parameterType.toUpperCase().trim())) ...[
+                                        if (![
+                                          'CAL TANK',
+                                          'CAL KILO LITER',
+                                          'SENSOR',
+                                          'SENSOR RATING',
+                                          'MFACTOR',
+                                          'SETBAR',
+                                          'SETCALBAR',
+                                          'CHART DATA',
+                                          'DATA INTERVAL',
+                                        ].contains(
+                                          row.parameterType
+                                              .toUpperCase()
+                                              .trim(),
+                                        )) ...[
                                           const SizedBox(width: 16),
                                           Expanded(
                                             flex: 2,
@@ -1042,38 +1105,87 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               ),
                                             ),
                                           ),
-                                          if (row.parameterType.toUpperCase().trim() != 'SOLAR') ...[
+                                          if (row.parameterType
+                                                  .toUpperCase()
+                                                  .trim() !=
+                                              'SOLAR') ...[
                                             const SizedBox(width: 16),
                                             Expanded(
                                               flex: 4,
                                               child: _buildLabelField(
                                                 'STATUS LABEL (UI DISPLAY)',
                                                 // For LEVEL & BATTERY: use predefined dropdown; for other types: free text
-                                                (row.parameterType.toUpperCase().trim() == 'LEVEL' || row.parameterType.toUpperCase().trim() == 'BATTERY')
+                                                (row.parameterType
+                                                                .toUpperCase()
+                                                                .trim() ==
+                                                            'LEVEL' ||
+                                                        row.parameterType
+                                                                .toUpperCase()
+                                                                .trim() ==
+                                                            'BATTERY')
                                                     ? AppDropdown<String>(
                                                         value: () {
-                                                          const allowed = ['ReOrder', 'Critical', 'Low', 'High'];
-                                                          final current = row.statusLabelController.text;
-                                                          if (allowed.contains(current)) return current;
+                                                          const allowed = [
+                                                            'ReOrder',
+                                                            'Critical',
+                                                            'Low',
+                                                            'High',
+                                                          ];
+                                                          final current = row
+                                                              .statusLabelController
+                                                              .text;
+                                                          if (allowed.contains(
+                                                            current,
+                                                          ))
+                                                            return current;
                                                           // Mapping existing values to prevent crash
-                                                          final upper = current.toUpperCase();
-                                                          if (upper == 'REORDER') return 'ReOrder';
-                                                          if (upper == 'CRITICAL') return 'Critical';
-                                                          if (upper.contains('LOW')) return 'Low';
-                                                          if (upper.contains('HIGH')) return 'High';
+                                                          final upper = current
+                                                              .toUpperCase();
+                                                          if (upper ==
+                                                              'REORDER')
+                                                            return 'ReOrder';
+                                                          if (upper ==
+                                                              'CRITICAL')
+                                                            return 'Critical';
+                                                          if (upper.contains(
+                                                            'LOW',
+                                                          ))
+                                                            return 'Low';
+                                                          if (upper.contains(
+                                                            'HIGH',
+                                                          ))
+                                                            return 'High';
                                                           return null;
                                                         }(),
-                                                        items: (row.parameterType.toUpperCase().trim() == 'BATTERY')
-                                                            ? const ['Critical', 'Low', 'High']
-                                                            : const ['ReOrder', 'Critical', 'Low', 'High'],
+                                                        items:
+                                                            (row.parameterType
+                                                                    .toUpperCase()
+                                                                    .trim() ==
+                                                                'BATTERY')
+                                                            ? const [
+                                                                'Critical',
+                                                                'Low',
+                                                                'High',
+                                                              ]
+                                                            : const [
+                                                                'ReOrder',
+                                                                'Critical',
+                                                                'Low',
+                                                                'High',
+                                                              ],
                                                         hint: 'Select Label',
                                                         itemLabel: (v) => v,
                                                         onChanged: (v) => setState(
-                                                          () => row.statusLabelController.text = v ?? '',
+                                                          () =>
+                                                              row
+                                                                      .statusLabelController
+                                                                      .text =
+                                                                  v ?? '',
                                                         ),
                                                       )
                                                     : AppTextField(
-                                                        controller: row.statusLabelController,
+                                                        controller: row
+                                                            .statusLabelController,
                                                         hint: 'e.g. LOW LEVEL',
                                                       ),
                                               ),
@@ -1088,75 +1200,199 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         Expanded(
                                           flex: 2,
                                           child: _buildLabelField(
-                                            (row.parameterType.toUpperCase().trim() == 'SENSOR' || row.parameterType.toUpperCase().trim() == 'SENSOR RATING')
+                                            (row.parameterType
+                                                            .toUpperCase()
+                                                            .trim() ==
+                                                        'SENSOR' ||
+                                                    row.parameterType
+                                                            .toUpperCase()
+                                                            .trim() ==
+                                                        'SENSOR RATING')
                                                 ? 'SENSOR RATING'
-                                                : (row.parameterType.toUpperCase().trim() == 'BATTERY' || row.parameterType.toUpperCase().trim() == 'SOLAR')
-                                                    ? 'VOLTAGE'
-                                                    : (['CAL TANK', 'CAL KILO LITER', 'MFACTOR', 'DATA INTERVAL', 'SETBAR', 'SETCALBAR', 'CHART DATA'].contains(row.parameterType.toUpperCase().trim()))
-                                                        ? 'FIELD 1'
-                                                        : (row.conditionType == 'BETWEEN' ? 'MIN THRESHOLD' : 'THRESHOLD VALUE'),
-                                            row.parameterType.toUpperCase().trim() == 'CHART DATA'
-                                                ? AppMultiSelectDropdown<StrappingPoint>(
-                                                    selectedItems: row.selectedPoints,
-                                                    items: _selectedTank?.strappingPoints ?? [],
-                                                    hint: _selectedTank == null 
-                                                         ? 'Select Tank First' 
-                                                         : (_selectedTank!.strappingPoints == null || _selectedTank!.strappingPoints!.isEmpty)
-                                                             ? 'No Points Available'
-                                                             : 'Select Point(s)',
-                                                    itemLabel: (p) => 'L: ${p.levelMm} | V: ${p.volumeM3}',
+                                                : (row.parameterType
+                                                              .toUpperCase()
+                                                              .trim() ==
+                                                          'BATTERY' ||
+                                                      row.parameterType
+                                                              .toUpperCase()
+                                                              .trim() ==
+                                                          'SOLAR')
+                                                ? 'VOLTAGE'
+                                                : (row.parameterType.toUpperCase().trim() == 'DATA INTERVAL')
+                                                    ? 'Hours'
+                                                    : ([
+                                                        'CAL TANK',
+                                                        'CAL KILO LITER',
+                                                        'MFACTOR',
+                                                        'SETBAR',
+                                                        'SETCALBAR',
+                                                      ].contains(
+                                                        row.parameterType
+                                                            .toUpperCase()
+                                                            .trim(),
+                                                      ))
+                                                        ? '${row.parameterType} 1'
+                                                        : (row.parameterType.toUpperCase().trim() == 'CHART DATA')
+                                                            ? 'Field 1'
+                                                            : (row.conditionType ==
+                                                                      'BETWEEN'
+                                                                  ? 'MIN THRESHOLD'
+                                                                  : 'THRESHOLD VALUE'),
+                                            row.parameterType
+                                                        .toUpperCase()
+                                                        .trim() ==
+                                                    'CHART DATA'
+                                                ? AppMultiSelectDropdown<
+                                                    StrappingPoint
+                                                  >(
+                                                    selectedItems:
+                                                        row.selectedPoints,
+                                                    items:
+                                                        _selectedTank
+                                                            ?.strappingPoints ??
+                                                        [],
+                                                    hint: _selectedTank == null
+                                                        ? 'Select Tank First'
+                                                        : (_selectedTank!
+                                                                      .strappingPoints ==
+                                                                  null ||
+                                                              _selectedTank!
+                                                                  .strappingPoints!
+                                                                  .isEmpty)
+                                                        ? 'No Points Available'
+                                                        : 'Select Point(s)',
+                                                    itemLabel: (p) =>
+                                                        'L: ${p.levelMm} | V: ${p.volumeM3}',
                                                     onChanged: (list) {
                                                       setState(() {
-                                                        row.selectedPoints = list;
-                                                        row.threshold1Controller.text = list.map((p) => p.levelMm).join(',');
-                                                        row.threshold2Controller.text = list.map((p) => p.volumeM3).join(',');
+                                                        row.selectedPoints =
+                                                            list;
+                                                        row
+                                                            .threshold1Controller
+                                                            .text = list
+                                                            .map(
+                                                              (p) => p.levelMm,
+                                                            )
+                                                            .join(',');
+                                                        row
+                                                            .threshold2Controller
+                                                            .text = list
+                                                            .map(
+                                                              (p) => p.volumeM3,
+                                                            )
+                                                            .join(',');
                                                       });
                                                     },
                                                   )
                                                 : AppTextField(
-                                                    controller: row.threshold1Controller,
+                                                    controller: row
+                                                        .threshold1Controller,
                                                     hint: 'Value',
-                                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                    keyboardType:
+                                                        const TextInputType.numberWithOptions(
+                                                          decimal: true,
+                                                        ),
                                                   ),
                                           ),
                                         ),
-                                        if (row.conditionType == 'BETWEEN' || 
-                                            ['CAL TANK', 'CAL KILO LITER', 'SENSOR', 'SENSOR RATING', 'MFACTOR', 'DATA INTERVAL'].contains(row.parameterType.toUpperCase().trim())) ...[
+                                        if (row.conditionType == 'BETWEEN' ||
+                                            [
+                                              'CAL TANK',
+                                              'CAL KILO LITER',
+                                              'SENSOR',
+                                              'SENSOR RATING',
+                                              'MFACTOR',
+                                              'DATA INTERVAL',
+                                            ].contains(
+                                              row.parameterType
+                                                  .toUpperCase()
+                                                  .trim(),
+                                            )) ...[
                                           const SizedBox(width: 16),
                                           Expanded(
                                             flex: 2,
                                             child: _buildLabelField(
-                                              (row.parameterType.toUpperCase().trim() == 'SENSOR' || row.parameterType.toUpperCase().trim() == 'SENSOR RATING')
+                                              (row.parameterType
+                                                              .toUpperCase()
+                                                              .trim() ==
+                                                          'SENSOR' ||
+                                                      row.parameterType
+                                                              .toUpperCase()
+                                                              .trim() ==
+                                                          'SENSOR RATING')
                                                   ? 'CUBIC METER'
-                                                  : (['CAL TANK', 'CAL KILO LITER', 'MFACTOR', 'DATA INTERVAL'].contains(row.parameterType.toUpperCase().trim()))
-                                                      ? 'FIELD 2'
-                                                      : 'MAX THRESHOLD',
+                                                  : (row.parameterType.toUpperCase().trim() == 'DATA INTERVAL')
+                                                      ? 'Minutes'
+                                                      : ([
+                                                          'CAL TANK',
+                                                          'CAL KILO LITER',
+                                                          'MFACTOR',
+                                                        ].contains(
+                                                          row.parameterType
+                                                              .toUpperCase()
+                                                              .trim(),
+                                                        ))
+                                                          ? '${row.parameterType} 2'
+                                                          : 'MAX THRESHOLD',
                                               AppTextField(
-                                                controller: row.threshold2Controller,
+                                                controller:
+                                                    row.threshold2Controller,
                                                 hint: 'Value',
-                                                readOnly: row.parameterType.toUpperCase().trim() == 'CHART DATA',
-                                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                readOnly:
+                                                    row.parameterType
+                                                        .toUpperCase()
+                                                        .trim() ==
+                                                    'CHART DATA',
+                                                keyboardType:
+                                                    const TextInputType.numberWithOptions(
+                                                      decimal: true,
+                                                    ),
                                               ),
                                             ),
                                           ),
                                         ],
-                                        if (row.parameterType.toUpperCase().trim() == 'MFACTOR') ...[
+                                        if (row.parameterType
+                                                .toUpperCase()
+                                                .trim() ==
+                                            'MFACTOR') ...[
                                           const SizedBox(width: 16),
                                           Expanded(
                                             flex: 2,
                                             child: _buildLabelField(
-                                              'FIELD 3',
+                                              '${row.parameterType} 3',
                                               AppTextField(
-                                                controller: row.threshold3Controller,
+                                                controller:
+                                                    row.threshold3Controller,
                                                 hint: 'Value',
-                                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                keyboardType:
+                                                    const TextInputType.numberWithOptions(
+                                                      decimal: true,
+                                                    ),
                                               ),
                                             ),
                                           ),
                                         ],
                                       ],
                                     ),
-                                    if (!isCustomer && !['CAL TANK', 'CAL KILO LITER', 'SENSOR', 'SENSOR RATING', 'MFACTOR', 'SETBAR', 'SETCALBAR', 'CHART DATA', 'DATA INTERVAL', 'SOLAR', 'TEMPERATURE', 'FLOW'].contains(row.parameterType.toUpperCase().trim())) ...[
+                                    if (!isCustomer &&
+                                        ![
+                                          'CAL TANK',
+                                          'CAL KILO LITER',
+                                          'SENSOR',
+                                          'SENSOR RATING',
+                                          'MFACTOR',
+                                          'SETBAR',
+                                          'SETCALBAR',
+                                          'CHART DATA',
+                                          'DATA INTERVAL',
+                                          'SOLAR',
+                                          'TEMPERATURE',
+                                          'FLOW',
+                                        ].contains(
+                                          row.parameterType
+                                              .toUpperCase()
+                                              .trim(),
+                                        )) ...[
                                       const SizedBox(height: 20),
                                       Row(
                                         children: [
