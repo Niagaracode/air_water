@@ -183,24 +183,6 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              label: "Product Group",
-                              child: _dropdown(["Gas", "Liquid", "Other"]),
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: _field(
-                              label: "Display Units",
-                              child: _dropdown(["kg", "litre", "m3"]),
-                            ),
-                          ),
-                        ],
-                      ),
                       const SizedBox(height: 28),
                       SizedBox(
                         width: double.infinity,
@@ -246,25 +228,6 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
         const SizedBox(height: 8),
         child,
       ],
-    );
-  }
-
-  Widget _dropdown(List<String> items) {
-    return DropdownButtonFormField<String>(
-      value: items.first,
-      items: items
-          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-          .toList(),
-      onChanged: (v) {},
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.grey.shade200,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      ),
     );
   }
 }
