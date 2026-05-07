@@ -1,8 +1,10 @@
+import 'package:air_water/features/tank/presentation/view/tank_details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/network/mqtt/providers/mqtt_notifier.dart';
 import '../../../../core/network/mqtt/providers/mqtt_providers.dart';
+import '../../data/models/tank_data_model.dart';
 import '../../provider/dashboard_provider.dart';
 
 import '../widgets/dashboard_list_view.dart';
@@ -106,7 +108,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
     return Scaffold(
       backgroundColor: Colors.grey.withValues(alpha: 0.1),
-
       body: tanksAsync.when(
         loading: () => _buildLoadingView(),
         error: (error, _) => Center(
@@ -194,6 +195,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                   selectedRegion: _selectedRegion,
                   selectedStatus: _selectedStatus,
                   searchQuery: _searchQuery,
+                  onMenuTap: _handleMenuTap,
                 ) : DashboardMapView(
                   tanksData: tanks,
                 ),
@@ -284,10 +286,29 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.black12,
+        color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(radius),
       ),
     );
+  }
+
+  void _handleMenuTap(TankDataModel tank, String action) {
+    switch (action) {
+      case 'view':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TankDetailsView(tankId: tank.id),
+          ),
+        );
+        break;
+      case 'edit':
+        break;
+      case 'alerts':
+        break;
+      case 'history':
+        break;
+    }
   }
 
   @override

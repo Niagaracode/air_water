@@ -41,9 +41,11 @@ class ViewToggle extends StatelessWidget {
       curve: Curves.easeInOutCubic,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade200,
+        color: Colors.grey.shade300,
         borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(color: Colors.grey.shade300),
       ),
+
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

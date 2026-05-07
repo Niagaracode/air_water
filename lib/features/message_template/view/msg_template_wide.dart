@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_text_field.dart';
-import '../../../../shared/widgets/app_table.dart';
-import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
-import '../../../core/app_theme/app_theme.dart';
+import '../../../shared/widgets/app_table.dart';
+import '../../../shared/widgets/table_data_cell.dart';
+import '../../../shared/widgets/table_header_cell.dart';
 import '../presentation/controller/message_template_provider.dart';
 import '../presentation/widgets/message_template_form.dart';
 import '../presentation/model/message_template_model.dart';
@@ -49,7 +49,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
     final notifier = ref.read(messageTemplateProvider.notifier);
 
     return Scaffold(
-      backgroundColor: primary.withValues(alpha: 0.04),
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Column(
         children: [
           _buildHeader(state, notifier),
@@ -67,11 +67,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
   Widget _buildHeader(MessageTemplateState state, MessageTemplateNotifier notifier) {
     return Container(
       padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 16),
-      margin: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      margin: const EdgeInsets.only(left: 26, right: 26, top: 26, bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -206,7 +202,8 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
 
     return Container(
       width: MediaQuery.sizeOf(context).width,
-      height: (state.templates.length*50) + 45,
+      height: (state.templates.length * 45) + 50,
+      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 8),
       decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
@@ -222,31 +219,30 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
         minWidth: 1000,
         dataRowHeight: 45,
         headingRowHeight: 45,
-        headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.7)),
-        columns: const [
+        headingRowColor: WidgetStateProperty.all(Colors.black38),
+        columns: [
           DataColumn2(
-              label: Center(child: AppTableHeaderCell('SI.NO', width: 70)),
-              fixedWidth: 70
+            label: Center(child: TableHeaderCell(label: 'SI.NO')),
+            fixedWidth: 70,
           ),
           DataColumn2(
-              label: AppTableHeaderCell('Template Name', width: 150),
-              size: ColumnSize.M
+            label: TableHeaderCell(label: 'Template Name'),
+            size: ColumnSize.M,
           ),
           DataColumn2(
-              label: AppTableHeaderCell('Subject', width: 100),
-              size: ColumnSize.M
+            label: TableHeaderCell(label: 'Subject'),
+            size: ColumnSize.M,
           ),
           DataColumn2(
-            label: AppTableHeaderCell('Description', width: 150),
-              size: ColumnSize.M
+            label: TableHeaderCell(label: 'Description'),
+            size: ColumnSize.M,
           ),
           DataColumn2(
-            label: Center(child: AppTableHeaderCell('Actions', width: 100)),
+            label: Center(child: TableHeaderCell(label: 'Actions')),
             fixedWidth: 100,
           ),
         ],
         rows: List<DataRow>.generate(state.templates.length + (state.hasMore ? 1 : 0), (index) {
-          // Check if this is the "load more" row
           if (state.hasMore && index == state.templates.length) {
             return const DataRow(
               cells: [
@@ -263,10 +259,10 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
 
           return DataRow(
             cells: [
-              DataCell(AppDataTableCell((index + 1).toString().padLeft(2, '0'))),
-              DataCell(AppDataTableCell(template.name, bold: true)),
-              DataCell(AppDataTableCell(template.subject)),
-              DataCell(AppDataTableCell(template.description)),
+              DataCell(Center(child: TableDataCell(label: '${index + 1}'))),
+              DataCell(TableDataCell(label: template.name)),
+              DataCell(TableDataCell(label: '${template.subject}')),
+              DataCell(TableDataCell(label: '${template.description}')),
               DataCell(Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -333,4 +329,5 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
       ),
     );
   }
+
 }

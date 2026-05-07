@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
+import '../../../../shared/widgets/table_data_cell.dart';
+import '../../../../shared/widgets/table_header_cell.dart';
 import '../../provider/product_provider.dart';
 import '../../data/product_model.dart';
 import '../view/product_edit_view.dart';
-import '../../../../shared/widgets/app_table.dart';
 
 class ProductWide extends ConsumerStatefulWidget {
   const ProductWide({super.key});
@@ -24,19 +25,15 @@ class _ProductWideState extends ConsumerState<ProductWide> {
     final state = ref.watch(productNotifierProvider);
 
     return Scaffold(
-      backgroundColor: primary.withValues(alpha: 0.04),
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: _buildHeader(context),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 45),
+          _buildHeader(context),
+          if (!state.isLoading)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: _buildDataTable(context, state.products),
             ),
-          )
         ],
       ),
     );
@@ -44,63 +41,52 @@ class _ProductWideState extends ConsumerState<ProductWide> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(left: 32, top: 32, right: 32, bottom: 32),
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
-      child: Column(
+      padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 16),
+      margin: const EdgeInsets.only(left: 26, right: 26, top: 26, bottom: 8),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'PRODUCT MANAGEMENT',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF111827),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Manage fluid products, their descriptions, and specific properties like SCM/M3 and gravity.',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF6B7280),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _showAddProductSideSheet(context),
-                icon: const Icon(Icons.add, color: Colors.white, size: 18),
-                label: Text(
-                  'Add Product',
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+              Text(
+                'PRODUCT MANAGEMENT',
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: const Color(0xFF111827),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF141E7A),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Manage fluid products, their descriptions, and specific properties like SCM/M3 and gravity.',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF6B7280),
+                  fontSize: 13,
                 ),
               ),
             ],
+          ),
+          ElevatedButton.icon(
+            onPressed: () => _showAddProductSideSheet(context),
+            icon: const Icon(Icons.add, color: Colors.white, size: 18),
+            label: Text(
+              'Add Product',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF141E7A),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
         ],
       ),
@@ -108,81 +94,92 @@ class _ProductWideState extends ConsumerState<ProductWide> {
   }
 
   Widget _buildDataTable(BuildContext context, List<Product> list) {
-    return DataTable2(
-      dataRowColor: WidgetStateProperty.all(Colors.white),
-      border: TableBorder(
-        bottom: BorderSide(color: Colors.black12, width: 0.6),
-        left: BorderSide(color: Colors.black12, width: 0.6),
-        right: BorderSide(color: Colors.black12, width: 0.6),
-      ),
-      columnSpacing: 12,
-      horizontalMargin: 12,
-      minWidth: 800,
-      headingRowHeight: 45,
-      dataRowHeight: 50,
-      dividerThickness: 0.4,
-      headingRowColor: WidgetStateProperty.all(const Color(0xFF141E7A)),
-      headingTextStyle: const TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
-      ),
 
-      columns: [
-        DataColumn2(
-          label: AppTableHeaderCell('SI.NO'),
-          size: ColumnSize.S,
+    return Container(
+      width: MediaQuery.sizeOf(context).width,
+      height: (list.length * 45) + 50,
+      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 8),
+      decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
+          border: Border(
+            left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+            right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+            bottom: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          )
+      ),
+      child: DataTable2(
+        dataRowColor: WidgetStateProperty.all(Colors.white),
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        minWidth: 800,
+        headingRowHeight: 45,
+        dataRowHeight: 45,
+        dividerThickness: 0.4,
+        headingRowColor: WidgetStateProperty.all(Colors.black38),
+        headingTextStyle: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
         ),
-        const DataColumn2(
-          label: AppTableHeaderCell('Product Name'),
-          size: ColumnSize.L,
-        ),
-        const DataColumn2(
-          label: AppTableHeaderCell('Description'),
-          size: ColumnSize.L,
-        ),
-        const DataColumn2(
-          label: AppTableHeaderCell('Scm / m3'),
-          fixedWidth: 150.0,
-        ),
-        const DataColumn2(
-          label: AppTableHeaderCell('Specific gravity'),
-          fixedWidth: 150.0,
-        ),
-        const DataColumn2(
-          label: AppTableHeaderCell('Action'),
-          fixedWidth: 100.0,
-        ),
-      ],
 
-      rows: List.generate(list.length, (index) {
-        final p = list[index];
-        return DataRow(
-          cells: [
-            DataCell(AppTableCell((index + 1).toString().padLeft(2, '0'), textAlign: TextAlign.center)),
-            DataCell(AppTableCell(p.name, bold: true)),
-            DataCell(AppTableCell(p.description, textAlign: TextAlign.left)),
-            DataCell(AppTableCell(p.scmM3.toStringAsFixed(2), textAlign: TextAlign.center)),
-            DataCell(AppTableCell(p.specificGravity.toStringAsFixed(3))),
-            DataCell(
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, color: Color(0xFF2563EB)),
-                    onPressed: () => _showProductSideSheet(context, p),
-                  ),
-                  SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteProduct(context, ref, p),
-                  ),
-                ],
+        columns: [
+          DataColumn2(
+            label: TableHeaderCell(label: 'SI.NO',),
+            size: ColumnSize.S,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Product Name'),
+            size: ColumnSize.L,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Description'),
+            size: ColumnSize.L,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Scm / m3'),
+            fixedWidth: 150.0,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Specific gravity'),
+            fixedWidth: 150.0,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Action'),
+            fixedWidth: 100.0,
+          ),
+        ],
+
+        rows: List.generate(list.length, (index) {
+          final p = list[index];
+          return DataRow(
+            cells: [
+              DataCell(TableDataCell(label: '${index + 1}')),
+              DataCell(TableDataCell(label: p.name)),
+              DataCell(TableDataCell(label: p.description)),
+              DataCell(TableDataCell(label: p.scmM3.toStringAsFixed(2))),
+              DataCell(TableDataCell(label: p.specificGravity.toStringAsFixed(3))),
+              DataCell(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_outlined, color: Color(0xFF2563EB)),
+                      onPressed: () => _showProductSideSheet(context, p),
+                    ),
+                    SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _deleteProduct(context, ref, p),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        );
-      }),
+            ],
+          );
+        }),
+      ),
     );
+
   }
 
   void _showAddProductSideSheet(BuildContext context) {
