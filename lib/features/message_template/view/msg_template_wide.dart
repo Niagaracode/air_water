@@ -220,6 +220,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
         dataRowHeight: 45,
         headingRowHeight: 45,
         headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.1)),
+        dividerThickness: 0.3,
         columns: [
           DataColumn2(
             label: Center(child: TableHeaderCell(label: 'SI.NO')),

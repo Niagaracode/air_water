@@ -1,7 +1,11 @@
+import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../shared/widgets/app_table.dart';
+import '../../../../core/app_theme/app_theme.dart';
+import '../../../../shared/widgets/table_data_cell.dart';
+import '../../../../shared/widgets/table_header_cell.dart';
 import '../controller/user_provider.dart';
 import '../model/user_model.dart';
 import '../widgets/add_user_modal.dart';
@@ -62,128 +66,177 @@ class _UserWideState extends ConsumerState<UserWide> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.withValues(alpha: 0.1),
-      body: Column(
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      body: state.isLoading ? Center(
+        child: CircularProgressIndicator(),
+      ) : Column(
         children: [
+          _buildHeader(state, notifier),
           Padding(
-            padding: const EdgeInsets.all(24),
-            child: _buildHeader(state, notifier),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: _buildDataTable(state, notifier),
           ),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final tableWidth = constraints.maxWidth > 1000 ? constraints.maxWidth : 1000.0;
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: tableWidth,
-                    child: Column(
-                      children: [
-                        if (!state.isLoading || state.users.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: _buildFixedTableHeader(),
-                          ),
-                        Expanded(
-                          child: state.isLoading && state.users.isEmpty
-                              ? const Center(
-                                  child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                                )
-                              : state.error != null
-                              ? Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(24.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          'Failed to load users',
-                                          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          state.error!,
-                                          textAlign: TextAlign.center,
-                                          style: GoogleFonts.inter(color: Colors.grey.shade600),
-                                        ),
-                                        const SizedBox(height: 24),
-                                        ElevatedButton(
-                                          onPressed: () => notifier.loadUsers(),
-                                          child: const Text('RETRY'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              : _buildVirtualizedTable(state, notifier),
-                        ),
-                        if (state.isLoading && state.users.isNotEmpty)
-                          const AppTableLoadingMore(),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
   Widget _buildHeader(UserState state, UserNotifier notifier) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'USER MANAGEMENT',
-                  style: GoogleFonts.outfit(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                    color: const Color(0xFF111827),
+    return Container(
+      padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 16),
+      margin: const EdgeInsets.only(left: 26, right: 26, top: 26, bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'USER MANAGEMENT',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: const Color(0xFF111827),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Centralize user information including identification, roles, access, and status management.',
+                  const SizedBox(height: 6),
+                  Text(
+                    'Centralize user information including identification, roles, access, and status management.',
+                    style: GoogleFonts.inter(
+                      color: Colors.black38,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+              ElevatedButton.icon(
+                onPressed: () => _showAddModal(),
+                style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(
+                  'ADD USER',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280),
+                    fontWeight: FontWeight.w800,
                     fontSize: 13,
+                    letterSpacing: 0.5,
                   ),
-                ),
-              ],
-            ),
-            ElevatedButton.icon(
-              onPressed: () => _showAddModal(),
-              style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(
-                'ADD USER',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  letterSpacing: 0.5,
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildFilterRow(state, notifier),
-        const SizedBox(height: 10),
-      ],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildFilterRow(state, notifier),
+          const SizedBox(height: 10),
+        ],
+      ),
     );
+  }
+
+  Widget _buildDataTable(UserState state, UserNotifier notifier) {
+
+    return Container(
+      width: MediaQuery.sizeOf(context).width,
+      height: (state.users.length * 45) + 50,
+      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1,
+        ),
+      ),
+      child: DataTable2(
+        dataRowColor: WidgetStateProperty.all(Colors.white),
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        minWidth: 800,
+        headingRowHeight: 45,
+        dataRowHeight: 45,
+        dividerThickness: 0.4,
+        headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.1)),
+        columns: [
+          DataColumn2(
+            label: TableHeaderCell(label: 'SI.NO',),
+            fixedWidth: 60,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'User Name'),
+            size: ColumnSize.M,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Company'),
+            size: ColumnSize.M,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Phone Number'),
+            size: ColumnSize.S,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Email'),
+            size: ColumnSize.M,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Role'),
+            fixedWidth: 150.0,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Status'),
+            fixedWidth: 100.0,
+          ),
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Action'),
+            fixedWidth: 80.0,
+          ),
+        ],
+
+        rows: List.generate(state.users.length, (index) {
+          final user = state.users[index];
+          return DataRow(
+            cells: [
+              DataCell(TableDataCell(label: '${index + 1}')),
+              DataCell(TableDataCell(label: user.fullName, bold: true,)),
+              DataCell(TableDataCell(label: user.companyName!)),
+              DataCell(TableDataCell(label: user.mobileNumber!)),
+              DataCell(TableDataCell(label: user.email!)),
+              DataCell(Align(
+                alignment: Alignment.centerLeft,
+                child: AppRoleBadge(roleName: user.roleName),
+              )),
+              DataCell(AppStatusBadge(status: user.status)),
+              DataCell(
+                SizedBox(
+                  width: 100,
+                  child: Row(
+                    children: [
+                      AppTableActionButton(
+                        icon: Icons.edit_outlined,
+                        color: const Color(0xFF2563EB),
+                        bg: const Color(0xFFEFF6FF),
+                        onTap: () => _showAddModal(user),
+                      ),
+                      const SizedBox(width: 8),
+                      AppTableActionButton(
+                        icon: Icons.delete_outline_rounded,
+                        color: const Color(0xFFDC2626),
+                        bg: const Color(0xFFFEF2F2),
+                        onTap: () => _confirmDelete(user, notifier),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+
   }
 
   Widget _buildFilterRow(UserState state, UserNotifier notifier) {
@@ -253,122 +306,6 @@ class _UserWideState extends ConsumerState<UserWide> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildFixedTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        border: Border(
-          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          AppTableHeaderCell('SI.NO', width: 70),
-          AppTableHeaderCell('User Name', flex: 2),
-          AppTableHeaderCell('Company', flex: 2),
-          AppTableHeaderCell('Phone Number', flex: 2),
-          AppTableHeaderCell('Email', flex: 2),
-          AppTableHeaderCell('Role', flex: 2),
-          AppTableHeaderCell('Status', flex: 1),
-          AppTableHeaderCell('Action', width: 100),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVirtualizedTable(UserState state, UserNotifier notifier) {
-    if (state.users.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24),
-        child: AppTableEmptyState(
-          icon: Icons.people_outline_rounded,
-          title: 'No users found',
-        ),
-      );
-    }
-
-    return CustomScrollView(
-      controller: _scrollController,
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          sliver: SliverList.builder(
-            itemCount: state.users.length,
-            itemBuilder: (context, index) {
-              final user = state.users[index];
-              return _buildUserRow(user, index, notifier);
-            },
-          ),
-        ),
-        // Bottom cap
-        const SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
-          sliver: SliverToBoxAdapter(child: AppTableBottomCap()),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUserRow(User user, int index, UserNotifier notifier) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          bottom: BorderSide(color: Color(0xFFF3F4F6)),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          AppTableCell((index + 1).toString().padLeft(2, '0'), width: 70),
-          AppTableCell(user.fullName, flex: 2, bold: true),
-          AppTableCell(user.companyName ?? '—', flex: 2),
-          AppTableCell(user.mobileNumber ?? '—', flex: 2),
-          AppTableCell(user.email ?? '—', flex: 2),
-          Expanded(
-            flex: 2,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: AppRoleBadge(roleName: user.roleName),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: AppStatusBadge(status: user.status),
-            ),
-          ),
-          SizedBox(
-            width: 100,
-            child: Row(
-              children: [
-                AppTableActionButton(
-                  icon: Icons.edit_outlined,
-                  color: const Color(0xFF2563EB),
-                  bg: const Color(0xFFEFF6FF),
-                  onTap: () => _showAddModal(user),
-                ),
-                const SizedBox(width: 8),
-                AppTableActionButton(
-                  icon: Icons.delete_outline_rounded,
-                  color: const Color(0xFFDC2626),
-                  bg: const Color(0xFFFEF2F2),
-                  onTap: () => _confirmDelete(user, notifier),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
