@@ -76,29 +76,11 @@ class _AssetSummaryContentState extends ConsumerState<AssetSummaryContent> {
             ),
             Row(
               children: [
-                if (!_isCustomer) ...[
-                  if (_isVisualView) ...[
-                    _buildActionButton(
-                      Icons.arrow_back,
-                      'Back to List',
-                      () => setState(() => _isVisualView = false),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  _buildActionButton(
-                    _isVisualView ? Icons.table_chart_outlined : Icons.dashboard_outlined,
-                    _isVisualView ? 'Table View' : 'Visual View',
-                    () => setState(() => _isVisualView = !_isVisualView),
-                  ),
-                  const SizedBox(width: 12),
-                ],
                 _buildActionButton(Icons.refresh, 'Refresh', () {
                   ref
                       .read(assetSummaryProvider.notifier)
                       .loadData(refresh: true);
                 }),
-                const SizedBox(width: 12),
-                _buildActionButton(Icons.download_outlined, 'Download', () {}),
               ],
             ),
           ],

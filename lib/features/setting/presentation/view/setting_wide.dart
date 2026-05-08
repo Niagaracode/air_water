@@ -419,20 +419,21 @@ class _SettingWideState extends ConsumerState<SettingWide> {
           const AppTableHeaderCell('SI.NO', width: 60),
           if (isCustomer) ...[
             const AppTableHeaderCell('Tank Number', flex: 2),
-            const AppTableHeaderCell('Device ID', flex: 2),
+            const AppTableHeaderCell('Device Name / ID', flex: 2),
             const AppTableHeaderCell('Parameter', flex: 2),
             const AppTableHeaderCell('Condition', flex: 2),
           ] else ...[
             const AppTableHeaderCell('Rule Name', flex: 3),
             const AppTableHeaderCell('Site', width: 100),
             const AppTableHeaderCell('Tank', width: 100),
+            const AppTableHeaderCell('Device', width: 120),
             const AppTableHeaderCell('Parameter', flex: 2),
             const AppTableHeaderCell('Condition', flex: 2),
             const SizedBox(width: 16),
             const AppTableHeaderCell('Status', width: 110),
           ],
           const SizedBox(width: 16),
-          const AppTableHeaderCell('Action', width: 80),
+          if (!isCustomer) const AppTableHeaderCell('Action', width: 80),
         ],
       ),
     );
@@ -617,7 +618,12 @@ class _SettingWideState extends ConsumerState<SettingWide> {
           const AppTableCell('', width: 60), // Match SI.NO width
           if (isCustomer) ...[
             AppTableCell(setting.tankNumber ?? '—', flex: 2, bold: true),
-            AppTableCell(setting.deviceId ?? '—', flex: 2),
+            AppTableCell(
+              setting.deviceName != null && setting.deviceName!.isNotEmpty
+                  ? '${setting.deviceName}\n(${setting.deviceId ?? '—'})'
+                  : (setting.deviceId ?? '—'),
+              flex: 2,
+            ),
             AppTableCell(setting.parameterType?.toUpperCase() ?? '—', flex: 2),
             AppTableCell(
               null,
@@ -656,6 +662,12 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             AppTableCell(setting.name, flex: 3, bold: true),
             AppTableCell(setting.siteName ?? '—', width: 100),
             AppTableCell(setting.tankNumber ?? '—', width: 100),
+            AppTableCell(
+              setting.deviceName != null && setting.deviceName!.isNotEmpty
+                  ? setting.deviceName!
+                  : (setting.deviceId ?? '—'),
+              width: 120,
+            ),
             AppTableCell(setting.parameterType?.toUpperCase() ?? '—', flex: 2),
             AppTableCell(
               null,
@@ -699,20 +711,21 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             ),
           ],
           const SizedBox(width: 16),
-          AppTableCell(
-            null,
-            width: 80,
-            child: Row(
-              children: [
-                AppTableActionButton(
-                  icon: Icons.tune_rounded,
-                  color: const Color(0xFF2563EB),
-                  bg: const Color(0xFFEFF6FF),
-                  onTap: () => _showEditModal(context, setting),
-                ),
-              ],
+          if (!isCustomer)
+            AppTableCell(
+              null,
+              width: 80,
+              child: Row(
+                children: [
+                  AppTableActionButton(
+                    icon: Icons.edit_rounded,
+                    color: const Color(0xFF2563EB),
+                    bg: const Color(0xFFEFF6FF),
+                    onTap: () => _showEditModal(context, setting),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );

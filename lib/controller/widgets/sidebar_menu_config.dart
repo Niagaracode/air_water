@@ -7,7 +7,14 @@ const mainMenu = [
     key: 'Dashboard',
     label: 'Dashboard',
     icon: Icons.home_rounded,
-    allowedRoles: UserRole.values, // all roles
+    allowedRoles: [
+      UserRole.superAdmin,
+      UserRole.companyAdmin,
+      UserRole.distributor,
+      UserRole.supervisor,
+      UserRole.technician,
+      UserRole.iotManager,
+    ],
   ),
   SidebarMenuItem(
     key: 'Asset Summary',
@@ -126,7 +133,7 @@ const eventsMenu = [
     key: 'Setting',
     label: 'Setting',
     icon: Icons.settings_rounded,
-    allowedRoles: [UserRole.customer],
+    allowedRoles: [], // Restricted
   ),
   SidebarMenuItem(
     key: 'Roaster',

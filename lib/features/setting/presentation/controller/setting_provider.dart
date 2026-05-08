@@ -179,6 +179,7 @@ class SettingNotifier extends Notifier<SettingState> {
           tankId: setting.tankId,
           tankNumber: setting.tankNumber,
           deviceId: setting.deviceId,
+          deviceName: setting.deviceName,
           parameterType: setting.parameterType,
           conditionType: setting.conditionType,
           thresholds: setting.thresholds,
