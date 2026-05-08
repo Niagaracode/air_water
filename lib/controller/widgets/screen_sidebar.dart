@@ -25,13 +25,13 @@ class ScreenSidebar extends ConsumerWidget {
       curve: Curves.easeInOut,
       width: isExpanded ? 250 : 72,
       child: Material(
-        color: primary.withValues(alpha: 0.07),
+        color: Colors.white.withValues(alpha: 0.2),
         child: Container(
           decoration: BoxDecoration(
             color: Colors.transparent,
             border: Border(
               right: BorderSide(
-                color: primary.withValues(alpha: 0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),

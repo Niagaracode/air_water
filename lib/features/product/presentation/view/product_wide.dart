@@ -25,7 +25,7 @@ class _ProductWideState extends ConsumerState<ProductWide> {
     final state = ref.watch(productNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withValues(alpha: 0.1),
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
         children: [
           _buildHeader(context),
@@ -63,7 +63,7 @@ class _ProductWideState extends ConsumerState<ProductWide> {
               Text(
                 'Manage fluid products, their descriptions, and specific properties like SCM/M3 and gravity.',
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF6B7280),
+                  color: Colors.black38,
                   fontSize: 13,
                 ),
               ),
@@ -94,19 +94,17 @@ class _ProductWideState extends ConsumerState<ProductWide> {
   }
 
   Widget _buildDataTable(BuildContext context, List<Product> list) {
-
     return Container(
       width: MediaQuery.sizeOf(context).width,
       height: (list.length * 45) + 50,
       margin: const EdgeInsets.only(left: 20, right: 20, bottom: 8),
-      decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
-          border: Border(
-            left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-            right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-            bottom: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          )
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1,
+        ),
       ),
       child: DataTable2(
         dataRowColor: WidgetStateProperty.all(Colors.white),
@@ -116,12 +114,7 @@ class _ProductWideState extends ConsumerState<ProductWide> {
         headingRowHeight: 45,
         dataRowHeight: 45,
         dividerThickness: 0.4,
-        headingRowColor: WidgetStateProperty.all(Colors.black38),
-        headingTextStyle: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-
+        headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.1)),
         columns: [
           DataColumn2(
             label: TableHeaderCell(label: 'SI.NO',),

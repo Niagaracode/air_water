@@ -1,3 +1,4 @@
+import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -48,7 +49,7 @@ class DashboardListView extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: primary.withValues(alpha: 0.1)),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -161,10 +162,10 @@ class DashboardListView extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.black38,
+        color: primary.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(8),
-          topRight: Radius.circular(8),
+          topLeft: Radius.circular(14),
+          topRight: Radius.circular(14),
         ),
       ),
       child: Row(
@@ -209,7 +210,7 @@ class DashboardListView extends ConsumerWidget {
     return GoogleFonts.outfit(
       fontSize: 12,
       fontWeight: FontWeight.w700,
-      color: Colors.white,
+      color: Colors.black54,
       letterSpacing: 1,
     );
   }
@@ -226,7 +227,7 @@ class DashboardListView extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+              border: Border(bottom: BorderSide(color: primary.withValues(alpha: 0.1))),
             ),
             child: Row(
               children: [

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
+import '../../../core/app_theme/app_theme.dart';
 import '../../../shared/widgets/app_table.dart';
 import '../../../shared/widgets/table_data_cell.dart';
 import '../../../shared/widgets/table_header_cell.dart';
@@ -49,7 +50,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
     final notifier = ref.read(messageTemplateProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withValues(alpha: 0.1),
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
         children: [
           _buildHeader(state, notifier),
@@ -89,7 +90,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
                   const SizedBox(height: 6),
                   Text(
                     'Define and manage dynamic alarm and notification message templates.',
-                    style: GoogleFonts.inter(color: const Color(0xFF6B7280), fontSize: 13),
+                    style: GoogleFonts.inter(color: Colors.black38, fontSize: 13),
                   ),
                 ],
               ),
@@ -204,14 +205,13 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
       width: MediaQuery.sizeOf(context).width,
       height: (state.templates.length * 45) + 50,
       margin: const EdgeInsets.only(left: 20, right: 20, bottom: 8),
-      decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10), bottomRight: Radius.circular(10)),
-          border: Border(
-            left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-            right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-            bottom: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          )
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1,
+        ),
       ),
       child: DataTable2(
         columnSpacing: 12,
@@ -219,7 +219,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
         minWidth: 1000,
         dataRowHeight: 45,
         headingRowHeight: 45,
-        headingRowColor: WidgetStateProperty.all(Colors.black38),
+        headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.1)),
         columns: [
           DataColumn2(
             label: Center(child: TableHeaderCell(label: 'SI.NO')),
