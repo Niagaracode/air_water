@@ -9,6 +9,7 @@ import '../../message_template/presentation/model/message_template_model.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../core/network/http/api_service.dart';
 import '../../../../shared/widgets/app_table.dart';
+import '../../user/presentation/controller/user_provider.dart';
 
 // ─── Parameter options ──────────────────────────────────────────────────────
 const _kParameters = [
@@ -183,6 +184,8 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
   @override
   Widget build(BuildContext context) {
     final groupState = ref.watch(assetGroupProvider);
+    final userState = ref.watch(userProvider);
+    final isSuperAdmin = userState.currentUser?.roleId == 1;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -200,7 +203,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                       ? const Center(child: CircularProgressIndicator())
                       : groupState.error != null
                           ? Center(child: Text(groupState.error!))
-                          : _buildGroupTable(groupState.groups),
+                      : _buildGroupTable(groupState.groups, isSuperAdmin),
                 ),
               ],
             ),
@@ -270,7 +273,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
   }
 
   // ─── Table of asset groups ────────────────────────────────────────────────
-  Widget _buildGroupTable(List<AssetGroupModel> groups) {
+  Widget _buildGroupTable(List<AssetGroupModel> groups, bool isSuperAdmin) {
     if (groups.isEmpty) {
       return Center(
         child: Column(
@@ -307,6 +310,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
               child: Row(
                 children: [
                   AppTableHeaderCell('SI.NO', width: 60),
+                  if (isSuperAdmin) AppTableHeaderCell('COMPANY', flex: 2),
                   AppTableHeaderCell('GROUP NAME', flex: 2),
                   AppTableHeaderCell('DESCRIPTION', flex: 3),
                   AppTableHeaderCell('ACTION', width: 80),
@@ -318,7 +322,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
               child: ListView.separated(
                 itemCount: groups.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) => _buildGroupRow(groups[i], i),
+                itemBuilder: (_, i) => _buildGroupRow(groups[i], i, isSuperAdmin),
               ),
             ),
             const AppTableBottomCap(),
@@ -328,7 +332,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     );
   }
 
-  Widget _buildGroupRow(AssetGroupModel group, int index) {
+  Widget _buildGroupRow(AssetGroupModel group, int index, bool isSuperAdmin) {
     final isSelected = _selectedGroup?.id == group.id;
     return InkWell(
       onTap: () => _selectGroup(group),
@@ -343,6 +347,13 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         child: Row(
           children: [
             AppTableCell((index + 1).toString().padLeft(2, '0'), width: 60),
+            if (isSuperAdmin)
+              AppTableCell(
+                group.companyName ?? '-',
+                flex: 2,
+                color: const Color(0xFF141E7A),
+                bold: true,
+              ),
             Expanded(
               flex: 2,
               child: Text(
