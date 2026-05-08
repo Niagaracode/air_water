@@ -1,3 +1,4 @@
+import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -41,7 +42,7 @@ class ViewToggle extends StatelessWidget {
       curve: Curves.easeInOutCubic,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade300,
+        color: primary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(color: Colors.grey.shade300),
       ),

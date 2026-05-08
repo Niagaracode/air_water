@@ -107,7 +107,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     final statistics = ref.watch(tankStatisticsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withValues(alpha: 0.1),
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: tanksAsync.when(
         loading: () => _buildLoadingView(),
         error: (error, _) => Center(

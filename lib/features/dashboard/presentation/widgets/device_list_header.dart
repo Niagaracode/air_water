@@ -14,11 +14,11 @@ class DeviceListHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(left: 5),
       child: Text(
-        title,
+        title.toUpperCase(),
         style: GoogleFonts.outfit(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF111827),
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: Colors.black54,
         ),
       ),
     );

@@ -12,7 +12,7 @@ class TableHeaderCell extends StatelessWidget {
       style: GoogleFonts.outfit(
         fontWeight: FontWeight.w600,
         fontSize: 12,
-        color: Colors.white.withValues(alpha: 0.90),
+        color: Colors.black54,
         letterSpacing: 0.8,
       ),
     );
