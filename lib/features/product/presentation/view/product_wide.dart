@@ -147,7 +147,7 @@ class _ProductWideState extends ConsumerState<ProductWide> {
           return DataRow(
             cells: [
               DataCell(TableDataCell(label: '${index + 1}')),
-              DataCell(TableDataCell(label: p.name)),
+              DataCell(TableDataCell(label: p.name, bold: true,)),
               DataCell(TableDataCell(label: p.description)),
               DataCell(TableDataCell(label: p.scmM3.toStringAsFixed(2))),
               DataCell(TableDataCell(label: p.specificGravity.toStringAsFixed(3))),
