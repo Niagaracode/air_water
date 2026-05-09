@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
+import '../../../../shared/widgets/app_table.dart';
 import '../../../../shared/widgets/table_data_cell.dart';
 import '../../../../shared/widgets/table_header_cell.dart';
 import '../../provider/product_provider.dart';
@@ -152,19 +153,25 @@ class _ProductWideState extends ConsumerState<ProductWide> {
               DataCell(TableDataCell(label: p.scmM3.toStringAsFixed(2))),
               DataCell(TableDataCell(label: p.specificGravity.toStringAsFixed(3))),
               DataCell(
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: Color(0xFF2563EB)),
-                      onPressed: () => _showProductSideSheet(context, p),
-                    ),
-                    SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteProduct(context, ref, p),
-                    ),
-                  ],
+                SizedBox(
+                  width: 100,
+                  child: Row(
+                    children: [
+                      AppTableActionButton(
+                        icon: Icons.edit_outlined,
+                        color: const Color(0xFF2563EB),
+                        bg: const Color(0xFFEFF6FF),
+                        onTap: () => _showProductSideSheet(context, p),
+                      ),
+                      const SizedBox(width: 8),
+                      AppTableActionButton(
+                        icon: Icons.delete_outline_rounded,
+                        color: const Color(0xFFDC2626),
+                        bg: const Color(0xFFFEF2F2),
+                        onTap: () => _deleteProduct(context, ref, p),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

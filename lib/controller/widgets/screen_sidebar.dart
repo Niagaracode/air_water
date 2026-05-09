@@ -48,7 +48,7 @@ class ScreenSidebar extends ConsumerWidget {
                 role: userRole,
               ),
               _buildGroup(
-                title: 'CONFIGURATION',
+                title: 'ASSETS',
                 items: configurationMenu,
                 location: location,
                 isExpanded: isExpanded,
@@ -64,8 +64,16 @@ class ScreenSidebar extends ConsumerWidget {
                 role: userRole,
               ),
               _buildGroup(
-                title: 'EVENTS',
+                title: 'EVENTS CONFIG',
                 items: eventsMenu,
+                location: location,
+                isExpanded: isExpanded,
+                context: context,
+                role: userRole,
+              ),
+              _buildGroup(
+                title: 'REPORT',
+                items: reportMenu,
                 location: location,
                 isExpanded: isExpanded,
                 context: context,

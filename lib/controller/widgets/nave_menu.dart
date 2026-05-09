@@ -24,13 +24,13 @@ class NaveMenu extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeInOut,
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: isSelected ? primary.withValues(alpha: 0.7): Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        color: isSelected ? primary.withValues(alpha: 0.9): Colors.transparent,
+        borderRadius: BorderRadius.circular(3),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(3),
         onTap: onTap,
         hoverColor: Colors.black.withValues(alpha: 0.08),
         splashColor: Colors.black.withValues(alpha: 0.12),
@@ -48,7 +48,7 @@ class NaveMenu extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: isSelected ? Colors.white : Colors.black.withValues(alpha: 0.75),
+                color: isSelected ? Colors.white : primary.withValues(alpha: 0.7),
               ),
 
               /// SPACE — animate instead of jump
