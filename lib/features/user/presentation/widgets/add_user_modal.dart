@@ -31,6 +31,15 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   final _companyAutocompleteController = TextEditingController();
   final _timeoutController = TextEditingController();
   final _companyFocusNode = FocusNode();
+  final _firstNameFocus = FocusNode();
+  final _lastNameFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _mobileFocus = FocusNode();
+
+  String? _firstNameError;
+  String? _lastNameError;
+  String? _emailError;
+  String? _mobileError;
 
   List<Role>? _roles;
   Role? _selectedRole;
@@ -79,6 +88,73 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     });
 
     _loadRoles();
+    _setupFocusListeners();
+  }
+
+  void _setupFocusListeners() {
+    _firstNameFocus.addListener(() {
+      if (!_firstNameFocus.hasFocus) _validateFirstName();
+    });
+    _lastNameFocus.addListener(() {
+      if (!_lastNameFocus.hasFocus) _validateLastName();
+    });
+    _emailFocus.addListener(() {
+      if (!_emailFocus.hasFocus) _validateEmail();
+    });
+    _mobileFocus.addListener(() {
+      if (!_mobileFocus.hasFocus) _validateMobile();
+    });
+  }
+
+  void _validateFirstName() {
+    setState(() {
+      if (_firstNameController.text.isNotEmpty &&
+          !RegExp(r'^[a-zA-Z\s]+$').hasMatch(_firstNameController.text)) {
+        _firstNameError = 'Letters only';
+      } else {
+        _firstNameError = null;
+      }
+    });
+  }
+
+  void _validateLastName() {
+    setState(() {
+      if (_lastNameController.text.isNotEmpty &&
+          !RegExp(r'^[a-zA-Z\s]+$').hasMatch(_lastNameController.text)) {
+        _lastNameError = 'Letters only';
+      } else {
+        _lastNameError = null;
+      }
+    });
+  }
+
+  void _validateEmail() {
+    setState(() {
+      if (_emailController.text.isEmpty) {
+        _emailError = 'Email required';
+      } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+          .hasMatch(_emailController.text)) {
+        _emailError = 'Invalid email';
+      } else {
+        _emailError = null;
+      }
+    });
+  }
+
+  void _validateMobile() {
+    setState(() {
+      if (_mobileController.text.isNotEmpty) {
+        if (!RegExp(r'^\d+$').hasMatch(_mobileController.text)) {
+          _mobileError = 'Digits only';
+        } else if (_mobileController.text.length < 10) {
+          _mobileError = 'Min 10 digits';
+        } else {
+          _mobileError = null;
+        }
+      } else {
+        _mobileError = null;
+      }
+    });
   }
 
   Future<void> _loadRoles() async {
@@ -113,6 +189,10 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     _companyAutocompleteController.dispose();
     _timeoutController.dispose();
     _companyFocusNode.dispose();
+    _firstNameFocus.dispose();
+    _lastNameFocus.dispose();
+    _emailFocus.dispose();
+    _mobileFocus.dispose();
     super.dispose();
   }
 
@@ -131,11 +211,55 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       return;
     }
 
+    // First Name Validation
+    if (_firstNameController.text.isNotEmpty) {
+      if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(_firstNameController.text)) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('First name should only contain letters')),
+        );
+        return;
+      }
+    }
+
+    // Last Name Validation
+    if (_lastNameController.text.isNotEmpty) {
+      if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(_lastNameController.text)) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Last name should only contain letters')),
+        );
+        return;
+      }
+    }
+
+    // Email Validation
     if (_emailController.text.isEmpty) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Email address is required')),
       );
       return;
+    }
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(_emailController.text)) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please enter a valid email address')),
+      );
+      return;
+    }
+
+    // Mobile Validation
+    if (_mobileController.text.isNotEmpty) {
+      if (!RegExp(r'^\d+$').hasMatch(_mobileController.text)) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Mobile number should only contain digits')),
+        );
+        return;
+      }
+      if (_mobileController.text.length < 10) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Mobile number must be at least 10 digits')),
+        );
+        return;
+      }
     }
 
     if (widget.user == null && _passwordController.text.isEmpty) {
@@ -326,7 +450,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                   'FIRST NAME',
                                   AppTextField(
                                     controller: _firstNameController,
+                                    focusNode: _firstNameFocus,
                                     hint: 'First Name',
+                                    errorText: _firstNameError,
                                     inputFormatters: [
                                       FilteringTextInputFormatter.allow(
                                           RegExp(r'[a-zA-Z\s]')),
@@ -340,7 +466,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                   'LAST NAME',
                                   AppTextField(
                                     controller: _lastNameController,
+                                    focusNode: _lastNameFocus,
                                     hint: 'Last Name',
+                                    errorText: _lastNameError,
                                     inputFormatters: [
                                       FilteringTextInputFormatter.allow(
                                           RegExp(r'[a-zA-Z\s]')),
@@ -359,7 +487,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                   'EMAIL ADDRESS*',
                                   AppTextField(
                                     controller: _emailController,
+                                    focusNode: _emailFocus,
                                     hint: 'john@example.com',
+                                    errorText: _emailError,
                                   ),
                                 ),
                               ),
@@ -369,7 +499,14 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                   'MOBILE NUMBER',
                                   AppTextField(
                                     controller: _mobileController,
+                                    focusNode: _mobileFocus,
                                     hint: '+1 234 567 890',
+                                    errorText: _mobileError,
+                                    keyboardType: TextInputType.phone,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(15),
+                                    ],
                                   ),
                                 ),
                               ),

@@ -86,6 +86,25 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   List<MessageTemplate> _templates = [];
   bool _isLoadingData = false;
 
+  final _allCompanyGroup = CompanyGroup(
+    name: 'ALL',
+    addresses: [CompanyAddress(status: 1, companyId: 0)],
+  );
+
+  final _allSite = Site(
+    id: 0,
+    name: 'ALL',
+    status: 1,
+    companyId: 0,
+  );
+
+  final _allTank = Tank(
+    tankId: 0,
+    tankNumber: 'ALL',
+    status: 1,
+    siteId: 0,
+  );
+
   @override
   void initState() {
     super.initState();
@@ -288,7 +307,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       }
     }
 
-    final companyId = _selectedCompanyGroup!.addresses.first.companyId;
+    final companyId = _selectedCompanyGroup?.name == 'ALL'
+        ? 0
+        : _selectedCompanyGroup!.addresses.first.companyId;
     final notifier = ref.read(settingProvider.notifier);
     bool allSuccess = true;
 
@@ -301,8 +322,8 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
             ? null
             : _descriptionController.text.trim(),
         'company_id': companyId,
-        'plant_id': _selectedSite?.id,
-        'tank_id': _selectedTank?.tankId,
+        'plant_id': _selectedSite?.id ?? 0,
+        'tank_id': _selectedTank?.tankId ?? 0,
         'product_id': _selectedProduct?.id,
         'parameter_type': row.parameterType,
         'condition_type': row.conditionType,
@@ -545,10 +566,22 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final companyIds = _selectedCompanyGroup!.addresses
           .map((a) => a.companyId)
           .toList();
-      filteredSites = _sites
-          .where((p) => companyIds.contains(p.companyId))
-          .toList();
+      filteredSites = [
+        _allSite,
+        ..._sites.where((p) => companyIds.contains(p.companyId)).toList(),
+      ];
+    } else {
+      filteredSites = [_allSite];
     }
+
+    final companyIds = _selectedCompanyGroup?.name == 'ALL'
+        ? <int>[]
+        : _selectedCompanyGroup?.addresses.map((a) => a.companyId ?? 0).toList() ??
+            <int>[];
+
+    final tanksForCompany = companyIds.isEmpty
+        ? _tanks
+        : _tanks.where((t) => companyIds.contains(t.companyId)).toList();
 
     final bool isEditMode = widget.initialSetting != null;
 
@@ -709,21 +742,24 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               )
                                             : AppDropdown<Tank>(
                                                 value: _selectedTank,
-                                                items:
-                                                    (_selectedSite == null &&
-                                                        !isCustomer)
-                                                    ? []
-                                                    : _tanks
-                                                          .where(
+                                                  items: [
+                                                    _allTank,
+                                                    ...((_selectedSite == null &&
+                                                            !isCustomer)
+                                                        ? []
+                                                        : tanksForCompany.where(
                                                             (t) =>
                                                                 isCustomer ||
                                                                 _selectedSite ==
                                                                     null ||
+                                                                _selectedSite!
+                                                                        .id ==
+                                                                    0 ||
                                                                 t.siteId ==
                                                                     _selectedSite!
                                                                         .id,
-                                                          )
-                                                          .toList(),
+                                                          )),
+                                                  ],
                                                 hint:
                                                     (_selectedSite == null &&
                                                         !isCustomer)
@@ -787,7 +823,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         'COMPANY',
                                         AppDropdown<CompanyGroup>(
                                           value: _selectedCompanyGroup,
-                                          items: _companyGroups,
+                                          items: [_allCompanyGroup, ..._companyGroups],
                                           hint: 'Select Company',
                                           itemLabel: (cg) =>
                                               cg.name.trim().isNotEmpty
@@ -833,15 +869,18 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             : 'TANK (OPTIONAL)',
                                         AppDropdown<Tank>(
                                           value: _selectedTank,
-                                          items: _selectedSite == null
-                                              ? []
-                                              : _tanks
-                                                    .where(
-                                                      (t) =>
-                                                          t.siteId ==
-                                                          _selectedSite!.id,
-                                                    )
-                                                    .toList(),
+                                          items: [
+                                            _allTank,
+                                            ...(_selectedSite == null
+                                                ? []
+                                                : tanksForCompany.where(
+                                                    (t) =>
+                                                        _selectedSite!.id ==
+                                                            0 ||
+                                                        t.siteId ==
+                                                            _selectedSite!.id,
+                                                  )),
+                                          ],
                                           hint: _selectedSite == null
                                               ? 'Select Site First'
                                               : 'Select Tank',

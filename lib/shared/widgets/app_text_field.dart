@@ -24,6 +24,7 @@ class AppTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final Color? prefixIconColor;
   final Widget? suffixIcon;
+  final String? errorText;
 
   const AppTextField({
     super.key,
@@ -45,6 +46,7 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.onSubmitted,
     this.inputFormatters,
+    this.errorText,
   });
 
 
@@ -77,6 +79,7 @@ class AppTextField extends StatelessWidget {
           color: const Color(0xFF9CA3AF),
           fontSize: 14,
         ),
+        errorText: errorText,
         prefixIcon: prefixIcon,
         prefixIconColor: prefixIconColor,
         suffixIcon: suffixIcon ?? (isPassword
