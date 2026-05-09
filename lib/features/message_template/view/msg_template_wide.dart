@@ -1,16 +1,19 @@
 import 'package:data_table_2/data_table_2.dart';
+import 'package:debounce_throttle/debounce_throttle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../shared/widgets/app_text_field.dart';
-import '../../../../shared/widgets/app_clear_button.dart';
 import '../../../core/app_theme/app_theme.dart';
+import '../../../shared/widgets/app_clear_button.dart';
 import '../../../shared/widgets/app_table.dart';
+import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/table_data_cell.dart';
 import '../../../shared/widgets/table_header_cell.dart';
 import '../presentation/controller/message_template_provider.dart';
 import '../presentation/widgets/message_template_form.dart';
 import '../presentation/model/message_template_model.dart';
+
+
 
 class MsgTemplateWide extends ConsumerStatefulWidget {
   const MsgTemplateWide({super.key});
@@ -112,16 +115,23 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
           ),
           const SizedBox(height: 24),
           _buildFilterRow(notifier, state),
+          //_buildSearchRow(notifier, state),
         ],
       ),
     );
+  }
+
+
+  void _clearFilters() {
+    _searchController.clear();
+    final notifier = ref.read(messageTemplateProvider.notifier);
+    notifier.clearFilters();
   }
 
   Widget _buildFilterRow(MessageTemplateNotifier notifier, MessageTemplateState state) {
     return Row(
       children: [
         Expanded(
-          flex: 2,
           child: RawAutocomplete<MessageTemplateAutocompleteInfo>(
             textEditingController: _searchController,
             focusNode: _focusNode,
@@ -142,6 +152,22 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
                 controller: controller,
                 focusNode: focusNode,
                 hint: 'Search By Name',
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Color(0xFF94A3B8),
+                  size: 20,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty ? Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.clear,
+                      color: Colors.red,
+                      size: 18,
+                    ),
+                    onPressed: _clearFilters,
+                  ),
+                ) : null,
                 onSubmitted: (v) {
                   _searchController.text = v;
                   notifier.setSearchName(v);
@@ -182,14 +208,6 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
             },
           ),
         ),
-        const SizedBox(width: 16),
-        AppClearButton(
-          onPressed: () {
-            _searchController.clear();
-            notifier.clearFilters();
-          },
-        ),
-        const Expanded(flex: 1, child: SizedBox()),
       ],
     );
   }
@@ -203,7 +221,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
 
     return Container(
       width: MediaQuery.sizeOf(context).width,
-      height: (state.templates.length * 45) + 50,
+      height: (state.templates.length * 55) + 55,
       margin: const EdgeInsets.only(left: 20, right: 20, bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -217,10 +235,10 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
         columnSpacing: 12,
         horizontalMargin: 12,
         minWidth: 1000,
-        dataRowHeight: 45,
-        headingRowHeight: 45,
+        dataRowHeight: 55,
+        headingRowHeight: 50,
         headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.1)),
-        dividerThickness: 0.3,
+        dividerThickness: 0.5,
         columns: [
           DataColumn2(
             label: Center(child: TableHeaderCell(label: 'SI.NO')),
@@ -330,5 +348,4 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
       ),
     );
   }
-
 }
