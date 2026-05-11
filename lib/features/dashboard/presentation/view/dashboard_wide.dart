@@ -23,7 +23,7 @@ class DashboardWide extends ConsumerStatefulWidget {
 }
 
 class _DashboardWideState extends ConsumerState<DashboardWide> {
-  final String topic = 'tweet/864180050620884';
+  final String topic = 'tweet';
 
   late final MqttNotifier mqttNotifier;
 
@@ -112,11 +112,22 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
       body: tanksAsync.when(
         loading: () => _buildLoadingView(),
         error: (error, _) => Center(
-          child: ElevatedButton(
-            onPressed: () {
-              ref.read(tankDataProvider.notifier).refresh();
-            },
-            child: const Text("Retry"),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                getErrorMessage(error),
+                style: const TextStyle(color: Colors.red),
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.read(tankDataProvider.notifier).refresh();
+                },
+                child: const Text("Retry"),
+              ),
+            ],
           ),
         ),
         data: (tanks) {
@@ -202,6 +213,21 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
         },
       ),
     );
+  }
+
+  String getErrorMessage(dynamic error) {
+    final msg = error.toString();
+    if (msg.contains('SocketException')) {
+      return 'No internet connection';
+    } else if (msg.contains('TimeoutException')) {
+      return 'Server timeout. Please try again';
+    } else if (msg.contains('401')) {
+      return 'Unauthorized access';
+    } else if (msg.contains('500')) {
+      return 'Internal server error';
+    }
+
+    return 'Unable to load data';
   }
 
   Widget _buildLoadingView() {

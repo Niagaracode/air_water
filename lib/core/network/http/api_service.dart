@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dio_client.dart';
 
@@ -9,12 +10,18 @@ class ApiService {
   ApiService(this._dio);
 
   Future<Response> get(String endpoint, {Map<String, dynamic>? query}) {
-    print("endpoint:$endpoint, query:$query");
+
+    debugPrint("Base URL: ${_dio.options.baseUrl}");
+    debugPrint("Endpoint: $endpoint");
+    debugPrint("Full URL: ${_dio.options.baseUrl}$endpoint");
+    debugPrint("Query: $query");
+
     return _dio.get(endpoint, queryParameters: query);
   }
 
   Future<Response> post(String endpoint, {dynamic data}) {
-    print("endpoint:$endpoint, data:$data");
+    debugPrint("Full URL: ${_dio.options.baseUrl}$endpoint");
+    debugPrint("data: $data");
     return _dio.post(endpoint, data: data);
   }
 
