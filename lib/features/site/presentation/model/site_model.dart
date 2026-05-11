@@ -460,6 +460,7 @@ class SiteAutocompleteInfo {
   final String? contactNumber;
   final String? pincode;
   final String? timeZone;
+  final int? addressId;
 
   SiteAutocompleteInfo({
     required this.siteId,
@@ -474,6 +475,7 @@ class SiteAutocompleteInfo {
     this.contactNumber,
     this.pincode,
     this.timeZone,
+    this.addressId,
   });
 
   factory SiteAutocompleteInfo.fromJson(Map<String, dynamic> json) {
@@ -490,6 +492,7 @@ class SiteAutocompleteInfo {
       contactNumber: json['contact_number'] as String?,
       pincode: json['pincode'] as String?,
       timeZone: json['time_zone'] as String?,
+      addressId: json['address_id'] as int?,
     );
   }
 

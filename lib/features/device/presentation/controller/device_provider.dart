@@ -268,10 +268,11 @@ class DeviceNotifier extends Notifier<DeviceState> {
   Future<List<Map<String, dynamic>>> searchTanks(
     String query, {
     int? siteId,
+    int? addressId,
   }) async {
     try {
       final repository = ref.read(deviceRepositoryProvider);
-      return await repository.searchTanks(query, siteId: siteId);
+      return await repository.searchTanks(query, siteId: siteId, addressId: addressId);
     } catch (e) {
       return [];
     }

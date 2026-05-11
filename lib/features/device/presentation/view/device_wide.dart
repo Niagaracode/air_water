@@ -331,7 +331,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                 children: [
                   Expanded(
                     child: Text(
-                      group.siteName,
+                      group.siteName ?? '',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,

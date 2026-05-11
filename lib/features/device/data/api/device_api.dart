@@ -84,10 +84,14 @@ class DeviceApi {
   Future<List<Map<String, dynamic>>> searchTanks(
     String q, {
     int? siteId,
+    int? addressId,
   }) async {
     final Map<String, dynamic> query = {'q': q};
     if (siteId != null) {
       query['plant_id'] = siteId.toString();
+    }
+    if (addressId != null) {
+      query['address_id'] = addressId.toString();
     }
     final response = await _client.get('/tanks/autocomplete', query: query);
     return List<Map<String, dynamic>>.from(response.data['data']);

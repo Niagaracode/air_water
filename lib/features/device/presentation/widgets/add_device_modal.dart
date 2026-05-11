@@ -41,11 +41,28 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     if (widget.device != null) {
       _deviceIdController.text = widget.device!.deviceId;
       _simNumberController.text = widget.device!.simNumber ?? '';
-      _siteAutocompleteController.text = widget.device!.siteName ?? '';
-      _tankAutocompleteController.text = widget.device!.tankName ?? '';
       _status = widget.device!.status;
       _selectedPowerSource = widget.device!.powerSource;
       _selectedTankId = widget.device!.tankId;
+      _tankAutocompleteController.text = widget.device!.tankName ?? '';
+      
+      _selectedSite = SiteAutocompleteInfo(
+        siteId: widget.device!.siteId ?? 0,
+        addressId: widget.device!.addressId,
+        siteName: widget.device!.siteName ?? '',
+        addressLine1: widget.device!.siteInformation?.addressLine1,
+        city: widget.device!.siteInformation?.city,
+        state: widget.device!.siteInformation?.state,
+        country: widget.device!.siteInformation?.country,
+        pincode: widget.device!.siteInformation?.pincode,
+        companyId: widget.device!.companyId,
+      );
+      
+      final fullAddr = _selectedSite!.fullAddress;
+      _siteAutocompleteController.text = fullAddr.isNotEmpty 
+          ? '${_selectedSite!.siteName}, $fullAddr'
+          : _selectedSite!.siteName;
+
       _latitude = widget.device!.latitude;
       _longitude = widget.device!.longitude;
     }
@@ -84,7 +101,9 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
       simNumber: _simNumberController.text,
       category: 'Controller', // Default to Controller as requested
       siteId: _selectedSite?.siteId ?? widget.device?.siteId,
+      addressId: _selectedSite?.addressId ?? widget.device?.addressId,
       companyId: _selectedSite?.companyId ?? widget.device?.companyId,
+      address: _selectedSite?.fullAddress,
       tankId: _selectedTankId,
       unitId: '9', // Default to 'm' (ID 9) as requested
       powerSource: _selectedPowerSource,
@@ -454,6 +473,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                 .searchTanks(
                   textEditingValue.text,
                   siteId: _selectedSite?.siteId ?? widget.device?.siteId,
+                  addressId: _selectedSite?.addressId ?? widget.device?.addressId,
                 );
           },
           displayStringForOption: (Map<String, dynamic> option) =>

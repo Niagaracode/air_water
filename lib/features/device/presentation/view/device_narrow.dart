@@ -222,7 +222,7 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
           onExpansionChanged: (_) =>
               notifier.toggleGroup(group.siteOrganizationCode),
           title: Text(
-            group.siteName,
+            group.siteName ?? '',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
           children: group.devices

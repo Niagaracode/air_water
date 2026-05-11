@@ -20,7 +20,7 @@ abstract class DeviceRepository {
   });
   Future<Map<String, dynamic>> getDeviceDropdowns();
   Future<List<String>> getDeviceNameSuggestions(String q);
-  Future<List<Map<String, dynamic>>> searchTanks(String q, {int? siteId});
+  Future<List<Map<String, dynamic>>> searchTanks(String q, {int? siteId, int? addressId});
 }
 
 class DeviceRepositoryImpl implements DeviceRepository {
@@ -82,7 +82,7 @@ class DeviceRepositoryImpl implements DeviceRepository {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> searchTanks(String q, {int? siteId}) {
-    return _api.searchTanks(q, siteId: siteId);
+  Future<List<Map<String, dynamic>>> searchTanks(String q, {int? siteId, int? addressId}) {
+    return _api.searchTanks(q, siteId: siteId, addressId: addressId);
   }
 }

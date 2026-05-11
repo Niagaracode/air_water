@@ -1,8 +1,11 @@
 class AppConstants {
-
-  static const String apiUrl = 'https://starring-limited-screenshot-threatened.trycloudflare.com/api';
-  static const String googleMapsApiKey = 'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
-  static const String mqttWebHost = 'wss://irrigationcare.niagaraautomation.com:9443/mqtt';
+  static const String apiUrl = 'http://localhost:4000/api';
+  // static const String apiUrl = 'https://20.193.232.190:4000/api';
+  // static const apiUrl = 'https://irrigationcare.niagaraautomation.com:4000/api';
+  static const String googleMapsApiKey =
+      'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
+  static const String mqttWebHost =
+      'wss://irrigationcare.niagaraautomation.com:9443/mqtt';
 
   static const int mqttWebPort = 9443;
   static const String mqttUserName = 'mqttuser';

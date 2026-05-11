@@ -6,6 +6,7 @@ class Device {
   final String? notes;
   final int? siteId;
   final String? siteName;
+  final int? addressId;
   final int? tankId;
   final String? tankName;
   final int? companyId;
@@ -30,6 +31,7 @@ class Device {
     this.notes,
     this.siteId,
     this.siteName,
+    this.addressId,
     this.tankId,
     this.tankName,
     this.companyId,
@@ -56,6 +58,7 @@ class Device {
       notes: json['notes'] as String?,
       siteId: json['site_id'] as int?,
       siteName: json['site_name'] as String?,
+      addressId: json['address_id'] as int?,
       tankId: json['tank_id'] as int?,
       tankName: json['tank_name'] as String?,
       companyId: json['company_id'] as int?,
@@ -124,26 +127,43 @@ class SiteInformation {
       state,
       country,
     ].where((p) => p != null && p.isNotEmpty).toList();
-    if (parts.isEmpty) return '';
-    return parts.join(', ') + (pincode != null ? ' - $pincode' : '');
+    return parts.join(', ');
   }
 }
 
 class DeviceGroup {
-  final String? siteOrganizationCode;
-  final String siteName;
+  final String? plantOrganizationCode;
+  final String? siteName;
+  final String? addressLine1;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? pincode;
   final List<Device> devices;
 
+  // Alias for backward compatibility
+  String? get siteOrganizationCode => plantOrganizationCode;
+
   DeviceGroup({
-    this.siteOrganizationCode,
-    required this.siteName,
+    this.plantOrganizationCode,
+    this.siteName,
+    this.addressLine1,
+    this.city,
+    this.state,
+    this.country,
+    this.pincode,
     required this.devices,
   });
 
   factory DeviceGroup.fromJson(Map<String, dynamic> json) {
     return DeviceGroup(
-      siteOrganizationCode: json['plant_organization_code'] as String?,
-      siteName: json['site_name'] as String,
+      plantOrganizationCode: json['plant_organization_code'] as String?,
+      siteName: json['site_name'] as String?,
+      addressLine1: json['address_line_1'] as String?,
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      country: json['country'] as String?,
+      pincode: json['pincode'] as String?,
       devices: (json['devices'] as List)
           .map((i) => Device.fromJson(i as Map<String, dynamic>))
           .toList(),
@@ -169,10 +189,34 @@ class DeviceGroupedResponse {
   }
 }
 
+class Pagination {
+  final int total;
+  final int page;
+  final int limit;
+  final int totalPages;
+
+  Pagination({
+    required this.total,
+    required this.page,
+    required this.limit,
+    required this.totalPages,
+  });
+
+  factory Pagination.fromJson(Map<String, dynamic> json) {
+    return Pagination(
+      total: json['total'] as int,
+      page: json['page'] as int,
+      limit: json['limit'] as int,
+      totalPages: json['total_pages'] as int,
+    );
+  }
+}
+
 class DeviceCreateRequest {
   final String deviceId;
   final String? notes;
   final int? siteId;
+  final int? addressId;
   final int? tankId;
   final int? companyId;
   final String? unitId;
@@ -184,14 +228,17 @@ class DeviceCreateRequest {
   final String? lastSync;
   final double? latitude;
   final double? longitude;
+  final String? address;
   final int? status;
 
   DeviceCreateRequest({
     required this.deviceId,
     this.notes,
     this.siteId,
+    this.addressId,
     this.tankId,
     this.companyId,
+    this.address,
     this.unitId,
     this.category,
     this.simNumber,
@@ -209,8 +256,10 @@ class DeviceCreateRequest {
       'device_id': deviceId,
       'notes': notes,
       'site_id': siteId,
+      'address_id': addressId,
       'tank_id': tankId,
       'company_id': companyId,
+      'address': address,
       'unit_id': unitId,
       'category': category,
       'sim_number': simNumber,
@@ -220,7 +269,6 @@ class DeviceCreateRequest {
       'last_sync': lastSync,
       'latitude': latitude,
       'longitude': longitude,
-
       'status': status,
     };
   }

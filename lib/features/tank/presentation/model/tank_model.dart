@@ -19,6 +19,7 @@ class Tank {
   final double? longitude;
   final int? siteId;
   final String? siteName;
+  final int? addressId;
   final double? width;
   final double? height;
   final double? dishHeight;
@@ -57,6 +58,7 @@ class Tank {
     this.longitude,
     this.siteId,
     this.siteName,
+    this.addressId,
     this.width,
     this.height,
     this.dishHeight,
@@ -102,6 +104,7 @@ class Tank {
           : null,
       siteId: _toInt(json['plant_id']),
       siteName: json['plant_name'] as String?,
+      addressId: _toInt(json['address_id']),
       width: _toDouble(json['width']),
       height: _toDouble(json['height']),
       dishHeight: _toDouble(json['dish_height']),
@@ -341,6 +344,7 @@ class TankCreateRequest {
   final double? coneLength;
   final double? tonnes;
   final int? siteId;
+  final int? addressId;
   final int? status;
   final bool? useStrappingChart;
   final List<StrappingPoint>? strappingPoints;
@@ -366,6 +370,7 @@ class TankCreateRequest {
     this.coneLength,
     this.tonnes,
     this.siteId,
+    this.addressId,
     this.status,
     this.useStrappingChart,
     this.strappingPoints,
@@ -392,6 +397,7 @@ class TankCreateRequest {
       'cone_length': coneLength,
       'tonnes': tonnes,
       'plant_id': siteId,
+      'address_id': addressId,
       'status': status,
       'use_strapping_chart': useStrappingChart == true ? 1 : 0,
       'strapping_points': strappingPoints?.map((e) => e.toJson()).toList(),

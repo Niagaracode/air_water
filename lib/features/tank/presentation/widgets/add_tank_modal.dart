@@ -177,6 +177,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       tonnes: 0.0,
       description: '',
       siteId: _selectedSite?.siteId ?? widget.initialTank?.siteId,
+      addressId: _selectedSite?.addressId ?? widget.initialTank?.addressId,
       unitId: _selectedUnit?['id'],
       tankTypeId: _selectedTankType?['id'],
       productId: _selectedProduct is TankProduct
@@ -715,10 +716,12 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           option.displayName ??
                               option.siteName + " " + option.fullAddress,
                         ),
-                        onTap: () {
-                          onSelected(option);
-                          setState(() => _selectedSite = option);
-                        },
+                          onTap: () {
+                            onSelected(option);
+                            setState(() {
+                              _selectedSite = option;
+                            });
+                          },
                       );
                     },
                   ),

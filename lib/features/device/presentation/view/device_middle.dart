@@ -220,7 +220,7 @@ class _DeviceMiddleState extends ConsumerState<DeviceMiddle> {
         onExpansionChanged: (_) =>
             notifier.toggleGroup(group.siteOrganizationCode),
         title: Text(
-          group.siteName,
+          group.siteName ?? '',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: group.devices.isNotEmpty
