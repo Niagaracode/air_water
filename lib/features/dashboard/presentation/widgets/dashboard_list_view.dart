@@ -48,7 +48,7 @@ class DashboardListView extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: primary.withValues(alpha: 0.1)),
       ),
       child: SingleChildScrollView(
@@ -164,8 +164,8 @@ class DashboardListView extends ConsumerWidget {
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(14),
-          topRight: Radius.circular(14),
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
         ),
       ),
       child: Row(
