@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:debounce_throttle/debounce_throttle.dart';
 import 'filter_dropdown.dart';
 
-class SearchAndFilters extends StatefulWidget {
+class SearchAndFilters extends ConsumerStatefulWidget {
   const SearchAndFilters({
     super.key,
     required this.onSearchChanged,
@@ -15,6 +16,7 @@ class SearchAndFilters extends StatefulWidget {
     this.regions = const ['All Regions', 'Tamil Nadu', 'New Mexico', 'Texas', 'Oklahoma'],
     this.statuses = const ['All Status', 'Active', 'Low Level', 'Critical', 'Offline', 'Reorder'],
     this.searchHint = 'Search devices...',
+    this.showStats = true,
   });
 
   final ValueChanged<String> onSearchChanged;
@@ -26,97 +28,274 @@ class SearchAndFilters extends StatefulWidget {
   final List<String> regions;
   final List<String> statuses;
   final String searchHint;
+  final bool showStats;
 
   @override
-  State<SearchAndFilters> createState() => _SearchAndFiltersState();
+  ConsumerState<SearchAndFilters> createState() => _SearchAndFiltersState();
 }
 
-class _SearchAndFiltersState extends State<SearchAndFilters> {
+class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
   late TextEditingController _searchController;
+  final FocusNode _focusNode = FocusNode();
+  late final Debouncer _debouncer;
+  int _resultCount = 0;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+
+    // Setup debouncer for search
+    _debouncer = Debouncer(
+      const Duration(milliseconds: 500),
+      initialValue: '',
+      checkEquality: true,
+    );
+
+    // Listen to search changes with debounce
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    _debouncer.setValue(_searchController.text);
+    _debouncer.values.listen((searchTerm) {
+      if (mounted && searchTerm != null) {
+        widget.onSearchChanged(searchTerm);
+      }
+    });
+  }
+
+  void _clearFilters() {
+    _searchController.clear();
+    widget.onClearFilters();
+    setState(() {
+      _resultCount = 0;
+    });
+  }
+
+  void updateResultCount(int count) {
+    if (mounted) {
+      setState(() {
+        _resultCount = count;
+      });
+    }
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _focusNode.dispose();
+    _debouncer.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final hasFilters = widget.selectedRegion != 'All Regions' ||
+        widget.selectedStatus != 'All Status' ||
+        _searchController.text.isNotEmpty;
+
+    return Column(
       children: [
-        // Search Bar
-        Expanded(
-          flex: 2,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: widget.onSearchChanged,
-              decoration: InputDecoration(
-                hintText: widget.searchHint,
-                hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(14),
+        Row(
+          children: [
+            /// Search Bar with improved styling
+            Expanded(
+              flex: 2,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _focusNode,
+                  onChanged: (value) {
+                    // Debouncer handles this
+                  },
+                  decoration: InputDecoration(
+                    hintText: widget.searchHint,
+                    hintStyle: GoogleFonts.inter(
+                      color: const Color(0xFF94A3B8),
+                      fontSize: 14,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Color(0xFF94A3B8),
+                      size: 20,
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                      icon: const Icon(
+                        Icons.clear,
+                        color: Color(0xFF94A3B8),
+                        size: 18,
+                      ),
+                      onPressed: _clearFilters,
+                    )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
+            const SizedBox(width: 12),
+
+            /// Region Filter
+            Expanded(
+              child: FilterDropdown<String>(
+                borderColor: const Color(0xFFE2E8F0),
+                borderRadius: 12,
+                label: 'Region',
+                value: widget.selectedRegion,
+                items: widget.regions,
+                onChanged: (value) {
+                  if (value != null) {
+                    widget.onRegionChanged(value);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            /// Status Filter
+            Expanded(
+              child: FilterDropdown<String>(
+                borderColor: const Color(0xFFE2E8F0),
+                borderRadius: 12,
+                label: 'Status',
+                value: widget.selectedStatus,
+                items: widget.statuses,
+                onChanged: (value) {
+                  if (value != null) {
+                    widget.onStatusChanged(value);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            /// Clear Filters Button
+            Container(
+              decoration: BoxDecoration(
+                color: hasFilters
+                    ? const Color(0xFF4F46E5).withOpacity(0.1)
+                    : Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: hasFilters
+                      ? const Color(0xFF4F46E5).withOpacity(0.3)
+                      : const Color(0xFFE2E8F0),
+                ),
+              ),
+              child: IconButton(
+                icon: Icon(
+                  Icons.filter_alt_off,
+                  color: hasFilters
+                      ? const Color(0xFF4F46E5)
+                      : const Color(0xFF94A3B8),
+                  size: 20,
+                ),
+                tooltip: 'Clear all filters',
+                onPressed: hasFilters ? _clearFilters : null,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        // Region Filter
-        Expanded(
-          child: FilterDropdown<String>(
-            borderColor: Colors.grey.shade300,
-            value: widget.selectedRegion,
-            items: widget.regions,
-            onChanged: (value) {
-              if (value != null) {
-                widget.onRegionChanged(value);
-              }
-            },
+
+        /// Search Stats & Active Filters (Optional)
+        if (widget.showStats && hasFilters)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Row(
+              children: [
+                /// Search results count
+                if (_searchController.text.isNotEmpty && _resultCount > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${_resultCount} result${_resultCount != 1 ? 's' : ''}',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+
+                if (_searchController.text.isNotEmpty && _resultCount > 0)
+                  const SizedBox(width: 8),
+
+                /// Active filter chips
+                if (widget.selectedRegion != 'All Regions')
+                  _buildFilterChip(
+                    label: 'Region: ${widget.selectedRegion}',
+                    onRemove: () => widget.onRegionChanged('All Regions'),
+                  ),
+
+                if (widget.selectedStatus != 'All Status')
+                  _buildFilterChip(
+                    label: 'Status: ${widget.selectedStatus}',
+                    onRemove: () => widget.onStatusChanged('All Status'),
+                  ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        // Status Filter
-        Expanded(
-          child: FilterDropdown<String>(
-            borderColor: Colors.grey.shade300,
-            value: widget.selectedStatus,
-            items: widget.statuses,
-            onChanged: (value) {
-              if (value != null) {
-                widget.onStatusChanged(value);
-              }
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Clear Filters Button
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF141E7A).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.filter_list, color: Color(0xFF141E7A)),
-            tooltip: 'Clear all filters',
-            onPressed: () {
-              _searchController.clear();
-              widget.onClearFilters();
-            },
-          ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required VoidCallback onRemove,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: const Color(0xFF475569),
+            ),
+          ),
+          const SizedBox(width: 4),
+          InkWell(
+            onTap: onRemove,
+            borderRadius: BorderRadius.circular(4),
+            child: const Icon(
+              Icons.close,
+              size: 14,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
