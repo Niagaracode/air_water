@@ -325,9 +325,27 @@ class DashboardListView extends ConsumerWidget {
             SizedBox(
               width: 100,
               child: Center(
-                child: Text(
-                  tank.pressure.toStringAsFixed(1),
-                  style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700),
+                child: RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: tank.pressure.toStringAsFixed(1),
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black,
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' /Bar',
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -336,7 +354,7 @@ class DashboardListView extends ConsumerWidget {
               width: 100,
               child: Center(
                 child: Text(
-                  '${tank.batteryV.toStringAsFixed(1)}v',
+                  '${tank.batteryV.toStringAsFixed(1)} v',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -350,7 +368,7 @@ class DashboardListView extends ConsumerWidget {
               width: 80,
               child: Center(
                 child: Text(
-                  '${tank.solarV.toStringAsFixed(1)}v',
+                  '${tank.solarV.toStringAsFixed(1)} v',
                   style: GoogleFonts.outfit(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
