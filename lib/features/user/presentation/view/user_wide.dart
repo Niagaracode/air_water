@@ -67,17 +67,17 @@ class _UserWideState extends ConsumerState<UserWide> {
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
-      body: state.isLoading ? Center(
-        child: CircularProgressIndicator(),
-      ) : Column(
-        children: [
-          _buildHeader(state, notifier),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: _buildDataTable(state, notifier),
-          ),
-        ],
-      ),
+      body: state.isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildHeader(state, notifier),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: _buildDataTable(state, notifier),
+                ),
+              ],
+            ),
     );
   }
 
@@ -138,7 +138,6 @@ class _UserWideState extends ConsumerState<UserWide> {
   }
 
   Widget _buildDataTable(UserState state, UserNotifier notifier) {
-
     return Container(
       width: MediaQuery.sizeOf(context).width,
       height: (state.users.length * 45) + 50,
@@ -146,10 +145,7 @@ class _UserWideState extends ConsumerState<UserWide> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(10)),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
       ),
       child: DataTable2(
         dataRowColor: WidgetStateProperty.all(Colors.white),
@@ -159,12 +155,11 @@ class _UserWideState extends ConsumerState<UserWide> {
         headingRowHeight: 45,
         dataRowHeight: 45,
         dividerThickness: 0.4,
-        headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.1)),
+        headingRowColor: WidgetStateProperty.all(
+          primary.withValues(alpha: 0.1),
+        ),
         columns: [
-          DataColumn2(
-            label: TableHeaderCell(label: 'SI.NO',),
-            fixedWidth: 60,
-          ),
+          DataColumn2(label: TableHeaderCell(label: 'SI.NO'), fixedWidth: 60),
           const DataColumn2(
             label: TableHeaderCell(label: 'User Name'),
             size: ColumnSize.M,
@@ -200,14 +195,16 @@ class _UserWideState extends ConsumerState<UserWide> {
           return DataRow(
             cells: [
               DataCell(TableDataCell(label: '${index + 1}')),
-              DataCell(TableDataCell(label: user.fullName, bold: true,)),
+              DataCell(TableDataCell(label: user.fullName, bold: true)),
               DataCell(TableDataCell(label: user.companyName!)),
               DataCell(TableDataCell(label: user.mobileNumber!)),
               DataCell(TableDataCell(label: user.email!)),
-              DataCell(Align(
-                alignment: Alignment.centerLeft,
-                child: AppRoleBadge(roleName: user.roleName),
-              )),
+              DataCell(
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppRoleBadge(roleName: user.roleName),
+                ),
+              ),
               DataCell(AppStatusBadge(status: user.status)),
               DataCell(
                 SizedBox(
@@ -236,7 +233,6 @@ class _UserWideState extends ConsumerState<UserWide> {
         }),
       ),
     );
-
   }
 
   Widget _buildFilterRow(UserState state, UserNotifier notifier) {
@@ -269,15 +265,25 @@ class _UserWideState extends ConsumerState<UserWide> {
                     color: Colors.grey.shade400,
                   ),
                 ),
-                icon: Icon(Icons.keyboard_arrow_down, size: 20, color: Colors.grey.shade600),
+                icon: Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 20,
+                  color: Colors.grey.shade600,
+                ),
                 items: [
                   DropdownMenuItem(
                     value: 1,
-                    child: Text('Active', style: GoogleFonts.outfit(fontSize: 14)),
+                    child: Text(
+                      'Active',
+                      style: GoogleFonts.outfit(fontSize: 14),
+                    ),
                   ),
                   DropdownMenuItem(
                     value: 0,
-                    child: Text('Inactive', style: GoogleFonts.outfit(fontSize: 14)),
+                    child: Text(
+                      'Inactive',
+                      style: GoogleFonts.outfit(fontSize: 14),
+                    ),
                   ),
                 ],
                 onChanged: (value) {
@@ -339,10 +345,16 @@ class _UserWideState extends ConsumerState<UserWide> {
                   notifier.setSearchQuery(v);
                   if (v.isEmpty) notifier.loadUsers();
                 },
-                style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  color: const Color(0xFF1A1A2E),
+                ),
                 decoration: InputDecoration(
                   hintText: 'Search users...',
-                  hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                  hintStyle: GoogleFonts.outfit(
+                    color: Colors.grey.shade400,
+                    fontSize: 14,
+                  ),
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(14),
@@ -398,7 +410,10 @@ class _UserWideState extends ConsumerState<UserWide> {
         style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
         decoration: InputDecoration(
           hintText: 'Search By Company',
-          hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+          hintStyle: GoogleFonts.outfit(
+            color: Colors.grey.shade400,
+            fontSize: 14,
+          ),
           prefixIcon: const Icon(Icons.search, color: Colors.grey),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(14),
