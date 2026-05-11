@@ -139,9 +139,12 @@ class _UserWideState extends ConsumerState<UserWide> {
 
   Widget _buildDataTable(UserState state, UserNotifier notifier) {
 
+    double screenHeight = MediaQuery.sizeOf(context).height;
+    double stateHeight = (state.users.length * 45) + 50;
+
     return Container(
       width: MediaQuery.sizeOf(context).width,
-      height: (state.users.length * 45) + 50,
+      height: stateHeight > (screenHeight-270) ? (screenHeight-275) : stateHeight,
       margin: const EdgeInsets.only(left: 20, right: 20, bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,

@@ -1,6 +1,6 @@
 class AppConstants {
   static const String apiUrl =
-      'https://deaf-trigger-designed-creator.trycloudflare.com/api';
+      'https://universe-friend-messaging-browsing.trycloudflare.com/api';
   // static const String apiUrl = 'http://localhost:4000/api';
   static const String googleMapsApiKey =
       'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
