@@ -380,6 +380,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                       paramType == 'SOLAR' ||
                       paramType == 'MFACTOR' ||
                       paramType == 'CHART DATA') &&
+                                          paramType != 'DEVICE COMMUNICATE FAILED' &&
                   _deviceIdController.text.isNotEmpty);
         if (shouldSendToDevice) {
           await _sendToDevice(skipSave: true);
@@ -1075,6 +1076,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                 'DATA INTERVAL',
                                                 'CHART DATA',
                                                 'SOLAR',
+                                                'DEVICE COMMUNICATE FAILED',
                                                 'OTHER',
                                               ],
                                               hint: 'Select Param',
@@ -1259,6 +1261,8 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                 ? 'VOLTAGE'
                                                 : (row.parameterType.toUpperCase().trim() == 'DATA INTERVAL')
                                                     ? 'Hours'
+                                                    : (row.parameterType.toUpperCase().trim() == 'DEVICE COMMUNICATE FAILED')
+                                                        ? 'Minutes'
                                                     : ([
                                                         'CAL TANK',
                                                         'CAL KILO LITER',
@@ -1496,7 +1500,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                               const SizedBox(height: 32),
                               Row(
                                 children: [
-                                  if (canSendToDevice && !isEditMode) ...[
+                                  if (canSendToDevice && !isEditMode && (_rows.isEmpty || _rows[0].parameterType.toUpperCase().trim() != 'DEVICE COMMUNICATE FAILED')) ...[
                                     Expanded(
                                       child: SizedBox(
                                         height: 56,
@@ -1544,14 +1548,21 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                           ),
                                           elevation: 0,
                                         ),
-                                        child: Text(
-                                          isEditMode
-                                              ? (isCustomer
-                                                    ? 'SEND DEVICE'
-                                                    : 'UPDATE RULE')
-                                              : (isCustomer
-                                                    ? 'CREATE SETTING'
-                                                    : 'CREATE RULE'),
+                                          child: Text(
+                                            isEditMode
+                                                ? (isCustomer
+                                                      ? 'SEND DEVICE'
+                                                      : 'UPDATE RULE')
+                                                : (isCustomer
+                                                      ? (_rows.isNotEmpty &&
+                                                              _rows[0]
+                                                                      .parameterType
+                                                                      .toUpperCase()
+                                                                      .trim() ==
+                                                                  'DEVICE COMMUNICATE FAILED'
+                                                          ? 'CREATE SETTING'
+                                                          : 'SEND DEVICE')
+                                                      : 'CREATE RULE'),
                                           style: GoogleFonts.outfit(
                                             fontWeight: FontWeight.w700,
                                             fontSize: 16,

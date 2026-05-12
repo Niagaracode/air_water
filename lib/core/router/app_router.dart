@@ -57,31 +57,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         final roleFromStorage = ref.read(userRoleProvider).value;
 
         if (location == '/login' || location == '/loading') {
-          // Priority 1: Check actual profile roleId
+          // Priority 1: Check profile role (Most accurate)
           if (currentUser != null) {
-            if (currentUser.roleId == 6) {
-              return '/asset-summary';
-            }
+            final roleId = currentUser.roleId;
+            if (roleId == 6) return '/asset-summary';
+            if (roleId == 5) return '/dashboard';
             return '/dashboard';
           }
 
-          // Priority 2: Fallback to storage-based role
+          // Priority 2: Storage fallback (Faster during load)
           if (roleFromStorage != null) {
-            if (roleFromStorage == UserRole.customer) {
-              return '/asset-summary';
-            }
+            if (roleFromStorage == UserRole.customer) return '/asset-summary';
             return '/dashboard';
           }
 
-          return null; // Stay on loading if we don't know the role yet
+          return null;
         }
 
+        // --- 🛡️ ACCESS CONTROL ---
+        
         // Combine routes to restrict for non-admin roles
         final restrictedRoutes = [
           '/company',
+          '/product',
+        ];
+
+        // Combine system configuration routes (Only for Admins)
+        final systemRoutes = [
           '/user',
           '/group',
-          '/product',
           '/device',
           '/message-template',
           '/roaster',
@@ -90,50 +94,59 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           '/asset-group',
         ];
 
-        // 1. Profile-based redirection (Most reliable)
         if (currentUser != null) {
           final roleId = currentUser.roleId;
 
-          if (roleId == 1 || roleId == 2) {
-            // Admin/SuperAdmin: Should NOT be on asset-summary by default if they were redirected there
-            // But we allow it if they clicked it (though it might be hidden in sidebar)
-            // Fix: If they land on asset-summary from login, move them to dashboard
-            if (location == '/asset-summary' && roleId == 1) {
-              // Only redirect if they didn't explicitly go there? 
-              // Actually, SuperAdmin doesn't even have Asset Summary in sidebar.
-              return '/dashboard';
-            }
-          }
-
+          // Customers (Role 6)
           if (roleId == 6) {
-            // Customer
-            if (restrictedRoutes.contains(location) || location == '/dashboard') {
+            if (restrictedRoutes.contains(location) || 
+                systemRoutes.contains(location) || 
+                location == '/dashboard') {
               return '/asset-summary';
             }
           }
           
+          // Technicians (Role 5)
           if (roleId == 5) {
-            // Technician
-            if (restrictedRoutes.contains(location)) {
+            if (restrictedRoutes.contains(location) || 
+                systemRoutes.contains(location)) {
               return '/dashboard';
             }
           }
-        }
 
-        // 2. Storage-based fallback (Prevents flashes)
-        if (roleFromStorage != null) {
+          // Super Admin (Role 1) & Company Admin (Role 2)
+          if (roleId == 1 || roleId == 2) {
+            if (roleId == 2 && restrictedRoutes.contains(location)) {
+              return '/dashboard';
+            }
+            if (location == '/asset-summary' || location == '/asset-schedule') {
+              return '/dashboard';
+            }
+          }
+        } else if (roleFromStorage != null) {
+          // Fallback during load/refresh
           if (roleFromStorage == UserRole.customer) {
-            if (restrictedRoutes.contains(location) || location == '/dashboard') {
+            if (restrictedRoutes.contains(location) || 
+                systemRoutes.contains(location) || 
+                location == '/dashboard') {
               return '/asset-summary';
             }
           }
+          
           if (roleFromStorage == UserRole.technician) {
-            if (restrictedRoutes.contains(location)) {
+             if (restrictedRoutes.contains(location) || 
+                systemRoutes.contains(location)) {
               return '/dashboard';
             }
           }
-          if (roleFromStorage == UserRole.superAdmin && location == '/asset-summary') {
-            return '/dashboard';
+
+          if (roleFromStorage == UserRole.superAdmin || roleFromStorage == UserRole.companyAdmin) {
+            if (roleFromStorage == UserRole.companyAdmin && restrictedRoutes.contains(location)) {
+              return '/dashboard';
+            }
+            if (location == '/asset-summary' || location == '/asset-schedule') {
+              return '/dashboard';
+            }
           }
         }
       }

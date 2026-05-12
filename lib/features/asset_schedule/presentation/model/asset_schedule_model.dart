@@ -1,11 +1,13 @@
 class AssetScheduleForecast {
   final DateTime date;
-  final double value;
+  final double? value; // Level %
+  final double? batteryValue; // Battery V
   final String status; // 'normal', 'warning', 'critical'
 
   AssetScheduleForecast({
     required this.date,
-    required this.value,
+    this.value,
+    this.batteryValue,
     required this.status,
   });
 }
@@ -15,7 +17,7 @@ class AssetScheduleModel {
   final String plantName;
   final int tankId;
   final String tankNumber;
-  final String item; // e.g. "Level"
+  final String deviceId;
   final String siteLocation; // "City, State"
   final DateTime? nextScheduledRefill;
   final DateTime? runoutDate;
@@ -27,7 +29,7 @@ class AssetScheduleModel {
     required this.plantName,
     required this.tankId,
     required this.tankNumber,
-    required this.item,
+    required this.deviceId,
     required this.siteLocation,
     this.nextScheduledRefill,
     this.runoutDate,

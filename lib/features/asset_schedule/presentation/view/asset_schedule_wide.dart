@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../controller/asset_schedule_provider.dart';
 import '../widgets/asset_schedule_pro_table.dart';
 import '../../../../shared/widgets/app_table.dart';
@@ -82,10 +83,12 @@ class _AssetScheduleWideState extends ConsumerState<AssetScheduleWide> {
             ],
           ),
           ElevatedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.download_outlined, size: 18),
+            onPressed: () {
+              ref.read(assetScheduleProvider.notifier).loadData(refresh: true);
+            },
+            icon: const Icon(Icons.refresh_outlined, size: 18),
             label: Text(
-              'EXPORT SCHEDULE',
+              'REFRESH',
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.w800,
                 fontSize: 12,
@@ -104,6 +107,9 @@ class _AssetScheduleWideState extends ConsumerState<AssetScheduleWide> {
   }
 
   Widget _buildFilterBar() {
+    final state = ref.watch(assetScheduleProvider);
+    final selectedDate = state.startDate ?? DateTime.now();
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -130,14 +136,54 @@ class _AssetScheduleWideState extends ConsumerState<AssetScheduleWide> {
             ),
           ),
           const SizedBox(width: 24),
-          SizedBox(
-            width: 200,
-            child: AppDropdown<String>(
-              value: 'All',
-              items: const ['All', '0-5', '6-10', '10+'],
-              hint: 'Days to Run Out',
-              itemLabel: (v) => v,
-              onChanged: (_) {},
+          InkWell(
+            onTap: () async {
+              final date = await showDatePicker(
+                context: context,
+                initialDate: selectedDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.light(
+                        primary: Color(0xFFEAB308),
+                        onPrimary: Colors.white,
+                        onSurface: Color(0xFF111827),
+                      ),
+                    ),
+                    child: child!,
+                  );
+                },
+              );
+              if (date != null) {
+                ref.read(assetScheduleProvider.notifier).loadData(startDate: date);
+              }
+            },
+            child: Container(
+              width: 200,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey.withOpacity(0.05),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFFEAB308)),
+                  const SizedBox(width: 12),
+                  Text(
+                    DateFormat('MMM dd, yyyy').format(selectedDate),
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF374151),
+                    ),
+                  ),
+                  const Spacer(),
+                  const Icon(Icons.arrow_drop_down, color: Color(0xFF9CA3AF)),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 16),

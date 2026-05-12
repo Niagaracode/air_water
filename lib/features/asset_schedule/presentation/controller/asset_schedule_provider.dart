@@ -5,6 +5,7 @@ import '../../../setting/data/api/setting_api.dart';
 import '../../../../core/network/http/api_service.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../model/asset_schedule_model.dart';
+import '../../data/api/mqtt_api.dart';
 
 class AssetScheduleState {
   final bool isLoading;
@@ -14,6 +15,7 @@ class AssetScheduleState {
   final int totalPages;
   final String? daysToRunOutFilter;
   final String? unitFilter;
+  final DateTime? startDate;
 
   const AssetScheduleState({
     this.isLoading = false,
@@ -23,6 +25,7 @@ class AssetScheduleState {
     this.totalPages = 1,
     this.daysToRunOutFilter,
     this.unitFilter,
+    this.startDate,
   });
 
   AssetScheduleState copyWith({
@@ -33,6 +36,7 @@ class AssetScheduleState {
     int? totalPages,
     String? daysToRunOutFilter,
     String? unitFilter,
+    DateTime? startDate,
   }) {
     return AssetScheduleState(
       isLoading: isLoading ?? this.isLoading,
@@ -42,6 +46,7 @@ class AssetScheduleState {
       totalPages: totalPages ?? this.totalPages,
       daysToRunOutFilter: daysToRunOutFilter ?? this.daysToRunOutFilter,
       unitFilter: unitFilter ?? this.unitFilter,
+      startDate: startDate ?? this.startDate,
     );
   }
 }
@@ -52,12 +57,13 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
     return const AssetScheduleState();
   }
 
-  Future<void> loadData({bool refresh = false}) async {
-    if (refresh) {
+  Future<void> loadData({bool refresh = false, DateTime? startDate}) async {
+    if (refresh || startDate != null) {
       state = state.copyWith(
         page: 1,
         schedules: [],
         isLoading: true,
+        startDate: startDate ?? state.startDate,
         error: null,
       );
     } else {
@@ -68,6 +74,8 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
       final apiClient = ref.read(apiClientProvider);
       final tankApi = TankApi(apiClient);
       final settingApi = SettingApi(apiClient);
+
+      final now = state.startDate ?? DateTime.now();
 
       // Fetch grouped tanks
       final response = await tankApi.getTanksGrouped(
@@ -88,94 +96,94 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
 
       final List<AssetScheduleModel> newSchedules = [];
       final random = Random();
-      final now = DateTime.now();
 
-      final parameters = [
-        {'name': 'Level', 'unit': '% Full'},
-        {'name': 'Pressure', 'unit': 'Psi'},
-        {'name': 'Battery', 'unit': 'V'},
-      ];
+      final mqttApi = MqttApi(apiClient);
 
       for (final tankGroup in response.data) {
         for (final tank in tankGroup.tanks) {
-          // Filter settings for this specific tank or its site
-          final tankSettings = allSettings
-              .where(
-                (r) =>
-                    r.tankId == tank.tankId ||
-                    (r.tankId == null && r.siteId == tank.siteId),
-              )
-              .toList();
-
-          for (var param in parameters) {
-            final paramName = param['name'] as String;
-            final paramUnit = param['unit'] as String;
-
-            // Check if there's a setting for this parameter
-            final setting = tankSettings
-                .where(
-                  (r) =>
-                      r.parameterType?.toLowerCase() == paramName.toLowerCase(),
-                )
-                .firstOrNull;
-
-            // Authorization logic
-            bool isAuthorized = false;
-            if (isTechnician) {
-              // Technician: Must have a setting AND that setting must belong to one of the user's rosters
-              isAuthorized =
-                  setting != null &&
-                  userRosters.any(
-                    (ur) =>
-                        setting.rosterName?.toLowerCase() == ur.toLowerCase(),
-                  );
-            } else {
-              // Admin/Customer: Level by default, or if has a setting
-              isAuthorized = paramName == 'Level' || setting != null;
-            }
-
-            if (isAuthorized) {
-              final currentLevel = 20.0 + random.nextInt(60);
-              final depletionRate = 2.0 + random.nextDouble() * 5.0;
-              final daysToRunout = (currentLevel / depletionRate).floor();
-
-              final runoutDate = now.add(
-                Duration(days: daysToRunout, hours: random.nextInt(24)),
-              );
-              final nextRefill = daysToRunout > 2
-                  ? now.add(Duration(days: max(1, daysToRunout - 2), hours: 9))
-                  : null;
-
-              final forecasts = List.generate(10, (index) {
-                final date = now.add(Duration(days: index));
-                final val =
-                    currentLevel + (index * random.nextDouble() * 10) % 100;
-                return AssetScheduleForecast(
-                  date: date,
-                  value: val,
-                  status: val < 20
-                      ? 'critical'
-                      : (val < 40 ? 'warning' : 'normal'),
-                );
-              });
-
-              newSchedules.add(
-                AssetScheduleModel(
-                  plantId: tank.siteId ?? 0,
-                  plantName: tankGroup.siteName,
-                  tankId: tank.tankId,
-                  tankNumber: tank.tankNumber,
-                  item: paramName,
-                  siteLocation:
-                      '${tankGroup.city ?? "Unknown"}, ${tankGroup.state ?? ""}',
-                  runoutDate: runoutDate,
-                  nextScheduledRefill: nextRefill,
-                  unit: paramUnit,
-                  forecast: forecasts,
-                ),
-              );
+          final deviceId = tank.deviceId ?? '';
+          
+          List<Map<String, dynamic>> deviceHistory = [];
+          DateTime? last100Date;
+          if (deviceId.isNotEmpty) {
+            try {
+              final historyData = await mqttApi.getDeviceHistory(deviceId, days: 14);
+              deviceHistory = (historyData['history'] as List).cast<Map<String, dynamic>>();
+              if (historyData['last_100_date'] != null) {
+                last100Date = DateTime.parse(historyData['last_100_date'] as String).toLocal();
+              }
+            } catch (e) {
+              print('Error fetching history for $deviceId: $e');
             }
           }
+
+          final currentLevel = 20.0 + random.nextInt(60);
+          final depletionRate = 2.0 + random.nextDouble() * 5.0;
+          final daysToRunout = (currentLevel / depletionRate).floor();
+
+          final runoutDate = now.add(
+            Duration(days: daysToRunout, hours: random.nextInt(24)),
+          );
+          
+          // Use real last 100% date if available, otherwise mock a future one
+          final nextRefill = last100Date ?? (daysToRunout > 2
+              ? now.add(Duration(days: max(1, daysToRunout - 2), hours: 9))
+              : null);
+
+          final forecasts = List.generate(14, (index) {
+            final date = now.add(Duration(days: index));
+            final dateStr = date.toIso8601String().split('T')[0];
+
+            // Robust date comparison: compare YYYY-MM-DD strings
+            final targetDateStr = date.toIso8601String().split('T')[0];
+            
+            final historyRecord = deviceHistory.where((h) {
+              try {
+                final hDate = DateTime.parse(h['timestamp'] as String).toLocal();
+                return hDate.toIso8601String().split('T')[0] == targetDateStr;
+              } catch (e) {
+                return false;
+              }
+            }).lastOrNull;
+
+            double? levelVal;
+            double? batteryVal;
+
+            if (historyRecord != null) {
+              final payload = historyRecord['payload'] as Map<String, dynamic>;
+              levelVal = (payload['TNP'] ?? 0.0).toDouble();
+              batteryVal = (payload['BAT'] ?? 0.0).toDouble();
+            } else {
+              // No real data for this day - set to null to show "--"
+              levelVal = null;
+              batteryVal = null;
+            }
+            
+            return AssetScheduleForecast(
+              date: date,
+              value: levelVal,
+              batteryValue: batteryVal,
+              status: (levelVal ?? 100) < 20
+                  ? 'critical'
+                  : ((levelVal ?? 100) < 40 ? 'warning' : 'normal'),
+            );
+          });
+
+          newSchedules.add(
+            AssetScheduleModel(
+              plantId: tank.siteId ?? 0,
+              plantName: tankGroup.siteName,
+              tankId: tank.tankId,
+              tankNumber: tank.tankNumber,
+              deviceId: deviceId,
+              siteLocation:
+                  '${tankGroup.city ?? "Unknown"}, ${tankGroup.state ?? ""}',
+              runoutDate: runoutDate,
+              nextScheduledRefill: nextRefill,
+              unit: '% Full',
+              forecast: forecasts,
+            ),
+          );
         }
       }
 

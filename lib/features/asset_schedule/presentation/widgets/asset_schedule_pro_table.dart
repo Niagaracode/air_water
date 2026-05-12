@@ -67,10 +67,10 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate widths
-        const double staticWidth = 70 + 150 + 180 + 150 + 150 + 80;
+        const double staticWidth = 70 + 150 + 180 + 150 + 150;
         final double forecastWidth = dayHeaders.length * 80.0;
         // Include 32px for horizontal padding (16 left + 16 right)
-        final double totalWidth = staticWidth + forecastWidth + 32;
+        final double totalWidth = staticWidth + forecastWidth + 40;
 
         // Use a ScrollController to sync or just let them scroll independently
         return Scrollbar(
@@ -131,11 +131,10 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
       child: Row(
         children: [
           const AppTableHeaderCell('SI.NO', width: 70),
-          const AppTableHeaderCell('ITEM', width: 150),
+          const AppTableHeaderCell('DEVICE ID', width: 150),
           const AppTableHeaderCell('SITE LOCATION', width: 180),
           const AppTableHeaderCell('SCHEDULE REFILL', width: 150),
           const AppTableHeaderCell('RUNOUT DATE', width: 150),
-          const AppTableHeaderCell('UNIT', width: 80),
           // Day Headers
           ...dayHeaders.map((h) => AppTableHeaderCell(h, width: 80)),
         ],
@@ -240,30 +239,11 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
         children: [
           const AppTableCell(null, width: 70), // SI.NO spacing
           AppTableCell(
-            null,
+            schedule.deviceId,
             width: 150,
-            child: Row(
-              children: [
-                Icon(
-                  schedule.item.toLowerCase().contains('level')
-                      ? Icons.analytics_outlined
-                      : schedule.item.toLowerCase().contains('battery')
-                          ? Icons.battery_std_outlined
-                          : Icons.circle_outlined,
-                  size: 16,
-                  color: const Color(0xFF141E7A),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  schedule.item,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-              ],
-            ),
+            bold: true,
+            fontSize: 13,
+            color: const Color(0xFF111827),
           ),
           AppTableCell(
             schedule.siteLocation,
@@ -337,12 +317,6 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
                     ),
                   ),
           ),
-          AppTableCell(
-            schedule.unit,
-            width: 80,
-            fontSize: 13,
-            color: const Color(0xFF4B5563),
-          ),
           // Forecast Cells
           ...schedule.forecast.map(
             (f) =>
@@ -365,27 +339,46 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          forecast.value.toStringAsFixed(0),
+          forecast.value != null ? '${forecast.value!.toStringAsFixed(0)}%' : '--',
           style: GoogleFonts.inter(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
             color: const Color(0xFF111827),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 3),
+        // Level Bar
         Container(
-          width: 60,
-          height: 4,
+          width: 50,
+          height: 2.5,
           decoration: BoxDecoration(
-            color: barColor,
+            color: forecast.value != null ? barColor : Colors.transparent,
             borderRadius: BorderRadius.circular(2),
-            boxShadow: [
-              BoxShadow(
-                color: barColor.withOpacity(0.3),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          forecast.batteryValue != null ? '${forecast.batteryValue!.toStringAsFixed(1)}V' : '--V',
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            color: const Color(0xFF6B7280),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 2),
+        // Battery Bar
+        Container(
+          width: 50,
+          height: 2.5,
+          decoration: BoxDecoration(
+            color: forecast.batteryValue != null
+                ? (forecast.batteryValue! > 3.3
+                    ? const Color(0xFF10B981) // Green
+                    : (forecast.batteryValue! > 0.1
+                        ? const Color(0xFFF59E0B) // Orange/Intermediate
+                        : const Color(0xFFEF4444))) // Red/Low
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
       ],

@@ -130,7 +130,10 @@ const reportMenu = [
     key: 'Event',
     label: 'Event',
     icon: Icons.event_note_rounded,
-    allowedRoles: [UserRole.technician, UserRole.customer],
+    allowedRoles: [
+      UserRole.technician,
+      UserRole.customer
+    ],
   ),
   SidebarMenuItem(
     key: 'Setting',
