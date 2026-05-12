@@ -9,7 +9,6 @@ import '../../provider/dashboard_provider.dart';
 
 import '../widgets/dashboard_list_view.dart';
 import '../widgets/dashboard_map_view.dart';
-import '../widgets/device_list_header.dart';
 import '../widgets/search_and_filters.dart';
 import '../widgets/statistics_cards.dart';
 import '../widgets/view_toggle.dart';
@@ -38,46 +37,31 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   @override
   void initState() {
     super.initState();
-
     mqttNotifier = ref.read(mqttProvider.notifier);
+    _initialize();
+  }
 
-    Future.microtask(() {
-
-      if (!mounted) return;
-
-      Future.microtask(() async {
+  Future<void> _initialize() async {
+    await mqttNotifier.initializeAndConnect();
+    if (!mounted) return;
+    await mqttNotifier.subscribeToTopic(topic,
+      onMessage: (msg) {
         if (!mounted) return;
-
-        await mqttNotifier.initializeAndConnect();
-
-        await mqttNotifier.subscribeToTopic(
-          topic,
-          onMessage: (msg) {
-            print("✅ MQTT MESSAGE: ${msg.rawPayload}");
-
-            final parsed = _parseMqtt(msg.data);
-
-            if (!mounted) return;
-            ref.read(tankDataProvider.notifier).updateFromMqtt(parsed);
-          },
-        );
-      });
-
-    });
+        print("✅ MQTT MESSAGE: ${msg.rawPayload}");
+        final parsed = _parseMqtt(msg.data);
+        ref.read(tankDataProvider.notifier).updateFromMqtt(parsed);
+      },
+    );
   }
 
 
   Map<String, dynamic> _parseMqtt(Map<String, dynamic> json) {
     final result = <String, dynamic>{};
-
     // ✅ deviceId
     result['deviceId'] = json['cC'];
-
     // ✅ extract cM string
     final cM = json['cM'] ?? '';
-
     final matches = RegExp(r'([A-Z]+):([\d.]+)').allMatches(cM);
-
     for (var m in matches) {
       final key = m.group(1);
       final value = double.tryParse(m.group(2)!);
@@ -97,7 +81,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
           break;
       }
     }
-
     return result;
   }
 
@@ -142,12 +125,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                   statistics: statistics,
                 ),
 
-                const SizedBox(height: 24),
-
-                /// Header
-                const DeviceListHeader(),
-
-                const SizedBox(height: 12),
+                const SizedBox(height: 30),
 
                 /// Search & Filters
                 SearchAndFilters(
@@ -336,8 +314,8 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
   @override
   void dispose() {
+    mqttNotifier.unsubscribeFromTopic(topic);
     _searchController.dispose();
-    //mqttNotifier.unsubscribeFromTopic(topic);
     super.dispose();
   }
 }
