@@ -2,6 +2,7 @@ import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../../../controller/provider/sidebar_provider.dart';
 import '../../../../shared/utils/app_helper.dart';
 import '../../data/models/site_group_model.dart';
@@ -468,9 +469,17 @@ class DashboardListView extends ConsumerWidget {
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min ago';
-    if (diff.inHours < 24) return '${diff.inHours} hrs ago';
-    return '${diff.inDays} day ago';
+
+    if (diff.inMinutes < 1) {
+      return 'Just now';
+    }
+    if (diff.inMinutes < 60) {
+      return '${diff.inMinutes} mins ago';
+    }
+    if (diff.inHours < 24) {
+      return '${diff.inHours} hrs ago';
+    }
+    return '${diff.inDays} days ago';
   }
+
 }

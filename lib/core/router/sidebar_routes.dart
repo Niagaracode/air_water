@@ -10,7 +10,7 @@ const Map<String, String> menuRoutes = {
   'Asset Group': '/asset-group',
   'Group': '/asset-group',
 
-  'Rule': '/rule-group',
+  'Rule Group': '/rule',
   'Message Template': '/message-template',
   'Roaster': '/roaster',
   'Report': '/report',

@@ -10,12 +10,8 @@ class ApiService {
   ApiService(this._dio);
 
   Future<Response> get(String endpoint, {Map<String, dynamic>? query}) {
-
-    debugPrint("Base URL: ${_dio.options.baseUrl}");
-    debugPrint("Endpoint: $endpoint");
     debugPrint("Full URL: ${_dio.options.baseUrl}$endpoint");
     debugPrint("Query: $query");
-
     return _dio.get(endpoint, queryParameters: query);
   }
 
