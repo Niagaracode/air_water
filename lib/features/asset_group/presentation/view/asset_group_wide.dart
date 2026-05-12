@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../controller/asset_group_provider.dart';
+import '../../../product/provider/product_provider.dart';
 import '../../domain/models/asset_group_model.dart';
 import 'asset_group_edit_page.dart';
 import '../widgets/add_asset_group_modal.dart';
 import '../../../user/presentation/controller/user_provider.dart';
-import '../../../product/provider/product_provider.dart';
 
 class AssetGroupWide extends ConsumerStatefulWidget {
   const AssetGroupWide({super.key});

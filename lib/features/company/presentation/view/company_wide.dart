@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../../../../shared/widgets/table_data_cell.dart';
 import '../../../../shared/widgets/table_header_cell.dart';
+import '../../../../shared/widgets/view_header.dart';
 import '../controller/company_provider.dart';
 import '../widgets/add_company_modal.dart';
 import '../model/company_model.dart';
@@ -31,7 +32,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
       ) : SizedBox(
         child: Column(
           children: [
-            _buildHeader(companyState, companyNotifier),
+            _buildHeader(context),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: _buildTableBody(companyState, companyNotifier),
@@ -42,73 +43,34 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     );
   }
 
-  Widget _buildHeader(CompanyState state, CompanyNotifier notifier) {
-    return Container(
-      padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 16),
-      margin: const EdgeInsets.only(left: 26, right: 26, top: 26, bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'COMPANY MANAGEMENT',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                      color: const Color(0xFF111827),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Centralize company information including identification, locations, and status management.',
-                    style: GoogleFonts.inter(color: Colors.black38, fontSize: 13),
-                  ),
-                ],
+  Widget _buildHeader(BuildContext context) {
+    return ViewHeader(
+      title: 'COMPANY MANAGEMENT',
+      subtitle:
+      'Centralize company information including identification, locations, and status management.',
+      buttonText: 'ADD COMPANY',
+      onPressed: () {
+        showGeneralDialog(
+          context: context,
+          barrierDismissible: true,
+          barrierLabel: 'AddCompany',
+          barrierColor: Colors.black54,
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, anim1, anim2) => const AddCompanyModal(),
+          transitionBuilder: (context, anim1, anim2, child) {
+            return SlideTransition(
+              position:
+              Tween<Offset>(
+                begin: const Offset(1, 0),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: anim1, curve: Curves.easeOut),
               ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  showGeneralDialog(
-                    context: context,
-                    barrierDismissible: true,
-                    barrierLabel: 'AddCompany',
-                    barrierColor: Colors.black54,
-                    transitionDuration: const Duration(milliseconds: 300),
-                    pageBuilder: (context, anim1, anim2) => const AddCompanyModal(),
-                    transitionBuilder: (context, anim1, anim2, child) {
-                      return SlideTransition(
-                        position:
-                        Tween<Offset>(
-                          begin: const Offset(1, 0),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(parent: anim1, curve: Curves.easeOut),
-                        ),
-                        child: child,
-                      );
-                    },
-                  );
-                },
-                style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(
-                  'ADD COMPANY',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+              child: child,
+            );
+          },
+        );
+      },
     );
   }
 

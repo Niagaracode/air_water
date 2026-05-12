@@ -1,28 +1,23 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../../../../shared/widgets/table_data_cell.dart';
 import '../../../../shared/widgets/table_header_cell.dart';
-import '../../provider/product_provider.dart';
+import '../../../../shared/widgets/view_header.dart';
 import '../../data/product_model.dart';
+import '../../provider/product_provider.dart';
 import '../view/product_edit_view.dart';
 
-class ProductWide extends ConsumerStatefulWidget {
+class ProductWide extends ConsumerWidget {
+
   const ProductWide({super.key});
 
   @override
-  ConsumerState<ProductWide> createState() => _ProductWideState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
 
-class _ProductWideState extends ConsumerState<ProductWide> {
-
-
-  @override
-  Widget build(BuildContext context) {
     final state = ref.watch(productNotifierProvider);
 
     return Scaffold(
@@ -30,63 +25,44 @@ class _ProductWideState extends ConsumerState<ProductWide> {
       body: Column(
         children: [
           _buildHeader(context),
-          if (!state.isLoading)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: _buildDataTable(context, state.products),
+          SizedBox(child: state.isLoading && state.products.isEmpty ? Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildLoadingView(),
+          )
+              : Padding(padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+              ),
+              child: _buildDataTable(context, ref, state.products),
             ),
+          ),
         ],
       ),
     );
   }
 
+  /// HEADER
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 16),
-      margin: const EdgeInsets.only(left: 26, right: 26, top: 26, bottom: 8),
-      child: Row(
+    return ViewHeader(
+      title: 'PRODUCT MANAGEMENT',
+      subtitle:
+      'Manage fluid products, their descriptions, and specific properties like SCM/M3 and gravity.',
+      buttonText: 'Add Product',
+      onPressed: () {
+        _showAddProductSideSheet(context);
+      },
+    );
+  }
+
+  Widget _buildLoadingView() {
+    return Skeletonizer(
+      enabled: true,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'PRODUCT MANAGEMENT',
-                style: GoogleFonts.outfit(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8,
-                  color: const Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Manage fluid products, their descriptions, and specific properties like SCM/M3 and gravity.',
-                style: GoogleFonts.inter(
-                  color: Colors.black38,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          ElevatedButton.icon(
-            onPressed: () => _showAddProductSideSheet(context),
-            icon: const Icon(Icons.add, color: Colors.white, size: 18),
-            label: Text(
-              'Add Product',
-              style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF141E7A),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+          ...List.generate(6, (index) => Container(
+              margin: const EdgeInsets.only(bottom: 5),
+              padding: const EdgeInsets.all(5),
+              child: Expanded(child: _skeletonBox(height: 40)),
             ),
           ),
         ],
@@ -94,10 +70,26 @@ class _ProductWideState extends ConsumerState<ProductWide> {
     );
   }
 
-  Widget _buildDataTable(BuildContext context, List<Product> list) {
+  Widget _skeletonBox({double? width, double height = 16, double radius = 12}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(radius),
+      ),
+    );
+  }
+
+  /// TABLE
+  Widget _buildDataTable(BuildContext context, WidgetRef ref, List<Product> list) {
+
+    double screenHeight = MediaQuery.sizeOf(context).height;
+    double stateHeight = (list.length * 45) + 50;
+
     return Container(
       width: MediaQuery.sizeOf(context).width,
-      height: (list.length * 45) + 50,
+      height: stateHeight > (screenHeight-200) ? (screenHeight-205) : stateHeight,
       margin: const EdgeInsets.only(left: 20, right: 20, bottom: 8),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -118,77 +110,124 @@ class _ProductWideState extends ConsumerState<ProductWide> {
         headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.1)),
         columns: [
           DataColumn2(
-            label: TableHeaderCell(label: 'SI.NO',),
+            fixedWidth: 60,
+            label: Center(child: TableHeaderCell(label: 'SI.NO')),
+          ),
+          const DataColumn2(
+            size: ColumnSize.M,
+            label: Center(child: TableHeaderCell(label: 'PRODUCT NAME')),
+          ),
+          const DataColumn2(
+            size: ColumnSize.L,
+            label: TableHeaderCell(label: 'DESCRIPTION')
+          ),
+          const DataColumn2(
             size: ColumnSize.S,
+            label: Center(child: TableHeaderCell(label: 'SPECIFIC GRAVITY')),
           ),
           const DataColumn2(
-            label: TableHeaderCell(label: 'Product Name'),
-            size: ColumnSize.L,
+            size: ColumnSize.M,
+            label: Center(child: TableHeaderCell(label: 'STANDARD VOLUME / M3')),
           ),
           const DataColumn2(
-            label: TableHeaderCell(label: 'Description'),
-            size: ColumnSize.L,
-          ),
-          const DataColumn2(
-            label: TableHeaderCell(label: 'Scm / m3'),
-            fixedWidth: 150.0,
-          ),
-          const DataColumn2(
-            label: TableHeaderCell(label: 'Specific gravity'),
-            fixedWidth: 150.0,
-          ),
-          const DataColumn2(
-            label: TableHeaderCell(label: 'Action'),
-            fixedWidth: 100.0,
+            fixedWidth: 120,
+            label: Center(child: TableHeaderCell(label: 'ACTIONS')),
           ),
         ],
 
-        rows: List.generate(list.length, (index) {
-          final p = list[index];
-          return DataRow(
-            cells: [
-              DataCell(TableDataCell(label: '${index + 1}')),
-              DataCell(TableDataCell(label: p.name, bold: true,)),
-              DataCell(TableDataCell(label: p.description)),
-              DataCell(TableDataCell(label: p.scmM3.toStringAsFixed(2))),
-              DataCell(TableDataCell(label: p.specificGravity.toStringAsFixed(3))),
-              DataCell(
-                SizedBox(
-                  width: 100,
-                  child: Row(
+        rows: List.generate(
+          list.length, (index) {
+            final p = list[index];
+            return DataRow(
+              cells: [
+                DataCell(Center(child: TableDataCell(label: '${index + 1}'))),
+                DataCell(Center(child: TableDataCell(label: p.name, bold: true))),
+                DataCell(TableDataCell(label: p.description)),
+                DataCell(Center(child: TableDataCell(label: (p.specificGravity).toStringAsFixed(3)))),
+                DataCell(Center(child: TableDataCell(label: p.scmM3.toStringAsFixed(2)))),
+                DataCell(Row(
+                    mainAxisAlignment:
+                    MainAxisAlignment.center,
                     children: [
                       AppTableActionButton(
-                        icon: Icons.edit_outlined,
+                        icon:
+                        Icons.edit_outlined,
                         color: const Color(0xFF2563EB),
                         bg: const Color(0xFFEFF6FF),
-                        onTap: () => _showProductSideSheet(context, p),
+                        onTap: () {
+                          _showProductSideSheet(context, p);
+                        },
                       ),
                       const SizedBox(width: 8),
-                      AppTableActionButton(
-                        icon: Icons.delete_outline_rounded,
+                      AppTableActionButton(icon: Icons.delete_outline_rounded,
                         color: const Color(0xFFDC2626),
                         bg: const Color(0xFFFEF2F2),
-                        onTap: () => _deleteProduct(context, ref, p),
+                        onTap: () {
+                          _deleteProduct(context, ref, p);
+                        },
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
-          );
-        }),
+              ],
+            );
+          },
+        ),
       ),
     );
-
   }
 
+  /// ADD PRODUCT
   void _showAddProductSideSheet(BuildContext context) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: "Add Product",
+      barrierLabel: 'Add Product',
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Align(alignment: Alignment.centerRight,
+          child: Material(
+            elevation: 8,
+            child: SizedBox(
+              width: 600,
+              height: double.infinity,
+              child: ProductEditView(
+                product: const Product(
+                  id: 0,
+                  name: '',
+                  productCode: '',
+                  description: '',
+                  scmM3: 0,
+                  specificGravity: 0,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      },
+    );
+  }
+
+  /// EDIT PRODUCT
+  void _showProductSideSheet(BuildContext context, Product product) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Edit Product',
+      barrierColor: Colors.black54,
+      transitionDuration:
+      const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) {
         return Align(
           alignment: Alignment.centerRight,
@@ -198,80 +237,59 @@ class _ProductWideState extends ConsumerState<ProductWide> {
               width: 600,
               height: double.infinity,
               child: ProductEditView(
-                product: Product(
-                  id: 0,
-                  name: '',
-                  productCode: '',
-                  description: '',
-                  scmM3: 0.0,
-                  specificGravity: 0.0,
-                ),
+                product: product,
               ),
             ),
           ),
         );
       },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final tween = Tween(begin: const Offset(1, 0), end: Offset.zero);
 
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
         return SlideTransition(
-          position: tween.animate(animation),
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
           child: child,
         );
       },
     );
   }
 
-  void _showProductSideSheet(BuildContext context, Product product) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "Edit Product",
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return Align(
-          alignment: Alignment.centerRight,
-          child: Material(
-            elevation: 8,
-            child: SizedBox(
-              width: 600,
-              height: double.infinity,
-              child: ProductEditView(product: product),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final tween = Tween(begin: const Offset(1, 0), end: Offset.zero);
-        return SlideTransition(
-          position: tween.animate(animation),
-          child: child,
-        );
-      },
-    );
-  }
+  /// DELETE
 
   Future<void> _deleteProduct(BuildContext context, WidgetRef ref, Product product) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Delete Product'),
-            content: const Text(
-                'Are you sure you want to delete this product? This action cannot be undone.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Product'),
+          content: const Text(
+            'Are you sure you want to delete this product?',
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                if (Navigator.canPop(dialogContext)) {
+                  Navigator.of(dialogContext).pop(false);
+                }
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (Navigator.canPop(dialogContext)) {
+                  Navigator.of(dialogContext).pop(true);
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirm != true) return;
@@ -280,23 +298,19 @@ class _ProductWideState extends ConsumerState<ProductWide> {
         .read(productNotifierProvider.notifier)
         .deleteProduct(product.id);
 
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: Colors.green,
-          content: Text("Product deleted successfully"),
-          duration: Duration(seconds: 2),
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor:
+        success ? Colors.green : Colors.red,
+        content: Text(
+          success
+              ? 'Product deleted successfully'
+              : ref.read(productNotifierProvider).error ??
+              'Delete failed',
         ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: Colors.red,
-          content: Text("Failed to delete product: ${ref
-              .read(productNotifierProvider)
-              .error}"),
-        ),
-      );
-    }
+      ),
+    );
   }
 }

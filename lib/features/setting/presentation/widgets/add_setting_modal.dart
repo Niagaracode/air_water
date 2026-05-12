@@ -1,3 +1,4 @@
+import 'package:air_water/features/product/provider/product_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +19,6 @@ import '../../../message_template/presentation/controller/message_template_provi
 import '../../../tank/presentation/model/tank_model.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../product/data/product_model.dart';
-import '../../../product/provider/product_provider.dart';
 import '../../../../core/network/http/api_service.dart';
 
 class AddSettingModal extends ConsumerStatefulWidget {
@@ -138,7 +138,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       _rows.add(SettingRowData());
     }
 
-    Future.microtask(() => _loadData());
+    Future.microtask(() => _loadData(productNotifierProvider));
   }
 
   Future<void> _fetchFullTankDetails(Tank t) async {
@@ -163,7 +163,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     }
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData(dynamic productListProvider) async {
     setState(() => _isLoadingData = true);
     try {
       final companyRepo = ref.read(companyRepositoryProvider);
