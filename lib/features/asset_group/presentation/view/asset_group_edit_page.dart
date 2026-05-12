@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../product/provider/product_provider.dart';
 import '../controller/asset_group_provider.dart';
 import '../../domain/models/asset_group_model.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
 import '../../../company/presentation/controller/company_provider.dart';
 import '../../../company/presentation/model/company_model.dart';
-import '../../../product/provider/product_provider.dart';
 import '../../../site/presentation/controller/site_provider.dart';
 import '../../../device/presentation/controller/device_provider.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
@@ -1086,13 +1086,15 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     }
 
     if (rule.parameter == 'Product Name') {
-      final products =
-          ref
-              .watch(productListProvider)
-              .value
-              ?.map((p) => {'id': p.id.toString(), 'name': p.name})
-              .toList() ??
-          [];
+
+      final state = ref.watch(productNotifierProvider);
+      final products = state.products.map((p) {
+        return {
+          'id': p.id.toString(),
+          'name': p.name,
+        };
+      }).toList();
+
       products.sort((a, b) => a['name']!.compareTo(b['name']!));
 
       if (rule.value.isEmpty && products.isNotEmpty) {

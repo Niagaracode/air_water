@@ -1,9 +1,10 @@
+import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../data/product_model.dart';
 import '../../provider/product_provider.dart';
+
 
 class ProductEditView extends ConsumerStatefulWidget {
   final Product product;
@@ -40,57 +41,71 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
   }
 
   Future<void> _saveChanges() async {
+    FocusScope.of(context).unfocus();
+
     if (nameCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Product name is required")),
+        const SnackBar(
+          content: Text("Product name is required"),
+        ),
       );
       return;
     }
 
     setState(() => isSaving = true);
 
-    final data = {
-      'product_name': nameCtrl.text.trim(),
-      'description': descCtrl.text.trim(),
-      'specificgravity': double.tryParse(gravityCtrl.text) ?? 0.0,
-      'scm_m3': double.tryParse(scmCtrl.text) ?? 0.0,
-    };
+    try {
+      final data = {
+        'product_name': nameCtrl.text.trim(),
+        'description': descCtrl.text.trim(),
+        'specificgravity': double.tryParse(gravityCtrl.text.trim()) ?? 0.0,
+        'scm_m3': double.tryParse(scmCtrl.text.trim()) ?? 0.0,
+      };
 
-    final success = widget.product.id == 0
-        ? await ref.read(productNotifierProvider.notifier).createProduct(data)
-        : await ref
-        .read(productNotifierProvider.notifier)
-        .updateProduct(widget.product.id, data);
+      final notifier = ref.read(productNotifierProvider.notifier);
 
-    if (mounted) {
+      final success = widget.product.id == 0
+          ? await notifier.createProduct(data)
+          : await notifier.updateProduct(widget.product.id, data);
+
+      if (!mounted) return;
+
       setState(() => isSaving = false);
 
       if (success) {
-        // Show SnackBar first, then pop (or pop then show SnackBar on parent)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.green,
-            content: Text(widget.product.id == 0
-                ? "Product created successfully"
-                : "Product updated successfully"),
-            duration: const Duration(seconds: 2),
+            content: Text(
+              widget.product.id == 0
+                  ? "Product created successfully"
+                  : "Product updated successfully",
+            ),
           ),
         );
-
-        // Wait a bit for SnackBar to be visible, then pop
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        if (mounted) {
-          Navigator.pop(context); // Only ONE pop
-        }
+        Navigator.of(context, rootNavigator: true).pop();
       } else {
+        final error = ref.read(productNotifierProvider).error;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.red,
-            content: Text("Failed to save product: ${ref.read(productNotifierProvider).error}"),
+            content: Text(
+              error ?? "Failed to save product",
+            ),
           ),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() => isSaving = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(e.toString()),
+        ),
+      );
     }
   }
 
@@ -116,7 +131,9 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  },
                 )
               ],
             ),
@@ -173,10 +190,10 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
                           const SizedBox(width: 20),
                           Expanded(
                             child: _field(
-                              label: "SCM/M3",
+                              label: "Standard volume/ cubic meter",
                               child: AppTextField(
                                 controller: scmCtrl,
-                                hint: "SCM/M3",
+                                hint: "Standard volume/ cubic meter",
                                 keyboardType: TextInputType.number,
                               ),
                             ),
@@ -190,7 +207,7 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
                         child: ElevatedButton(
                           onPressed: isSaving ? null : _saveChanges,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF141E7A),
+                            backgroundColor: primary,
                             foregroundColor: Colors.white,
                           ),
                           child: isSaving

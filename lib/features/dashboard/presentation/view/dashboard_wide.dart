@@ -31,7 +31,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   String _selectedStatus = 'All Status';
   String _selectedRegion = 'All Regions';
   String _searchQuery = '';
-  int _filteredCount = 0;
   bool _isListView = true;
 
   @override
@@ -149,7 +148,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                       _selectedRegion = 'All Regions';
                       _selectedStatus = 'All Status';
                       _searchQuery = '';
-                      _filteredCount = 0;
                     });
                     _searchController.clear();
                   },
