@@ -115,7 +115,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
         data: (tanks) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -159,10 +158,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
                 /// Toggle
                 ViewToggle(
-                  currentView: _isListView
-                      ? ViewType.list
-                      : ViewType.map,
-
+                  currentView: _isListView ? ViewType.list : ViewType.map,
                   onViewChanged: (val) {
                     setState(() {
                       _isListView = val == ViewType.list;
