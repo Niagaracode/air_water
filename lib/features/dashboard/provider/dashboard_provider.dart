@@ -37,8 +37,39 @@ final tankDataProvider = StateNotifierProvider<
 });
 
 
-
 final groupedTanksProvider = Provider<List<SiteGroupModel>>((ref) {
+
+  final tankAsync = ref.watch(tankDataProvider);
+
+  return tankAsync.when(
+    data: (tanks) {
+
+      final Map<String, SiteGroupModel> grouped = {};
+      for (final tank in tanks) {
+        final site = tank.siteName.isNotEmpty
+            ? tank.siteName
+            : 'Unknown Site';
+        final city = tank.city.isNotEmpty
+            ? tank.city
+            : 'Unknown City';
+        /// UNIQUE GROUP KEY
+        final key = '${site}_$city';
+        grouped.putIfAbsent(key, () => SiteGroupModel(
+            siteName: site,
+            city: city,
+            tanks: [],
+          ),
+        );
+        grouped[key]!.tanks.add(tank);
+      }
+      return grouped.values.toList();
+    },
+    loading: () => [],
+    error: (_, __) => [],
+  );
+});
+
+/*final groupedTanksProvider = Provider<List<SiteGroupModel>>((ref) {
   final tankAsync = ref.watch(tankDataProvider);
 
   return tankAsync.when(
@@ -59,7 +90,7 @@ final groupedTanksProvider = Provider<List<SiteGroupModel>>((ref) {
     loading: () => [],
     error: (_, __) => [],
   );
-});
+});*/
 
 
 final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
