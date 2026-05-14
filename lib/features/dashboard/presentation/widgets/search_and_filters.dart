@@ -14,7 +14,7 @@ class SearchAndFilters extends ConsumerStatefulWidget {
     this.selectedRegion = 'All Regions',
     this.selectedStatus = 'All Status',
     this.regions = const ['All Regions', 'Tamil Nadu', 'New Mexico', 'Texas', 'Oklahoma'],
-    this.statuses = const ['All Status', 'Active', 'Low Level', 'Critical', 'Offline', 'Reorder'],
+    this.statuses = const ['All Status', 'Online', 'Offline', 'Low Level', 'Critical', 'Reorder'],
     this.searchHint = 'Search devices...',
     this.showStats = true,
   });

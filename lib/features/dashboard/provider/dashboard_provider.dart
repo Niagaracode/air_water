@@ -98,41 +98,38 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
 
   return tankAsync.when(
     data: (tanks) {
-      final now = DateTime.now();
 
       final active = tanks.where((t) {
-        final th = t.thresholdValues;
-        final minutes = durationToMinutes(th.duration);
-
-        return now.difference(t.lastUpdate).inMinutes <= minutes;
+        return t.status=='ONLINE';
       }).length;
 
       final offline = tanks.where((t) {
-        final th = t.thresholdValues;
-        final minutes = durationToMinutes(th.duration);
-
-        return now.difference(t.lastUpdate).inMinutes > minutes;
+        return t.status=='OFFLINE';
       }).length;
 
       final lowBattery = tanks.where((t) {
-        return t.batteryV < t.thresholdValues.battery;
+        final batteryLow = t.batteryV <= t.thresholdValues.battery;
+        final solarLow = t.solarV <= t.thresholdValues.battery;
+        return batteryLow || solarLow;
       }).length;
 
       final lowLevel = tanks.where((t) {
-        return t.level < t.thresholdValues.level;
+        final isLowLevel = t.level <= t.thresholdValues.level;
+        final isReorder = t.level <= t.thresholdValues.reorder;
+        return isLowLevel && !isReorder;
       }).length;
 
       final lowPressure = tanks.where((t) {
-        return t.pressure < t.thresholdValues.pressure;
+        return t.pressure <= t.thresholdValues.pressure;
       }).length;
 
       final reorder = tanks.where((t) {
-        return t.level < t.thresholdValues.reorder;
+        return t.level <= t.thresholdValues.reorder;
       }).length;
 
       return {
         'total': tanks.length,
-        'active': active,
+        'online': active,
         'offline': offline,
         'lowBattery': lowBattery,
         'lowLevel': lowLevel,
@@ -142,7 +139,7 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
     },
     loading: () => {
       'total': 0,
-      'active': 0,
+      'online': 0,
       'offline': 0,
       'lowBattery': 0,
       'lowLevel': 0,
@@ -151,7 +148,7 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
     },
     error: (_, __) => {
       'total': 0,
-      'active': 0,
+      'online': 0,
       'offline': 0,
       'lowBattery': 0,
       'lowLevel': 0,
