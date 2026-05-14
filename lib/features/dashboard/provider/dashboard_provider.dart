@@ -100,11 +100,11 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
     data: (tanks) {
 
       final active = tanks.where((t) {
-        return t.status=='Active';
+        return t.status=='ONLINE';
       }).length;
 
       final offline = tanks.where((t) {
-        return t.status=='Offline';
+        return t.status=='OFFLINE';
       }).length;
 
       final lowBattery = tanks.where((t) {
@@ -129,7 +129,7 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
 
       return {
         'total': tanks.length,
-        'active': active,
+        'online': active,
         'offline': offline,
         'lowBattery': lowBattery,
         'lowLevel': lowLevel,
@@ -139,7 +139,7 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
     },
     loading: () => {
       'total': 0,
-      'active': 0,
+      'online': 0,
       'offline': 0,
       'lowBattery': 0,
       'lowLevel': 0,
@@ -148,7 +148,7 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
     },
     error: (_, __) => {
       'total': 0,
-      'active': 0,
+      'online': 0,
       'offline': 0,
       'lowBattery': 0,
       'lowLevel': 0,

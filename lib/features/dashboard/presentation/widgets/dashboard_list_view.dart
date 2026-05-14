@@ -75,18 +75,22 @@ class DashboardListView extends ConsumerWidget {
           return false;
         }
         if (selectedStatus != 'All Status') {
+
           final th = tank.thresholdValues;
 
-          final isLowLevel = tank.level < th.level;
-          final isLowBattery = tank.batteryV < th.battery;
-          final isCritical = tank.level < th.reorder;
-          final isOffline =
-              DateTime.now().difference(tank.lastUpdate).inMinutes >
-                  durationToMinutes(th.duration);
+          final isReorder = tank.level <= th.reorder;
+          final isLowLevel = tank.level <= th.level &&
+                  tank.level > th.reorder;
+          final isLowBattery = tank.batteryV <= th.battery ||
+                  tank.solarV <= th.battery;
+          final isLowPressure = tank.pressure <= th.pressure;
+          final isOffline = tank.status.toUpperCase() == 'OFFLINE';
+          final isOnline = !isOffline;
 
           switch (selectedStatus) {
-            case 'Active':
-              if (isOffline) return false;
+
+            case 'Online':
+              if (!isOnline) return false;
               break;
 
             case 'Offline':
@@ -97,12 +101,17 @@ class DashboardListView extends ConsumerWidget {
               if (!isLowLevel) return false;
               break;
 
+            case 'Reorder':
             case 'Critical':
-              if (!isCritical) return false;
+              if (!isReorder) return false;
               break;
 
-            case 'Reorder':
-              if (!isCritical) return false;
+            case 'Low Battery':
+              if (!isLowBattery) return false;
+              break;
+
+            case 'Low Pressure':
+              if (!isLowPressure) return false;
               break;
           }
         }
@@ -457,7 +466,7 @@ class DashboardListView extends ConsumerWidget {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
-      case 'active': return Colors.green;
+      case 'online': return Colors.green;
       case 'warning': return Colors.orange;
       case 'critical': return Colors.red;
       case 'offline': return Colors.grey;
