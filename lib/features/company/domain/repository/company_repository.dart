@@ -8,6 +8,7 @@ abstract class CompanyRepository {
     int? status,
     String? date,
   });
+  Future<List<CompanyGroup>> getRuleCompanies();
 
   Future<List<CompanyAutocompleteInfo>> getCompanyAutocomplete({String? q});
 

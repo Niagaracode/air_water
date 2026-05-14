@@ -1,6 +1,5 @@
 class AppConstants {
-  static const String apiUrl =
-      'https://endangered-police-proxy-distant.trycloudflare.com/api';
+  static const String apiUrl = 'http://localhost:4000/api';
   // static const String apiUrl = 'http://localhost:4000/api';
 
   static const String googleMapsApiKey =

@@ -138,6 +138,7 @@ class CompanyGroup {
   final String? createdAt;
   final String? emailTemplate;
   final String? password;
+  final String? organizationCode;
 
   CompanyGroup({
     required this.name,
@@ -145,29 +146,37 @@ class CompanyGroup {
     this.createdAt,
     this.emailTemplate,
     this.password,
+    this.organizationCode,
   });
 
   factory CompanyGroup.fromJson(Map<String, dynamic> json) {
     return CompanyGroup(
-      name: json['name'] as String,
-      addresses: (json['addresses'] as List)
+      name: json['name']?.toString() ?? '',
+      organizationCode: json['organization_code']?.toString(),
+      addresses: (json['addresses'] as List? ?? [])
           .map((a) => CompanyAddress.fromJson(a as Map<String, dynamic>))
           .toList(),
-      createdAt: json['created_at'] as String?,
-      emailTemplate: json['email_template'] as String?,
-      password: json['password'] as String?,
+      createdAt: json['created_at']?.toString(),
+      emailTemplate: json['email_template']?.toString(),
+      password: json['password']?.toString(),
     );
   }
+
+  /// Unique key for this group — uses organizationCode if available,
+  /// otherwise falls back to the first address's companyId.
+  String get uniqueKey =>
+      organizationCode ??
+      (addresses.isNotEmpty ? 'id_${addresses.first.companyId}' : name);
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is CompanyGroup &&
           runtimeType == other.runtimeType &&
-          name == other.name;
+          uniqueKey == other.uniqueKey;
 
   @override
-  int get hashCode => name.hashCode;
+  int get hashCode => uniqueKey.hashCode;
 }
 
 class CompanyGroupedResponse {
@@ -259,10 +268,10 @@ class Pagination {
 
   factory Pagination.fromJson(Map<String, dynamic> json) {
     return Pagination(
-      total: json['total'] as int,
-      page: json['page'] as int,
-      limit: json['limit'] as int,
-      totalPages: json['totalPages'] as int,
+      total: (json['total'] as num?)?.toInt() ?? 0,
+      page: (json['page'] as num?)?.toInt() ?? 1,
+      limit: (json['limit'] as num?)?.toInt() ?? 10,
+      totalPages: (json['totalPages'] as num?)?.toInt() ?? 1,
     );
   }
 }

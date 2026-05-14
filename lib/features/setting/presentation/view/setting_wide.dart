@@ -424,6 +424,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             const AppTableHeaderCell('Condition', flex: 2),
           ] else ...[
             const AppTableHeaderCell('Rule Name', flex: 3),
+            const AppTableHeaderCell('Company', flex: 2),
             const AppTableHeaderCell('Site', width: 100),
             const AppTableHeaderCell('Tank', width: 100),
             const AppTableHeaderCell('Device', width: 120),
@@ -472,7 +473,7 @@ class _SettingWideState extends ConsumerState<SettingWide> {
     bool isCustomer,
   ) {
     final companyName = group.settings.isNotEmpty
-        ? group.settings.first.companyName
+        ? (group.settings.first.companyId == 0 ? 'ALL COMPANIES' : group.settings.first.companyName)
         : null;
 
     return Column(
@@ -660,6 +661,10 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             ),
           ] else ...[
             AppTableCell(setting.name, flex: 3, bold: true),
+            AppTableCell(
+              setting.companyId == 0 ? 'ALL' : (setting.companyName ?? '—'),
+              flex: 2,
+            ),
             AppTableCell(setting.siteName ?? '—', width: 100),
             AppTableCell(setting.tankNumber ?? '—', width: 100),
             AppTableCell(

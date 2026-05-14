@@ -72,8 +72,8 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   final _timeZoneController = TextEditingController();
 
   CompanyGroup? _selectedCompanyGroup;
-  Site? _selectedSite;
-  Tank? _selectedTank;
+  List<Site> _selectedSites = [];
+  List<Tank> _selectedTanks = [];
   Product? _selectedProduct;
   int _isActive = 1;
 
@@ -86,24 +86,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
   List<MessageTemplate> _templates = [];
   bool _isLoadingData = false;
 
-  final _allCompanyGroup = CompanyGroup(
-    name: 'ALL',
-    addresses: [CompanyAddress(status: 1, companyId: 0)],
-  );
 
-  final _allSite = Site(
-    id: 0,
-    name: 'ALL',
-    status: 1,
-    companyId: 0,
-  );
-
-  final _allTank = Tank(
-    tankId: 0,
-    tankNumber: 'ALL',
-    status: 1,
-    siteId: 0,
-  );
 
   @override
   void initState() {
@@ -149,11 +132,14 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final tankRepo = ref.read(tankRepositoryProvider);
       final fullTank = await tankRepo.getTankById(t.tankId);
       setState(() {
-        _selectedTank = fullTank;
-        // Also update the tank in the local list so we don't fetch it again
-        final index = _tanks.indexWhere((tank) => tank.tankId == t.tankId);
+        final index = _selectedTanks.indexWhere((tank) => tank.tankId == t.tankId);
         if (index != -1) {
-          _tanks[index] = fullTank;
+          _selectedTanks[index] = fullTank;
+        }
+        // Also update the tank in the local list so we don't fetch it again
+        final allIndex = _tanks.indexWhere((tank) => tank.tankId == t.tankId);
+        if (allIndex != -1) {
+          _tanks[allIndex] = fullTank;
         }
       });
     } catch (e) {
@@ -171,28 +157,49 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final templateRepo = ref.read(messageTemplateRepositoryProvider);
       final tankRepo = ref.read(tankRepositoryProvider);
 
-      final results = await Future.wait([
-        companyRepo.getGroupedCompanies(limit: 1000),
-        siteRepo.getSites(limit: 1000),
-        ref.read(allTanksProvider.future),
-        ref.refresh(activeTemplatesProvider.future),
-        ref.read(productListProvider.future),
-      ]);
+      try {
+        final companiesList = await companyRepo.getRuleCompanies();
+        if (mounted) setState(() => _companyGroups = companiesList);
+      } catch (e) {
+        debugPrint('Error loading companies: $e');
+      }
+
+      try {
+        final siteResponse = await siteRepo.getSites(limit: 1000);
+        if (mounted) setState(() => _sites = siteResponse.data);
+      } catch (e) {
+        debugPrint('Error loading sites: $e');
+      }
+
+      try {
+        final List<Tank> tanksList = await ref.read(allTanksProvider.future);
+        if (mounted) setState(() => _tanks = tanksList);
+      } catch (e) {
+        debugPrint('Error loading tanks: $e');
+      }
+
+      try {
+        final List<MessageTemplate> templatesList = await ref.read(activeTemplatesProvider.future);
+        if (mounted) setState(() => _templates = templatesList);
+      } catch (e) {
+        debugPrint('Error loading templates: $e');
+      }
+
+      try {
+        await ref.read(productListProvider.notifier).loadProducts();
+        final pState = ref.read(productListProvider);
+        if (mounted) setState(() => _products = pState.products);
+      } catch (e) {
+        debugPrint('Error loading products: $e');
+      }
 
       setState(() {
-        _companyGroups = (results[0] as CompanyGroupedResponse).data;
-        _sites = (results[1] as SiteResponse).data;
-        _tanks = results[2] as List<Tank>;
-        _templates = results[3] as List<MessageTemplate>;
-        _products = results[4] as List<Product>;
-
         if (widget.initialSetting != null) {
           final s = widget.initialSetting!;
           _selectedCompanyGroup = _companyGroups
               .where((g) => g.addresses.any((a) => a.companyId == s.companyId))
               .firstOrNull;
 
-          // Fallback: match by company name when companyId match fails
           if (_selectedCompanyGroup == null &&
               s.companyName != null &&
               s.companyName!.isNotEmpty) {
@@ -206,23 +213,25 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
           }
 
           if (s.siteId != null) {
-            _selectedSite = _sites.where((p) => p.id == s.siteId).firstOrNull;
+            final site = _sites.where((p) => p.id == s.siteId).firstOrNull;
+            if (site != null) _selectedSites = [site];
           }
 
           if (s.tankId != null) {
-            _selectedTank = _tanks
+            final tank = _tanks
                 .where((t) => t.tankId == s.tankId)
                 .firstOrNull;
+            if (tank != null) _selectedTanks = [tank];
           }
 
           if (s.productId != null) {
             _selectedProduct = _products
                 .where((p) => p.id == s.productId)
                 .firstOrNull;
-          } else if (_selectedTank?.productId != null &&
-              _selectedTank?.productId != 0) {
+          } else if (_selectedTanks.isNotEmpty && _selectedTanks.first.productId != null &&
+              _selectedTanks.first.productId != 0) {
             _selectedProduct = _products
-                .where((p) => p.id == _selectedTank!.productId)
+                .where((p) => p.id == _selectedTanks.first.productId)
                 .firstOrNull;
           }
 
@@ -233,29 +242,29 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
           }
 
           _deviceIdController.text =
-              s.deviceId ?? _selectedTank?.deviceId ?? '';
+              s.deviceId ?? _selectedTanks.firstOrNull?.deviceId ?? '';
           _simNumberController.text =
-              s.simNumber ?? _selectedTank?.simNumber ?? '';
+              s.simNumber ?? _selectedTanks.firstOrNull?.simNumber ?? '';
           _timeZoneController.text =
-              s.timeZone ?? _selectedTank?.timeZone ?? '';
+              s.timeZone ?? _selectedTanks.firstOrNull?.timeZone ?? '';
         } else {
-          // New Setting Mode: Auto-select if only one tank is available
           if (_tanks.length == 1) {
-            _selectedTank = _tanks[0];
-            _selectedSite = _sites
-                .where((p) => p.id == _selectedTank!.siteId)
+            _selectedTanks = [_tanks[0]];
+            final s = _sites
+                .where((p) => p.id == _selectedTanks[0].siteId)
                 .firstOrNull;
+            if (s != null) _selectedSites = [s];
             _selectedCompanyGroup = _companyGroups
                 .where(
                   (g) => g.addresses.any(
-                    (a) => a.companyId == _selectedTank!.companyId,
+                    (a) => a.companyId == _selectedTanks[0].companyId,
                   ),
                 )
                 .firstOrNull;
-            _deviceIdController.text = _selectedTank?.deviceId ?? '';
-            _simNumberController.text = _selectedTank?.simNumber ?? '';
-            _timeZoneController.text = _selectedTank?.timeZone ?? '';
-            _fetchFullTankDetails(_selectedTank!);
+            _deviceIdController.text = _selectedTanks.firstOrNull?.deviceId ?? '';
+            _simNumberController.text = _selectedTanks.firstOrNull?.simNumber ?? '';
+            _timeZoneController.text = _selectedTanks.firstOrNull?.timeZone ?? '';
+            _fetchFullTankDetails(_selectedTanks[0]);
           }
         }
       });
@@ -289,7 +298,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         userRole == UserRole.superAdmin || userRole == UserRole.companyAdmin;
 
     if (isSuperOrCompany) {
-      if (_selectedSite == null) {
+      if (_selectedSites.isEmpty) {
         if (!silent) {
           ScaffoldMessenger.of(
             context,
@@ -297,7 +306,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         }
         return false;
       }
-      if (_selectedTank == null) {
+      if (_selectedTanks.isEmpty) {
         if (!silent) {
           ScaffoldMessenger.of(
             context,
@@ -307,100 +316,89 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       }
     }
 
-    final companyId = _selectedCompanyGroup?.name == 'ALL'
-        ? 0
-        : _selectedCompanyGroup!.addresses.first.companyId;
+    final companyId = _selectedCompanyGroup!.addresses.first.companyId;
     final notifier = ref.read(settingProvider.notifier);
-    bool allSuccess = true;
 
-    for (var i = 0; i < _rows.length; i++) {
-      final row = _rows[i];
-
-      final data = {
-        'name': _nameController.text.trim(),
-        'description': _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
-        'company_id': companyId,
-        'plant_id': _selectedSite?.id ?? 0,
-        'tank_id': _selectedTank?.tankId ?? 0,
-        'product_id': _selectedProduct?.id,
+    final List<Map<String, dynamic>> rowsData = _rows.map((row) {
+      return {
         'parameter_type': row.parameterType,
         'condition_type': row.conditionType,
-        'thresholds': [
-          double.tryParse(row.threshold1Controller.text.trim()),
-          double.tryParse(row.threshold2Controller.text.trim()),
-          double.tryParse(row.threshold3Controller.text.trim()),
-        ],
         'threshold_1': double.tryParse(row.threshold1Controller.text.trim()),
         'threshold_2': double.tryParse(row.threshold2Controller.text.trim()),
         'threshold_3': double.tryParse(row.threshold3Controller.text.trim()),
-
         'status_label': row.statusLabelController.text.trim().isEmpty
             ? null
             : row.statusLabelController.text.trim(),
         'message_template_id': row.selectedTemplate?.id,
-        'sim_number': _simNumberController.text.trim().isEmpty
-            ? null
-            : _simNumberController.text.trim(),
-        'time_zone': _timeZoneController.text.trim().isEmpty
-            ? null
-            : _timeZoneController.text.trim(),
-        'is_active': _isActive,
-        'status': 1,
       };
+    }).toList();
 
-      bool success;
-      if (widget.initialSetting != null && i == 0) {
-        success = await notifier.updateSetting(widget.initialSetting!.id, data);
-      } else {
-        success = await notifier.createSetting(data);
-      }
+    final data = {
+      'name': _nameController.text.trim(),
+      'description': _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
+      'company_id': companyId,
+      'plant_ids': _selectedSites.map((s) => s.id).toList(),
+      'tank_ids': _selectedTanks.map((t) => t.tankId).toList(),
+      'product_id': _selectedProduct?.id,
+      'rows': rowsData,
+      'sim_number': _simNumberController.text.trim().isEmpty
+          ? null
+          : _simNumberController.text.trim(),
+      'time_zone': _timeZoneController.text.trim().isEmpty
+          ? null
+          : _timeZoneController.text.trim(),
+      'is_active': _isActive,
+      'status': 1,
+    };
 
-      if (!success) allSuccess = false;
+    bool success;
+    if (widget.initialSetting != null) {
+      success = await notifier.updateSetting(widget.initialSetting!.id, data);
+    } else {
+      success = await notifier.createSetting(data);
     }
 
-    if (allSuccess && mounted) {
-      if (!silent) {
-        final row1 = _rows.isNotEmpty ? _rows[0] : null;
-        final paramType = (row1?.parameterType ?? '').toUpperCase().trim();
-        final statusLabel = row1?.statusLabelController.text.trim() ?? '';
-        // For LEVEL: only send to device when status label is 'ReOrder'
-        final shouldSendToDevice = paramType == 'LEVEL'
-            ? (statusLabel.toLowerCase() == 'reorder' &&
-                  _deviceIdController.text.isNotEmpty)
-            : ((paramType == 'CAL TANK' ||
-                      paramType == 'CAL KILO LITER' ||
-                      paramType == 'SETCALBAR' ||
-                      paramType == 'SETBAR' ||
-                      paramType == 'SENSOR' ||
-                      paramType == 'SENSOR RATING' ||
-                      paramType == 'DATA INTERVAL' ||
-                      paramType == 'BATTERY' ||
-                      paramType == 'SOLAR' ||
-                      paramType == 'MFACTOR' ||
-                      paramType == 'CHART DATA') &&
-                                          paramType != 'DEVICE COMMUNICATE FAILED' &&
-                  _deviceIdController.text.isNotEmpty);
-        if (shouldSendToDevice) {
-          await _sendToDevice(skipSave: true);
-          return true;
+    if (mounted) {
+      setState(() => _isLoadingData = false);
+      if (success) {
+        if (!silent) {
+          final row1 = _rows.isNotEmpty ? _rows[0] : null;
+          final paramType = (row1?.parameterType ?? '').toUpperCase().trim();
+          final statusLabel = row1?.statusLabelController.text.trim() ?? '';
+          
+          final shouldSendToDevice = paramType == 'LEVEL'
+              ? (statusLabel.toLowerCase() == 'reorder' &&
+                    _deviceIdController.text.isNotEmpty)
+              : ((paramType == 'CAL TANK' ||
+                        paramType == 'CAL KILO LITER' ||
+                        paramType == 'SETCALBAR' ||
+                        paramType == 'SETBAR' ||
+                        paramType == 'SENSOR' ||
+                        paramType == 'SENSOR RATING' ||
+                        paramType == 'DATA INTERVAL' ||
+                        paramType == 'BATTERY' ||
+                        paramType == 'SOLAR' ||
+                        paramType == 'MFACTOR' ||
+                        paramType == 'CHART DATA') &&
+                    paramType != 'DEVICE COMMUNICATE FAILED' &&
+                    _deviceIdController.text.isNotEmpty);
+
+          if (shouldSendToDevice) {
+            await _sendToDevice(skipSave: true);
+          } else {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Rule(s) saved successfully')),
+            );
+          }
         }
-
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.initialSetting != null
-                  ? 'Setting updated'
-                  : 'Setting(s) created',
-            ),
-          ),
-        );
       }
-      return true;
     }
-    return false;
+    return success;
   }
 
   Future<void> _sendToDevice({bool skipSave = false}) async {
@@ -409,13 +407,13 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         userRole == UserRole.superAdmin || userRole == UserRole.companyAdmin;
 
     if (isSuperOrCompany) {
-      if (_selectedSite == null) {
+      if (_selectedSites.isEmpty) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Site is required')));
         return;
       }
-      if (_selectedTank == null) {
+      if (_selectedTanks.isEmpty) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Tank is required')));
@@ -452,6 +450,18 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
           ? 'N/A'
           : _simNumberController.text.trim();
 
+      final deviceIds = _selectedTanks
+          .map((t) => t.deviceId)
+          .where((id) => id != null && id.isNotEmpty)
+          .cast<String>()
+          .toList();
+
+      if (deviceIds.isEmpty) {
+        throw Exception('No valid Device IDs found for selected tanks');
+      }
+
+      final deviceIdPlaceholder = deviceIds.first;
+
       final allParams = _rows.map((r) => r.parameterType).toSet().join('/');
 
       String payload;
@@ -470,7 +480,10 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       } else if (param1.toUpperCase().trim() == 'SENSOR' ||
           param1.toUpperCase().trim() == 'SENSOR RATING') {
         final productCode = _selectedProduct?.productCode ?? 'N/A';
-        final tonnes = (_selectedTank?.tonnes ?? 0.0).toStringAsFixed(2);
+        final tonnes = (_selectedTanks.isNotEmpty
+                ? (_selectedTanks.first.tonnes ?? 0.0)
+                : 0.0)
+            .toStringAsFixed(2);
         payload = 'SENSORRATING,1,$thresh1,$productCode,$thresh2,$tonnes,0';
       } else if (param1.toUpperCase().trim() == 'DATA INTERVAL') {
         final hh = int.tryParse(thresh1) ?? 0;
@@ -491,13 +504,13 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         payload = '{"\"chartdata\"",$pointsData,9999,9999}';
       } else {
         payload =
-            '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$thresh3,N/A,$deviceId,$simNumber,$allParams';
+            '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$thresh3,N/A,$deviceIdPlaceholder,$simNumber,$allParams';
       }
 
       final response = await apiClient.post(
         '/mqtt/send-command',
         data: {
-          'deviceId': deviceId,
+          'deviceIds': deviceIds,
           'sms': payload,
           'parameter_type': param1,
           'status_label': row1?.statusLabelController.text.trim() ?? '',
@@ -567,22 +580,23 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final companyIds = _selectedCompanyGroup!.addresses
           .map((a) => a.companyId)
           .toList();
-      filteredSites = [
-        _allSite,
-        ..._sites.where((p) => companyIds.contains(p.companyId)).toList(),
-      ];
-    } else {
-      filteredSites = [_allSite];
+      filteredSites = _sites.where((p) {
+        final belongsToCompany = companyIds.contains(p.companyId);
+        final hasTanks = _tanks.any((t) => t.siteId == p.id);
+        return belongsToCompany && hasTanks;
+      }).toList();
     }
 
-    final companyIds = _selectedCompanyGroup?.name == 'ALL'
-        ? <int>[]
-        : _selectedCompanyGroup?.addresses.map((a) => a.companyId ?? 0).toList() ??
-            <int>[];
-
-    final tanksForCompany = companyIds.isEmpty
-        ? _tanks
-        : _tanks.where((t) => companyIds.contains(t.companyId)).toList();
+    final companyIds = _selectedCompanyGroup?.addresses
+            .map((a) => a.companyId ?? 0)
+            .toList() ??
+        <int>[];
+    final tanksForSite = (_selectedSites.isNotEmpty
+        ? _tanks.where((t) => _selectedSites.any((s) => s.id == t.siteId)).toList()
+        : (_selectedCompanyGroup != null
+            ? _tanks.where((t) => companyIds.contains(t.companyId)).toList()
+            : <Tank>[]))
+      ..sort((a, b) => (a.siteName ?? '').compareTo(b.siteName ?? ''));
 
     final bool isEditMode = widget.initialSetting != null;
 
@@ -593,15 +607,15 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       error: (_, __) => false,
     );
 
-    final isSuperOrCompanyAdmin = roleAsync.when(
-      data: (role) =>
-          role == UserRole.superAdmin || role == UserRole.companyAdmin,
+    final canSendToDevice = roleAsync.when(
+      data: (role) => role == UserRole.customer,
       loading: () => false,
       error: (_, __) => false,
     );
 
-    final canSendToDevice = roleAsync.when(
-      data: (role) => role == UserRole.customer,
+    final isSuperOrCompanyAdmin = roleAsync.when(
+      data: (role) =>
+          role == UserRole.superAdmin || role == UserRole.companyAdmin,
       loading: () => false,
       error: (_, __) => false,
     );
@@ -628,7 +642,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                 ),
               ),
               Expanded(
-                child: _isLoadingData && isEditMode
+                child: _isLoadingData && _companyGroups.isEmpty
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
                         padding: const EdgeInsets.symmetric(
@@ -735,78 +749,35 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                 controller:
                                                     TextEditingController(
                                                       text:
-                                                          _selectedTank
-                                                              ?.tankNumber ??
-                                                          'N/A',
+                                                          _selectedTanks.isNotEmpty
+                                                              ? _selectedTanks.first.tankNumber
+                                                              : 'N/A',
                                                     ),
                                                 hint: 'Tank Name',
                                               )
-                                            : AppDropdown<Tank>(
-                                                value: _selectedTank,
-                                                  items: [
-                                                    _allTank,
-                                                    ...((_selectedSite == null &&
-                                                            !isCustomer)
-                                                        ? []
-                                                        : tanksForCompany.where(
-                                                            (t) =>
-                                                                isCustomer ||
-                                                                _selectedSite ==
-                                                                    null ||
-                                                                _selectedSite!
-                                                                        .id ==
-                                                                    0 ||
-                                                                t.siteId ==
-                                                                    _selectedSite!
-                                                                        .id,
-                                                          )),
-                                                  ],
-                                                hint:
-                                                    (_selectedSite == null &&
-                                                        !isCustomer)
-                                                    ? 'Select Site First'
-                                                    : 'Select Tank',
+                                            : AppMultiSelectDropdown<Tank>(
+                                                selectedItems: _selectedTanks,
+                                                items: tanksForSite,
+                                                hint: _selectedSites.isEmpty
+                                                    ? 'Select Site(s) First'
+                                                    : 'Select Tank(s)',
                                                 itemLabel: (t) => t.tankNumber,
-                                                onChanged:
-                                                    (_selectedSite == null &&
-                                                        !isCustomer)
-                                                    ? null
-                                                    : (t) {
-                                                        setState(() {
-                                                          _selectedTank = t;
-                                                          if (t != null) {
-                                                            _deviceIdController
-                                                                    .text =
-                                                                t.deviceId ??
-                                                                '';
-                                                            _simNumberController
-                                                                    .text =
-                                                                t.simNumber ??
-                                                                '';
-                                                            _timeZoneController
-                                                                    .text =
-                                                                t.timeZone ??
-                                                                '';
-                                                            if (t.productId !=
-                                                                    null &&
-                                                                t.productId !=
-                                                                    0) {
-                                                              _selectedProduct = _products
-                                                                  .where(
-                                                                    (p) =>
-                                                                        p.id ==
-                                                                        t.productId,
-                                                                  )
-                                                                  .firstOrNull;
-                                                            }
-                                                          }
-                                                        });
-                                                        if (t != null) {
-                                                          _fetchFullTankDetails(
-                                                            t,
-                                                          );
-                                                        }
-                                                      },
+                                                enabled: _selectedSites.isNotEmpty,
+                                                onChanged: (tanks) {
+                                                  setState(() {
+                                                    _selectedTanks = tanks;
+                                                    if (tanks.isNotEmpty) {
+                                                      final t = tanks.first;
+                                                      _deviceIdController.text = t.deviceId ?? '';
+                                                      _simNumberController.text = t.simNumber ?? '';
+                                                      _timeZoneController.text = t.timeZone ?? '';
+                                                      if (t.productId != null && t.productId != 0) {
+                                                        _selectedProduct = _products.where((p) => p.id == t.productId).firstOrNull;
+                                                      }
+                                                      _fetchFullTankDetails(t);
+                                                    }
+                                                  });
+                                                },
                                               ),
                                       ),
                                     ),
@@ -824,16 +795,17 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         'COMPANY',
                                         AppDropdown<CompanyGroup>(
                                           value: _selectedCompanyGroup,
-                                          items: [_allCompanyGroup, ..._companyGroups],
+                                          items: _companyGroups,
                                           hint: 'Select Company',
-                                          itemLabel: (cg) =>
-                                              cg.name.trim().isNotEmpty
-                                              ? cg.name.trim()
-                                              : '(Unnamed Company)',
+                                          itemLabel: (cg) {
+                                            final name = cg.name.trim().isNotEmpty ? cg.name.trim() : '(Unnamed Company)';
+                                            final org = cg.organizationCode;
+                                            return (org != null && org.trim().isNotEmpty) ? "$name ($org)" : name;
+                                          },
                                           onChanged: (cg) => setState(() {
                                             _selectedCompanyGroup = cg;
-                                            _selectedSite = null;
-                                            _selectedTank = null;
+                                            _selectedSites = [];
+                                            _selectedTanks = [];
                                           }),
                                         ),
                                       ),
@@ -844,14 +816,20 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         isSuperOrCompanyAdmin
                                             ? 'SITE'
                                             : 'SITE (OPTIONAL)',
-                                        AppDropdown<Site>(
-                                          value: _selectedSite,
+                                        AppMultiSelectDropdown<Site>(
+                                          selectedItems: _selectedSites,
                                           items: filteredSites,
-                                          hint: 'Select Site',
-                                          itemLabel: (p) => p.name,
-                                          onChanged: (p) => setState(() {
-                                            _selectedSite = p;
-                                            _selectedTank = null;
+                                          hint: _selectedCompanyGroup == null
+                                              ? 'Select Company First'
+                                              : 'Select Site(s)',
+                                          itemLabel: (s) {
+                                            final loc = s.siteLocation;
+                                            return loc.isNotEmpty ? "${s.name} ($loc)" : s.name;
+                                          },
+                                          enabled: _selectedCompanyGroup != null,
+                                          onChanged: (sites) => setState(() {
+                                            _selectedSites = sites;
+                                            _selectedTanks = [];
                                           }),
                                         ),
                                       ),
@@ -868,55 +846,33 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         isSuperOrCompanyAdmin
                                             ? 'TANK'
                                             : 'TANK (OPTIONAL)',
-                                        AppDropdown<Tank>(
-                                          value: _selectedTank,
-                                          items: [
-                                            _allTank,
-                                            ...(_selectedSite == null
-                                                ? []
-                                                : tanksForCompany.where(
-                                                    (t) =>
-                                                        _selectedSite!.id ==
-                                                            0 ||
-                                                        t.siteId ==
-                                                            _selectedSite!.id,
-                                                  )),
-                                          ],
-                                          hint: _selectedSite == null
-                                              ? 'Select Site First'
-                                              : 'Select Tank',
-                                          itemLabel: (t) => t.tankNumber,
-                                          onChanged: _selectedSite == null
-                                              ? null
-                                              : (t) {
-                                                  setState(() {
-                                                    _selectedTank = t;
-                                                    if (t != null) {
-                                                      _deviceIdController.text =
-                                                          t.deviceId ?? '';
-                                                      _simNumberController
-                                                              .text =
-                                                          t.simNumber ?? '';
-                                                      _timeZoneController.text =
-                                                          t.timeZone ?? '';
-
-                                                      if (t.productId != null &&
-                                                          t.productId != 0) {
-                                                        _selectedProduct =
-                                                            _products
-                                                                .where(
-                                                                  (p) =>
-                                                                      p.id ==
-                                                                      t.productId,
-                                                                )
-                                                                .firstOrNull;
-                                                      }
-                                                    }
-                                                  });
-                                                  if (t != null) {
-                                                    _fetchFullTankDetails(t);
-                                                  }
-                                                },
+                                        AppMultiSelectDropdown<Tank>(
+                                          selectedItems: _selectedTanks,
+                                          items: tanksForSite,
+                                          hint: _selectedSites.isEmpty
+                                              ? 'Select Site(s) First'
+                                              : 'Select Tank(s)',
+                                          itemLabel: (t) {
+                                            final site = t.siteName ?? 'Unknown Site';
+                                            final dev = t.deviceId;
+                                            return "$site - ${t.tankNumber}${dev != null && dev.isNotEmpty ? ' ($dev)' : ''}";
+                                          },
+                                          enabled: _selectedSites.isNotEmpty,
+                                          onChanged: (tanks) {
+                                            setState(() {
+                                              _selectedTanks = tanks;
+                                              if (tanks.isNotEmpty) {
+                                                final t = tanks.first;
+                                                _deviceIdController.text = t.deviceId ?? '';
+                                                _simNumberController.text = t.simNumber ?? '';
+                                                _timeZoneController.text = t.timeZone ?? '';
+                                                if (t.productId != null && t.productId != 0) {
+                                                  _selectedProduct = _products.where((p) => p.id == t.productId).firstOrNull;
+                                                }
+                                                _fetchFullTankDetails(t);
+                                              }
+                                            });
+                                          },
                                         ),
                                       ),
                                     ),
@@ -1098,9 +1054,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                   }
                                                 });
                                                 if (v == 'CHART DATA' &&
-                                                    _selectedTank != null) {
+                                                    _selectedTanks.isNotEmpty) {
                                                   _fetchFullTankDetails(
-                                                    _selectedTank!,
+                                                    _selectedTanks.first,
                                                   );
                                                 }
                                               },
@@ -1291,15 +1247,15 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                     selectedItems:
                                                         row.selectedPoints,
                                                     items:
-                                                        _selectedTank
+                                                        _selectedTanks.firstOrNull
                                                             ?.strappingPoints ??
                                                         [],
-                                                    hint: _selectedTank == null
+                                                    hint: _selectedTanks.isEmpty
                                                         ? 'Select Tank First'
-                                                        : (_selectedTank!
+                                                        : (_selectedTanks.first
                                                                       .strappingPoints ==
                                                                   null ||
-                                                              _selectedTank!
+                                                              _selectedTanks.first
                                                                   .strappingPoints!
                                                                   .isEmpty)
                                                         ? 'No Points Available'

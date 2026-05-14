@@ -25,6 +25,11 @@ class CompanyRepositoryImpl implements CompanyRepository {
   }
 
   @override
+  Future<List<CompanyGroup>> getRuleCompanies() async {
+    return await _api.getRuleCompanies();
+  }
+
+  @override
   Future<List<CompanyAutocompleteInfo>> getCompanyAutocomplete({
     String? q,
   }) async {

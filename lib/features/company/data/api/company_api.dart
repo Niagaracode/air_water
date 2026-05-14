@@ -30,6 +30,14 @@ class CompanyApi {
     );
   }
 
+  Future<List<CompanyGroup>> getRuleCompanies() async {
+    final response = await _client.get('/rules/companies');
+    final List data = response.data['data'] ?? [];
+    return data
+        .map((e) => CompanyGroup.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
   Future<List<CompanyAutocompleteInfo>> getCompanyAutocomplete({
     String? q,
   }) async {
