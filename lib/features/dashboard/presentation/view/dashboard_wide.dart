@@ -56,9 +56,9 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
   Map<String, dynamic> _parseMqtt(Map<String, dynamic> json) {
     final result = <String, dynamic>{};
-    // ✅ deviceId
+    // deviceId
     result['deviceId'] = json['cC'];
-    // ✅ extract cM string
+    // extract cM string
     final cM = json['cM'] ?? '';
     final matches = RegExp(r'([A-Z]+):([\d.]+)').allMatches(cM);
     for (var m in matches) {
