@@ -1,8 +1,7 @@
 class AppConstants {
-
-  static const String apiUrl =
-      'https://mrna-logistics-richard-alabama.trycloudflare.com/api';
-  // static const String apiUrl = 'http://localhost:4000/api';
+  static const String apiUrl = 'http://localhost:4000/api';
+  // static const String apiUrl =
+  //     'https://irrigationcare.niagaraautomation.com:4000/api';
 
   static const String googleMapsApiKey =
       'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';

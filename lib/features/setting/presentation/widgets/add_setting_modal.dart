@@ -1044,13 +1044,18 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                       .toUpperCase()
                                                       .trim();
                                                   row.parameterType = v!;
-                                                  // Reset status label when switching from LEVEL to another type
-                                                  // to avoid stale dropdown values appearing in the free-text field
-                                                  if (prevType == 'LEVEL' &&
-                                                      v.toUpperCase().trim() !=
-                                                          'LEVEL') {
-                                                    row.statusLabelController
-                                                        .clear();
+                                                  final dropdownTypes = ['LEVEL', 'BATTERY', 'PRESSURE'];
+                                                  final currentType = v.toUpperCase().trim();
+                                                  
+                                                  // Reset status label when switching between dropdown types and free-text types,
+                                                  // or between different dropdown types with different allowed values
+                                                  if (prevType != currentType) {
+                                                    if (!dropdownTypes.contains(currentType) || 
+                                                        !dropdownTypes.contains(prevType) ||
+                                                        (prevType == 'LEVEL' && currentType != 'LEVEL') ||
+                                                        (prevType != 'LEVEL' && currentType == 'LEVEL')) {
+                                                      row.statusLabelController.clear();
+                                                    }
                                                   }
                                                 });
                                                 if (v == 'CHART DATA' &&
@@ -1111,15 +1116,10 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               flex: 4,
                                               child: _buildLabelField(
                                                 'STATUS LABEL (UI DISPLAY)',
-                                                // For LEVEL & BATTERY: use predefined dropdown; for other types: free text
-                                                (row.parameterType
-                                                                .toUpperCase()
-                                                                .trim() ==
-                                                            'LEVEL' ||
-                                                        row.parameterType
-                                                                .toUpperCase()
-                                                                .trim() ==
-                                                            'BATTERY')
+                                                (['LEVEL', 'BATTERY', 'PRESSURE']
+                                                        .contains(row.parameterType
+                                                            .toUpperCase()
+                                                            .trim()))
                                                     ? AppDropdown<String>(
                                                         value: () {
                                                           const allowed = [
@@ -1155,10 +1155,11 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                           return null;
                                                         }(),
                                                         items:
-                                                            (row.parameterType
-                                                                    .toUpperCase()
-                                                                    .trim() ==
-                                                                'BATTERY')
+                                                            (['BATTERY', 'PRESSURE']
+                                                                    .contains(row
+                                                                        .parameterType
+                                                                        .toUpperCase()
+                                                                        .trim()))
                                                             ? const [
                                                                 'Critical',
                                                                 'Low',
