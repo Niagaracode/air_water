@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:air_water/features/user/presentation/model/user_model.dart';
-import 'package:air_water/features/tank/presentation/model/tank_model.dart';
 import 'package:air_water/features/tank/presentation/controller/tank_provider.dart';
 
 /// Hierarchical Site-Tank Dropdown Selector

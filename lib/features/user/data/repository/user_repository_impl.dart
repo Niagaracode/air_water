@@ -1,6 +1,6 @@
+import '../../../tank/data/model/tank_model.dart';
 import '../../presentation/model/user_model.dart';
 import '../../../site/presentation/model/site_model.dart';
-import '../../../tank/presentation/model/tank_model.dart';
 import '../../domain/repository/user_repository.dart';
 import '../api/user_api.dart';
 

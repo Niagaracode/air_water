@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/app_theme/app_theme.dart';
+import '../../../tank/data/model/tank_model.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
-import '../../../tank/presentation/model/tank_model.dart';
 import '../model/group_model.dart';
 
 class GroupDetail extends ConsumerStatefulWidget {

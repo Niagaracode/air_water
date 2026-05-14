@@ -6,7 +6,6 @@ import '../../../site/presentation/model/site_model.dart';
 class Tank {
   final int tankId;
   final String tankNumber;
-  final String? tankImage;
   final int? tankTypeId;
   final String? tankTypeName;
   final int? unitId;
@@ -46,7 +45,6 @@ class Tank {
   Tank({
     required this.tankId,
     required this.tankNumber,
-    this.tankImage,
     this.tankTypeId,
     this.tankTypeName,
     this.unitId,
@@ -88,7 +86,6 @@ class Tank {
     return Tank(
       tankId: _toInt(json['tank_id']) ?? 0,
       tankNumber: json['tank_number'] as String,
-      tankImage: json['tank_image'] as String?,
       tankTypeId: _toInt(json['tank_type_id']),
       unitId: _toInt(json['unit_id']),
       tankTypeName: json['tank_type_name'] as String?,
@@ -162,11 +159,7 @@ class Tank {
 
   String get statusText => status == 1 ? 'Active' : 'Inactive';
 
-  String? get tankImageUrl {
-    if (tankImage == null || tankImage!.isEmpty) return null;
-    final baseUrl = Env.apiUrl.replaceAll('/api', '');
-    return '$baseUrl/uploads/tank/$tankImage';
-  }
+
 
   static double? _toDouble(dynamic value) {
     if (value == null) return null;
@@ -327,82 +320,32 @@ class TankProduct {
 
 class TankCreateRequest {
   final String tankNumber;
-  final String? tankImage;
-  final XFile? imageFile;
-  final int? tankTypeId;
   final int? unitId;
   final int? productId;
   final String? description;
-  final double? width;
-  final double? height;
-  final double? dishHeight;
-  final double? canLength;
-  final double? diameter;
-  final double? length;
-  final double? dishDepth;
-  final double? depth;
-  final double? coneLength;
-  final double? tonnes;
   final int? siteId;
   final int? addressId;
-  final int? status;
-  final bool? useStrappingChart;
-  final List<StrappingPoint>? strappingPoints;
   final String? levelUnit;
-  final String? volumeUnit;
 
   TankCreateRequest({
     required this.tankNumber,
-    this.tankImage,
-    this.imageFile,
-    this.tankTypeId,
     this.unitId,
     this.productId,
     this.description,
-    this.width,
-    this.height,
-    this.dishHeight,
-    this.canLength,
-    this.diameter,
-    this.length,
-    this.dishDepth,
-    this.depth,
-    this.coneLength,
-    this.tonnes,
     this.siteId,
     this.addressId,
-    this.status,
-    this.useStrappingChart,
-    this.strappingPoints,
     this.levelUnit,
-    this.volumeUnit,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'tank_number': tankNumber,
-      'tank_image': tankImage,
-      'tank_type_id': tankTypeId,
       'unit_id': unitId,
       'product_id': productId,
       'description': description,
-      'width': width,
-      'height': height,
-      'dish_height': dishHeight,
-      'can_length': canLength,
-      'diameter': diameter,
-      'length': length,
-      'dish_depth': dishDepth,
-      'depth': depth,
-      'cone_length': coneLength,
-      'tonnes': tonnes,
       'plant_id': siteId,
       'address_id': addressId,
-      'status': status,
-      'use_strapping_chart': useStrappingChart == true ? 1 : 0,
-      'strapping_points': strappingPoints?.map((e) => e.toJson()).toList(),
       'level_unit': levelUnit,
-      'volume_unit': volumeUnit,
     };
   }
 }

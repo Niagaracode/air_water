@@ -1,8 +1,8 @@
 import 'dart:convert';
 import '../../../../core/network/http/api_service.dart';
+import '../../../tank/data/model/tank_model.dart';
 import '../../presentation/model/user_model.dart';
 import '../../../site/presentation/model/site_model.dart';
-import '../../../tank/presentation/model/tank_model.dart';
 
 class UserApi {
   final ApiService _client;

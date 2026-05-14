@@ -1,16 +1,12 @@
+import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../model/tank_model.dart';
 import '../../../site/presentation/model/site_model.dart';
+import '../../data/model/tank_model.dart';
 import '../controller/tank_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
-import 'package:desktop_drop/desktop_drop.dart';
-import 'package:dotted_border/dotted_border.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 
 class AddTankModal extends ConsumerStatefulWidget {
   final Tank? initialTank;
@@ -37,10 +33,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   dynamic _selectedUnit;
   dynamic _selectedTankType;
   dynamic _selectedProduct;
-  XFile? _imageFile;
-  Uint8List? _previewBytes;
-  bool _isDragging = false;
   int _status = 1;
+
+  late List<Map<String, dynamic>> _channels;
+  late List<bool> _channelEnabled;
 
   @override
   void initState() {
@@ -99,6 +95,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       }
     }
     _loadDropdownData();
+    _initializeChannels();
   }
 
   Future<void> _loadDropdownData() async {
@@ -139,6 +136,40 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     }
   }
 
+  void _initializeChannels() {
+    _channels = [
+      {
+        'type': 'Level',
+        'min': 0,
+        'max': 95,
+        'units': '% Full',
+        'enabled': true,
+      },
+      {
+        'type': 'Pressure',
+        'min': 0,
+        'max': 41.4,
+        'units': 'Bar',
+        'enabled': true,
+      },
+      {
+        'type': 'Battery Voltage',
+        'min': 0,
+        'max': 30,
+        'units': 'Volts',
+        'enabled': true,
+      },
+      {
+        'type': 'Solar Voltage',
+        'min': 0,
+        'max': 30,
+        'units': 'Volts',
+        'enabled': true,
+      },
+    ];
+    _channelEnabled = List.generate(_channels.length, (i) => _channels[i]['enabled']);
+  }
+
   Future<void> _save() async {
     final messenger = ScaffoldMessenger.of(context);
 
@@ -163,34 +194,22 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
+    final channelData = getChannelData();
+    print('Channel Data: ${channelData['channels']}');
+
     final request = TankCreateRequest(
       tankNumber: _tankNumberController.text,
-      height: null,
-      width: null,
-      dishHeight: null,
-      canLength: null,
-      diameter: null,
-      length: null,
-      dishDepth: null,
-      depth: null,
-      coneLength: null,
-      tonnes: 0.0,
       description: '',
       siteId: _selectedSite?.siteId ?? widget.initialTank?.siteId,
       addressId: _selectedSite?.addressId ?? widget.initialTank?.addressId,
       unitId: _selectedUnit?['id'],
-      tankTypeId: _selectedTankType?['id'],
       productId: _selectedProduct is TankProduct
           ? _selectedProduct.productId
           : _selectedProduct?['id'],
-      imageFile: _imageFile,
-      status: _status,
     );
 
-    final success = widget.initialTank != null
-        ? await ref
-              .read(tankProvider.notifier)
-              .updateTank(widget.initialTank!.tankId, request)
+    final success = widget.initialTank != null ?
+    await ref.read(tankProvider.notifier).updateTank(widget.initialTank!.tankId, request)
         : await ref.read(tankProvider.notifier).createTank(request);
 
     if (!mounted) return;
@@ -215,7 +234,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final tankState = ref.watch(tankProvider);
@@ -231,199 +249,189 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
         child: SizedBox(
           width: 600,
           height: MediaQuery.of(context).size.height,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Stack(
             children: [
-              // Top accent bar
-              Container(
-                height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF141E7A),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(16)),
+              SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 48,
                 ),
-              ),
-              Expanded(
-                child: Stack(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 48,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header with close button
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      widget.initialTank != null
-                                          ? 'Edit Tank Instance'
-                                          : 'Create New Tank',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF111827),
-                                        letterSpacing: -0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      widget.initialTank != null
-                                          ? 'Modify the existing tank configuration and properties.'
-                                          : 'Fill in the information below to register a new tank unit.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        color: const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
+                              Text(widget.initialTank != null
+                                    ? 'Edit Tank Instance'
+                                    : 'Create New Tank',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF111827),
+                                  letterSpacing: -0.5,
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              IconButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                icon: const Icon(Icons.close_rounded, size: 22),
-                                color: const Color(0xFF6B7280),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF3F4F6),
-                                  padding: const EdgeInsets.all(12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                              const SizedBox(height: 8),
+                              Text(
+                                widget.initialTank != null
+                                    ? 'Modify the existing tank configuration and properties.'
+                                    : 'Fill in the information below to register a new tank unit.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: primary.withValues(alpha: 0.5),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 32),
-                          _buildInfoBar(),
-                          const SizedBox(height: 48),
-                          _buildLabelField(
-                            'TANK NAME',
-                            _buildTankAutocomplete(),
-                          ),
-                          const SizedBox(height: 32),
-                          _buildLabelField('SITE', _buildSiteAutocomplete()),
-                          const SizedBox(height: 32),
-                          _buildLabelField(
-                            'ASSIGNED PRODUCT',
-                            _isLoadingDropdowns
-                                ? const LinearProgressIndicator(
-                                    minHeight: 2,
-                                  )
-                                : AppDropdown<dynamic>(
-                                    value: _selectedProduct,
-                                    items: _products,
-                                    itemLabel: (p) => p is TankProduct
-                                        ? p.productName
-                                        : p['product_name'],
-                                    hint: 'Select Product',
-                                    onChanged: (v) => setState(
-                                      () => _selectedProduct = v,
-                                    ),
-                                  ),
-                          ),
-                          const SizedBox(height: 32),
-                          // Status toggle - redesigned
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFFF3F4F6),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'STATUS',
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 12,
-                                        color: const Color(0xFF141E7A),
-                                        letterSpacing: 1.1,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Set the visibility of this tank record.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const Spacer(),
-                                _buildStatusToggle(
-                                  1,
-                                  'Active',
-                                  const Color(0xFF10B981),
-                                ),
-                                const SizedBox(width: 12),
-                                _buildStatusToggle(
-                                  0,
-                                  'Inactive',
-                                  const Color(0xFF6B7280),
-                                ),
-                              ],
+                        ),
+                        const SizedBox(width: 16),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close_rounded, size: 22),
+                          color: const Color(0xFF6B7280),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFF3F4F6),
+                            padding: const EdgeInsets.all(12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-
-                          const SizedBox(height: 64),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: _save,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF141E7A),
-                                foregroundColor: Colors.white,
-                                elevation: 4,
-                                shadowColor: const Color(
-                                  0xFF141E7A,
-                                ).withValues(alpha: 0.4),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Text(
-                                widget.initialTank != null
-                                    ? 'UPDATE TANK RECORD'
-                                    : 'CREATE TANK RECORD',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 48),
+                    _buildLabelField('TANK NAME',
+                      _buildTankAutocomplete(),
+                    ),
+                    const SizedBox(height: 25),
+                    _buildLabelField('SITE', _buildSiteAutocomplete()),
+                    const SizedBox(height: 25),
+                    _buildLabelField('ASSIGNED PRODUCT',
+                      _isLoadingDropdowns ? const LinearProgressIndicator(
+                        minHeight: 2,
+                      ) : AppDropdown<dynamic>(
+                        value: _selectedProduct,
+                        items: _products,
+                        itemLabel: (p) => p is TankProduct ? p.productName
+                            : p['product_name'],
+                        hint: 'Select Product',
+                        onChanged: (v) => setState(() => _selectedProduct = v),
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    _buildLabelField('EVENT RULE GROUP',
+                      _isLoadingDropdowns ? const LinearProgressIndicator(
+                        minHeight: 2,
+                      ) :
+                      AppDropdown<dynamic>(
+                        value: _selectedProduct,
+                        items: _products,
+                        itemLabel: (p) => p is TankProduct ? p.productName
+                            : p['product_name'],
+                        hint: 'Select rule',
+                        onChanged: (v) => setState(() => _selectedProduct = v),
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    _buildLabelField('DATA CHANNELS', _buildChannelsTable()),
+                    const SizedBox(height: 32),
+                    // Status toggle - redesigned
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FAFB),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFF3F4F6),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'STATUS',
                                 style: GoogleFonts.outfit(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                  letterSpacing: 0.5,
+                                  fontSize: 12,
+                                  color: const Color(0xFF141E7A),
+                                  letterSpacing: 1.1,
                                 ),
                               ),
-                            ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Set the visibility of this tank record.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: const Color(0xFF6B7280),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          _buildStatusToggle(
+                            1,
+                            'Active',
+                            const Color(0xFF10B981),
+                          ),
+                          const SizedBox(width: 12),
+                          _buildStatusToggle(
+                            0,
+                            'Inactive',
+                            const Color(0xFF6B7280),
                           ),
                         ],
                       ),
                     ),
-                    if (tankState.isProcessing)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black26,
-                          child: const Center(
-                            child: CircularProgressIndicator(),
+
+                    const SizedBox(height: 64),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _save,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF141E7A),
+                          foregroundColor: Colors.white,
+                          elevation: 4,
+                          shadowColor: const Color(
+                            0xFF141E7A,
+                          ).withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          widget.initialTank != null
+                              ? 'UPDATE TANK RECORD'
+                              : 'CREATE TANK RECORD',
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
+              if (tankState.isProcessing)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black26,
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -431,34 +439,13 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
-  Widget _buildInfoBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.info_outline, color: Color(0xFF141E7A), size: 18),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Enter The Tank Name And Basic Details To Create A New Tank.',
-              style: TextStyle(color: Color(0xFF141E7A), fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildLabelField(String label, Widget field) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          height: 35,
+          height: 20,
           child: Text(
             label,
             style: const TextStyle(
@@ -473,101 +460,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
         const SizedBox(height: 8),
         field,
       ],
-    );
-  }
-
-  Widget _buildImageUploadArea() {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: _pickImage,
-      child: DropTarget(
-        onDragDone: (detail) async {
-          if (detail.files.isNotEmpty) {
-            final file = detail.files.first;
-            final bytes = await file.readAsBytes();
-            setState(() {
-              _imageFile = file;
-              _previewBytes = bytes;
-            });
-          }
-        },
-        onDragEntered: (detail) => setState(() => _isDragging = true),
-        onDragExited: (detail) => setState(() => _isDragging = false),
-        child: DottedBorder(
-          borderType: BorderType.RRect,
-          radius: const Radius.circular(12),
-          dashPattern: const [6, 3],
-          color: _isDragging ? const Color(0xFF141E7A) : Colors.grey.shade300,
-          strokeWidth: 2,
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: _isDragging
-                  ? const Color(0xFF141E7A).withValues(alpha: 0.05)
-                  : Colors.grey.shade50,
-            ),
-            child: _previewBytes != null
-                ? Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.memory(
-                          _previewBytes!,
-                          width: 200,
-                          height: 200,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: InkWell(
-                          onTap: () => setState(() {
-                            _imageFile = null;
-                            _previewBytes = null;
-                          }),
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              size: 16,
-                              color: Colors.red,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.cloud_upload_outlined,
-                        size: 48,
-                        color: _isDragging
-                            ? const Color(0xFF141E7A)
-                            : Colors.grey.shade300,
-                      ),
-                      const SizedBox(height: 16),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'Drag And Drop The Image Or Browse Files',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 10, color: Colors.grey),
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -615,17 +507,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      final bytes = await image.readAsBytes();
-      setState(() {
-        _imageFile = image;
-        _previewBytes = bytes;
-      });
-    }
-  }
 
   Widget _buildTankAutocomplete() {
     return LayoutBuilder(
@@ -634,8 +515,9 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           textEditingController: _tankNumberController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty)
+            if (textEditingValue.text.isEmpty) {
               return const Iterable<String>.empty();
+            }
             return await ref
                 .read(tankProvider.notifier)
                 .getTankNameSuggestions(textEditingValue.text);
@@ -683,8 +565,9 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           textEditingController: _siteAutocompleteController,
           focusNode: FocusNode(),
           optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty)
+            if (textEditingValue.text.isEmpty) {
               return const Iterable<SiteAutocompleteInfo>.empty();
+            }
             return await ref
                 .read(tankProvider.notifier)
                 .searchSites(textEditingValue.text);
@@ -734,40 +617,204 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
-  List<String> _getDimensionFields(String? typeName) {
-    if (typeName == null) return ['HEIGHT', 'WIDTH'];
+  Widget _buildChannelsTable() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: 650,
+          ),
+          child: DataTable(
+            columnSpacing: 16,
+            horizontalMargin: 16,
+            headingRowColor: WidgetStateProperty.resolveWith(
+                  (states) => const Color(0xFFF9FAFB),
+            ),
+            headingTextStyle: GoogleFonts.outfit(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF6B7280),
+              letterSpacing: 0.5,
+            ),
+            dataTextStyle: GoogleFonts.inter(
+              fontSize: 12,
+              color: const Color(0xFF111827),
+            ),
+            headingRowHeight: 40.0,
+            dataRowMinHeight: 52.0,
+            dataRowMaxHeight: 52.0,
+            columns: const [
+              DataColumn(label: Text('ENABLE')),
+              DataColumn(label: Text('TYPE')),
+              DataColumn(label: Text('MIN')),
+              DataColumn(label: Text('MAX')),
+              DataColumn(label: Text('UNITS')),
+            ],
+            rows: List.generate(_channels.length, (index) {
+              final channel = _channels[index];
+              final isEnabled = _channelEnabled[index];
 
-    switch (typeName) {
-      case 'Cyclinder':
-        return ['HEIGHT', 'WIDTH', 'DISH HEIGHT'];
-      case 'Rectangle':
-      case 'Rectangular':
-        return ['HEIGHT', 'WIDTH'];
-      case 'Horizontal with 2:1 Ellipsoidal Ends':
-        return ['Can Length (L)', 'Diameter (D)'];
-      case 'Horizontal with Flat Ends':
-        return ['Length (L)', 'Diameter (D)'];
-      case 'Horizontal with Hemispherical Ends':
-        return ['Can Length (L)', 'Diameter (D)'];
-      case 'Horizontal with Variable Dished Ends':
-        return ['Can Length (L)', 'Diameter (D)', 'Dish Depth (DL)'];
-      case 'None':
-        return ['Can Length (L)', 'Diameter (D)'];
-      case 'Spherical':
-        return ['Can Length (L)', 'Diameter (D)'];
-      case 'Vertical with 2:1 Ellipsoidal Ends':
-        return ['Can Length (L)', 'Diameter (D)'];
-      case 'Vertical with Conical Bottom End':
-        return ['Can Length (L)', 'Diameter (D)', 'Cone Length (CL)'];
-      case 'Vertical with Flat Ends':
-        return ['Can Length (L)', 'Diameter (D)'];
-      case 'Vertical with Hemispherical Ends':
-        return ['Can Length (L)', 'Diameter (D)'];
-      case 'Vertical with Variable Dished Ends':
-        return ['Can Length (L)', 'Diameter (D)', 'Dish Depth (DL)'];
-      default:
-        return ['HEIGHT', 'WIDTH', 'DISH HEIGHT'];
-    }
+              return DataRow(
+                color: isEnabled
+                    ? null
+                    : WidgetStateProperty.resolveWith((states) => const Color(0xFFF9FAFB)),
+                cells: [
+                  DataCell(
+                    SizedBox(
+                      width: 40,
+                      child: Checkbox(
+                        value: isEnabled,
+                        onChanged: (value) {
+                          setState(() {
+                            _channelEnabled[index] = value ?? false;
+                            _channels[index]['enabled'] = value ?? false;
+                          });
+                        },
+                        activeColor: const Color(0xFF141E7A),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      channel['type'],
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: isEnabled
+                            ? const Color(0xFF111827)
+                            : const Color(0xFF9CA3AF),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    SizedBox(
+                      width: 80,
+                      child: TextFormField(
+                        initialValue: channel['min'].toString(),
+                        enabled: isEnabled,
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          color: isEnabled
+                              ? const Color(0xFF111827)
+                              : const Color(0xFF9CA3AF),
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFF141E7A), width: 1.5),
+                          ),
+                          disabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFFF3F4F6)),
+                          ),
+                          filled: true,
+                          fillColor: isEnabled ? Colors.white : const Color(0xFFF9FAFB),
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          _channels[index]['min'] = double.tryParse(value) ?? 0;
+                        },
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    SizedBox(
+                      width: 80,
+                      child: TextFormField(
+                        initialValue: channel['max'].toString(),
+                        enabled: isEnabled,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: isEnabled
+                              ? const Color(0xFF111827)
+                              : const Color(0xFF9CA3AF),
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFF141E7A), width: 1.5),
+                          ),
+                          disabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(color: Color(0xFFF3F4F6)),
+                          ),
+                          filled: true,
+                          fillColor: isEnabled ? Colors.white : const Color(0xFFF9FAFB),
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          _channels[index]['max'] = double.tryParse(value) ?? 0;
+                        },
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        channel['units'],
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: isEnabled
+                              ? const Color(0xFF6B7280)
+                              : const Color(0xFFD1D5DB),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Map<String, dynamic> getChannelData() {
+    return {
+      'channels': _channels.map((channel) {
+        final index = _channels.indexOf(channel);
+        return {
+          'type': channel['type'],
+          'min': channel['min'],
+          'max': channel['max'],
+          'units': channel['units'],
+          'enabled': _channelEnabled[index],
+        };
+      }).toList(),
+    };
   }
 
   @override

@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import '../../presentation/model/tank_model.dart';
-import '../../../site/presentation/model/site_model.dart';
-import '../../../../core/network/http/api_service.dart';
+import '../../site/presentation/model/site_model.dart';
+import '../../../core/network/http/api_service.dart';
+import 'model/tank_model.dart';
 
 class TankApi {
   final ApiService _client;
-
   TankApi(this._client);
 
   Future<TankGroupedResponse> getTanksGrouped({
@@ -54,45 +53,11 @@ class TankApi {
   }
 
   Future<void> createTank(TankCreateRequest request) async {
-    if (request.imageFile != null) {
-      final bytes = await request.imageFile!.readAsBytes();
-      final jsonRequest = request.toJson();
-      if (jsonRequest['strapping_points'] != null) {
-        jsonRequest['strapping_points'] = jsonEncode(jsonRequest['strapping_points']);
-      }
-
-      final formData = FormData.fromMap({
-        ...jsonRequest,
-        'tank_image': MultipartFile.fromBytes(
-          bytes,
-          filename: request.imageFile!.name,
-        ),
-      });
-      await _client.post('/tanks', data: formData);
-    } else {
-      await _client.post('/tanks', data: request.toJson());
-    }
+    await _client.post('/tanks', data: request.toJson());
   }
 
   Future<void> updateTank(int id, TankCreateRequest request) async {
-    if (request.imageFile != null) {
-      final bytes = await request.imageFile!.readAsBytes();
-      final jsonRequest = request.toJson();
-      if (jsonRequest['strapping_points'] != null) {
-        jsonRequest['strapping_points'] = jsonEncode(jsonRequest['strapping_points']);
-      }
-
-      final formData = FormData.fromMap({
-        ...jsonRequest,
-        'tank_image': MultipartFile.fromBytes(
-          bytes,
-          filename: request.imageFile!.name,
-        ),
-      });
-      await _client.put('/tanks/$id', data: formData);
-    } else {
-      await _client.put('/tanks/$id', data: request.toJson());
-    }
+    await _client.put('/tanks/$id', data: request.toJson());
   }
 
   Future<void> deleteTank(int id) async {

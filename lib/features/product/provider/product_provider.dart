@@ -99,21 +99,16 @@ class ProductNotifier extends StateNotifier<ProductState> {
         isSaving: true,
         error: null,
       );
-
       final product = await _repo.createProduct(data);
-
       if (!mounted) return false;
-
       final updatedList = [
         product,
         ...state.products,
       ];
-
       state = state.copyWith(
         products: updatedList,
         isSaving: false,
       );
-
       return true;
     } catch (e) {
       if (!mounted) return false;
@@ -122,7 +117,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
         isSaving: false,
         error: e.toString(),
       );
-
       return false;
     }
   }
@@ -134,19 +128,14 @@ class ProductNotifier extends StateNotifier<ProductState> {
         isSaving: true,
         error: null,
       );
-
       final updatedProduct = await _repo.updateProduct(id, data);
-
       if (!mounted) return false;
-
       final updatedList = state.products.map((product) {
         if (product.id == id) {
           return updatedProduct;
         }
-
         return product;
       }).toList();
-
       state = state.copyWith(
         products: updatedList,
         isSaving: false,
@@ -155,7 +144,6 @@ class ProductNotifier extends StateNotifier<ProductState> {
       return true;
     } catch (e) {
       if (!mounted) return false;
-
       state = state.copyWith(
         isSaving: false,
         error: e.toString(),
@@ -169,20 +157,15 @@ class ProductNotifier extends StateNotifier<ProductState> {
   Future<bool> deleteProduct(int id) async {
     try {
       final oldList = state.products;
-
       /// Optimistic update
       final updatedList = oldList.where((p) {
         return p.id != id;
       }).toList();
-
       state = state.copyWith(products: updatedList);
-
       await _repo.deleteProduct(id);
-
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());
-
       return false;
     }
   }
