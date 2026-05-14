@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../shared/widgets/app_table.dart';
+import '../../../../core/app_theme/app_theme.dart';
+import '../../../../shared/widgets/view_header.dart';
 import '../controller/device_provider.dart';
 import '../model/device_model.dart';
 import '../../../site/presentation/model/site_model.dart';
@@ -51,69 +53,19 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     );
   }
 
-  Widget _buildHeader(DeviceState state, DeviceNotifier notifier) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'DEVICE MANAGEMENT',
-                  style: GoogleFonts.outfit(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Monitor and configure your water monitoring hardware across various sites.',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-            ElevatedButton.icon(
-              onPressed: () => _showAddModal(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF141E7A),
-                foregroundColor: Colors.white,
-              ),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(
-                'ADD DEVICE',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildFilterRow(state, notifier),
-        if (state.error != null) ...[
-          const SizedBox(height: 16),
-          _buildErrorBanner(state.error!, notifier),
-        ],
-        const SizedBox(height: 16),
-      ],
+  Widget _buildHeader(BuildContext context) {
+    return ViewHeader(
+      title: 'DEVICE MANAGEMENT',
+      subtitle:
+      'Monitor and configure your water monitoring hardware across various sites.',
+      buttonText: 'Add Device',
+      onPressed: () => _showAddModal(),
     );
   }
 
   Widget _buildFilterRow(DeviceState state, DeviceNotifier notifier) {
     return Row(
       children: [
-        // Site search — dashboard style
         Expanded(
           flex: 2,
           child: _buildSiteAutocomplete(notifier),
@@ -183,13 +135,15 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     final notifier = ref.read(deviceProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withValues(alpha: 0.1),
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
         children: [
+          _buildHeader(context),
           Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: _buildHeader(state, notifier),
+            padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
+            child: _buildFilterRow(state, notifier),
           ),
+
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -277,14 +231,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
   Widget _buildFixedTableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        border: Border(
-          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-        ),
-      ),
+      color: primary.withValues(alpha: 0.1),
       child: Row(
         children: [
           AppTableHeaderCell('SI.NO', width: 70),
@@ -303,15 +250,15 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
   Widget _buildGroupHeader(DeviceGroup group, int index, bool isLast) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: primary.withValues(alpha: 0.04),
         border: Border(
-          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          bottom: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5),
+          left: BorderSide(color: Colors.grey.shade300, width: 1),
+          right: BorderSide(color: Colors.grey.shade300, width: 1),
+          bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
             SizedBox(
@@ -321,61 +268,19 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E40AF),
+                  color: Colors.black87,
                 ),
               ),
             ),
-            Expanded(
-              flex: 2, // Align with DATE column
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      group.siteName ?? '',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E40AF),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: Text(
-                      '${group.devices.length} Devices',
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF2563EB),
-                      ),
-                    ),
-                  ),
-                ],
+            Text(
+                group.siteName ?? '',
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF111827),
               ),
             ),
-            Expanded(
-              flex: 13, // Align with the rest of columns (Total 15 - Date 2)
-              child: group.devices.isNotEmpty && group.devices.first.siteInformation != null
-                  ? Text(
-                      group.devices.first.siteInformation!.fullAddress,
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: const Color(0xFF6B7280),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  : const SizedBox.shrink(),
-            ),
-            const SizedBox(width: 100), // Match ACTION column width
+
           ],
         ),
       ),

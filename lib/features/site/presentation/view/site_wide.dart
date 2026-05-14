@@ -5,6 +5,8 @@ import 'package:air_water/shared/widgets/app_text_field.dart';
 import 'package:air_water/shared/widgets/app_dropdown.dart';
 import 'package:air_water/shared/widgets/app_date_picker.dart';
 import 'package:air_water/shared/widgets/app_table.dart';
+import '../../../../core/app_theme/app_theme.dart';
+import '../../../../shared/widgets/view_header.dart';
 import '../controller/site_provider.dart';
 import '../widgets/add_site_modal.dart';
 import '../model/site_model.dart';
@@ -47,12 +49,13 @@ class _SiteWideState extends ConsumerState<SiteWide> {
     final siteNotifier = ref.read(siteNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withValues(alpha: 0.1),
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
         children: [
+          _buildHeader(context),
           Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: _buildHeader(siteState, siteNotifier),
+            padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
+            child: _buildFilterRow(siteNotifier, siteState),
           ),
           Expanded(
             child: LayoutBuilder(
@@ -66,8 +69,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                     width: tableWidth,
                     child: Column(
                       children: [
-                        if (!siteState.isLoading ||
-                            siteState.groupedSites.isNotEmpty)
+                        if (!siteState.isLoading || siteState.groupedSites.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24.0,
@@ -75,9 +77,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                             child: _buildFixedTableHeader(),
                           ),
                         Expanded(
-                          child:
-                              siteState.isLoading &&
-                                  siteState.groupedSites.isEmpty
+                          child: siteState.isLoading && siteState.groupedSites.isEmpty
                               ? const AppTableInitialLoader()
                               : _buildVirtualizedTable(siteState, siteNotifier),
                         ),
@@ -97,52 +97,38 @@ class _SiteWideState extends ConsumerState<SiteWide> {
     );
   }
 
-  Widget _buildHeader(SiteState state, SiteNotifier notifier) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'SITE MANAGEMENT',
-          style: GoogleFonts.outfit(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.8,
-            color: const Color(0xFF111827),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Centralize site information including identification, locations, and status management.',
-          style: GoogleFonts.inter(
-            color: const Color(0xFF6B7280),
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(height: 20),
-        // Filter label
-        Text(
-          'FILTER',
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF374151),
-            letterSpacing: 1.0,
-          ),
-        ),
-        const SizedBox(height: 10),
-        _buildFilterRow(notifier, state),
-        const SizedBox(height: 10),
-        // Align(
-        //   alignment: Alignment.centerRight,
-        //   child: Text(
-        //     'Showing ${state.totalEntries} entries',
-        //     style: GoogleFonts.inter(
-        //       color: const Color(0xFF9CA3AF),
-        //       fontSize: 12,
-        //     ),
-        //   ),
-        // ),
-      ],
+  Widget _buildHeader(BuildContext context) {
+    return ViewHeader(
+      title: 'SITE MANAGEMENT',
+      subtitle:
+      'Centralize site information including identification, locations, and status management.',
+      buttonText: 'Add Site',
+      onPressed: () {
+        showGeneralDialog(
+          context: context,
+          barrierDismissible: true,
+          barrierLabel: 'AddSite',
+          barrierColor: Colors.black54,
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
+          transitionBuilder: (context, anim1, anim2, child) {
+            return SlideTransition(
+              position:
+              Tween<Offset>(
+                begin: const Offset(1, 0),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: anim1, curve: Curves.easeOut),
+              ),
+              child: child,
+            );
+          },
+        ).then((_) {
+          ref
+              .read(siteNotifierProvider.notifier)
+              .loadGroupedSites(isReload: true);
+        });
+      },
     );
   }
 
@@ -261,72 +247,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
             notifier.clearFilters();
           },
         ),
-        const SizedBox(width: 32),
-        ElevatedButton.icon(
-          onPressed: () {
-            showGeneralDialog(
-              context: context,
-              barrierDismissible: true,
-              barrierLabel: 'AddSite',
-              barrierColor: Colors.black54,
-              transitionDuration: const Duration(milliseconds: 300),
-              pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
-              transitionBuilder: (context, anim1, anim2, child) {
-                return SlideTransition(
-                  position:
-                      Tween<Offset>(
-                        begin: const Offset(1, 0),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(parent: anim1, curve: Curves.easeOut),
-                      ),
-                  child: child,
-                );
-              },
-            ).then((_) {
-              ref
-                  .read(siteNotifierProvider.notifier)
-                  .loadGroupedSites(isReload: true);
-            });
-          },
-          style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
-          icon: const Icon(Icons.add, size: 18),
-          label: Text(
-            'ADD SITE',
-            style: GoogleFonts.inter(
-              fontWeight: FontWeight.w800,
-              fontSize: 13,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
       ],
-    );
-  }
-
-  Widget _buildFixedTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        border: Border(
-          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-        ),
-      ),
-      child: Row(
-        children: [
-          AppTableHeaderCell('SI.NO', width: 70),
-          AppTableHeaderCell('City', flex: 2),
-          AppTableHeaderCell('Company', flex: 2),
-          AppTableHeaderCell('State', flex: 2),
-          AppTableHeaderCell('Country', flex: 2),
-          AppTableHeaderCell('Status', flex: 2),
-          AppTableHeaderCell('Address', flex: 3),
-          AppTableHeaderCell('Action', width: 100),
-        ],
-      ),
     );
   }
 
@@ -386,15 +307,15 @@ class _SiteWideState extends ConsumerState<SiteWide> {
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF), // More visible blue 50
+        color: primary.withValues(alpha: 0.04),
         border: Border(
-          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          bottom: const BorderSide(color: Color(0xFFE5E7EB)),
+          left: BorderSide(color: Colors.grey.shade300, width: 1),
+          right: BorderSide(color: Colors.grey.shade300, width: 1),
+          bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
             SizedBox(
@@ -404,51 +325,39 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E40AF),
+                  color: Colors.black87,
                 ),
               ),
             ),
-            Expanded(
-              child: Row(
-                children: [
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      group.name,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E40AF),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: Text(
-                      '${group.addresses.length} Sites',
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF2563EB),
-                      ),
-                    ),
-                  ),
-                ],
+            Text(
+              group.name,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF111827),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFixedTableHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      color: primary.withValues(alpha: 0.1),
+      child: Row(
+        children: [
+          AppTableHeaderCell('SI.NO', width: 70),
+          AppTableHeaderCell('City', flex: 2),
+          AppTableHeaderCell('State', flex: 2),
+          AppTableHeaderCell('Country', flex: 2),
+          AppTableHeaderCell('Address', flex: 3),
+          AppTableHeaderCell('Company', flex: 2),
+          AppTableHeaderCell('Status', width: 80),
+          AppTableHeaderCell('Action', width: 80),
+        ],
       ),
     );
   }
@@ -458,26 +367,31 @@ class _SiteWideState extends ConsumerState<SiteWide> {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Colors.grey.shade300, width: 1),
+          right: BorderSide(color: Colors.grey.shade300, width: 1),
           bottom: isLast
-              ? const BorderSide(color: Color(0xFFD1D5DB), width: 1.5)
+              ? BorderSide(color: Colors.grey.shade300, width: 1)
               : const BorderSide(color: Color(0xFFF3F4F6)),
         ),
-        borderRadius: isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-              )
+        borderRadius: isLast ? const BorderRadius.only(
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        )
             : BorderRadius.zero,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
             const AppTableCell(null, width: 70),
+
             AppTableCell(site.city ?? '--', flex: 2),
 
+            const SizedBox(width: 16),
+            AppTableCell(site.state ?? '--', flex: 2),
+            AppTableCell(site.country ?? '--', flex: 2),
+
+            AppTableCell(site.fullAddress, flex: 3),
             AppTableCell(
               site.companyName ?? '--',
               flex: 2,
@@ -485,22 +399,17 @@ class _SiteWideState extends ConsumerState<SiteWide> {
               fontSize: 13,
               color: const Color(0xFF111827),
             ),
-            const SizedBox(width: 16),
-            AppTableCell(site.state ?? '--', flex: 2),
-            AppTableCell(site.country ?? '--', flex: 2),
             AppTableCell(
               null,
-              flex: 2,
+              width: 80,
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: AppStatusBadge(status: site.status ?? 1),
               ),
             ),
-
-            AppTableCell(site.fullAddress, flex: 3),
             AppTableCell(
               null,
-              width: 100,
+              width: 80,
               child: Row(
                 children: [
                   AppTableActionButton(

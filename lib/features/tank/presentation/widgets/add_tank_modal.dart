@@ -341,7 +341,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                     const SizedBox(height: 25),
                     _buildLabelField('DATA CHANNELS', _buildChannelsTable()),
                     const SizedBox(height: 32),
-                    // Status toggle - redesigned
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -410,8 +409,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                         ),
                         child: Text(
                           widget.initialTank != null
-                              ? 'UPDATE TANK RECORD'
-                              : 'CREATE TANK RECORD',
+                              ? 'UPDATE TANK'
+                              : 'CREATE TANK',
                           style: GoogleFonts.outfit(
                             fontWeight: FontWeight.w700,
                             fontSize: 16,
@@ -597,7 +596,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       return ListTile(
                         title: Text(
                           option.displayName ??
-                              option.siteName + " " + option.fullAddress,
+                              "${option.siteName} ${option.fullAddress}",
                         ),
                           onTap: () {
                             onSelected(option);
@@ -627,7 +626,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
         scrollDirection: Axis.horizontal,
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            minWidth: 650,
+            minWidth: 600,
+            maxWidth: 600
           ),
           child: DataTable(
             columnSpacing: 16,
@@ -646,14 +646,30 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
               color: const Color(0xFF111827),
             ),
             headingRowHeight: 40.0,
-            dataRowMinHeight: 52.0,
-            dataRowMaxHeight: 52.0,
-            columns: const [
-              DataColumn(label: Text('ENABLE')),
-              DataColumn(label: Text('TYPE')),
-              DataColumn(label: Text('MIN')),
-              DataColumn(label: Text('MAX')),
-              DataColumn(label: Text('UNITS')),
+            dataRowMinHeight: 40.0,
+            dataRowMaxHeight: 40.0,
+            dividerThickness: 0.3,
+            columns: [
+              const DataColumn(
+                label: Text('ENABLE'),
+                columnWidth: FixedColumnWidth(70.0),
+              ),
+              const DataColumn(
+                label: Text('TYPE'),
+                columnWidth: FixedColumnWidth(120.0),  // Fixed width for type text
+              ),
+              const DataColumn(
+                label: Text('MIN'),
+                columnWidth: FixedColumnWidth(95.0),
+              ),
+              const DataColumn(
+                label: Text('MAX'),
+                columnWidth: FixedColumnWidth(95.0),
+              ),
+              const DataColumn(
+                label: Text('UNITS'),
+                columnWidth: FlexColumnWidth(1.0),
+              ),
             ],
             rows: List.generate(_channels.length, (index) {
               final channel = _channels[index];
@@ -698,7 +714,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                         initialValue: channel['min'].toString(),
                         enabled: isEnabled,
                         style: GoogleFonts.inter(
-                          fontSize: 15,
+                          fontSize: 13,
                           color: isEnabled
                               ? const Color(0xFF111827)
                               : const Color(0xFF9CA3AF),
@@ -742,7 +758,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                         initialValue: channel['max'].toString(),
                         enabled: isEnabled,
                         style: GoogleFonts.inter(
-                          fontSize: 12,
+                          fontSize: 13,
                           color: isEnabled
                               ? const Color(0xFF111827)
                               : const Color(0xFF9CA3AF),
