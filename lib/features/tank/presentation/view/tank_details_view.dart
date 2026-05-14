@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../data/model/tank_details_model.dart';
+import '../../data/model/tank_model.dart';
 import '../controller/tank_details_provider.dart';
-import '../model/tank_model.dart';
-import '../model/tank_details_model.dart';
 import '../../../../shared/widgets/app_loader.dart';
 import '../../../../shared/widgets/app_details_header.dart';
 import '../../../../shared/widgets/app_metric_card.dart';
@@ -1223,31 +1223,10 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView> with SingleTi
     
     final request = TankCreateRequest(
       tankNumber: tank.tankNumber,
-      tankTypeId: tank.tankTypeId,
       unitId: tank.unitId,
       productId: tank.productId,
       siteId: tank.siteId,
-      status: tank.status,
-      description: tank.description, // Use existing as it's now read-only
-      useStrappingChart: _useStrappingChart,
-      strappingPoints: _editPoints.where((p) => p.levelMm > 0 || p.volumeM3 > 0).map((p) => StrappingPoint(
-        levelMm: p.levelMm,
-        volumeM3: p.volumeM3,
-        levelUnit: _selectedLevelUnit,
-        volumeUnit: _selectedVolumeUnit,
-      )).toList(),
-      width: tank.width,
-      height: tank.height,
-      dishHeight: tank.dishHeight,
-      canLength: tank.canLength,
-      diameter: tank.diameter,
-      length: tank.length,
-      dishDepth: tank.dishDepth,
-      depth: tank.depth,
-      coneLength: tank.coneLength,
-      tonnes: tank.tonnes,
-      levelUnit: _selectedLevelUnit,
-      volumeUnit: _selectedVolumeUnit,
+      description: tank.description,
     );
 
     final success = await ref.read(tankProvider.notifier).updateTank(tank.tankId, request);

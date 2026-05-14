@@ -232,7 +232,7 @@ class DashboardListView extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.location_on, size: 18, color: Color(0xFF141E7A)),
+                Icon(Icons.location_on, size: 18, color: primary),
                 const SizedBox(width: 8),
                 Text(
                   '${site.siteName} - ${site.city}',
@@ -246,7 +246,7 @@ class DashboardListView extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF141E7A).withOpacity(0.1),
+                    color: primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -254,7 +254,7 @@ class DashboardListView extends ConsumerWidget {
                     style: GoogleFonts.outfit(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF141E7A),
+                      color: primary,
                     ),
                   ),
                 ),

@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/http/api_service.dart';
-import '../../data/api/tank_api.dart';
-import '../../data/repository/tank_repository_impl.dart';
-import '../model/tank_model.dart';
+import '../../data/model/tank_model.dart';
+import '../../data/tank_api.dart';
+import '../../data/tank_repository.dart';
+import '../../data/tank_repository_impl.dart';
 import '../../../site/presentation/model/site_model.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 
@@ -66,9 +67,7 @@ class TankState {
       products: products ?? this.products,
       searchSite: searchSite ?? this.searchSite,
       searchTank: searchTank ?? this.searchTank,
-      selectedStatus: selectedStatus != null
-          ? selectedStatus
-          : this.selectedStatus,
+      selectedStatus: selectedStatus ?? this.selectedStatus,
     );
   }
 }
@@ -118,7 +117,6 @@ class TankNotifier extends Notifier<TankState> {
   }
 
   Future<void> loadGroupedTanks() async {
-    // Auth Guard: Don't fetch if no user is logged in (prevents 401 during logout)
     if (ref.read(userProvider).currentUser == null) return;
 
     state = state.copyWith(isLoading: true, page: 1, groupedTanks: []);

@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/http/api_service.dart';
+import '../../../tank/data/model/tank_model.dart';
 import '../../data/api/user_api.dart';
 import '../../data/repository/user_repository_impl.dart';
 import '../../domain/repository/user_repository.dart';
 import '../model/user_model.dart';
 import '../../../site/presentation/model/site_model.dart';
-import '../../../tank/presentation/model/tank_model.dart';
 import '../../../../app_startup/app_startup.dart';
 
 class UserState {

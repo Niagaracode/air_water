@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
+import '../../../../shared/widgets/view_header.dart';
+import '../../data/model/tank_model.dart';
 import '../controller/tank_provider.dart';
 import '../widgets/add_tank_modal.dart';
-import '../model/tank_model.dart';
 import '../../../site/presentation/model/site_model.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
@@ -47,72 +49,16 @@ class _TankWideState extends ConsumerState<TankWide> {
     super.dispose();
   }
 
-  Widget _buildHeader(TankState state, TankNotifier notifier) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'TANK MANAGEMENT',
-                  style: GoogleFonts.outfit(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Centralize tank information including dimensions, types, products and site associations.',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-            ElevatedButton.icon(
-              onPressed: () => _showAddDialog(),
-              style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(
-                'ADD TANK',
-                style: GoogleFonts.inter(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'FILTER',
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF374151),
-            letterSpacing: 1.0,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildFilterRow(state, notifier),
-        if (state.error != null) ...[
-          const SizedBox(height: 16),
-          _buildErrorBanner(state.error!),
-        ],
-        const SizedBox(height: 16),
-      ],
+  /// HEADER
+  Widget _buildHeader(BuildContext context) {
+    return ViewHeader(
+      title: 'TANK MANAGEMENT',
+      subtitle:
+      'Centralize tank information including dimensions, types, products and site associations.',
+      buttonText: 'Add tank',
+      onPressed: () => _showAddDialog(),
     );
   }
-
 
   Widget _buildFilterRow(TankState state, TankNotifier notifier) {
     return Row(
@@ -285,12 +231,13 @@ class _TankWideState extends ConsumerState<TankWide> {
     final notifier = ref.read(tankProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withOpacity(0.1),
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
         children: [
+          _buildHeader(context),
           Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: _buildHeader(state, notifier),
+            padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
+            child: _buildFilterRow(state, notifier),
           ),
           Expanded(
             child: LayoutBuilder(
@@ -343,22 +290,11 @@ class _TankWideState extends ConsumerState<TankWide> {
 
     // Generate linear list (Site Headers + Tank Rows + Asset Groups)
     final List<dynamic> items = [];
-    
-    // 1. Site Groups
     for (int i = 0; i < state.groupedTanks.length; i++) {
       final group = state.groupedTanks[i];
       items.add({'type': 'header', 'group': group, 'index': i + 1});
       for (final tank in group.tanks) {
         items.add({'type': 'row', 'tank': tank, 'group': group});
-      }
-    }
-
-    // 2. Asset Groups
-    for (int i = 0; i < state.assetGroups.length; i++) {
-      final group = state.assetGroups[i];
-      items.add({'type': 'asset_header', 'group': group, 'index': state.groupedTanks.length + i + 1});
-      for (final tank in group.tanks) {
-        items.add({'type': 'row', 'tank': tank, 'is_asset_group': true});
       }
     }
 
@@ -376,101 +312,31 @@ class _TankWideState extends ConsumerState<TankWide> {
             item['index'] as int,
             isLast,
           );
-        } else if (item['type'] == 'asset_header') {
-          return _buildAssetGroupHeader(
-            item['group'] as AssetGroupData,
-            item['index'] as int,
-            isLast,
-          );
-        } else {
+        }else {
           return _buildTankRow(
             item['tank'] as Tank,
             notifier,
             isLast,
+            item['group'] as TankGroup,
           );
         }
       },
     );
   }
 
-  Widget _buildAssetGroupHeader(AssetGroupData group, int index, bool isLast) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F3FF), // Soft purple for Asset Groups
-        border: Border(
-          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          bottom: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 60,
-              child: Text(
-                index.toString().padLeft(2, '0'),
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF6D28D9), // Purple text
-                ),
-              ),
-            ),
-            const Icon(Icons.layers_rounded, size: 18, color: Color(0xFF6D28D9)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'ASSET GROUP: ${group.name.toUpperCase()}',
-                style: GoogleFonts.outfit(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF4C1D95),
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEDE9FE),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${group.tanks.length} TANKS',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF6D28D9),
-                ),
-              ),
-            ),
-            const SizedBox(width: 120), // Match ACTIONS column
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildFixedTableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        border: Border(
-          top: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-        ),
-      ),
+      color: primary.withValues(alpha: 0.1),
       child: Row(
         children: [
           AppTableHeaderCell('SI.NO', width: 60),
-          AppTableHeaderCell('Tank Number', flex: 3),
-          AppTableHeaderCell('Product', flex: 3),
+          AppTableHeaderCell('Site/ Tank', flex: 2),
+          AppTableHeaderCell('Device id', flex: 2),
+          AppTableHeaderCell('Site Information', flex: 3),
+          AppTableHeaderCell('Product', flex: 1, textAlign: TextAlign.center),
           AppTableHeaderCell('Status', flex: 1),
-          AppTableHeaderCell('Actions', width: 120),
+          AppTableHeaderCell('Actions', width: 80),
         ],
       ),
     );
@@ -479,15 +345,15 @@ class _TankWideState extends ConsumerState<TankWide> {
   Widget _buildGroupHeader(TankGroup group, int index, bool isLast) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: primary.withValues(alpha: 0.04),
         border: Border(
-          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          bottom: const BorderSide(color: Color(0xFFD1D5DB), width: 0.5),
+          left: BorderSide(color: Colors.grey.shade300, width: 1),
+          right: BorderSide(color: Colors.grey.shade300, width: 1),
+          bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
             SizedBox(
@@ -497,124 +363,79 @@ class _TankWideState extends ConsumerState<TankWide> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1E40AF),
+                  color: Colors.black87,
                 ),
               ),
             ),
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      group.siteName,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E40AF),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: Text(
-                      '${group.tanks.length} Tanks',
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF2563EB),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  if (group.fullAddress.isNotEmpty)
-                    Expanded(
-                      child: Text(
-                        group.fullAddress,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
-                    ),
-                ],
+            Text(
+              group.siteName,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF111827),
               ),
             ),
-            const SizedBox(width: 120), // Match ACTIONS column
+            const SizedBox(width: 5),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${group.tanks.length} tanks',
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: primary,
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTankRow(Tank tank, TankNotifier notifier, bool isLast) {
+  Widget _buildTankRow(Tank tank, TankNotifier notifier, bool isLast, TankGroup group) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+          left: BorderSide(color: Colors.grey.shade300, width: 1),
+          right: BorderSide(color: Colors.grey.shade300, width: 1),
           bottom: isLast
-              ? const BorderSide(color: Color(0xFFD1D5DB), width: 1.5)
+              ? BorderSide(color: Colors.grey.shade300, width: 1)
               : const BorderSide(color: Color(0xFFF3F4F6)),
         ),
-        borderRadius: isLast
-            ? const BorderRadius.only(
+        borderRadius: isLast ? const BorderRadius.only(
                 bottomLeft: Radius.circular(16),
                 bottomRight: Radius.circular(16),
               )
             : BorderRadius.zero,
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
         child: Row(
           children: [
             const SizedBox(width: 60),
             Expanded(
-              flex: 3,
-              child: Row(
-                children: [
-                  if (tank.tankImageUrl != null)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.network(
-                        tank.tankImageUrl!,
-                        width: 44,
-                        height: 44,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _noImageBox(),
-                      ),
-                    )
-                  else
-                    _noImageBox(),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
-                      child: Text(
-                        tank.tankNumber,
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF2563EB),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                ],
+              flex: 2,
+              child: InkWell(
+                onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
+                child: Text(
+                  tank.tankNumber,
+                  style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade600),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
-            AppTableCell(tank.productName ?? '--', flex: 3),
+
+            AppTableCell(tank.deviceId ?? '--', flex: 2),
+
+            AppTableCell(group.fullAddress ?? '--', flex: 3),
+
+            AppTableCell(tank.productName ?? '--', flex: 1, textAlign: TextAlign.center,),
 
             Expanded(
               flex: 1,
@@ -624,23 +445,16 @@ class _TankWideState extends ConsumerState<TankWide> {
               ),
             ),
             SizedBox(
-              width: 120,
+              width: 80,
               child: Row(
                 children: [
-                  AppTableActionButton(
-                    icon: Icons.visibility_outlined,
-                    color: const Color(0xFF141E7A),
-                    bg: const Color(0xFFF0FDF4),
-                    onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
-                  ),
-                  const SizedBox(width: 6),
                   AppTableActionButton(
                     icon: Icons.edit_outlined,
                     color: const Color(0xFF2563EB),
                     bg: const Color(0xFFEFF6FF),
                     onTap: () => _showAddDialog(tank),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 5),
                   AppTableActionButton(
                     icon: Icons.delete_outline,
                     color: const Color(0xFFDC2626),
@@ -656,54 +470,6 @@ class _TankWideState extends ConsumerState<TankWide> {
     );
   }
 
-
-  Widget _noImageBox() {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: const Icon(
-        Icons.image_not_supported_outlined,
-        size: 20,
-        color: Color(0xFF9CA3AF),
-      ),
-    );
-  }
-
-  Widget _buildErrorBanner(String error) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFEF2F2),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFFECACA)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 18),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              error,
-              style: GoogleFonts.inter(
-                color: const Color(0xFFDC2626),
-                fontSize: 13,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, color: Color(0xFFDC2626), size: 16),
-            onPressed: () => ref.read(tankProvider.notifier).loadGroupedTanks(),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showAddDialog([Tank? tank]) {
     showGeneralDialog(
@@ -782,31 +548,5 @@ class _TankWideState extends ConsumerState<TankWide> {
         );
       }
     }
-  }
-}
-
-class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-  final double height;
-
-  _SliverHeaderDelegate({required this.child, this.height = 56});
-
-  @override
-  double get minExtent => height;
-  @override
-  double get maxExtent => height;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox.expand(child: child);
-  }
-
-  @override
-  bool shouldRebuild(_SliverHeaderDelegate oldDelegate) {
-    return oldDelegate.child != child || oldDelegate.height != height;
   }
 }

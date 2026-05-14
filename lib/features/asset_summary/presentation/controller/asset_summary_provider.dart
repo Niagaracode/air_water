@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../tank/presentation/model/tank_model.dart';
-import '../../../tank/data/api/tank_api.dart';
+import '../../../tank/data/model/tank_model.dart';
+import '../../../tank/data/tank_api.dart';
 import '../../../setting/data/api/setting_api.dart';
 import '../../../setting/presentation/model/setting_model.dart';
 import '../../../user/presentation/controller/user_provider.dart';

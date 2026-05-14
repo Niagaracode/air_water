@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../core/app_theme/app_theme.dart';
+import '../../data/model/tank_model.dart';
 import '../controller/tank_provider.dart';
 import '../widgets/add_tank_modal.dart';
 import '../../../../shared/widgets/app_clear_button.dart';
-import '../model/tank_model.dart';
 import '../../../site/presentation/model/site_model.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import 'dart:async';
@@ -214,34 +214,6 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: tank.tankImageUrl != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Image.network(
-                    tank.tankImageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Center(
-                      child: Text(
-                        'No Image',
-                        style: TextStyle(fontSize: 8, color: Colors.red),
-                      ),
-                    ),
-                  ),
-                )
-              : const Center(
-                  child: Text(
-                    'No Image',
-                    style: TextStyle(fontSize: 8, color: Colors.red),
-                  ),
-                ),
-        ),
         title: Text(tank.tankNumber),
         subtitle: Text(
           '${tank.tankTypeName ?? ''} | ${tank.productName ?? ''} | ${tank.height ?? 0}/${tank.width ?? 0}/${tank.dishHeight ?? 0}',

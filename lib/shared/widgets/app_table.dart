@@ -26,7 +26,7 @@ class AppTableHeaderCell extends StatelessWidget {
       style: GoogleFonts.outfit(
         fontWeight: FontWeight.w600,
         fontSize: 12,
-        color: Colors.white.withValues(alpha: 0.90),
+        color: Colors.black.withValues(alpha: 0.6),
         letterSpacing: 0.8,
       ),
     );

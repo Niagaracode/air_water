@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../model/tank_details_model.dart';
+import '../../data/model/tank_details_model.dart';
 import 'tank_provider.dart';
 
 class TankDetailsNotifier extends Notifier<TankDetailsState> {

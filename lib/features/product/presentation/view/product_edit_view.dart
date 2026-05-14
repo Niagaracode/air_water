@@ -63,15 +63,12 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
       };
 
       final notifier = ref.read(productNotifierProvider.notifier);
-
       final success = widget.product.id == 0
           ? await notifier.createProduct(data)
           : await notifier.updateProduct(widget.product.id, data);
 
       if (!mounted) return;
-
       setState(() => isSaving = false);
-
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -97,9 +94,7 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
       }
     } catch (e) {
       if (!mounted) return;
-
       setState(() => isSaving = false);
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red,
