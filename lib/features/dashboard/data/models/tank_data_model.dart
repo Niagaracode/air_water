@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import '../../../../shared/utils/app_helper.dart';
+
 class TankDataModel {
   static double _toDouble(dynamic value) {
     if (value == null) return 0;
@@ -54,7 +56,7 @@ class TankDataModel {
       solarV: _toDouble(json['sol']),
       thresholds: json['thresholds'] ?? '00:00_3.5_25.0_1.0_20.0',
       status: json['status'] ?? 'Unknown',
-      lastUpdate: _parseDateTime(json['lastUpdate']),
+      lastUpdate: parseDateTime(json['lastUpdate']),
       region: json['region'] ?? '',
       latitude: double.tryParse('${json['latitude']}') ?? 0,
       longitude: double.tryParse('${json['longitude']}') ?? 0,
@@ -88,22 +90,6 @@ class TankDataModel {
       latitude: latitude,
       longitude: longitude,
     );
-  }
-
-  static DateTime _parseDateTime(dynamic value) {
-    if (value == null) {
-      return DateTime.now();
-    }
-    final str = value.toString().trim();
-    // Invalid server value
-    if (str == '0.0 0.0' || str.isEmpty) {
-      return DateTime.now().subtract(const Duration(days: 365));
-    }
-    try {
-      return DateFormat('dd/MM/yyyy HH:mm:ss').parse(str);
-    } catch (e) {
-      return DateTime.now().subtract(const Duration(days: 365));
-    }
   }
 }
 
@@ -147,10 +133,11 @@ class TankThreshold {
 
     final parts = value.split('_');
 
-    // Handle legacy 5-part format
+    // Handle legacy 4-part format
     if (parts.length == 5) {
       return TankThreshold(
         duration: parts[0],
+
         battery: double.tryParse(parts[1]) ?? 0,
         batteryStatus: 'N/A',
         level: double.tryParse(parts[2]) ?? 0,

@@ -1,10 +1,10 @@
+import 'dart:ui';
+
 import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import '../../../../controller/provider/sidebar_provider.dart';
-import '../../../../shared/utils/app_helper.dart';
 import '../../data/models/site_group_model.dart';
 import '../../data/models/tank_data_model.dart';
 
@@ -39,8 +39,9 @@ class DashboardListView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filteredGroups = _getFilteredGroups();
-    final screenWidth = MediaQuery.of(context).size.width;
+    final mediaWidth = MediaQuery.of(context).size.width;
     final isExpanded = ref.watch(sidebarExpandedProvider);
+    final screenWidth = isExpanded ? mediaWidth - 300 : mediaWidth - 120;
 
     if (filteredGroups.isEmpty) {
       return _buildEmptyState();
@@ -52,16 +53,29 @@ class DashboardListView extends ConsumerWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: primary.withValues(alpha: 0.1)),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: isExpanded ? screenWidth - 300 : screenWidth - 120,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (showHeader) _buildTableHeader(),
-              ...filteredGroups.map((site) => _buildSiteGroup(site)),
-            ],
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+          },
+        ),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: 1200,
+            ),
+            child: SizedBox(
+              width: screenWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (showHeader) _buildTableHeader(),
+                  ...filteredGroups.map((site) => _buildSiteGroup(site)),
+                ],
+              ),
+            ),
           ),
         ),
       ),
