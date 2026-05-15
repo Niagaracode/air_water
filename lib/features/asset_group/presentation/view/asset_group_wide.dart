@@ -8,6 +8,8 @@ import '../../domain/models/asset_group_model.dart';
 import 'asset_group_edit_page.dart';
 import '../widgets/add_asset_group_modal.dart';
 import '../../../user/presentation/controller/user_provider.dart';
+import '../../../tank/presentation/controller/tank_provider.dart';
+
 
 class AssetGroupWide extends ConsumerStatefulWidget {
   const AssetGroupWide({super.key});
@@ -68,6 +70,8 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     final state = ref.watch(assetGroupProvider);
     final userState = ref.watch(userProvider);
     final productState = ref.watch(productNotifierProvider);
+    final tankState = ref.watch(allTanksProvider);
+
 
     return Scaffold(
       backgroundColor: Colors.grey.withValues(alpha: 0.1),
@@ -82,8 +86,9 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF141E7A)))
                 : Padding(
                   padding: const EdgeInsets.only(left: 24, right: 24, bottom: 8),
-                  child: _buildTable(state, userState, productState),
+                  child: _buildTable(state, userState, productState, tankState),
                 ),
+
           ),
         ],
       ),
@@ -174,7 +179,8 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     );
   }
 
-  Widget _buildTable(AssetGroupState state, UserState userState, ProductState productState) {
+  Widget _buildTable(AssetGroupState state, UserState userState, ProductState productState, AsyncValue<List<dynamic>> tankState) {
+
     if (state.groups.isEmpty) {
       return const AppTableEmptyState(
         icon: Icons.layers_outlined,
@@ -233,6 +239,24 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                           }
                         }
                       }
+                      
+                      // Resolve Tank ID to Name if parameter is Tank Name
+                      if (c.parameter == 'Tank Name') {
+                        final tankId = int.tryParse(c.value);
+                        if (tankId != null) {
+                          final tankList = tankState.value ?? [];
+                          final tank = tankList.isEmpty 
+                              ? null 
+                              : tankList.firstWhere(
+                                  (t) => t.tankId == tankId || t.tankId.toString() == c.value,
+                                  orElse: () => null,
+                                );
+                          if (tank != null) {
+                            displayValue = tank.tankNumber;
+                          }
+                        }
+                      }
+
                       
                       buffer.write('${c.parameter} ${c.logic} $displayValue');
                       if (i < group.criteria.length - 1) {

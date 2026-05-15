@@ -4,19 +4,21 @@ import 'package:google_fonts/google_fonts.dart';
 class ViewHeader extends StatelessWidget {
   final String title;
   final String subtitle;
-  final String buttonText;
-  final VoidCallback onPressed;
+  final String? buttonText;
+  final VoidCallback? onPressed;
   final IconData buttonIcon;
   final Color buttonColor;
+  final bool showButton;
 
   const ViewHeader({
     super.key,
     required this.title,
     required this.subtitle,
-    required this.buttonText,
-    required this.onPressed,
+    this.buttonText,
+    this.onPressed,
     this.buttonIcon = Icons.add,
     this.buttonColor = const Color(0xFF141E7A),
+    this.showButton = true,
   });
 
   @override
@@ -72,39 +74,40 @@ class ViewHeader extends StatelessWidget {
           const SizedBox(width: 16),
 
           /// RIGHT BUTTON
-          ElevatedButton.icon(
-            onPressed: onPressed,
+          if (showButton && onPressed != null && buttonText != null)
+            ElevatedButton.icon(
+              onPressed: onPressed!,
 
-            icon: Icon(
-              buttonIcon,
-              color: Colors.white,
-              size: 18,
-            ),
-
-            label: Text(
-              buttonText.toUpperCase(),
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-                letterSpacing: 0.5,
+              icon: Icon(
+                buttonIcon,
                 color: Colors.white,
+                size: 18,
+              ),
+
+              label: Text(
+                buttonText!.toUpperCase(),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  letterSpacing: 0.5,
+                  color: Colors.white,
+                ),
+              ),
+
+              style: ElevatedButton.styleFrom(
+                backgroundColor: buttonColor,
+                foregroundColor: Colors.white,
+
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
-
-            style: ElevatedButton.styleFrom(
-              backgroundColor: buttonColor,
-              foregroundColor: Colors.white,
-
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
-              ),
-
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
         ],
       ),
     );

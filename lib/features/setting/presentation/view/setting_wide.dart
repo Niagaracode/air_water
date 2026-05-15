@@ -728,9 +728,65 @@ class _SettingWideState extends ConsumerState<SettingWide> {
                     bg: const Color(0xFFEFF6FF),
                     onTap: () => _showEditModal(context, setting),
                   ),
+                  const SizedBox(width: 8),
+                  AppTableActionButton(
+                    icon: Icons.delete_outline_rounded,
+                    color: Colors.red.shade600,
+                    bg: Colors.red.shade50,
+                    onTap: () => _showDeleteConfirmation(context, setting, notifier),
+                  ),
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, Setting setting, SettingNotifier notifier) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Delete Rule',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Are you sure you want to delete the rule "${setting.name}"? This action cannot be undone.',
+          style: GoogleFonts.inter(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final success = await notifier.deleteSetting(setting.id);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(success ? 'Rule deleted successfully' : 'Failed to delete rule'),
+                    backgroundColor: success ? Colors.green : Colors.red,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
       ),
     );

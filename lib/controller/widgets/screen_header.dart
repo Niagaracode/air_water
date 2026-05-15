@@ -13,6 +13,8 @@ import '../../core/user_config/user_role_provider.dart';
 import '../../features/dashboard/presentation/widgets/mqtt_connection_status.dart';
 import '../../features/dashboard/presentation/widgets/sync_button.dart';
 import '../../features/dashboard/provider/dashboard_provider.dart';
+import '../../features/notification/presentation/widgets/notification_dropdown.dart';
+import '../../features/notification/presentation/controller/notification_provider.dart';
 import '../provider/sidebar_provider.dart';
 
 class ScreenHeader extends ConsumerWidget {
@@ -62,27 +64,40 @@ class ScreenHeader extends ConsumerWidget {
               },
             ),
             const SizedBox(width: 16),
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+            PopupMenuButton<void>(
+              offset: const Offset(0, 48),
+              elevation: 8,
+              color: Colors.white,
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Color(0xFFE5E7EB)),
               ),
-              child: Badge(
-                alignment: const AlignmentDirectional(0.6, -0.6),
-                smallSize: 7,
-                backgroundColor: Colors.red.shade500,
-                child: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
+              itemBuilder: (context) => [
+                PopupMenuItem<void>(
+                  enabled: false,
+                  padding: EdgeInsets.zero,
+                  child: const NotificationDropdown(),
+                ),
+              ],
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Badge(
+                  alignment: const AlignmentDirectional(0.6, -0.6),
+                  smallSize: 7,
+                  backgroundColor: Colors.red.shade500,
+                  isLabelVisible: ref.watch(notificationNotifierProvider).notifications.isNotEmpty,
+                  child: const Icon(
                     Icons.notifications_none_rounded,
                     size: 20,
                     color: Color(0xFF6B7280),
                   ),
-                  padding: EdgeInsets.zero,
-                  splashRadius: 18,
                 ),
               ),
             ),
