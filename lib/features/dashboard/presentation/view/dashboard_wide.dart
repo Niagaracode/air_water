@@ -1,6 +1,7 @@
 import 'package:air_water/features/tank/presentation/view/tank_details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../core/network/mqtt/providers/mqtt_notifier.dart';
 import '../../../../core/network/mqtt/providers/mqtt_providers.dart';
@@ -53,14 +54,13 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     );
   }
 
-
   Map<String, dynamic> _parseMqtt(Map<String, dynamic> json) {
     final result = <String, dynamic>{};
-    // deviceId
+
     result['deviceId'] = json['cC'];
-    // extract cM string
     final cM = json['cM'] ?? '';
     final matches = RegExp(r'([A-Z]+):([\d.]+)').allMatches(cM);
+
     for (var m in matches) {
       final key = m.group(1);
       final value = double.tryParse(m.group(2)!);
@@ -69,19 +69,37 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
         case 'TNP':
           result['level'] = value;
           break;
+
         case 'PTN':
           result['pressure'] = value;
           break;
+
         case 'BAT':
-          result['battery'] = value;
+          result['batteryV'] = value;
           break;
+
         case 'SOL':
-          result['solar'] = value;
+          result['solarV'] = value;
           break;
       }
     }
+
+    /// Parse date + time
+    final date = json['cD']?.toString().trim() ?? '';
+    final time = json['cT']?.toString().trim() ?? '';
+
+    if (date.isNotEmpty && time.isNotEmpty) {
+      try {
+        result['lastUpdate'] = DateFormat('dd/MM/yyyy HH:mm:ss')
+                .parse('$date $time');
+      } catch (_) {
+        result['lastUpdate'] = DateTime.now();
+      }
+    }
+
     return result;
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -309,7 +327,9 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   @override
   void dispose() {
     mqttNotifier.unsubscribeFromTopic(topic);
+    mqttNotifier.disconnect();
     _searchController.dispose();
     super.dispose();
   }
+
 }
