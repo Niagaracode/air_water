@@ -57,6 +57,9 @@ dependencies:
   fl_chart: ^1.2.0
   skeletonizer: ^2.1.1
   debounce_throttle: ^2.0.0
+  syncfusion_flutter_xlsio: ^28.2.3
+  pdf: ^3.11.1
+  file_saver: ^0.2.14
 
 dev_dependencies:
   flutter_test:
