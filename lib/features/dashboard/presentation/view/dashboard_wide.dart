@@ -192,9 +192,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                         });
                       },
                     ),
-
                     Spacer(),
-
                     PopupMenuButton<String>(
                       tooltip: 'Download Report',
                       onSelected: (value) async {
@@ -209,21 +207,21 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                         }
                       },
                       itemBuilder: (context) => [
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'excel',
                           child: Row(
                             children: [
-                              Icon(Icons.table_chart_outlined),
+                              Icon(Icons.table_chart_outlined, color: primary),
                               SizedBox(width: 10),
                               Text('Download Excel'),
                             ],
                           ),
                         ),
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'pdf',
                           child: Row(
                             children: [
-                              Icon(Icons.picture_as_pdf_outlined),
+                              Icon(Icons.picture_as_pdf_outlined, color: primary),
                               SizedBox(width: 10),
                               Text('Download PDF'),
                             ],
