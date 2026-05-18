@@ -31,6 +31,40 @@ final mqttLastMessageProvider = Provider.family<MqttMessageModel?, String>((ref,
   },
 );
 
+// mqttTopicStreamProvider
+
+final mqttTopicStreamProvider =
+StreamProvider.family<MqttMessageModel, String>(
+      (ref, topic) {
+    final controller =
+    StreamController<MqttMessageModel>.broadcast();
+
+    final mqttNotifier =
+    ref.read(mqttProvider.notifier);
+
+    ref.onDispose(() {
+      controller.close();
+
+      // REMOVE unsubscribe here
+    });
+
+    Future.microtask(() async {
+      await mqttNotifier.subscribeToTopic(
+        topic,
+        onMessage: (message) {
+          if (!controller.isClosed) {
+            controller.add(message);
+          }
+        },
+      );
+    });
+
+    return controller.stream;
+  },
+);
+
+/*
+
 // Provider for subscribing to a topic and receiving real-time updates
 final mqttTopicStreamProvider = StreamProvider.family<MqttMessageModel, String>((ref, topic) {
     final controller = StreamController<MqttMessageModel>.broadcast();
@@ -51,4 +85,4 @@ final mqttTopicStreamProvider = StreamProvider.family<MqttMessageModel, String>(
 
     return controller.stream;
   },
-);
+);*/

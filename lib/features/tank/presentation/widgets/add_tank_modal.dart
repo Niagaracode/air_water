@@ -206,6 +206,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       productId: _selectedProduct is TankProduct
           ? _selectedProduct.productId
           : _selectedProduct?['id'],
+      channelData: channelData['channels'],
     );
 
     final success = widget.initialTank != null ?
