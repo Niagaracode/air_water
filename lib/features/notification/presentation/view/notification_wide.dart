@@ -47,6 +47,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
       title: 'NOTIFICATIONS',
       subtitle: 'Real-time alerts and system notifications for levels, battery, and critical events.',
       showButton: false,
+      showBackButton: true,
     );
   }
 
@@ -137,8 +138,10 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
           DataColumn2(label: TableHeaderCell(label: 'Tank/Site'), size: ColumnSize.L),
           DataColumn2(label: TableHeaderCell(label: 'Rule'), size: ColumnSize.M),
           DataColumn2(label: TableHeaderCell(label: 'Value'), size: ColumnSize.S),
-          DataColumn2(label: TableHeaderCell(label: 'Importance'), fixedWidth: 120),
+          DataColumn2(label: TableHeaderCell(label: 'Importance'), fixedWidth: 100),
           DataColumn2(label: TableHeaderCell(label: 'Company'), size: ColumnSize.M),
+          DataColumn2(label: TableHeaderCell(label: 'Subject'), size: ColumnSize.L),
+          DataColumn2(label: TableHeaderCell(label: 'Description'), size: ColumnSize.L),
         ],
         rows: state.notifications.map((n) {
           final color = _getImportanceColor(n.importance);
@@ -168,6 +171,18 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                 ),
               )),
               DataCell(TableDataCell(label: n.companyName ?? '—')),
+              DataCell(Text(
+                n.subject ?? '—',
+                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              )),
+              DataCell(Text(
+                n.body ?? '—',
+                style: GoogleFonts.inter(fontSize: 11, color: Colors.black54),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              )),
             ],
           );
         }).toList(),

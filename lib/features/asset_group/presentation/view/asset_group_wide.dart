@@ -247,7 +247,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                           final tankList = tankState.value ?? [];
                           final tank = tankList.isEmpty 
                               ? null 
-                              : tankList.firstWhere(
+                              : tankList.cast<dynamic>().firstWhere(
                                   (t) => t.tankId == tankId || t.tankId.toString() == c.value,
                                   orElse: () => null,
                                 );

@@ -11,6 +11,8 @@ class NotificationModel {
   final String? tankNumber;
   final String? plantName;
   final String? companyName;
+  final String? subject;
+  final String? body;
 
   NotificationModel({
     required this.id,
@@ -25,6 +27,8 @@ class NotificationModel {
     this.tankNumber,
     this.plantName,
     this.companyName,
+    this.subject,
+    this.body,
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +45,8 @@ class NotificationModel {
       tankNumber: json['tank_number'] as String?,
       plantName: json['plant_name'] as String?,
       companyName: json['company_name'] as String?,
+      subject: json['subject'] as String?,
+      body: json['body'] as String?,
     );
   }
 }

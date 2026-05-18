@@ -9,6 +9,8 @@ class ViewHeader extends StatelessWidget {
   final IconData buttonIcon;
   final Color buttonColor;
   final bool showButton;
+  final bool showBackButton;
+  final VoidCallback? onBack;
 
   const ViewHeader({
     super.key,
@@ -19,6 +21,8 @@ class ViewHeader extends StatelessWidget {
     this.buttonIcon = Icons.add,
     this.buttonColor = const Color(0xFF141E7A),
     this.showButton = true,
+    this.showBackButton = false,
+    this.onBack,
   });
 
   @override
@@ -42,6 +46,33 @@ class ViewHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
         children: [
+          if (showBackButton) ...[
+            Container(
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                onPressed: onBack ?? () => Navigator.pop(context),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 18,
+                  color: Color(0xFF141E7A),
+                ),
+                padding: const EdgeInsets.all(12),
+                constraints: const BoxConstraints(),
+              ),
+            ),
+          ],
+
           /// LEFT
           Expanded(
             child: Column(
