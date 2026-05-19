@@ -59,119 +59,117 @@ class TankReadingsTab extends ConsumerWidget {
             ),
           ],
         ),
-        child: Expanded(
-          child: DataTable2(
-            columnSpacing: 12,
-            horizontalMargin: 8,
-            minWidth: 1200,
+        child: DataTable2(
+          columnSpacing: 12,
+          horizontalMargin: 8,
+          minWidth: 1200,
 
-            headingRowColor:
-            WidgetStateProperty.all(
-              const Color(0xFFF9FAFB),
-            ),
-
-            headingRowHeight: 50,
-            dataRowHeight: 42,
-
-            headingTextStyle:
-            GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF374151),
-            ),
-
-            dataTextStyle:
-            GoogleFonts.inter(
-              fontSize: 13,
-              color: const Color(0xFF4B5563),
-            ),
-
-            columns: const [
-
-              DataColumn2(
-                label: Text('Reading At'),
-                size: ColumnSize.L,
-              ),
-
-              DataColumn2(
-                label: Text('Time'),
-                size: ColumnSize.S,
-              ),
-
-              DataColumn2(
-                label: Text('Level'),
-                size: ColumnSize.S,
-              ),
-
-              DataColumn2(
-                label: Text('Pressure'),
-                size: ColumnSize.S,
-              ),
-
-              DataColumn2(
-                label: Text('Battery'),
-                size: ColumnSize.S,
-              ),
-
-              DataColumn2(
-                label: Text('Solar'),
-                size: ColumnSize.S,
-              ),
-
-            ],
-
-            rows: readingsState.readings.map((reading) {
-
-              return DataRow2(
-
-                cells: [
-
-                  DataCell(
-                    Text(
-                      DateFormat(
-                        'dd MMM yyyy hh:mm a',
-                      ).format(
-                        reading.createdAt,
-                      ),
-                    ),
-                  ),
-
-                  DataCell(
-                    Text(reading.time),
-                  ),
-
-                  DataCell(
-                    Text(
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                      '${reading.level.toString()} %',
-                    ),
-                  ),
-
-                  DataCell(
-                    Text(
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                      '${reading.pressure.toString()} bar',
-                    ),
-                  ),
-
-                  DataCell(
-                    Text(
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                      '${reading.battery.toString()} v',
-                    ),
-                  ),
-
-                  DataCell(
-                    Text(
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                      '${reading.solar.toString()} v',
-                    ),
-                  ),
-
-                ],
-              );
-            }).toList(),
+          headingRowColor:
+          WidgetStateProperty.all(
+            const Color(0xFFF9FAFB),
           ),
+
+          headingRowHeight: 50,
+          dataRowHeight: 42,
+
+          headingTextStyle:
+          GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF374151),
+          ),
+
+          dataTextStyle:
+          GoogleFonts.inter(
+            fontSize: 13,
+            color: const Color(0xFF4B5563),
+          ),
+
+          columns: const [
+
+            DataColumn2(
+              label: Text('Reading At'),
+              size: ColumnSize.L,
+            ),
+
+            DataColumn2(
+              label: Text('Time'),
+              size: ColumnSize.S,
+            ),
+
+            DataColumn2(
+              label: Text('Level'),
+              size: ColumnSize.S,
+            ),
+
+            DataColumn2(
+              label: Text('Pressure'),
+              size: ColumnSize.S,
+            ),
+
+            DataColumn2(
+              label: Text('Battery'),
+              size: ColumnSize.S,
+            ),
+
+            DataColumn2(
+              label: Text('Solar'),
+              size: ColumnSize.S,
+            ),
+
+          ],
+
+          rows: readingsState.readings.map((reading) {
+
+            return DataRow2(
+
+              cells: [
+
+                DataCell(
+                  Text(
+                    DateFormat(
+                      'dd MMM yyyy hh:mm a',
+                    ).format(
+                      reading.createdAt,
+                    ),
+                  ),
+                ),
+
+                DataCell(
+                  Text(reading.time),
+                ),
+
+                DataCell(
+                  Text(
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    '${reading.level.toString()} %',
+                  ),
+                ),
+
+                DataCell(
+                  Text(
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    '${reading.pressure.toString()} bar',
+                  ),
+                ),
+
+                DataCell(
+                  Text(
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    '${reading.battery.toString()} v',
+                  ),
+                ),
+
+                DataCell(
+                  Text(
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    '${reading.solar.toString()} v',
+                  ),
+                ),
+
+              ],
+            );
+          }).toList(),
         ),
       ),
     );
