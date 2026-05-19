@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,7 +17,6 @@ class DashboardListView extends ConsumerWidget {
     this.searchQuery = '',
     this.onTankTap,
     this.onSiteTap,
-    this.onMenuTap,
     this.emptyStateTitle = 'No devices found',
     this.emptyStateSubtitle = 'Try adjusting your filters',
     this.showHeader = true,
@@ -31,7 +29,6 @@ class DashboardListView extends ConsumerWidget {
   final String searchQuery;
   final Function(TankDataModel)? onTankTap;
   final Function(SiteGroupModel)? onSiteTap;
-  final Function(TankDataModel, String)? onMenuTap;
   final String emptyStateTitle;
   final String emptyStateSubtitle;
   final bool showHeader;
@@ -222,9 +219,8 @@ class DashboardListView extends ConsumerWidget {
           ),
           SizedBox(
             width: 150,
-            child: Text('LAST UPDATE', style: _headerStyle(), textAlign: TextAlign.center),
+            child: Text('READING TIME', style: _headerStyle(), textAlign: TextAlign.center),
           ),
-          const SizedBox(width: 45),
         ],
       ),
     );
@@ -291,6 +287,219 @@ class DashboardListView extends ConsumerWidget {
   }
 
   Widget _buildTankRow(TankDataModel tank) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => onTankTap?.call(tank),
+        hoverColor: Colors.grey.shade100,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        mouseCursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.grey.shade100,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              // Tank Name
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 24),
+                  child: Text(
+                    tank.tankName,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade700,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+      
+              // Device ID
+              SizedBox(
+                width: 200,
+                child: Text(
+                  tank.deviceId,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+      
+              // Level
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${tank.level.toStringAsFixed(1)}%',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _getLevelColor(tank.level),
+                      ),
+                    ),
+      
+                    const SizedBox(height: 4),
+      
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: tank.level / 100,
+                        backgroundColor: Colors.grey.shade200,
+                        color: _getLevelColor(tank.level),
+                        minHeight: 5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      
+              // Pressure
+              SizedBox(
+                width: 100,
+                child: Center(
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: tank.pressure.toStringAsFixed(1),
+                          style: GoogleFonts.outfit(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' Bar',
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+      
+              // Battery
+              SizedBox(
+                width: 100,
+                child: Center(
+                  child: Text(
+                    '${tank.batteryV.toStringAsFixed(1)} v',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _getBatSolColor(
+                        tank.batteryV,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+      
+              // Solar
+              SizedBox(
+                width: 80,
+                child: Center(
+                  child: Text(
+                    '${tank.solarV.toStringAsFixed(1)} v',
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: _getBatSolColor(
+                        tank.solarV,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+      
+              // Status
+              SizedBox(
+                width: 100,
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(
+                        tank.status,
+                      ).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(
+                              tank.status,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+      
+                        const SizedBox(width: 6),
+      
+                        Text(
+                          tank.status,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _getStatusColor(
+                              tank.status,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+      
+              // Reading Time
+              SizedBox(
+                width: 150,
+                child: Center(
+                  child: Text(
+                    _formatDateTime(
+                      tank.lastUpdate,
+                    ),
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /*Widget _buildTankRow(TankDataModel tank) {
     return GestureDetector(
       onTap: () => onTankTap?.call(tank),
       child: Container(
@@ -361,7 +570,7 @@ class DashboardListView extends ConsumerWidget {
                         ),
                       ),
                       TextSpan(
-                        text: ' /Bar',
+                        text: '  Bar',
                         style: GoogleFonts.outfit(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -464,7 +673,7 @@ class DashboardListView extends ConsumerWidget {
         ),
       ),
     );
-  }
+  }*/
 
   Color _getBatSolColor(double level) {
     if (level <= 3) return Colors.red;

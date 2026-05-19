@@ -58,21 +58,35 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
     try {
       final repository = ref.read(messageTemplateRepositoryProvider);
       final response = await repository.getMessageTemplatePlaceholders();
+      debugPrint('Template Config Response: $response');
       final configData = response['data'] ?? response;
+      debugPrint('Config Data: $configData');
 
       setState(() {
-        _dateFormats = List<String>.from(configData['Date Format'] ?? []);
-        _subjectPlaceholders = List<String>.from(configData['Template Content Subject'] ?? []);
-        _timeFormats = List<String>.from(configData['Time Format'] ?? []);
-        _timeZoneTypes = List<String>.from(configData['Time Zone Type'] ?? []);
+        _dateFormats =
+        List<String>.from(configData['Date Format'] ?? []);
+
+        _subjectPlaceholders =
+        List<String>.from(
+            configData['Template Content Subject'] ?? []);
+
+        _timeFormats =
+        List<String>.from(configData['Time Format'] ?? []);
+
+        _timeZoneTypes =
+        List<String>.from(configData['Time Zone Type'] ?? []);
+
         _isLoading = false;
       });
 
-
-    } catch (e) {
-      debugPrint("Error : ${e.toString()}");
-      //_useDefaultValues();
-      _showSnackBar('Failed to load template configuration: ${e.toString()}', isError: true);
+    } catch (e, stackTrace) {
+      debugPrint('Error loading template config: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      setState(() => _isLoading = false);
+      _showSnackBar(
+        'Failed to load template configuration: ${e.toString()}',
+        isError: true,
+      );
     }
   }
 

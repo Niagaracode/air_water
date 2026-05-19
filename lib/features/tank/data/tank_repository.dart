@@ -18,5 +18,5 @@ abstract class TankRepository {
   Future<List<String>> getTankNameSuggestions({String? q});
   Future<List<TankProduct>> getProducts();
   Future<List<Tank>> getTanks({int? siteId});
-  Future<Tank> getTankById(int id);
+  Future<Map<String, dynamic>> getTankReadings(int tankId, String day);
 }

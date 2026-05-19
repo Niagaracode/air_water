@@ -69,29 +69,6 @@ final groupedTanksProvider = Provider<List<SiteGroupModel>>((ref) {
   );
 });
 
-/*final groupedTanksProvider = Provider<List<SiteGroupModel>>((ref) {
-  final tankAsync = ref.watch(tankDataProvider);
-
-  return tankAsync.when(
-    data: (tanks) {
-      final Map<String, SiteGroupModel> grouped = {};
-      for (var tank in tanks) {
-        grouped.putIfAbsent(
-          tank.siteName, () => SiteGroupModel(
-            siteName: tank.siteName,
-            city: tank.city,
-            tanks: [],
-          ),
-        );
-        grouped[tank.siteName]!.tanks.add(tank);
-      }
-      return grouped.values.toList();
-    },
-    loading: () => [],
-    error: (_, __) => [],
-  );
-});*/
-
 
 final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
   final tankAsync = ref.watch(tankDataProvider);
