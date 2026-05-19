@@ -102,4 +102,9 @@ class TankApi {
     final response = await _client.get('/tanks/$id');
     return Tank.fromJson(Map<String, dynamic>.from(response.data['data']));
   }
+
+  Future<Map<String, dynamic>> getTankReadings(int tankId, String date) async {
+    final response = await _client.get('/devices/$tankId/graph?date=$date');
+    return response.data;
+  }
 }

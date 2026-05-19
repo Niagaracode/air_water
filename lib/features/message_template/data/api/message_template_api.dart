@@ -43,7 +43,6 @@ class MessageTemplateApi {
 
   Future<Map<String, dynamic>> getMessageTemplatesPlaceholders() async {
     final response = await _client.get('/message-template-rules', query: {});
-    // Extract the data field from the response
     final Map<String, dynamic> responseData = Map<String, dynamic>.from(response.data);
     return Map<String, dynamic>.from(responseData['data'] ?? {});
   }

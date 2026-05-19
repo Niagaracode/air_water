@@ -44,7 +44,9 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   void initState() {
     super.initState();
     mqttNotifier = ref.read(mqttProvider.notifier);
-    _initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialize();
+    });
   }
 
   Future<void> _initialize() async {
@@ -242,7 +244,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.download_outlined, size: 18, color: primary),
+                            Icon(Icons.download, size: 18, color: primary),
                             SizedBox(width: 8),
                             Text('Download', style: TextStyle(color: primary)),
                           ],
@@ -261,7 +263,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                   selectedRegion: _selectedRegion,
                   selectedStatus: _selectedStatus,
                   searchQuery: _searchQuery,
-                  onMenuTap: _handleMenuTap,
+                  onTankTap: _callDetailsPage,
                 ) : DashboardMapView(
                   tanksData: tanks,
                 ),
@@ -284,7 +286,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     } else if (msg.contains('500')) {
       return 'Internal server error';
     }
-
     return 'Unable to load data';
   }
 
@@ -373,23 +374,13 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
     );
   }
 
-  void _handleMenuTap(TankDataModel tank, String action) {
-    switch (action) {
-      case 'view':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TankDetailsView(tankId: tank.id),
-          ),
-        );
-        break;
-      case 'edit':
-        break;
-      case 'alerts':
-        break;
-      case 'history':
-        break;
-    }
+  void _callDetailsPage(TankDataModel tank) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TankDetailsView(tankId: tank.id, tank: tank),
+      ),
+    );
   }
 
   Future<void> exportToExcel(
@@ -500,7 +491,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   @override
   void dispose() {
     mqttNotifier.unsubscribeFromTopic(topic);
-    mqttNotifier.disconnect();
+    //mqttNotifier.disconnect();
     _searchController.dispose();
     super.dispose();
   }

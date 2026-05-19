@@ -1,4 +1,5 @@
 import 'package:air_water/features/company/company_layout.dart';
+import 'package:air_water/features/dashboard/data/models/tank_data_model.dart';
 import 'package:air_water/features/group/user_group_layout.dart';
 import 'package:air_water/features/message_template/message_template_layout.dart';
 import 'package:air_water/features/product/product_layout.dart';
@@ -187,8 +188,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: 'details/:id',
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  final tank = state.extra as Tank?;
-                  return TankDetailsView(tankId: id, tank: tank);
+                  final tank = state.extra as TankDataModel?;
+                  return TankDetailsView(tankId: id, tank: tank!);
                 },
               ),
             ],

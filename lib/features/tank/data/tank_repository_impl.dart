@@ -71,7 +71,7 @@ class TankRepositoryImpl implements TankRepository {
   }
 
   @override
-  Future<Tank> getTankById(int id) {
-    return _api.getTankById(id);
+  Future<Map<String, dynamic>> getTankReadings(int tankId, String day) {
+    return _api.getTankReadings(tankId, day);
   }
 }

@@ -130,7 +130,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     setState(() => _isLoadingData = true);
     try {
       final tankRepo = ref.read(tankRepositoryProvider);
-      final fullTank = await tankRepo.getTankById(t.tankId);
+      /*final fullTank = await tankRepo.getTankById(t.tankId);
       setState(() {
         final index = _selectedTanks.indexWhere((tank) => tank.tankId == t.tankId);
         if (index != -1) {
@@ -141,7 +141,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         if (allIndex != -1) {
           _tanks[allIndex] = fullTank;
         }
-      });
+      });*/
     } catch (e) {
       debugPrint('Error fetching full tank details: $e');
     } finally {
