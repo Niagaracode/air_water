@@ -5,6 +5,7 @@ class AssetGroupModel {
   final String name;
   final String description;
   final bool displayInTree;
+  final int status;
   final String domain;
   final List<AssetCriteria> criteria;
   final int? userCount;
@@ -17,6 +18,7 @@ class AssetGroupModel {
     required this.name,
     required this.description,
     this.displayInTree = true,
+    this.status = 1,
     this.domain = 'AIRWATER',
     required this.criteria,
     this.userCount,
@@ -44,6 +46,7 @@ class AssetGroupModel {
       name: json['name'] ?? '',
       description: json['description'] ?? '',
       displayInTree: json['display_in_tree'] == 1,
+      status: json['status'] is int ? json['status'] : (json['status'] != null ? int.tryParse(json['status'].toString()) ?? 1 : 1),
       domain: json['domain'] ?? 'AIRWATER',
       criteria: parsedCriteria,
       userCount: json['user_count'],
@@ -61,6 +64,8 @@ class AssetGroupModel {
       'name': name,
       'description': description,
       'display_in_tree': displayInTree ? 1 : 0,
+      'status': status,
+      'domain': domain,
       'criteria': criteria.map((c) => c.toJson()).toList(),
       'users': users?.map((u) => u.toJson()).toList(),
       if (companyId != null) 'company_id': companyId,

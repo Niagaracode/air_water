@@ -68,7 +68,7 @@ class AssetGroupNotifier extends Notifier<AssetGroupState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final client = ref.read(apiClientProvider);
-      final response = await client.get('/asset-groups');
+      final response = await client.get('/asset-groups', query: {'domain': 'AIRWATER'});
 
       final List<AssetGroupModel> groups = (response.data['data'] as List)
           .map((json) => AssetGroupModel.fromJson(json))
@@ -170,4 +170,49 @@ class AssetGroupNotifier extends Notifier<AssetGroupState> {
 final assetGroupProvider =
     NotifierProvider<AssetGroupNotifier, AssetGroupState>(
       AssetGroupNotifier.new,
+    );
+
+class RosterGroupNotifier extends Notifier<AssetGroupState> {
+  @override
+  AssetGroupState build() {
+    ref.keepAlive();
+    
+    // Listen to user changes to trigger reload when current user data becomes available
+    ref.listen(userProvider, (previous, next) {
+      if (previous?.currentUser == null && next.currentUser != null) {
+        loadGroups();
+      }
+    });
+
+    // Initial load only if user is already available
+    final currentUser = ref.read(userProvider).currentUser;
+    if (currentUser != null) {
+      Future.microtask(() => loadGroups());
+    }
+    
+    return AssetGroupState();
+  }
+
+  Future<void> loadGroups() async {
+    if (ref.read(userProvider).currentUser == null) return;
+
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final client = ref.read(apiClientProvider);
+      final response = await client.get('/asset-groups', query: {'domain': 'ROSTER'});
+
+      final List<AssetGroupModel> groups = (response.data['data'] as List)
+          .map((json) => AssetGroupModel.fromJson(json))
+          .toList();
+
+      state = state.copyWith(isLoading: false, groups: groups);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+}
+
+final rosterGroupProvider =
+    NotifierProvider<RosterGroupNotifier, AssetGroupState>(
+      RosterGroupNotifier.new,
     );

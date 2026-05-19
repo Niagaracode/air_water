@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../asset_group/domain/models/asset_group_model.dart';
 import '../../asset_group/presentation/controller/asset_group_provider.dart';
+import '../presentation/widgets/add_roster_group_modal.dart';
 import '../presentation/controller/roaster_provider.dart';
-import '../../message_template/presentation/controller/message_template_provider.dart';
-import '../../message_template/presentation/model/message_template_model.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../core/network/http/api_service.dart';
 import '../../../../shared/widgets/app_table.dart';
@@ -31,22 +30,13 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
   // Per-user notification config (userId → state)
   final Map<int, _UserConfig> _userConfigs = {};
 
-  // Shared parameter + template for this group session
+  // Shared parameter for this group session
   String _parameter = 'LEVEL';
-  MessageTemplate? _selectedTemplate;
-  List<MessageTemplate> _allTemplates = [];
   bool _savingRoster = false;
 
   @override
   void initState() {
     super.initState();
-    _loadTemplates();
-  }
-
-  Future<void> _loadTemplates() async {
-    final repo = ref.read(messageTemplateRepositoryProvider);
-    final templates = await repo.getActiveTemplates();
-    if (mounted) setState(() => _allTemplates = templates);
   }
 
   Future<void> _selectGroup(AssetGroupModel group) async {
@@ -55,7 +45,6 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       _groupUsers = [];
       _userConfigs.clear();
       _loadingUsers = true;
-      _selectedTemplate = null;
     });
 
     try {
@@ -68,7 +57,6 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       // 2. Try to find the latest roster for this group to preview settings
       Map<int, _UserConfig> savedConfigs = {};
       String savedParam = 'LEVEL';
-      MessageTemplate? savedTemplate;
 
       try {
         final rosterResp = await client.get('/roster', query: {
@@ -79,10 +67,6 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         if (rosters != null && rosters.isNotEmpty) {
           final latest = rosters.first;
           savedParam = latest['parameter_name'] ?? 'LEVEL';
-          final tid = latest['message_template_id'];
-          if (tid != null) {
-            savedTemplate = _allTemplates.firstWhere((t) => t.id == tid, orElse: () => _allTemplates.first);
-          }
 
           final membersResp = await client.get('/roster/${latest['id']}/members');
           final members = membersResp.data['data'] as List?;
@@ -110,7 +94,6 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
           _groupUsers = users;
           _loadingUsers = false;
           _parameter = savedParam;
-          _selectedTemplate = savedTemplate;
           for (final u in users) {
             _userConfigs[u.userId] = savedConfigs[u.userId] ?? _UserConfig(userId: u.userId);
           }
@@ -145,8 +128,6 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
             '${_selectedGroup!.name} – ${user.username}',
         'enabled': 1,
         'parameter_name': _parameter,
-        if (_selectedTemplate != null)
-          'message_template_id': _selectedTemplate!.id,
         'members': [
           {
             'user_id': cfg.userId,
@@ -155,8 +136,6 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
             'email_to_phone': cfg.sms ? 1 : 0,
             'enabled': cfg.enabled ? 1 : 0,
             'parameter_name': _parameter,
-            if (_selectedTemplate != null)
-              'message_template_id': _selectedTemplate!.id,
           }
         ],
       };
@@ -183,7 +162,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
 
   @override
   Widget build(BuildContext context) {
-    final groupState = ref.watch(assetGroupProvider);
+    final groupState = ref.watch(rosterGroupProvider);
     final userState = ref.watch(userProvider);
     final isSuperAdmin = userState.currentUser?.roleId == 1;
 
@@ -203,7 +182,10 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                       ? const Center(child: CircularProgressIndicator())
                       : groupState.error != null
                           ? Center(child: Text(groupState.error!))
-                      : _buildGroupTable(groupState.groups, isSuperAdmin),
+                      : _buildGroupTable(
+                          groupState.groups.where((g) => g.status == 1).toList(),
+                          isSuperAdmin,
+                        ),
                 ),
               ],
             ),
@@ -230,42 +212,95 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFF141E7A).withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.people_alt_outlined,
-              color: Color(0xFF141E7A),
-              size: 24,
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF141E7A).withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.people_alt_outlined,
+                    color: Color(0xFF141E7A),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'ROASTER MANAGEMENT',
+                        style: GoogleFonts.outfit(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF111827),
+                          letterSpacing: 0.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Select an asset group to configure notifications.',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: const Color(0xFF6B7280),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'ROASTER MANAGEMENT',
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF111827),
-                  letterSpacing: 0.5,
-                ),
+          ElevatedButton.icon(
+            onPressed: () {
+              showGeneralDialog(
+                context: context,
+                barrierDismissible: true,
+                barrierLabel: 'Dismiss',
+                barrierColor: Colors.black.withValues(alpha: 0.5),
+                transitionDuration: const Duration(milliseconds: 300),
+                pageBuilder: (context, anim1, anim2) => const AddRosterGroupModal(),
+                transitionBuilder: (context, anim1, anim2, child) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(1, 0),
+                      end: Offset.zero,
+                    ).animate(anim1),
+                    child: child,
+                  );
+                },
+              );
+            },
+            icon: const Icon(Icons.add_circle_outline, size: 18),
+            label: Text(
+              'CREATE GROUP',
+              style: GoogleFonts.outfit(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                letterSpacing: 0.5,
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Select an asset group to configure notifications.',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: const Color(0xFF6B7280),
-                ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF141E7A),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -470,6 +505,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
           ),
 
           // Parameter + Template row
+          // Parameter row
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
             child: Row(
@@ -485,20 +521,6 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                       onChanged: (v) {
                         if (v != null) setState(() => _parameter = v);
                       },
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildPanelField(
-                    label: 'MESSAGE TEMPLATE',
-                    child: AppDropdown<MessageTemplate>(
-                      value: _selectedTemplate,
-                      items: _allTemplates,
-                      hint: 'Select Template',
-                      itemLabel: (t) => t.name,
-                      onChanged: (v) =>
-                          setState(() => _selectedTemplate = v),
                     ),
                   ),
                 ),
