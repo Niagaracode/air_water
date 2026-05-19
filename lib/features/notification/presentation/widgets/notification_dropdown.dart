@@ -144,15 +144,21 @@ class _NotificationDropdownState extends ConsumerState<NotificationDropdown> {
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        n.parameterType ?? 'Alert',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF111827),
+                      Expanded(
+                        child: Text(
+                          n.parameterType ?? 'Alert',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF111827),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         _formatTime(n.createdAt),
                         style: GoogleFonts.inter(
