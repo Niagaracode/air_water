@@ -7,6 +7,11 @@ import '../../../../core/network/http/api_service.dart';
 import '../../../../features/company/presentation/controller/company_provider.dart';
 import '../../../../features/company/presentation/model/company_model.dart';
 import '../../../../features/user/presentation/controller/user_provider.dart';
+import '../../../../features/tank/presentation/controller/tank_provider.dart';
+import '../../../../features/device/presentation/controller/device_provider.dart';
+import '../../../../features/group/presentation/controller/group_provider.dart';
+import '../../../../features/roaster/presentation/controller/roaster_provider.dart';
+
 
 final siteApiProvider = Provider(
   (ref) => SiteApi(ref.read(apiClientProvider)),
@@ -238,6 +243,15 @@ class SiteNotifier extends Notifier<SiteState> {
     try {
       final repository = ref.read(siteRepositoryProvider);
       await repository.deleteSite(id);
+      
+      // Propagate cascading deletion to other provider states
+      ref.invalidate(tankProvider);
+      ref.invalidate(allTanksProvider);
+      ref.invalidate(deviceProvider);
+      ref.invalidate(groupProvider);
+      ref.invalidate(roasterNotifierProvider);
+      ref.read(userProvider.notifier).loadUsers();
+
       await loadGroupedSites(isReload: true);
       state = state.copyWith(isProcessing: false);
       return true;
