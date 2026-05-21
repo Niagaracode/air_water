@@ -280,7 +280,6 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
           Expanded(flex: 35, child: _buildHeaderText('CONTACT PERSON')),
           Expanded(flex: 15, child: _buildHeaderText('COMPANY')),
           Expanded(flex: 15, child: _buildHeaderText('ROLE')),
-          Expanded(flex: 12, child: _buildHeaderText('ENABLED')),
           Expanded(flex: 12, child: _buildHeaderText('NOTIFICATION')),
           Expanded(flex: 12, child: _buildHeaderText('E2P')),
           Expanded(flex: 30, child: _buildHeaderText('ACTIONS')),
@@ -338,13 +337,6 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
             child: Text(
               member.roleName ?? '-',
               style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF475569)),
-            ),
-          ),
-          Expanded(
-            flex: 12,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: _buildStatusBadge(member.enabled == 1, 'Active', 'Inactive'),
             ),
           ),
           Expanded(
@@ -623,7 +615,6 @@ class _RosterUserEditor extends ConsumerStatefulWidget {
 class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
   Role? _selectedRole;
   User? _selectedUser;
-  bool _enabled = true;
   bool _emailEnabled = false;
   bool _emailToPhoneEnabled = false;
   bool _pushEnabled = false;
@@ -636,7 +627,6 @@ class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
   void initState() {
     super.initState();
     if (widget.member != null) {
-      _enabled = widget.member!.enabled == 1;
       _emailEnabled = widget.member!.emailNotif == 1;
       _emailToPhoneEnabled = widget.member!.emailToPhone == 1;
       _pushEnabled = widget.member!.pushNotif == 1;
@@ -687,7 +677,7 @@ class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
       'roster_id': widget.roster.id,
       'user_id': _selectedUser!.userId,
       'role_id': _selectedRole?.id,
-      'enabled': _enabled ? 1 : 0,
+      'enabled': 1,
       'email_notif': _emailEnabled ? 1 : 0,
       'email_to_phone': _emailToPhoneEnabled ? 1 : 0,
       'push_notif': _pushEnabled ? 1 : 0,
@@ -859,8 +849,6 @@ class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
             ),
           ],
         ),
-        const SizedBox(height: 24),
-        _buildStatusSelector('MEMBER STATUS', 'Operational status of this contact.', _enabled, (v) => setState(() => _enabled = v)),
       ],
     );
   }

@@ -65,22 +65,25 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         final rosters = rosterResp.data['data'] as List?;
         
         if (rosters != null && rosters.isNotEmpty) {
-          final latest = rosters.first;
-          savedParam = latest['parameter_name'] ?? 'LEVEL';
+          savedParam = rosters.first['parameter_name'] ?? 'LEVEL';
 
-          final membersResp = await client.get('/roster/${latest['id']}/members');
-          final members = membersResp.data['data'] as List?;
-          if (members != null) {
-            for (final m in members) {
-              final uid = m['user_id'];
-              if (uid != null) {
-                savedConfigs[uid] = _UserConfig(
-                  userId: uid,
-                  email: (m['email_notif'] ?? 0) == 1,
-                  push: (m['push_notif'] ?? 0) == 1,
-                  sms: (m['email_to_phone'] ?? 0) == 1,
-                  enabled: (m['enabled'] ?? 0) == 1,
-                );
+          for (final roster in rosters) {
+            final membersResp = await client.get('/roster/${roster['id']}/members');
+            final members = membersResp.data['data'] as List?;
+            if (members != null) {
+              for (final m in members) {
+                final uid = m['user_id'];
+                if (uid != null) {
+                  if (!savedConfigs.containsKey(uid)) {
+                    savedConfigs[uid] = _UserConfig(
+                      userId: uid,
+                      email: (m['email_notif'] ?? 0) == 1,
+                      push: (m['push_notif'] ?? 0) == 1,
+                      sms: (m['email_to_phone'] ?? 0) == 1,
+                      enabled: (m['enabled'] ?? 0) == 1,
+                    );
+                  }
+                }
               }
             }
           }
@@ -106,12 +109,10 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
   }
 
   Future<void> _saveRosters() async {
-    final enabledUsers = _userConfigs.values
-        .where((c) => c.email || c.push || c.sms)
-        .toList();
+    final enabledUsers = _userConfigs.values.toList();
 
     if (enabledUsers.isEmpty) {
-      _snack('Select at least one user notification channel');
+      _snack('No users found in this group to configure');
       return;
     }
 
@@ -551,7 +552,6 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                 _headerCell('EMAIL'),
                 _headerCell('PUSH'),
                 _headerCell('SMS'),
-                _headerCell('ENABLE'),
               ],
             ),
           ),
@@ -739,11 +739,6 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
           _toggle(cfg.sms, (v) {
             setState(() => _userConfigs[user.userId] =
                 cfg.copyWith(sms: v));
-          }),
-          // Master enable
-          _toggle(cfg.enabled, (v) {
-            setState(() => _userConfigs[user.userId] =
-                cfg.copyWith(enabled: v));
           }),
         ],
       ),

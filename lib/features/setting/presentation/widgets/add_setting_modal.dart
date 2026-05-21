@@ -969,6 +969,31 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                               const Divider(),
                               ...List.generate(_rows.length, (index) {
                                 final row = _rows[index];
+                                final showStatusLabel = ![
+                                  'CAL TANK',
+                                  'CAL KILO LITER',
+                                  'SENSOR',
+                                  'SENSOR RATING',
+                                  'MFACTOR',
+                                  'SETBAR',
+                                  'SETCALBAR',
+                                  'CHART DATA',
+                                  'DATA INTERVAL',
+                                ].contains(row.parameterType.toUpperCase().trim());
+
+                                final showMessageTemplate = !isCustomer && ![
+                                  'CAL TANK',
+                                  'CAL KILO LITER',
+                                  'SENSOR',
+                                  'SENSOR RATING',
+                                  'MFACTOR',
+                                  'SETBAR',
+                                  'SETCALBAR',
+                                  'CHART DATA',
+                                  'DATA INTERVAL',
+                                  'TEMPERATURE',
+                                  'FLOW',
+                                ].contains(row.parameterType.toUpperCase().trim());
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -1021,19 +1046,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                 'LEVEL',
                                                 'BATTERY',
                                                 'PRESSURE',
-                                                'TEMPERATURE',
-                                                'FLOW',
-                                                'CAL TANK',
-                                                'CAL KILO LITER',
-                                                'SENSOR',
-                                                'SETBAR',
-                                                'SETCALBAR',
-                                                'MFACTOR',
                                                 'DATA INTERVAL',
-                                                'CHART DATA',
                                                 'SOLAR',
                                                 'DEVICE COMMUNICATE FAILED',
-                                                'OTHER',
                                               ],
                                               hint: 'Select Param',
                                               itemLabel: (v) => v,
@@ -1107,88 +1122,6 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               ),
                                             ),
                                           ),
-                                          if (row.parameterType
-                                                  .toUpperCase()
-                                                  .trim() !=
-                                              'SOLAR') ...[
-                                            const SizedBox(width: 16),
-                                            Expanded(
-                                              flex: 4,
-                                              child: _buildLabelField(
-                                                'STATUS LABEL (UI DISPLAY)',
-                                                (['LEVEL', 'BATTERY', 'PRESSURE']
-                                                        .contains(row.parameterType
-                                                            .toUpperCase()
-                                                            .trim()))
-                                                    ? AppDropdown<String>(
-                                                        value: () {
-                                                          const allowed = [
-                                                            'ReOrder',
-                                                            'Critical',
-                                                            'Low',
-                                                            'High',
-                                                          ];
-                                                          final current = row
-                                                              .statusLabelController
-                                                              .text;
-                                                          if (allowed.contains(
-                                                            current,
-                                                          ))
-                                                            return current;
-                                                          // Mapping existing values to prevent crash
-                                                          final upper = current
-                                                              .toUpperCase();
-                                                          if (upper ==
-                                                              'REORDER')
-                                                            return 'ReOrder';
-                                                          if (upper ==
-                                                              'CRITICAL')
-                                                            return 'Critical';
-                                                          if (upper.contains(
-                                                            'LOW',
-                                                          ))
-                                                            return 'Low';
-                                                          if (upper.contains(
-                                                            'HIGH',
-                                                          ))
-                                                            return 'High';
-                                                          return null;
-                                                        }(),
-                                                        items:
-                                                            (['BATTERY', 'PRESSURE']
-                                                                    .contains(row
-                                                                        .parameterType
-                                                                        .toUpperCase()
-                                                                        .trim()))
-                                                            ? const [
-                                                                'Critical',
-                                                                'Low',
-                                                                'High',
-                                                              ]
-                                                            : const [
-                                                                'ReOrder',
-                                                                'Critical',
-                                                                'Low',
-                                                                'High',
-                                                              ],
-                                                        hint: 'Select Label',
-                                                        itemLabel: (v) => v,
-                                                        onChanged: (v) => setState(
-                                                          () =>
-                                                              row
-                                                                      .statusLabelController
-                                                                      .text =
-                                                                  v ?? '',
-                                                        ),
-                                                      )
-                                                    : AppTextField(
-                                                        controller: row
-                                                            .statusLabelController,
-                                                        hint: 'e.g. LOW LEVEL',
-                                                      ),
-                                              ),
-                                            ),
-                                          ],
                                         ],
                                       ],
                                     ),
@@ -1374,46 +1307,112 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         ],
                                       ],
                                     ),
-                                    if (!isCustomer &&
-                                        ![
-                                          'CAL TANK',
-                                          'CAL KILO LITER',
-                                          'SENSOR',
-                                          'SENSOR RATING',
-                                          'MFACTOR',
-                                          'SETBAR',
-                                          'SETCALBAR',
-                                          'CHART DATA',
-                                          'DATA INTERVAL',
-                                          'SOLAR',
-                                          'TEMPERATURE',
-                                          'FLOW',
-                                        ].contains(
-                                          row.parameterType
-                                              .toUpperCase()
-                                              .trim(),
-                                        )) ...[
+                                    if (showStatusLabel || showMessageTemplate) ...[
                                       const SizedBox(height: 20),
                                       Row(
                                         children: [
-                                          Expanded(
-                                            flex: 2,
-                                            child: _buildLabelField(
-                                              'MESSAGE TEMPLATE TO TRIGGER',
-                                              AppDropdown<MessageTemplate>(
-                                                value: row.selectedTemplate,
-                                                items: _templates,
-                                                hint: 'Select Template',
-                                                itemLabel: (t) => t.name,
-                                                onChanged: (t) => setState(
-                                                  () =>
-                                                      row.selectedTemplate = t,
+                                          if (showStatusLabel)
+                                            Expanded(
+                                              flex: 2,
+                                              child: _buildLabelField(
+                                                'STATUS LABEL (UI DISPLAY)',
+                                                ([
+                                                  'LEVEL',
+                                                  'BATTERY',
+                                                  'PRESSURE',
+                                                  'SOLAR'
+                                                ].contains(row.parameterType
+                                                        .toUpperCase()
+                                                        .trim()))
+                                                    ? AppDropdown<String>(
+                                                        value: () {
+                                                          const allowed = [
+                                                            'ReOrder',
+                                                            'Critical',
+                                                            'Low',
+                                                            'High',
+                                                          ];
+                                                          final current = row
+                                                              .statusLabelController
+                                                              .text;
+                                                          if (allowed.contains(
+                                                            current,
+                                                          )) return current;
+                                                          // Mapping existing values to prevent crash
+                                                          final upper = current
+                                                              .toUpperCase();
+                                                          if (upper ==
+                                                              'REORDER')
+                                                            return 'ReOrder';
+                                                          if (upper ==
+                                                              'CRITICAL')
+                                                            return 'Critical';
+                                                          if (upper.contains(
+                                                            'LOW',
+                                                          )) return 'Low';
+                                                          if (upper.contains(
+                                                            'HIGH',
+                                                          )) return 'High';
+                                                          return null;
+                                                        }(),
+                                                        items: ([
+                                                          'BATTERY',
+                                                          'PRESSURE',
+                                                          'SOLAR'
+                                                        ].contains(row
+                                                                .parameterType
+                                                                .toUpperCase()
+                                                                .trim()))
+                                                            ? const [
+                                                                'Critical',
+                                                                'Low',
+                                                                'High',
+                                                              ]
+                                                            : const [
+                                                                'ReOrder',
+                                                                'Critical',
+                                                                'Low',
+                                                                'High',
+                                                              ],
+                                                        hint: 'Select Label',
+                                                        itemLabel: (v) => v,
+                                                        onChanged: (v) => setState(
+                                                          () => row
+                                                                  .statusLabelController
+                                                                  .text =
+                                                              v ?? '',
+                                                        ),
+                                                      )
+                                                    : AppTextField(
+                                                        controller: row
+                                                            .statusLabelController,
+                                                        hint: 'e.g. LOW LEVEL',
+                                                      ),
+                                              ),
+                                            ),
+                                          if (showStatusLabel && showMessageTemplate)
+                                            const SizedBox(width: 16),
+                                          if (showMessageTemplate)
+                                            Expanded(
+                                              flex: 2,
+                                              child: _buildLabelField(
+                                                'MESSAGE TEMPLATE TO TRIGGER',
+                                                AppDropdown<MessageTemplate>(
+                                                  value: row.selectedTemplate,
+                                                  items: _templates,
+                                                  hint: 'Select Template',
+                                                  itemLabel: (t) => t.name,
+                                                  onChanged: (t) => setState(
+                                                    () =>
+                                                        row.selectedTemplate = t,
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          const Spacer(flex: 2),
+                                          if (showStatusLabel != showMessageTemplate) ...[
+                                            const SizedBox(width: 16),
+                                            const Spacer(flex: 2),
+                                          ],
                                         ],
                                       ),
                                     ],
