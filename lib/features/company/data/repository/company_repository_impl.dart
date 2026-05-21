@@ -1,6 +1,6 @@
 import '../../presentation/model/company_model.dart';
 import '../api/company_api.dart';
-import '../../domain/repository/company_repository.dart';
+import 'company_repository.dart';
 
 class CompanyRepositoryImpl implements CompanyRepository {
   final CompanyApi _api;

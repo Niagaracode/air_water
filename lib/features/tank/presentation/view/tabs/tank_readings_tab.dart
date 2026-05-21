@@ -116,15 +116,11 @@ class TankReadingsTab extends ConsumerWidget {
               label: Text('Solar'),
               size: ColumnSize.S,
             ),
-
           ],
 
           rows: readingsState.readings.map((reading) {
-
             return DataRow2(
-
               cells: [
-
                 DataCell(
                   Text(
                     DateFormat(
@@ -166,7 +162,6 @@ class TankReadingsTab extends ConsumerWidget {
                     '${reading.solar.toString()} v',
                   ),
                 ),
-
               ],
             );
           }).toList(),

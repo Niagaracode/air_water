@@ -38,7 +38,7 @@ class _SyncButtonState extends State<SyncButton> {
     });
 
     try {
-      await widget.onSync(); // Added await
+      await widget.onSync();
     } catch (e) {
       print('Sync error: $e');
     } finally {

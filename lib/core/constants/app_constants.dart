@@ -1,6 +1,8 @@
 class AppConstants {
   static const String apiUrl =
       'https://irrigationcare.niagaraautomation.com:4000/api';
+  //static const String apiUrl =
+  //    'https://faqs-rendering-analyses-gazette.trycloudflare.com/api';
   static const String googleMapsApiKey =
       'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
   static const String mqttWebHost =

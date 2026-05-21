@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/site_model.dart';
 import '../../data/api/site_api.dart';
-import '../../domain/repository/site_repository.dart';
+import '../../data/repository/site_repository.dart';
 import '../../data/repository/site_repository_impl.dart';
 import '../../../../core/network/http/api_service.dart';
 import '../../../../features/company/presentation/controller/company_provider.dart';
@@ -88,14 +88,12 @@ class SiteNotifier extends Notifier<SiteState> {
   SiteState build() {
     ref.keepAlive();
     
-    // Listen to user changes to trigger reload when current user data becomes available
     ref.listen(userProvider, (previous, next) {
       if (previous?.currentUser == null && next.currentUser != null) {
         loadGroupedSites(isReload: true);
       }
     });
 
-    // Initial load only if user is already available
     final currentUser = ref.read(userProvider).currentUser;
     if (currentUser != null) {
       Future.microtask(() => loadGroupedSites());
@@ -105,7 +103,6 @@ class SiteNotifier extends Notifier<SiteState> {
   }
 
   Future<void> loadGroupedSites({bool isReload = false}) async {
-    // Auth Guard: Don't fetch if no user is logged in (prevents 401 during logout)
     if (ref.read(userProvider).currentUser == null) return;
 
     if (state.isLoading) return;

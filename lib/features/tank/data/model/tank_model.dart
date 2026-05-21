@@ -19,15 +19,6 @@ class Tank {
   final int? siteId;
   final String? siteName;
   final int? addressId;
-  final double? width;
-  final double? height;
-  final double? dishHeight;
-  final double? canLength;
-  final double? diameter;
-  final double? length;
-  final double? dishDepth;
-  final double? depth;
-  final double? coneLength;
   final double? tonnes;
   final int? companyId;
   final String? companyName;
@@ -38,9 +29,7 @@ class Tank {
   final int status;
   final bool? useStrappingChart;
   final List<StrappingPoint>? strappingPoints;
-  final String? levelUnit;
-  final String? volumeUnit;
-  final String? createdAt;
+  final List<ChannelData>? channelData;
 
   Tank({
     required this.tankId,
@@ -57,15 +46,6 @@ class Tank {
     this.siteId,
     this.siteName,
     this.addressId,
-    this.width,
-    this.height,
-    this.dishHeight,
-    this.canLength,
-    this.diameter,
-    this.length,
-    this.dishDepth,
-    this.depth,
-    this.coneLength,
     this.tonnes,
     this.companyId,
     this.companyName,
@@ -75,11 +55,9 @@ class Tank {
     required this.status,
     this.useStrappingChart,
     this.strappingPoints,
-    this.levelUnit,
-    this.volumeUnit,
     this.tankName,
-    this.createdAt,
     this.deviceName,
+    this.channelData,
   });
 
   factory Tank.fromJson(Map<String, dynamic> json) {
@@ -102,15 +80,7 @@ class Tank {
       siteId: _toInt(json['plant_id']),
       siteName: json['plant_name'] as String?,
       addressId: _toInt(json['address_id']),
-      width: _toDouble(json['width']),
-      height: _toDouble(json['height']),
-      dishHeight: _toDouble(json['dish_height']),
-      canLength: _toDouble(json['can_length']),
-      diameter: _toDouble(json['diameter']),
-      length: _toDouble(json['length']),
-      dishDepth: _toDouble(json['dish_depth']),
-      depth: _toDouble(json['depth']),
-      coneLength: _toDouble(json['cone_length']),
+
       tonnes: _toDouble(json['tonnes']),
       companyId: _toInt(json['company_id']),
       companyName: json['company_name'] as String?,
@@ -150,15 +120,17 @@ class Tank {
         }
         return null;
       })(),
-      levelUnit: json['level_unit'] as String?,
-      volumeUnit: json['volume_unit'] as String?,
       tankName: json['tank_name'] as String?,
-      createdAt: json['created_at'] as String?,
+
+      channelData: json['channel_data'] != null
+          ? (json['channel_data'] as List)
+          .map((e) => ChannelData.fromJson(e))
+          .toList()
+          : null,
     );
   }
 
   String get statusText => status == 1 ? 'Active' : 'Inactive';
-
 
 
   static double? _toDouble(dynamic value) {
@@ -173,6 +145,39 @@ class Tank {
     if (value is int) return value;
     if (value is String) return int.tryParse(value);
     if (value is num) return value.toInt();
+    return null;
+  }
+}
+
+class ChannelData {
+  final String? type;
+  final double? min;
+  final double? max;
+  final String? units;
+  final bool enabled;
+
+  ChannelData({
+    this.type,
+    this.min,
+    this.max,
+    this.units,
+    required this.enabled,
+  });
+
+  factory ChannelData.fromJson(Map<String, dynamic> json) {
+    return ChannelData(
+      type: json['type'] as String?,
+      min: _toDouble(json['min']),
+      max: _toDouble(json['max']),
+      units: json['units'] as String?,
+      enabled: json['enabled'] ?? false,
+    );
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
     return null;
   }
 }

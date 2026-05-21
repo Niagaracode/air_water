@@ -1249,7 +1249,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
     if (rule.parameter == 'DeviceID') {
       final devices = ref
-          .watch(deviceProvider)
+          .watch(deviceNotifierProvider)
           .groupedDevices
           .expand((g) => g.devices)
           .map((d) => {'id': d.id.toString(), 'name': d.deviceId})
@@ -1351,7 +1351,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     }
 
     if (rule.parameter == 'Tank Name') {
-      final tankState = ref.watch(tankProvider);
+      final tankState = ref.watch(tankNotifierProvider);
       final tanks = tankState.groupedTanks
           .expand((g) => g.tanks)
           .map(

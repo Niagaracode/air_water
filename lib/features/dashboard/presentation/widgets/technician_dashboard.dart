@@ -11,7 +11,7 @@ class TechnicianDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final alarmState = ref.watch(alarmProvider);
-    final tankState = ref.watch(tankProvider);
+    final tankState = ref.watch(tankNotifierProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

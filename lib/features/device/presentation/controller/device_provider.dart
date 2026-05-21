@@ -71,14 +71,12 @@ class DeviceNotifier extends Notifier<DeviceState> {
   DeviceState build() {
     ref.keepAlive();
     
-    // Listen to user changes to trigger reload when current user data becomes available
     ref.listen(userProvider, (previous, next) {
       if (previous?.currentUser == null && next.currentUser != null) {
         loadGroupedDevices();
       }
     });
 
-    // Initial load only if user is already available
     final currentUser = ref.read(userProvider).currentUser;
     if (currentUser != null) {
       Future.microtask(() => loadGroupedDevices());
@@ -289,6 +287,6 @@ final deviceRepositoryProvider = Provider<DeviceRepository>((ref) {
   return DeviceRepositoryImpl(api);
 });
 
-final deviceProvider = NotifierProvider<DeviceNotifier, DeviceState>(
+final deviceNotifierProvider = NotifierProvider<DeviceNotifier, DeviceState>(
   DeviceNotifier.new,
 );
