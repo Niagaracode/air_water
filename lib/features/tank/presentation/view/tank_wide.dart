@@ -36,7 +36,7 @@ class _TankWideState extends ConsumerState<TankWide> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
-      ref.read(tankProvider.notifier).loadMore();
+      ref.read(tankNotifierProvider.notifier).loadMore();
     }
   }
 
@@ -49,7 +49,7 @@ class _TankWideState extends ConsumerState<TankWide> {
     super.dispose();
   }
 
-  /// HEADER
+  /// HEADER-----------------------------------------
   Widget _buildHeader(BuildContext context) {
     return ViewHeader(
       title: 'TANK MANAGEMENT',
@@ -72,8 +72,7 @@ class _TankWideState extends ConsumerState<TankWide> {
           child: AppDropdown<int?>(
             value: state.selectedStatus,
             items: const [null, 1, 0],
-            itemLabel: (v) =>
-                v == null ? 'All Status' : (v == 1 ? 'Active' : 'Inactive'),
+            itemLabel: (v) => v == null ? 'All Status' : (v == 1 ? 'Active' : 'Inactive'),
             hint: 'Status',
             onChanged: (v) => notifier.setStatus(v),
           ),
@@ -102,8 +101,7 @@ class _TankWideState extends ConsumerState<TankWide> {
             }
             return await notifier.searchSites(textEditingValue.text);
           },
-          displayStringForOption: (SiteAutocompleteInfo option) =>
-              option.siteName,
+          displayStringForOption: (SiteAutocompleteInfo option) => option.siteName,
           onSelected: (option) {
             notifier.setSearchSite(option.siteName);
             notifier.loadGroupedTanks();
@@ -227,8 +225,9 @@ class _TankWideState extends ConsumerState<TankWide> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(tankProvider);
-    final notifier = ref.read(tankProvider.notifier);
+
+    final state = ref.watch(tankNotifierProvider);
+    final notifier = ref.read(tankNotifierProvider.notifier);
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -433,7 +432,7 @@ class _TankWideState extends ConsumerState<TankWide> {
 
             AppTableCell(tank.deviceId ?? '--', flex: 2),
 
-            AppTableCell(group.fullAddress ?? '--', flex: 3),
+            AppTableCell(group.fullAddress, flex: 3),
 
             AppTableCell(tank.productName ?? '--', flex: 1, textAlign: TextAlign.center,),
 
@@ -470,21 +469,30 @@ class _TankWideState extends ConsumerState<TankWide> {
     );
   }
 
-
-  void _showAddDialog([Tank? tank]) {
-    showGeneralDialog(
+  Future<void> _showAddDialog([Tank? tank]) async {
+    await showGeneralDialog<bool>(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'AddTank',
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) => AddTankModal(initialTank: tank),
+      pageBuilder: (context, anim1, anim2) => AddTankModal(
+        tank: tank,
+        onSuccess: () {
+          ref.read(tankNotifierProvider.notifier).loadGroupedTanks();
+        },
+      ),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(1, 0),
             end: Offset.zero,
-          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
+          ).animate(
+            CurvedAnimation(
+              parent: anim1,
+              curve: Curves.easeOut,
+            ),
+          ),
           child: child,
         );
       },
@@ -534,7 +542,7 @@ class _TankWideState extends ConsumerState<TankWide> {
 
     if (confirmed == true) {
       final success = await ref
-          .read(tankProvider.notifier)
+          .read(tankNotifierProvider.notifier)
           .deleteTank(tank.tankId);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

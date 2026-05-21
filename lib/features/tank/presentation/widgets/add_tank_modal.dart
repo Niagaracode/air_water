@@ -9,8 +9,9 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 
 class AddTankModal extends ConsumerStatefulWidget {
-  final Tank? initialTank;
-  const AddTankModal({super.key, this.initialTank});
+  final Tank? tank;
+  final VoidCallback? onSuccess;
+  const AddTankModal({super.key, this.tank, this.onSuccess});
 
   @override
   ConsumerState<AddTankModal> createState() => _AddTankModalState();
@@ -18,9 +19,6 @@ class AddTankModal extends ConsumerStatefulWidget {
 
 class _AddTankModalState extends ConsumerState<AddTankModal> {
   final _tankNumberController = TextEditingController();
-  final _heightController = TextEditingController();
-  final _widthController = TextEditingController();
-  final _dishHeightController = TextEditingController();
   final _tonnesController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _siteAutocompleteController = TextEditingController();
@@ -41,59 +39,15 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialTank != null) {
-      final tank = widget.initialTank!;
+    if (widget.tank != null) {
+      final tank = widget.tank!;
       _tankNumberController.text = tank.tankNumber;
       _tonnesController.text = tank.tonnes?.toString() ?? '';
       _descriptionController.text = tank.description ?? '';
       _siteAutocompleteController.text = tank.siteName ?? '';
       _status = tank.status;
-
-      // Dynamic mapping of dimensions based on tank type
-      final typeName = tank.tankTypeName ?? '';
-      switch (typeName) {
-        case 'Cyclinder':
-          _heightController.text = tank.height?.toString() ?? '';
-          _widthController.text = tank.width?.toString() ?? '';
-          _dishHeightController.text = tank.dishHeight?.toString() ?? '';
-          break;
-        case 'Rectangle':
-        case 'Rectangular':
-          _heightController.text = tank.height?.toString() ?? '';
-          _widthController.text = tank.width?.toString() ?? '';
-          _dishHeightController.text = tank.depth?.toString() ?? '';
-          break;
-        case 'Horizontal with 2:1 Ellipsoidal Ends':
-        case 'Horizontal with Hemispherical Ends':
-        case 'None':
-        case 'Spherical':
-        case 'Vertical with 2:1 Ellipsoidal Ends':
-        case 'Vertical with Flat Ends':
-        case 'Vertical with Hemispherical Ends':
-          _heightController.text = tank.canLength?.toString() ?? '';
-          _widthController.text = tank.diameter?.toString() ?? '';
-          break;
-        case 'Horizontal with Flat Ends':
-          _heightController.text = tank.length?.toString() ?? '';
-          _widthController.text = tank.diameter?.toString() ?? '';
-          break;
-        case 'Horizontal with Variable Dished Ends':
-        case 'Vertical with Variable Dished Ends':
-          _heightController.text = tank.canLength?.toString() ?? '';
-          _widthController.text = tank.diameter?.toString() ?? '';
-          _dishHeightController.text = tank.dishDepth?.toString() ?? '';
-          break;
-        case 'Vertical with Conical Bottom End':
-          _heightController.text = tank.canLength?.toString() ?? '';
-          _widthController.text = tank.diameter?.toString() ?? '';
-          _dishHeightController.text = tank.coneLength?.toString() ?? '';
-          break;
-        default:
-          _heightController.text = tank.height?.toString() ?? '';
-          _widthController.text = tank.width?.toString() ?? '';
-          _dishHeightController.text = tank.dishHeight?.toString() ?? '';
-      }
     }
+
     _loadDropdownData();
     _initializeChannels();
   }
@@ -102,8 +56,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     setState(() => _isLoadingDropdowns = true);
     try {
       final results = await Future.wait([
-        ref.read(tankProvider.notifier).getDropdowns(),
-        ref.read(tankProvider.notifier).getProducts(),
+        ref.read(tankNotifierProvider.notifier).getDropdowns(),
+        ref.read(tankNotifierProvider.notifier).getProducts(),
       ]);
 
       final data = results[0] as Map<String, dynamic>;
@@ -112,17 +66,17 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       setState(() {
         _dropdownData = data;
         _products = products;
-        if (widget.initialTank != null) {
+        if (widget.tank != null) {
           _selectedUnit = (data['units'] as List).firstWhere(
-            (u) => u['id'] == widget.initialTank!.unitId,
+            (u) => u['id'] == widget.tank!.unitId,
             orElse: () => null,
           );
           _selectedTankType = (data['tank_types'] as List).firstWhere(
-            (tt) => tt['id'] == widget.initialTank!.tankTypeId,
+            (tt) => tt['id'] == widget.tank!.tankTypeId,
             orElse: () => null,
           );
           final foundProducts = products.where(
-            (p) => p.productId == widget.initialTank!.productId,
+            (p) => p.productId == widget.tank!.productId,
           );
           _selectedProduct = foundProducts.isNotEmpty
               ? foundProducts.first
@@ -137,37 +91,55 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   }
 
   void _initializeChannels() {
-    _channels = [
-      {
-        'type': 'Level',
-        'min': 0,
-        'max': 95,
-        'units': '% Full',
-        'enabled': true,
-      },
-      {
-        'type': 'Pressure',
-        'min': 0,
-        'max': 41.4,
-        'units': 'Bar',
-        'enabled': true,
-      },
-      {
-        'type': 'Battery Voltage',
-        'min': 0,
-        'max': 30,
-        'units': 'Volts',
-        'enabled': true,
-      },
-      {
-        'type': 'Solar Voltage',
-        'min': 0,
-        'max': 30,
-        'units': 'Volts',
-        'enabled': true,
-      },
-    ];
-    _channelEnabled = List.generate(_channels.length, (i) => _channels[i]['enabled']);
+    final apiChannels = widget.tank?.channelData ?? [];
+
+    if (apiChannels.isNotEmpty) {
+      _channels = apiChannels.map((channel) {
+        return {
+          'type': channel.type ?? '',
+          'min': channel.min ?? 0,
+          'max': channel.max ?? 0,
+          'units': channel.units ?? '',
+          'enabled': channel.enabled ?? true,
+        };
+      }).toList();
+    } else {
+      _channels = [
+        {
+          'type': 'Level',
+          'min': 0,
+          'max': 0,
+          'units': '% Full',
+          'enabled': true,
+        },
+        {
+          'type': 'Pressure',
+          'min': 0,
+          'max': 0,
+          'units': 'Bar',
+          'enabled': true,
+        },
+        {
+          'type': 'Battery Voltage',
+          'min': 0,
+          'max': 0,
+          'units': 'Volts',
+          'enabled': true,
+        },
+        {
+          'type': 'Solar Voltage',
+          'min': 0,
+          'max': 0,
+          'units': 'Volts',
+          'enabled': true,
+        },
+      ];
+    }
+
+    _channelEnabled = List.generate(
+      _channels.length,
+          (i) => _channels[i]['enabled'] ?? true,
+    );
   }
 
   Future<void> _save() async {
@@ -180,7 +152,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
-    if (_selectedSite == null && widget.initialTank?.siteId == null) {
+    if (_selectedSite == null && widget.tank?.siteId == null) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Please select a Site')),
       );
@@ -195,13 +167,12 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     }
 
     final channelData = getChannelData();
-    print('Channel Data: ${channelData['channels']}');
 
     final request = TankCreateRequest(
       tankNumber: _tankNumberController.text,
       description: '',
-      siteId: _selectedSite?.siteId ?? widget.initialTank?.siteId,
-      addressId: _selectedSite?.addressId ?? widget.initialTank?.addressId,
+      siteId: _selectedSite?.siteId ?? widget.tank?.siteId,
+      addressId: _selectedSite?.addressId ?? widget.tank?.addressId,
       unitId: _selectedUnit?['id'],
       productId: _selectedProduct is TankProduct
           ? _selectedProduct.productId
@@ -209,23 +180,24 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       channelData: channelData['channels'],
     );
 
-    final success = widget.initialTank != null ?
-    await ref.read(tankProvider.notifier).updateTank(widget.initialTank!.tankId, request)
-        : await ref.read(tankProvider.notifier).createTank(request);
+    final success = widget.tank != null ?
+    await ref.read(tankNotifierProvider.notifier).updateTank(widget.tank!.tankId, request)
+        : await ref.read(tankNotifierProvider.notifier).createTank(request);
 
     if (!mounted) return;
 
     if (success) {
+      widget.onSuccess?.call();
       Navigator.of(context).pop();
       messenger.showSnackBar(
         SnackBar(
           content: Text(
-            widget.initialTank != null ? 'Tank updated' : 'Tank created',
+            widget.tank != null ? 'Tank updated' : 'Tank created',
           ),
         ),
       );
     } else {
-      final error = ref.read(tankProvider).error;
+      final error = ref.read(tankNotifierProvider).error;
       messenger.showSnackBar(
         SnackBar(
           content: Text('Action failed: ${error ?? "Unknown error"}'),
@@ -237,7 +209,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
 
   @override
   Widget build(BuildContext context) {
-    final tankState = ref.watch(tankProvider);
+    final tankState = ref.watch(tankNotifierProvider);
 
     return Align(
       alignment: Alignment.centerRight,
@@ -268,7 +240,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(widget.initialTank != null
+                              Text(widget.tank != null
                                     ? 'Edit Tank Instance'
                                     : 'Create New Tank',
                                 style: GoogleFonts.outfit(
@@ -280,7 +252,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                widget.initialTank != null
+                                widget.tank != null
                                     ? 'Modify the existing tank configuration and properties.'
                                     : 'Fill in the information below to register a new tank unit.',
                                 style: GoogleFonts.inter(
@@ -409,7 +381,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           ),
                         ),
                         child: Text(
-                          widget.initialTank != null
+                          widget.tank != null
                               ? 'UPDATE TANK'
                               : 'CREATE TANK',
                           style: GoogleFonts.outfit(
@@ -519,7 +491,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
               return const Iterable<String>.empty();
             }
             return await ref
-                .read(tankProvider.notifier)
+                .read(tankNotifierProvider.notifier)
                 .getTankNameSuggestions(textEditingValue.text);
           },
           displayStringForOption: (String option) => option,
@@ -569,7 +541,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
               return const Iterable<SiteAutocompleteInfo>.empty();
             }
             return await ref
-                .read(tankProvider.notifier)
+                .read(tankNotifierProvider.notifier)
                 .searchSites(textEditingValue.text);
           },
           displayStringForOption: (SiteAutocompleteInfo option) =>
@@ -837,9 +809,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   @override
   void dispose() {
     _tankNumberController.dispose();
-    _heightController.dispose();
-    _widthController.dispose();
-    _dishHeightController.dispose();
     _descriptionController.dispose();
     _siteAutocompleteController.dispose();
     super.dispose();

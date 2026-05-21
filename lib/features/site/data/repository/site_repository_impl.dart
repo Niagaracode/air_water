@@ -1,6 +1,6 @@
 import '../../presentation/model/site_model.dart';
 import '../api/site_api.dart';
-import '../../domain/repository/site_repository.dart';
+import 'site_repository.dart';
 
 class SiteRepositoryImpl implements SiteRepository {
   final SiteApi _api;

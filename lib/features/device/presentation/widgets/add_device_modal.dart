@@ -117,9 +117,9 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
 
     final success = widget.device != null
         ? await ref
-              .read(deviceProvider.notifier)
+              .read(deviceNotifierProvider.notifier)
               .updateDevice(widget.device!.id, request)
-        : await ref.read(deviceProvider.notifier).createDevice(request);
+        : await ref.read(deviceNotifierProvider.notifier).createDevice(request);
 
     if (success && mounted) {
       Navigator.pop(context);
@@ -128,7 +128,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
 
   @override
   Widget build(BuildContext context) {
-    final deviceState = ref.watch(deviceProvider);
+    final deviceState = ref.watch(deviceNotifierProvider);
 
     return Align(
       alignment: Alignment.centerRight,
@@ -222,7 +222,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                                   return const Iterable<String>.empty();
                                 }
                                 return await ref
-                                    .read(deviceProvider.notifier)
+                                    .read(deviceNotifierProvider.notifier)
                                     .getDeviceNameSuggestions(
                                       textEditingValue.text,
                                     );
@@ -469,7 +469,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
               return const Iterable<Map<String, dynamic>>.empty();
             }
             return await ref
-                .read(deviceProvider.notifier)
+                .read(deviceNotifierProvider.notifier)
                 .searchTanks(
                   textEditingValue.text,
                   siteId: _selectedSite?.siteId ?? widget.device?.siteId,
@@ -551,7 +551,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
               return const Iterable<SiteAutocompleteInfo>.empty();
             }
             return await ref
-                .read(deviceProvider.notifier)
+                .read(deviceNotifierProvider.notifier)
                 .searchSites(textEditingValue.text);
           },
           displayStringForOption: (SiteAutocompleteInfo option) =>

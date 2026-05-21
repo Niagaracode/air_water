@@ -1,5 +1,6 @@
 import 'package:air_water/features/tank/data/tank_repository.dart';
 
+import 'model/tank_event_model.dart';
 import 'model/tank_model.dart';
 import 'tank_api.dart';
 import '../../site/presentation/model/site_model.dart';
@@ -74,4 +75,11 @@ class TankRepositoryImpl implements TankRepository {
   Future<Map<String, dynamic>> getTankReadings(int tankId, String day) {
     return _api.getTankReadings(tankId, day);
   }
+
+  @override
+  Future<List<TankEventModel>> getTankEvents(int tankId, String day) {
+    return _api.getTankEvents(tankId, day);
+  }
+
+
 }
