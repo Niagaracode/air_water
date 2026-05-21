@@ -5,10 +5,8 @@ import '../../data/model/tank_reading_model.dart';
 
 
 class TankReadingParams {
-
   final int tankId;
   final String day;
-
   const TankReadingParams({
     required this.tankId,
     required this.day,
@@ -22,10 +20,7 @@ class TankReadingParams {
   }
 
   @override
-  int get hashCode => Object.hash(
-    tankId,
-    day,
-  );
+  int get hashCode => Object.hash(tankId, day);
 }
 
 final tankReadingsProvider = StateNotifierProvider.family<
@@ -52,11 +47,8 @@ class TankReadingsState {
     this.error,
   });
 
-  TankReadingsState copyWith({
-    bool? isLoading,
-    List<TankReadingModel>? readings,
-    String? error,
-  }) {
+  TankReadingsState copyWith({bool? isLoading,
+    List<TankReadingModel>? readings, String? error}) {
     return TankReadingsState(
       isLoading: isLoading ?? this.isLoading,
       readings: readings ?? this.readings,
@@ -71,47 +63,20 @@ class TankReadingsNotifier extends StateNotifier<TankReadingsState> {
   final int tankId;
   final String day;
 
-  TankReadingsNotifier(
-      this.repository,
-      this.tankId,
-      this.day,
-      ) : super(const TankReadingsState()) {
-
+  TankReadingsNotifier(this.repository, this.tankId, this.day) :
+        super(const TankReadingsState()) {
     loadReadings();
   }
 
   Future<void> loadReadings() async {
-
     try {
-
-      state = state.copyWith(
-        isLoading: true,
-        error: null,
-      );
-
-      final response =
-      await repository.getTankReadings(
-        tankId,
-        day,
-      );
-
+      state = state.copyWith(isLoading: true, error: null);
+      final response = await repository.getTankReadings(tankId, day);
       final data = response['data'] as List;
-
-      final readings = data
-          .map((e) => TankReadingModel.fromJson(e))
-          .toList();
-
-      state = state.copyWith(
-        isLoading: false,
-        readings: readings,
-      );
-
+      final readings = data.map((e) => TankReadingModel.fromJson(e)).toList();
+      state = state.copyWith(isLoading: false, readings: readings);
     } catch (e) {
-
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 }

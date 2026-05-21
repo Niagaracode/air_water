@@ -42,7 +42,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   String selectedSegment = '1D';
 
 
-
   @override
   void initState() {
     super.initState();
@@ -184,7 +183,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                 controller: _tabController,
                 children: [
                   TankDetailsTab(tankId: widget.tankId, day: selectedSegment),
-                  TankEventsTab(),
+                  TankEventsTab(tankId: widget.tankId, day: selectedSegment),
                   TankReadingsTab(tankId: widget.tankId, day: selectedSegment),
                   TankMapTab(),
                 ],

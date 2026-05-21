@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../site/presentation/model/site_model.dart';
 import '../../../core/network/http/api_service.dart';
+import 'model/tank_event_model.dart';
 import 'model/tank_model.dart';
 
 class TankApi {
@@ -31,6 +32,7 @@ class TankApi {
     }
 
     final response = await _client.get('/tanks/grouped', query: query);
+
     return TankGroupedResponse.fromJson(
       Map<String, dynamic>.from(response.data),
     );
@@ -103,8 +105,15 @@ class TankApi {
     return Tank.fromJson(Map<String, dynamic>.from(response.data['data']));
   }
 
-  Future<Map<String, dynamic>> getTankReadings(int tankId, String date) async {
-    final response = await _client.get('/devices/$tankId/graph?date=$date');
+  Future<Map<String, dynamic>> getTankReadings(int tankId, String day) async {
+    final response = await _client.get('/devices/$tankId/graph?date=$day');
     return response.data;
   }
+
+  Future<List<TankEventModel>> getTankEvents(int tankId, String day) async {
+    final response = await _client.get('/tank/$tankId/events?day=$day');
+    final List data = response.data['data'] ?? [];
+    return data.map((e) => TankEventModel.fromJson(e)).toList();
+  }
+
 }

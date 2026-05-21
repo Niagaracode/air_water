@@ -24,15 +24,9 @@ class _CompanyNarrowState extends ConsumerState<CompanyNarrow> {
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent * 0.9) {
-      ref.read(companyNotifierProvider.notifier).loadMore();
-    }
-  }
+
 
   @override
   void dispose() {

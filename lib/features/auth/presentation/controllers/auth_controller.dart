@@ -48,8 +48,8 @@ class AuthController extends AsyncNotifier<void> {
     ref.invalidate(userProvider);
     ref.invalidate(companyNotifierProvider);
     ref.invalidate(siteNotifierProvider);
-    ref.invalidate(tankProvider);
-    ref.invalidate(deviceProvider);
+    ref.invalidate(tankNotifierProvider);
+    ref.invalidate(deviceNotifierProvider);
     ref.invalidate(assetGroupProvider);
     ref.invalidate(rosterGroupProvider);
     ref.invalidate(roasterNotifierProvider);

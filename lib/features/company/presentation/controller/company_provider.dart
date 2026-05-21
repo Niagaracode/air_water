@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/company_model.dart';
 import '../../data/api/company_api.dart';
-import '../../domain/repository/company_repository.dart';
+import '../../data/repository/company_repository.dart';
 import '../../data/repository/company_repository_impl.dart';
 import '../../../../core/network/http/api_service.dart';
 import '../../../user/presentation/controller/user_provider.dart';
@@ -82,14 +82,12 @@ class CompanyNotifier extends Notifier<CompanyState> {
   CompanyState build() {
     ref.keepAlive();
     
-    // Listen to user changes to trigger reload when current user data (and companyId) becomes available
     ref.listen(userProvider, (previous, next) {
       if (previous?.currentUser == null && next.currentUser != null) {
         loadGroupedCompanies(isReload: true);
       }
     });
 
-    // Initial load
     Future.microtask(() => loadGroupedCompanies());
     return CompanyState();
   }
@@ -138,40 +136,9 @@ class CompanyNotifier extends Notifier<CompanyState> {
     }
   }
 
-  Future<void> loadMore() async {
-    if (state.isLoading || !state.hasMore) return;
-
-    state = state.copyWith(isLoading: true);
-
-    try {
-      final nextPage = state.page + 1;
-      final repository = ref.read(companyRepositoryProvider);
-      final response = await repository.getGroupedCompanies(
-        page: nextPage,
-        limit: _limit,
-        search: state.searchName,
-        status: state.selectedStatus,
-        date: state.selectedDate,
-      );
-      
-      final filteredNew = _filterCompanies(response.data);
-
-
-      state = state.copyWith(
-        groupedCompanies: [...state.groupedCompanies, ...filteredNew],
-        isLoading: false,
-        page: nextPage,
-        totalEntries: state.totalEntries + filteredNew.length,
-      );
-
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
 
   void setSearchName(String name) {
     state = state.copyWith(searchName: name);
-    // Explicit trigger required from UI
   }
 
   void clearFilters() {

@@ -367,7 +367,7 @@ class AppTableActionButton extends StatelessWidget {
         splashRadius: 20,
         splashColor: color.withValues(alpha: 0.2),
         highlightColor: color.withValues(alpha: 0.1),
-        tooltip: icon == Icons.delete ? 'Delete' : 'Edit',
+        tooltip: icon == Icons.delete_outline ? 'Delete' : 'Edit',
       ),
     );
   }

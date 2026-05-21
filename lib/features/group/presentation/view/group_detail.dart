@@ -260,8 +260,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text('${tank.tankTypeName} | ${tank.productName}'),
-                trailing: Text(
-                  '${tank.width} x ${tank.height} (${tank.unitName})',
+                trailing: Text('(${tank.unitName})',
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
               );

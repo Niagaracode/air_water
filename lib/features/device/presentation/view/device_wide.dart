@@ -30,7 +30,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.9) {
-      ref.read(deviceProvider.notifier).loadMore();
+      ref.read(deviceNotifierProvider.notifier).loadMore();
     }
   }
 
@@ -131,8 +131,8 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(deviceProvider);
-    final notifier = ref.read(deviceProvider.notifier);
+    final state = ref.watch(deviceNotifierProvider);
+    final notifier = ref.read(deviceNotifierProvider.notifier);
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),

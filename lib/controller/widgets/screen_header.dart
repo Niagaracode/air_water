@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/app_theme/app_theme.dart';
+import '../../core/helpers/route_refresh_helper.dart';
 import '../../features/auth/presentation/controllers/auth_providers.dart';
 
 
@@ -60,7 +61,10 @@ class ScreenHeader extends ConsumerWidget {
             const SizedBox(width: 16),
             SyncButton(
               onSync: () async {
-                await _refreshData(ref, context);
+                await RouteRefreshHelper.refreshCurrentPage(
+                  ref,
+                  context,
+                );
               },
             ),
             const SizedBox(width: 16),
@@ -217,14 +221,4 @@ class ScreenHeader extends ConsumerWidget {
     );
   }
 
-  Future<void> _refreshData(WidgetRef ref, BuildContext context) async {
-    // Refresh the tank data from server
-    ref.read(tankDataProvider.notifier).refresh();
-
-    /*await ref.read(tankDataListProvider.notifier).refresh();
-
-      // Invalidate related providers to refresh UI
-      ref.invalidate(tankStatisticsProvider);
-      ref.invalidate(groupedTanksProvider);*/
-  }
 }
