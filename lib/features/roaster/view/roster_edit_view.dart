@@ -94,6 +94,14 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626)),
+            tooltip: 'Delete Roster',
+            onPressed: _deleteRoster,
+          ),
+          const SizedBox(width: 16),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
@@ -440,6 +448,47 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
       final success = await ref.read(roasterNotifierProvider.notifier).removeMember(member.id!);
       if (success) {
         _loadData();
+      }
+    }
+  }
+
+  Future<void> _deleteRoster() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Roster', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        content: Text('Are you sure you want to delete this roster?', style: GoogleFonts.inter()),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: const Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Delete', style: GoogleFonts.inter(color: const Color(0xFFDC2626), fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && _roster != null) {
+      setState(() => _isLoading = true);
+      final success = await ref.read(roasterNotifierProvider.notifier).deleteRoaster(_roster!.id);
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Roster deleted successfully')),
+          );
+          Navigator.pop(context);
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to delete roster')),
+          );
+        }
       }
     }
   }

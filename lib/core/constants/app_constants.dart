@@ -1,6 +1,6 @@
 class AppConstants {
   static const String apiUrl =
-      'https://irrigationcare.niagaraautomation.com:9443/api';
+      'https://irrigationcare.niagaraautomation.com:4000/api';
   static const String googleMapsApiKey =
       'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
 

@@ -39,7 +39,7 @@ class RoasterNarrow extends ConsumerWidget {
               itemCount: state.rosters.length,
               itemBuilder: (context, index) {
                 final roster = state.rosters[index];
-                return _buildRosterCard(context, roster);
+                return _buildRosterCard(context, ref, roster);
               },
             ),
       floatingActionButton: FloatingActionButton(
@@ -52,7 +52,7 @@ class RoasterNarrow extends ConsumerWidget {
     );
   }
 
-  Widget _buildRosterCard(BuildContext context, Roster roster) {
+  Widget _buildRosterCard(BuildContext context, WidgetRef ref, Roster roster) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -84,6 +84,13 @@ class RoasterNarrow extends ConsumerWidget {
                     ),
                   ),
                   _buildStatusChip(roster.enabled == 1),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626), size: 20),
+                    onPressed: () => _deleteRoster(context, ref, roster),
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -99,6 +106,36 @@ class RoasterNarrow extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _deleteRoster(BuildContext context, WidgetRef ref, Roster roster) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Roster', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        content: Text('Are you sure you want to delete "${roster.description}"?', style: GoogleFonts.inter()),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: GoogleFonts.inter(color: const Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Delete', style: GoogleFonts.inter(color: const Color(0xFFDC2626), fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final success = await ref.read(roasterNotifierProvider.notifier).deleteRoaster(roster.id);
+      if (success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Roster deleted successfully')),
+        );
+      }
+    }
   }
 
   Widget _buildStatusChip(bool enabled) {

@@ -11,9 +11,7 @@ import '../../../../shared/widgets/app_table.dart';
 import '../../user/presentation/controller/user_provider.dart';
 
 // ─── Parameter options ──────────────────────────────────────────────────────
-const _kParameters = [
-  'LEVEL', 'BATTERY', 'PRESSURE',
-];
+const _kParameters = ['LEVEL', 'BATTERY', 'PRESSURE'];
 
 class RoasterWide extends ConsumerStatefulWidget {
   const RoasterWide({super.key});
@@ -30,6 +28,9 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
   // Per-user notification config (userId → state)
   final Map<int, _UserConfig> _userConfigs = {};
 
+  // Track the roster IDs associated with this group to support deletion
+  List<int> _selectedRosterIds = [];
+
   // Shared parameter for this group session
   String _parameter = 'LEVEL';
   bool _savingRoster = false;
@@ -44,6 +45,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       _selectedGroup = group;
       _groupUsers = [];
       _userConfigs.clear();
+      _selectedRosterIds.clear();
       _loadingUsers = true;
     });
 
@@ -57,18 +59,26 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       // 2. Try to find the latest roster for this group to preview settings
       Map<int, _UserConfig> savedConfigs = {};
       String savedParam = 'LEVEL';
+      List<int> rosterIds = [];
 
       try {
-        final rosterResp = await client.get('/roster', query: {
-          'description': group.name,
-        });
+        final rosterResp = await client.get(
+          '/roster',
+          query: {'description': group.name},
+        );
         final rosters = rosterResp.data['data'] as List?;
-        
+
         if (rosters != null && rosters.isNotEmpty) {
           savedParam = rosters.first['parameter_name'] ?? 'LEVEL';
 
           for (final roster in rosters) {
-            final membersResp = await client.get('/roster/${roster['id']}/members');
+            final id = roster['id'];
+            if (id != null) {
+              rosterIds.add(id as int);
+            }
+            final membersResp = await client.get(
+              '/roster/${roster['id']}/members',
+            );
             final members = membersResp.data['data'] as List?;
             if (members != null) {
               for (final m in members) {
@@ -97,8 +107,10 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
           _groupUsers = users;
           _loadingUsers = false;
           _parameter = savedParam;
+          _selectedRosterIds = rosterIds;
           for (final u in users) {
-            _userConfigs[u.userId] = savedConfigs[u.userId] ?? _UserConfig(userId: u.userId);
+            _userConfigs[u.userId] =
+                savedConfigs[u.userId] ?? _UserConfig(userId: u.userId);
           }
         });
       }
@@ -125,8 +137,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     for (final cfg in enabledUsers) {
       final user = _groupUsers.firstWhere((u) => u.userId == cfg.userId);
       final data = {
-        'description':
-            '${_selectedGroup!.name} – ${user.username}',
+        'description': '${_selectedGroup!.name} – ${user.username}',
         'enabled': 1,
         'parameter_name': _parameter,
         'members': [
@@ -137,7 +148,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
             'email_to_phone': cfg.sms ? 1 : 0,
             'enabled': cfg.enabled ? 1 : 0,
             'parameter_name': _parameter,
-          }
+          },
         ],
       };
       final ok = await notifier.createRoster(data);
@@ -152,13 +163,72 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         _selectedGroup = null;
         _groupUsers.clear();
         _userConfigs.clear();
+        _selectedRosterIds.clear();
       });
     }
   }
 
+  Future<void> _deleteSelectedRosters() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Delete Roster Configuration',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Are you sure you want to delete the roster configuration for "${_selectedGroup!.name}"? This will delete all active rosters associated with this group.',
+          style: GoogleFonts.inter(),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: const Color(0xFF64748B)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.inter(
+                color: const Color(0xFFDC2626),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      setState(() => _savingRoster = true);
+      final notifier = ref.read(roasterNotifierProvider.notifier);
+      int deletedCount = 0;
+      for (final id in _selectedRosterIds) {
+        final ok = await notifier.deleteRoaster(id);
+        if (ok) deletedCount++;
+      }
+
+      if (mounted) {
+        setState(() {
+          _savingRoster = false;
+          _selectedGroup = null;
+          _groupUsers.clear();
+          _userConfigs.clear();
+          _selectedRosterIds.clear();
+        });
+        _snack(
+          'Roster configuration deleted successfully ($deletedCount roster(s) removed)',
+        );
+      }
+    }
+  }
+
   void _snack(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
@@ -182,9 +252,11 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                   child: groupState.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : groupState.error != null
-                          ? Center(child: Text(groupState.error!))
+                      ? Center(child: Text(groupState.error!))
                       : _buildGroupTable(
-                          groupState.groups.where((g) => g.status == 1).toList(),
+                          groupState.groups
+                              .where((g) => g.status == 1)
+                              .toList(),
                           isSuperAdmin,
                         ),
                 ),
@@ -194,10 +266,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
 
           // ── Right: User config panel ──────────────────────────────────────
           if (_selectedGroup != null)
-            Expanded(
-              flex: 3,
-              child: _buildUserConfigPanel(),
-            ),
+            Expanded(flex: 3, child: _buildUserConfigPanel()),
         ],
       ),
     );
@@ -273,7 +342,8 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                 barrierLabel: 'Dismiss',
                 barrierColor: Colors.black.withValues(alpha: 0.5),
                 transitionDuration: const Duration(milliseconds: 300),
-                pageBuilder: (context, anim1, anim2) => const AddRosterGroupModal(),
+                pageBuilder: (context, anim1, anim2) =>
+                    const AddRosterGroupModal(),
                 transitionBuilder: (context, anim1, anim2, child) {
                   return SlideTransition(
                     position: Tween<Offset>(
@@ -315,8 +385,11 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.folder_open_outlined,
-                size: 64, color: Colors.grey.shade300),
+            Icon(
+              Icons.folder_open_outlined,
+              size: 64,
+              color: Colors.grey.shade300,
+            ),
             const SizedBox(height: 16),
             Text(
               'No asset groups found',
@@ -358,7 +431,8 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
               child: ListView.separated(
                 itemCount: groups.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
-                itemBuilder: (_, i) => _buildGroupRow(groups[i], i, isSuperAdmin),
+                itemBuilder: (_, i) =>
+                    _buildGroupRow(groups[i], i, isSuperAdmin),
               ),
             ),
             const AppTableBottomCap(),
@@ -375,9 +449,13 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF141E7A).withValues(alpha: 0.05) : Colors.transparent,
+          color: isSelected
+              ? const Color(0xFF141E7A).withValues(alpha: 0.05)
+              : Colors.transparent,
           border: Border(
-            left: isSelected ? const BorderSide(color: Color(0xFF141E7A), width: 4) : BorderSide.none,
+            left: isSelected
+                ? const BorderSide(color: Color(0xFF141E7A), width: 4)
+                : BorderSide.none,
           ),
         ),
         child: Row(
@@ -397,7 +475,9 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? const Color(0xFF141E7A) : const Color(0xFF1F2937),
+                  color: isSelected
+                      ? const Color(0xFF141E7A)
+                      : const Color(0xFF1F2937),
                 ),
               ),
             ),
@@ -419,7 +499,9 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF141E7A) : const Color(0xFF141E7A).withValues(alpha: 0.08),
+                    color: isSelected
+                        ? const Color(0xFF141E7A)
+                        : const Color(0xFF141E7A).withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -489,11 +571,27 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                     ],
                   ),
                 ),
+                if (_selectedRosterIds.isNotEmpty) ...[
+                  IconButton(
+                    onPressed: _deleteSelectedRosters,
+                    icon: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.white,
+                    ),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFDC2626),
+                      padding: const EdgeInsets.all(8),
+                    ),
+                    tooltip: 'Delete Configuration',
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 IconButton(
                   onPressed: () => setState(() {
                     _selectedGroup = null;
                     _groupUsers.clear();
                     _userConfigs.clear();
+                    _selectedRosterIds.clear();
                   }),
                   icon: const Icon(Icons.close_rounded, color: Colors.white),
                   style: IconButton.styleFrom(
@@ -563,22 +661,19 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
             child: _loadingUsers
                 ? const Center(child: CircularProgressIndicator())
                 : _groupUsers.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No users in this group',
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF9CA3AF),
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: _groupUsers.length,
-                        separatorBuilder: (_, __) =>
-                            const Divider(height: 1, indent: 24, endIndent: 24),
-                        itemBuilder: (_, i) =>
-                            _buildUserRow(_groupUsers[i]),
-                      ),
+                ? Center(
+                    child: Text(
+                      'No users in this group',
+                      style: GoogleFonts.inter(color: const Color(0xFF9CA3AF)),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: _groupUsers.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, indent: 24, endIndent: 24),
+                    itemBuilder: (_, i) => _buildUserRow(_groupUsers[i]),
+                  ),
           ),
 
           // Save button
@@ -660,12 +755,11 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
 
   Widget _buildUserRow(AssetGroupUser user) {
     final cfg = _userConfigs[user.userId]!;
-    final fullName = [user.firstName, user.lastName]
-        .whereType<String>()
-        .where((s) => s.isNotEmpty)
-        .join(' ');
-    final displayName =
-        fullName.isNotEmpty ? fullName : user.username;
+    final fullName = [
+      user.firstName,
+      user.lastName,
+    ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
+    final displayName = fullName.isNotEmpty ? fullName : user.username;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
@@ -727,18 +821,15 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
           ),
           // Email toggle
           _toggle(cfg.email, (v) {
-            setState(() => _userConfigs[user.userId] =
-                cfg.copyWith(email: v));
+            setState(() => _userConfigs[user.userId] = cfg.copyWith(email: v));
           }),
           // Push toggle
           _toggle(cfg.push, (v) {
-            setState(() => _userConfigs[user.userId] =
-                cfg.copyWith(push: v));
+            setState(() => _userConfigs[user.userId] = cfg.copyWith(push: v));
           }),
           // SMS toggle
           _toggle(cfg.sms, (v) {
-            setState(() => _userConfigs[user.userId] =
-                cfg.copyWith(sms: v));
+            setState(() => _userConfigs[user.userId] = cfg.copyWith(sms: v));
           }),
         ],
       ),
@@ -779,12 +870,7 @@ class _UserConfig {
     this.enabled = true,
   });
 
-  _UserConfig copyWith({
-    bool? email,
-    bool? push,
-    bool? sms,
-    bool? enabled,
-  }) {
+  _UserConfig copyWith({bool? email, bool? push, bool? sms, bool? enabled}) {
     return _UserConfig(
       userId: userId,
       email: email ?? this.email,
