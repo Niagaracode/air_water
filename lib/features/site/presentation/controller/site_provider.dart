@@ -242,9 +242,9 @@ class SiteNotifier extends Notifier<SiteState> {
       await repository.deleteSite(id);
       
       // Propagate cascading deletion to other provider states
-      ref.invalidate(tankProvider);
+      ref.invalidate(tankNotifierProvider);
       ref.invalidate(allTanksProvider);
-      ref.invalidate(deviceProvider);
+      ref.invalidate(deviceNotifierProvider);
       ref.invalidate(groupProvider);
       ref.invalidate(roasterNotifierProvider);
       ref.read(userProvider.notifier).loadUsers();
