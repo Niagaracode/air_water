@@ -107,8 +107,8 @@ const eventsMenu = [
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),
   SidebarMenuItem(
-    key: 'Roaster',
-    label: 'Roaster',
+    key: 'Roster',
+    label: 'Roster',
     icon: Icons.people_alt_rounded,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),

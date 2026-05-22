@@ -12,7 +12,7 @@ const Map<String, String> menuRoutes = {
 
   'Rule Group': '/rule',
   'Message Template': '/message-template',
-  'Roaster': '/roaster',
+  'Roster': '/roster',
   'Report': '/report',
   'Asset Summary': '/asset-summary',
   'Schedule': '/asset-schedule',

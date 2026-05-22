@@ -8,7 +8,7 @@ import '../mqtt_service.dart';
 class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
   final MqttService _mqttService;
   final Map<String, MqttMessageModel> _lastMessages = {};
-  final Map<String, List<Function(MqttMessageModel)>> _topicCallbacks = {};
+  final Map<String, Set<Function(MqttMessageModel)>> _topicCallbacks = {};
   final Set<String> _subscribedTopics = {};
 
   bool _isInitialized = false;
@@ -26,10 +26,6 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
         isConnecting: false,
       );
 
-      if (isConnected && _subscribedTopics.isNotEmpty) {
-        debugPrint('Reconnected, resubscribing to ${_subscribedTopics.length} topics');
-        await _resubscribeToTopics();
-      }
     });
 
     // Listen to reconnection attempts
@@ -75,11 +71,49 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
     _isInitialized = true;
   }
 
-  Future<void> _resubscribeToTopics() async {
-    for (final topic in _subscribedTopics) {
-      await _mqttService.subscribe(topic);
+  Future<void> reconnectAndRestore() async {
+
+    try {
+
+      state = state.copyWith(
+        isConnecting: true,
+        error: null,
+      );
+
+      /// Disconnect old connection
+      await _mqttService.disconnect();
+
+      /// Small delay
+      await Future.delayed(
+        const Duration(milliseconds: 500),
+      );
+
+      /// Reconnect
+      await _mqttService.connect();
+
+      /// Restore subscriptions
+      for (final topic in _subscribedTopics) {
+        await _mqttService.subscribe(topic);
+      }
+
+      state = state.copyWith(
+        isConnected: true,
+        isConnecting: false,
+      );
+
+      debugPrint('MQTT Manual reconnect success');
+
+    } catch (e) {
+
+      debugPrint('Reconnect error: $e');
+
+      state = state.copyWith(
+        isConnecting: false,
+        error: e.toString(),
+      );
     }
   }
+
 
   Future<void> disconnect() async {
     await _mqttService.disconnect();
@@ -87,24 +121,34 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
     _isInitialized = false;
   }
 
-  Future<void> subscribeToTopic(String topic, {Function(MqttMessageModel)? onMessage}) async {
-    // Track subscription
-    _subscribedTopics.add(topic);
+  Future<void> subscribeToTopic(String topic, {
+        Function(MqttMessageModel)? onMessage,
+      }) async {
 
-    await _mqttService.subscribe(topic);
+    if (!_subscribedTopics.contains(topic)) {
+      _subscribedTopics.add(topic);
+      await _mqttService.subscribe(topic);
+    }
 
     if (onMessage != null) {
-      if (!_topicCallbacks.containsKey(topic)) {
-        _topicCallbacks[topic] = [];
-      }
+      _topicCallbacks.putIfAbsent(topic, () => <Function(MqttMessageModel)>{});
       _topicCallbacks[topic]!.add(onMessage);
     }
   }
 
-  void unsubscribeFromTopic(String topic) {
-    _subscribedTopics.remove(topic);
-    _mqttService.unsubscribe(topic);
-    _topicCallbacks.remove(topic);
+  void unsubscribeFromTopic(
+      String topic, {
+        Function(MqttMessageModel)? onMessage,
+      }) {
+
+    if (_topicCallbacks.containsKey(topic) && onMessage != null) {
+      _topicCallbacks[topic]!.remove(onMessage);
+      if (_topicCallbacks[topic]!.isEmpty) {
+        _topicCallbacks.remove(topic);
+        _subscribedTopics.remove(topic);
+        _mqttService.unsubscribe(topic);
+      }
+    }
   }
 
   MqttMessageModel? getLastMessage(String topic) {
