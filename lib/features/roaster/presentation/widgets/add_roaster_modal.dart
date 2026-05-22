@@ -39,6 +39,7 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     'LEVEL',
     'BATTERY',
     'PRESSURE',
+    'DEVICE COMMUNICATE FAILED',
   ];
 
   @override

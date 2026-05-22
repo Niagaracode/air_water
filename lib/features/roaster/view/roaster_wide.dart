@@ -11,7 +11,7 @@ import '../../../../shared/widgets/app_table.dart';
 import '../../user/presentation/controller/user_provider.dart';
 
 // ─── Parameter options ──────────────────────────────────────────────────────
-const _kParameters = ['LEVEL', 'BATTERY', 'PRESSURE'];
+const _kParameters = ['LEVEL', 'BATTERY', 'PRESSURE', 'DEVICE COMMUNICATE FAILED'];
 
 class RoasterWide extends ConsumerStatefulWidget {
   const RoasterWide({super.key});
@@ -140,6 +140,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         'description': '${_selectedGroup!.name} – ${user.username}',
         'enabled': 1,
         'parameter_name': _parameter,
+        if (_selectedGroup!.companyId != null) 'company_id': _selectedGroup!.companyId,
         'members': [
           {
             'user_id': cfg.userId,

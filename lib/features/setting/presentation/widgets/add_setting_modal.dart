@@ -486,8 +486,11 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
             .toStringAsFixed(2);
         payload = 'SENSORRATING,1,$thresh1,$productCode,$thresh2,$tonnes,0';
       } else if (param1.toUpperCase().trim() == 'DATA INTERVAL') {
-        final hh = int.tryParse(thresh1) ?? 0;
-        final mm = int.tryParse(thresh2) ?? 0;
+        final mins = int.tryParse(thresh1) ?? 0;
+        final secs = int.tryParse(thresh2) ?? 0;
+        final totalMins = mins + (secs / 60).round();
+        final hh = totalMins ~/ 60;
+        final mm = totalMins % 60;
         final hhStr = hh.toString().padLeft(2, '0');
         final mmStr = mm.toString().padLeft(2, '0');
         payload = 'DATAINTERVAL,$hhStr$mmStr';
@@ -1150,7 +1153,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                           'SOLAR')
                                                 ? 'VOLTAGE'
                                                 : (row.parameterType.toUpperCase().trim() == 'DATA INTERVAL')
-                                                    ? 'Hours'
+                                                    ? 'Minutes'
                                                     : (row.parameterType.toUpperCase().trim() == 'DEVICE COMMUNICATE FAILED')
                                                         ? 'Minutes'
                                                     : ([
@@ -1255,7 +1258,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                                           'SENSOR RATING')
                                                   ? 'CUBIC METER'
                                                   : (row.parameterType.toUpperCase().trim() == 'DATA INTERVAL')
-                                                      ? 'Minutes'
+                                                      ? 'Seconds'
                                                       : ([
                                                           'CAL TANK',
                                                           'CAL KILO LITER',
