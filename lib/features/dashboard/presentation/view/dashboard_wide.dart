@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import '../../../../core/network/mqtt/models/mqtt_message.dart';
 import '../../../../core/network/mqtt/providers/mqtt_notifier.dart';
 import '../../../../core/network/mqtt/providers/mqtt_providers.dart';
 import '../../data/models/tank_data_model.dart';
@@ -24,16 +25,18 @@ import 'package:pdf/widgets.dart' as pw;
 class DashboardWide extends ConsumerStatefulWidget {
   const DashboardWide({super.key});
 
+
   @override
   ConsumerState<DashboardWide> createState() => _DashboardWideState();
 }
 
 class _DashboardWideState extends ConsumerState<DashboardWide> {
   final String topic = 'tweet';
-
   late final MqttNotifier mqttNotifier;
+  late final Function(MqttMessageModel) _mqttCallback;
 
   final TextEditingController _searchController = TextEditingController();
+
 
   String _selectedStatus = 'All Status';
   String _selectedRegion = 'All Regions';
@@ -52,15 +55,20 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   Future<void> _initialize() async {
     await mqttNotifier.initializeAndConnect();
     if (!mounted) return;
-    await mqttNotifier.subscribeToTopic(topic,
-      onMessage: (msg) {
-        if (!mounted) return;
-        print("✅ MQTT MESSAGE: ${msg.rawPayload}");
-        final parsed = _parseMqtt(msg.data);
-        ref.read(tankDataProvider.notifier).updateFromMqtt(parsed);
-      },
+
+    _mqttCallback = (msg) {
+      if (!mounted) return;
+      print("✅ MQTT MESSAGE: ${msg.rawPayload}");
+      final parsed = _parseMqtt(msg.data);
+      ref.read(tankDataProvider.notifier)
+          .updateFromMqtt(parsed);
+    };
+    await mqttNotifier.subscribeToTopic(
+      topic,
+      onMessage: _mqttCallback,
     );
   }
+
 
   Map<String, dynamic> _parseMqtt(Map<String, dynamic> json) {
     final result = <String, dynamic>{};
@@ -490,8 +498,9 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
   @override
   void dispose() {
-    mqttNotifier.unsubscribeFromTopic(topic);
-    //mqttNotifier.disconnect();
+    mqttNotifier.unsubscribeFromTopic(topic,
+      onMessage: _mqttCallback,
+    );
     _searchController.dispose();
     super.dispose();
   }

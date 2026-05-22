@@ -90,7 +90,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           '/group',
           '/device',
           '/message-template',
-          '/roaster',
+          '/roster',
           '/setting',
           '/rule',
           '/asset-group',
@@ -203,7 +203,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/message-template',
             builder: (_, __) => const MessageTemplateLayout(),
           ),
-          GoRoute(path: '/roaster', builder: (_, __) => const RoasterLayout()),
+          GoRoute(path: '/roster', builder: (_, __) => const RoasterLayout()),
           GoRoute(path: '/report', builder: (_, __) => const ReportLayout()),
           GoRoute(
             path: '/asset-summary',

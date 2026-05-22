@@ -7,6 +7,7 @@ import '../../features/dashboard/provider/dashboard_provider.dart';
 import '../../features/device/presentation/controller/device_provider.dart';
 import '../../features/site/presentation/controller/site_provider.dart';
 import '../../features/tank/presentation/controller/tank_provider.dart';
+import '../network/mqtt/providers/mqtt_providers.dart';
 
 
 class RouteRefreshHelper {
@@ -30,6 +31,13 @@ class RouteRefreshHelper {
 
       case '/dashboard':
         await ref.read(tankDataProvider.notifier).refresh();
+        final mqttNotifier = ref.read(mqttProvider.notifier);
+        final mqttState = ref.read(mqttProvider);
+        /// Reconnect MQTT if disconnected
+        if (!mqttState.isConnected &&
+            !mqttState.isConnecting) {
+          await mqttNotifier.reconnectAndRestore();
+        }
         break;
 
       case '/company':
