@@ -12,6 +12,7 @@ class SettingApi {
     String? name,
     String? parameterType,
     int? plantId,
+    int? tankId,
     int? isActive,
   }) async {
     final queryParameters = {
@@ -20,6 +21,7 @@ class SettingApi {
       if (name != null && name.isNotEmpty) 'name': name,
       if (parameterType != null) 'parameter_type': parameterType,
       if (plantId != null) 'plant_id': plantId,
+      if (tankId != null) 'tank_id': tankId,
       if (isActive != null) 'is_active': isActive,
     };
 
@@ -37,6 +39,7 @@ class SettingApi {
     String? name,
     String? parameterType,
     int? plantId,
+    int? tankId,
     int? isActive,
   }) async {
     final queryParameters = {
@@ -45,6 +48,7 @@ class SettingApi {
       if (name != null && name.isNotEmpty) 'name': name,
       if (parameterType != null) 'parameter_type': parameterType,
       if (plantId != null) 'plant_id': plantId,
+      if (tankId != null) 'tank_id': tankId,
       if (isActive != null) 'is_active': isActive,
     };
 

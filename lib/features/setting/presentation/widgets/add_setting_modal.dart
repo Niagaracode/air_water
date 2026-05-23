@@ -23,14 +23,16 @@ import '../../../../core/network/http/api_service.dart';
 
 class AddSettingModal extends ConsumerStatefulWidget {
   final Setting? initialSetting;
+  final Tank? preselectedTank;
 
-  const AddSettingModal({super.key, this.initialSetting});
+  const AddSettingModal({super.key, this.initialSetting, this.preselectedTank});
 
   @override
   ConsumerState<AddSettingModal> createState() => _AddSettingModalState();
 }
 
 class SettingRowData {
+  int? id;
   String parameterType;
   String conditionType;
   final TextEditingController threshold1Controller;
@@ -41,6 +43,7 @@ class SettingRowData {
   List<StrappingPoint> selectedPoints;
 
   SettingRowData({
+    this.id,
     this.parameterType = 'LEVEL',
     this.conditionType = '>',
     String threshold1 = '',
@@ -100,16 +103,17 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
 
       _rows.add(
         SettingRowData(
+          id: s.id,
           parameterType: (s.parameterType ?? 'LEVEL').toUpperCase() == 'MFACTOR'
               ? 'MFACTOR'
               : (s.parameterType ?? 'LEVEL'),
           conditionType: s.conditionType ?? '>',
           threshold1: (s.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
-              ? (s.threshold1?.toInt().toString().padLeft(2, '0') ?? '00')
+              ? ((s.threshold1 ?? s.threshold2)?.toInt().toString().padLeft(2, '0') ?? '00')
               : (s.threshold1?.toString().replaceAll(RegExp(r'\.0$'), '') ??
                   '0'),
           threshold2: (s.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
-              ? (s.threshold2?.toInt().toString().padLeft(2, '0') ?? '00')
+              ? '00'
               : (s.threshold2?.toString().replaceAll(RegExp(r'\.0$'), '') ??
                   '0'),
           threshold3: s.threshold_3?.toString().replaceAll(RegExp(r'\.0$'), '') ??
@@ -129,19 +133,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
 
     setState(() => _isLoadingData = true);
     try {
-      final tankRepo = ref.read(tankRepositoryProvider);
-      /*final fullTank = await tankRepo.getTankById(t.tankId);
-      setState(() {
-        final index = _selectedTanks.indexWhere((tank) => tank.tankId == t.tankId);
-        if (index != -1) {
-          _selectedTanks[index] = fullTank;
-        }
-        // Also update the tank in the local list so we don't fetch it again
-        final allIndex = _tanks.indexWhere((tank) => tank.tankId == t.tankId);
-        if (allIndex != -1) {
-          _tanks[allIndex] = fullTank;
-        }
-      });*/
+      // Body intentionally empty — strapping points fetching disabled
     } catch (e) {
       debugPrint('Error fetching full tank details: $e');
     } finally {
@@ -154,8 +146,6 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     try {
       final companyRepo = ref.read(companyRepositoryProvider);
       final siteRepo = ref.read(siteRepositoryProvider);
-      final templateRepo = ref.read(messageTemplateRepositoryProvider);
-      final tankRepo = ref.read(tankRepositoryProvider);
 
       try {
         final companiesList = await companyRepo.getRuleCompanies();
@@ -191,6 +181,39 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         if (mounted) setState(() => _products = pState.products);
       } catch (e) {
         debugPrint('Error loading products: $e');
+      }
+
+      List<Setting> matchedRules = [];
+      if (widget.initialSetting != null) {
+        final s = widget.initialSetting!;
+        try {
+          final settingResponse = await ref.read(settingRepositoryProvider).getSettings(
+            tankId: s.tankId,
+            plantId: s.siteId,
+            name: s.tankId == null ? s.name : null,
+            limit: 100,
+          );
+          if (s.tankId != null) {
+            matchedRules = settingResponse.data;
+          } else {
+            matchedRules = settingResponse.data
+                .where((r) => r.name.trim().toLowerCase() == s.name.trim().toLowerCase())
+                .toList();
+          }
+        } catch (e) {
+          debugPrint('Error fetching bulk rules in loadData: $e');
+        }
+      } else if (widget.preselectedTank != null) {
+        final t = widget.preselectedTank!;
+        try {
+          final settingResponse = await ref.read(settingRepositoryProvider).getSettings(
+            tankId: t.tankId,
+            limit: 100,
+          );
+          matchedRules = settingResponse.data;
+        } catch (e) {
+          debugPrint('Error fetching preselected tank rules in loadData: $e');
+        }
       }
 
       setState(() {
@@ -235,10 +258,45 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                 .firstOrNull;
           }
 
-          if (s.messageTemplateId != null && _rows.isNotEmpty) {
-            _rows[0].selectedTemplate = _templates
-                .where((t) => t.id == s.messageTemplateId)
-                .firstOrNull;
+          if (matchedRules.isNotEmpty) {
+            _rows.clear();
+            for (final r in matchedRules) {
+              final rowData = SettingRowData(
+                id: r.id,
+                parameterType: (r.parameterType ?? 'LEVEL').toUpperCase() == 'MFACTOR'
+                    ? 'MFACTOR'
+                    : (r.parameterType ?? 'LEVEL'),
+                conditionType: r.conditionType ?? '>',
+                threshold1: (r.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
+                    ? ((r.threshold1 ?? r.threshold2)?.toInt().toString().padLeft(2, '0') ?? '00')
+                    : (r.threshold1?.toString().replaceAll(RegExp(r'\.0$'), '') ??
+                        '0'),
+                threshold2: (r.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
+                    ? '00'
+                    : (r.threshold2?.toString().replaceAll(RegExp(r'\.0$'), '') ??
+                        '0'),
+                threshold3: r.threshold_3?.toString().replaceAll(RegExp(r'\.0$'), '') ??
+                    '0',
+                statusLabel: r.statusLabel ?? '',
+              );
+
+              if (r.messageTemplateId != null) {
+                rowData.selectedTemplate = _templates
+                    .where((t) => t.id == r.messageTemplateId)
+                    .firstOrNull;
+              }
+              _rows.add(rowData);
+            }
+
+            _nameController.text = matchedRules.first.name;
+            _descriptionController.text = matchedRules.first.description ?? '';
+            _isActive = matchedRules.first.isActive;
+          } else {
+            if (s.messageTemplateId != null && _rows.isNotEmpty) {
+              _rows[0].selectedTemplate = _templates
+                  .where((t) => t.id == s.messageTemplateId)
+                  .firstOrNull;
+            }
           }
 
           _deviceIdController.text =
@@ -247,6 +305,60 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
               s.simNumber ?? _selectedTanks.firstOrNull?.simNumber ?? '';
           _timeZoneController.text =
               s.timeZone ?? _selectedTanks.firstOrNull?.timeZone ?? '';
+        } else if (widget.preselectedTank != null) {
+          final t = widget.preselectedTank!;
+          final tank = _tanks.where((x) => x.tankId == t.tankId).firstOrNull ?? t;
+          _selectedTanks = [tank];
+
+          final site = _sites.where((s) => s.id == tank.siteId).firstOrNull;
+          if (site != null) {
+            _selectedSites = [site];
+          }
+
+          _selectedCompanyGroup = _companyGroups
+              .where((g) => g.addresses.any((a) => a.companyId == tank.companyId))
+              .firstOrNull;
+
+          _deviceIdController.text = tank.deviceId ?? '';
+          _simNumberController.text = tank.simNumber ?? '';
+          _timeZoneController.text = tank.timeZone ?? '';
+
+          if (matchedRules.isNotEmpty) {
+            _rows.clear();
+            for (final r in matchedRules) {
+              final rowData = SettingRowData(
+                id: r.id,
+                parameterType: (r.parameterType ?? 'LEVEL').toUpperCase() == 'MFACTOR'
+                    ? 'MFACTOR'
+                    : (r.parameterType ?? 'LEVEL'),
+                conditionType: r.conditionType ?? '>',
+                threshold1: (r.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
+                    ? ((r.threshold1 ?? r.threshold2)?.toInt().toString().padLeft(2, '0') ?? '00')
+                    : (r.threshold1?.toString().replaceAll(RegExp(r'\.0$'), '') ??
+                        '0'),
+                threshold2: (r.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
+                    ? '00'
+                    : (r.threshold2?.toString().replaceAll(RegExp(r'\.0$'), '') ??
+                        '0'),
+                threshold3: r.threshold_3?.toString().replaceAll(RegExp(r'\.0$'), '') ??
+                    '0',
+                statusLabel: r.statusLabel ?? '',
+              );
+
+              if (r.messageTemplateId != null) {
+                rowData.selectedTemplate = _templates
+                    .where((t) => t.id == r.messageTemplateId)
+                    .firstOrNull;
+              }
+              _rows.add(rowData);
+            }
+
+            _nameController.text = matchedRules.first.name;
+            _descriptionController.text = matchedRules.first.description ?? '';
+            _isActive = matchedRules.first.isActive;
+          }
+
+          _fetchFullTankDetails(tank);
         } else {
           if (_tanks.length == 1) {
             _selectedTanks = [_tanks[0]];
@@ -320,11 +432,16 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     final notifier = ref.read(settingProvider.notifier);
 
     final List<Map<String, dynamic>> rowsData = _rows.map((row) {
+      final isDataInterval =
+          row.parameterType.toUpperCase().trim() == 'DATA INTERVAL';
       return {
+        if (row.id != null) 'id': row.id,
         'parameter_type': row.parameterType,
         'condition_type': row.conditionType,
         'threshold_1': double.tryParse(row.threshold1Controller.text.trim()),
-        'threshold_2': double.tryParse(row.threshold2Controller.text.trim()),
+        'threshold_2': isDataInterval
+            ? 0.0
+            : double.tryParse(row.threshold2Controller.text.trim()),
         'threshold_3': double.tryParse(row.threshold3Controller.text.trim()),
         'status_label': row.statusLabelController.text.trim().isEmpty
             ? null
@@ -364,36 +481,21 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       setState(() => _isLoadingData = false);
       if (success) {
         if (!silent) {
-          final row1 = _rows.isNotEmpty ? _rows[0] : null;
-          final paramType = (row1?.parameterType ?? '').toUpperCase().trim();
-          final statusLabel = row1?.statusLabelController.text.trim() ?? '';
-          
-          final shouldSendToDevice = paramType == 'LEVEL'
-              ? (statusLabel.toLowerCase() == 'reorder' &&
-                    _deviceIdController.text.isNotEmpty)
-              : ((paramType == 'CAL TANK' ||
-                        paramType == 'CAL KILO LITER' ||
-                        paramType == 'SETCALBAR' ||
-                        paramType == 'SETBAR' ||
-                        paramType == 'SENSOR' ||
-                        paramType == 'SENSOR RATING' ||
-                        paramType == 'DATA INTERVAL' ||
-                        paramType == 'BATTERY' ||
-                        paramType == 'SOLAR' ||
-                        paramType == 'MFACTOR' ||
-                        paramType == 'CHART DATA') &&
-                    paramType != 'DEVICE COMMUNICATE FAILED' &&
-                    _deviceIdController.text.isNotEmpty);
+          // Always try to send to device after a successful DB save
+          final hasDevice = _deviceIdController.text.trim().isNotEmpty ||
+              _selectedTanks.any((t) => t.deviceId != null && t.deviceId!.isNotEmpty);
 
-          if (shouldSendToDevice) {
+          if (hasDevice) {
             await _sendToDevice(skipSave: true);
           } else {
-            if (Navigator.of(context).canPop()) {
+            if (mounted && Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
             }
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Rule(s) saved successfully')),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Rule(s) saved successfully')),
+              );
+            }
           }
         }
       }
@@ -420,8 +522,21 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         return;
       }
     }
-    final deviceId = _deviceIdController.text.trim();
-    if (deviceId.isEmpty) {
+
+    // Collect device IDs from selected tanks
+    final deviceIds = _selectedTanks
+        .map((t) => t.deviceId)
+        .where((id) => id != null && id.isNotEmpty)
+        .cast<String>()
+        .toList();
+
+    // Fallback to manually entered device ID if tanks don't have one
+    final manualDeviceId = _deviceIdController.text.trim();
+    if (deviceIds.isEmpty && manualDeviceId.isNotEmpty) {
+      deviceIds.add(manualDeviceId);
+    }
+
+    if (deviceIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Device ID is required to send configuration'),
@@ -438,127 +553,122 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       final scmM3 = _selectedProduct?.scmM3.toString() ?? '0.0';
       final specificGravity =
           _selectedProduct?.specificGravity.toString() ?? '0.0';
-
-      final row1 = _rows.isNotEmpty ? _rows[0] : null;
-      final param1 = row1?.parameterType ?? 'N/A';
-      final cond1 = row1?.conditionType ?? 'N/A';
-      final thresh1 = row1?.threshold1Controller.text.trim() ?? '0';
-      final thresh2 = row1?.threshold2Controller.text.trim() ?? '0';
-      final thresh3 = row1?.threshold3Controller.text.trim() ?? '0';
-
       final simNumber = _simNumberController.text.trim().isEmpty
           ? 'N/A'
           : _simNumberController.text.trim();
-
-      final deviceIds = _selectedTanks
-          .map((t) => t.deviceId)
-          .where((id) => id != null && id.isNotEmpty)
-          .cast<String>()
-          .toList();
-
-      if (deviceIds.isEmpty) {
-        throw Exception('No valid Device IDs found for selected tanks');
-      }
-
       final deviceIdPlaceholder = deviceIds.first;
 
-      final allParams = _rows.map((r) => r.parameterType).toSet().join('/');
-
-      String payload;
-      if (param1 == 'LEVEL') {
-        payload = 'ReOrderLevel,$thresh1';
-      } else if (param1 == 'CAL TANK') {
-        final val1 = ((double.tryParse(thresh1) ?? 0) * 100000).toInt();
-        final val2 = ((double.tryParse(thresh2) ?? 0) * 100000).toInt();
-        payload = 'CALTANK,1,$val1,$val2';
-      } else if (param1 == 'CAL KILO LITER') {
-        payload = 'CALLTRS,1,$thresh1,$thresh2';
-      } else if (param1 == 'SETCALBAR' || param1 == 'SETBAR') {
-        payload = 'SETCALIBBAR,1,$thresh1';
-      } else if (param1.toUpperCase().trim() == 'MFACTOR') {
-        payload = 'MRATIO,1,$thresh1,$thresh2,$thresh3';
-      } else if (param1.toUpperCase().trim() == 'SENSOR' ||
-          param1.toUpperCase().trim() == 'SENSOR RATING') {
-        final productCode = _selectedProduct?.productCode ?? 'N/A';
-        final tonnes = (_selectedTanks.isNotEmpty
-                ? (_selectedTanks.first.tonnes ?? 0.0)
-                : 0.0)
-            .toStringAsFixed(2);
-        payload = 'SENSORRATING,1,$thresh1,$productCode,$thresh2,$tonnes,0';
-      } else if (param1.toUpperCase().trim() == 'DATA INTERVAL') {
-        final mins = int.tryParse(thresh1) ?? 0;
-        final secs = int.tryParse(thresh2) ?? 0;
-        final totalMins = mins + (secs / 60).round();
-        final hh = totalMins ~/ 60;
-        final mm = totalMins % 60;
-        final hhStr = hh.toString().padLeft(2, '0');
-        final mmStr = mm.toString().padLeft(2, '0');
-        payload = 'DATAINTERVAL,$hhStr$mmStr';
-      } else if (param1.toUpperCase().trim() == 'BATTERY') {
-        payload = 'BATVOLTCAL,1,$thresh1';
-      } else if (param1.toUpperCase().trim() == 'SOLAR') {
-        payload = 'SOLARVOLTCAL,1,$thresh1';
-      } else if (param1.toUpperCase().trim() == 'CHART DATA') {
-        final pointsData =
-            row1?.selectedPoints
-                .map((p) => '${p.levelMm.toInt()},${p.volumeM3.toInt()}')
-                .join(',') ??
-            '';
-        payload = '{"\"chartdata\"",$pointsData,9999,9999}';
-      } else {
-        payload =
-            '$productName,$scmM3,$specificGravity,$param1,$cond1,$thresh1,$thresh2,$thresh3,N/A,$deviceIdPlaceholder,$simNumber,$allParams';
+      // Save first if not already saved
+      if (!skipSave) {
+        final saveSuccess = await _save(silent: true);
+        if (!saveSuccess) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to save rules before sending to device'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
       }
 
-      final response = await apiClient.post(
-        '/mqtt/send-command',
-        data: {
-          'deviceIds': deviceIds,
-          'sms': payload,
-          'parameter_type': param1,
-          'status_label': row1?.statusLabelController.text.trim() ?? '',
-        },
-      );
+      // Send MQTT command for each row
+      final List<String> sentParams = [];
+      final List<String> failedParams = [];
+
+      for (final row in _rows) {
+        final param = row.parameterType.toUpperCase().trim();
+        final cond = row.conditionType;
+        final thresh1 = row.threshold1Controller.text.trim();
+        final thresh2 = row.threshold2Controller.text.trim();
+        final thresh3 = row.threshold3Controller.text.trim();
+
+        String? payload;
+
+        if (param == 'LEVEL') {
+          payload = 'ReOrderLevel,$thresh1';
+        } else if (param == 'CAL TANK') {
+          final val1 = ((double.tryParse(thresh1) ?? 0) * 100000).toInt();
+          final val2 = ((double.tryParse(thresh2) ?? 0) * 100000).toInt();
+          payload = 'CALTANK,1,$val1,$val2';
+        } else if (param == 'CAL KILO LITER') {
+          payload = 'CALLTRS,1,$thresh1,$thresh2';
+        } else if (param == 'SETCALBAR' || param == 'SETBAR') {
+          payload = 'SETCALIBBAR,1,$thresh1';
+        } else if (param == 'MFACTOR') {
+          payload = 'MRATIO,1,$thresh1,$thresh2,$thresh3';
+        } else if (param == 'SENSOR' || param == 'SENSOR RATING') {
+          final productCode = _selectedProduct?.productCode ?? 'N/A';
+          final tonnes = (_selectedTanks.isNotEmpty
+                  ? (_selectedTanks.first.tonnes ?? 0.0)
+                  : 0.0)
+              .toStringAsFixed(2);
+          payload = 'SENSORRATING,1,$thresh1,$productCode,$thresh2,$tonnes,0';
+        } else if (param == 'DATA INTERVAL') {
+          final mins = int.tryParse(thresh1) ?? 0;
+          final minsStr = mins.toString().padLeft(4, '0');
+          payload = 'DATAINTERVAL,$minsStr';
+        } else if (param == 'BATTERY') {
+          payload = 'BATVOLTCAL,1,$thresh1';
+        } else if (param == 'SOLAR' || param == 'SOLOR') {
+          payload = 'SOLARVOLTCAL,1,$thresh1';
+        } else if (param == 'PRESSURE') {
+          payload = 'PRESSURE,$cond,$thresh1,$thresh2';
+        } else if (param == 'DEVICE COMMUNICATE FAILED') {
+          payload = 'COMFAILED,$thresh1';
+        } else if (param == 'CHART DATA') {
+          final pointsData = row.selectedPoints
+              .map((p) => '${p.levelMm.toInt()},${p.volumeM3.toInt()}')
+              .join(',');
+          payload = '{"\"chartdata\"",$pointsData,9999,9999}';
+        } else {
+          payload =
+              '$productName,$scmM3,$specificGravity,$param,$cond,$thresh1,$thresh2,$thresh3,N/A,$deviceIdPlaceholder,$simNumber,$param';
+        }
+
+        try {
+          final response = await apiClient.post(
+            '/mqtt/send-command',
+            data: {
+              'deviceIds': deviceIds,
+              'sms': payload,
+              'parameter_type': param,
+              'status_label': row.statusLabelController.text.trim(),
+            },
+          );
+          if (response.statusCode == 200) {
+            sentParams.add(param);
+          } else {
+            failedParams.add(param);
+          }
+        } catch (_) {
+          failedParams.add(param);
+        }
+      }
 
       if (mounted) {
-        if (response.statusCode == 200) {
-          bool saveSuccess = true;
-          if (!skipSave) {
-            saveSuccess = await _save(silent: true);
-          }
-
-          if (mounted) {
-            if (saveSuccess) {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              }
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Configuration sent and setting updated successfully',
-                  ),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Configuration sent but failed to update setting in database',
-                  ),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
-          }
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+        final String message;
+        final Color bg;
+        if (failedParams.isEmpty) {
+          message =
+              'Saved & sent to device: ${sentParams.join(', ')}';
+          bg = Colors.green;
+        } else if (sentParams.isNotEmpty) {
+          message =
+              'Sent: ${sentParams.join(', ')}. Failed: ${failedParams.join(', ')}';
+          bg = Colors.orange;
         } else {
+          message = 'Saved to DB. Failed to send: ${failedParams.join(', ')}';
+          bg = Colors.orange;
+        }
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Failed to send command: ${response.data['message'] ?? 'Unknown error'}',
-              ),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(message), backgroundColor: bg),
           );
         }
       }
@@ -1000,42 +1110,45 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const SizedBox(height: 20),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Configuration Set ${index + 1}',
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF141E7A),
-                                          ),
-                                        ),
-                                        if (!isEditMode && _rows.length > 1)
-                                          TextButton.icon(
-                                            onPressed: () {
-                                              setState(() {
-                                                row.dispose();
-                                                _rows.removeAt(index);
-                                              });
-                                            },
-                                            icon: const Icon(
-                                              Icons.remove_circle_outline,
-                                              size: 18,
-                                              color: Colors.red,
+                                    if (_rows.length > 1) ...[
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Configuration Set ${index + 1}',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF141E7A),
                                             ),
-                                            label: Text(
-                                              'Remove',
-                                              style: GoogleFonts.inter(
+                                          ),
+                                            TextButton.icon(
+                                              onPressed: () {
+                                                setState(() {
+                                                  row.dispose();
+                                                  _rows.removeAt(index);
+                                                });
+                                              },
+                                              icon: const Icon(
+                                                Icons.remove_circle_outline,
+                                                size: 18,
                                                 color: Colors.red,
-                                                fontSize: 13,
+                                              ),
+                                              label: Text(
+                                                'Remove',
+                                                style: GoogleFonts.inter(
+                                                  color: Colors.red,
+                                                  fontSize: 13,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                      ],
-                                    ),
+                                        ],
+                                      ),
+                                    ] else ...[
+                                      const SizedBox(height: 20),
+                                    ],
                                     const SizedBox(height: 12),
                                     Row(
                                       children: [
@@ -1238,7 +1351,6 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                               'SENSOR',
                                               'SENSOR RATING',
                                               'MFACTOR',
-                                              'DATA INTERVAL',
                                             ].contains(
                                               row.parameterType
                                                   .toUpperCase()
@@ -1425,41 +1537,40 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                 );
                               }),
                               const SizedBox(height: 24),
-                              if (!isEditMode)
-                                OutlinedButton.icon(
-                                  onPressed: () => setState(
-                                    () => _rows.add(SettingRowData()),
-                                  ),
-                                  icon: const Icon(
-                                    Icons.add_circle_outline,
-                                    color: Color(0xFF141E7A),
-                                  ),
-                                  label: Text(
-                                    'ADD ANOTHER CONFIGURATION',
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF141E7A),
-                                    ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                      color: Color(0xFF141E7A),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
-                                      horizontal: 20,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
+                              OutlinedButton.icon(
+                                onPressed: () => setState(
+                                  () => _rows.add(SettingRowData()),
+                                ),
+                                icon: const Icon(
+                                  Icons.add_circle_outline,
+                                  color: Color(0xFF141E7A),
+                                ),
+                                label: Text(
+                                  'ADD ANOTHER CONFIGURATION',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF141E7A),
                                   ),
                                 ),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                    color: Color(0xFF141E7A),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                    horizontal: 20,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
                               const SizedBox(height: 32),
                               _buildStatusSection(),
                               const SizedBox(height: 32),
                               Row(
                                 children: [
-                                  if (canSendToDevice && !isEditMode && (_rows.isEmpty || _rows[0].parameterType.toUpperCase().trim() != 'DEVICE COMMUNICATE FAILED')) ...[
+                                  if (canSendToDevice && !isEditMode && _rows.isNotEmpty && _rows[0].parameterType.toUpperCase().trim() == 'DATA INTERVAL') ...[
                                     Expanded(
                                       child: SizedBox(
                                         height: 56,
@@ -1493,7 +1604,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         onPressed:
                                             (isCustomer &&
                                                 canSendToDevice &&
-                                                isEditMode)
+                                                isEditMode &&
+                                                _rows.isNotEmpty &&
+                                                _rows[0].parameterType.toUpperCase().trim() == 'DATA INTERVAL')
                                             ? _sendToDevice
                                             : _save,
                                         style: ElevatedButton.styleFrom(

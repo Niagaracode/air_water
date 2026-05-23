@@ -7,6 +7,7 @@ abstract class SettingRepository {
     String? name,
     String? parameterType,
     int? plantId,
+    int? tankId,
     int? isActive,
   });
 
@@ -16,6 +17,7 @@ abstract class SettingRepository {
     String? name,
     String? parameterType,
     int? plantId,
+    int? tankId,
     int? isActive,
   });
 

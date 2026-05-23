@@ -581,10 +581,8 @@ class _SettingWideState extends ConsumerState<SettingWide> {
         .toList();
 
     if (paramType == 'DATA INTERVAL') {
-      final hh = setting.threshold1?.toInt() ?? 0;
-      final mm = setting.threshold2?.toInt() ?? 0;
-      final hhStr = hh > 0 ? '${hh.toString().padLeft(2, '0')} Hours ' : '';
-      conditionText = '$hhStr${mm.toString().padLeft(2, '0')} Minutes';
+      final mm = setting.threshold1?.toInt() ?? setting.threshold2?.toInt() ?? 0;
+      conditionText = '${mm.toString().padLeft(2, '0')} Minutes';
     } else if (activeThresholds.isNotEmpty) {
       if (setting.conditionType == 'BETWEEN' && activeThresholds.length >= 2) {
         conditionText = '${activeThresholds[0]} - ${activeThresholds[1]}';

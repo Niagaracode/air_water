@@ -14,6 +14,7 @@ class SettingRepositoryImpl implements SettingRepository {
     String? name,
     String? parameterType,
     int? plantId,
+    int? tankId,
     int? isActive,
   }) {
     return _api.getSettingsGrouped(
@@ -22,6 +23,7 @@ class SettingRepositoryImpl implements SettingRepository {
       name: name,
       parameterType: parameterType,
       plantId: plantId,
+      tankId: tankId,
       isActive: isActive,
     );
   }
@@ -33,6 +35,7 @@ class SettingRepositoryImpl implements SettingRepository {
     String? name,
     String? parameterType,
     int? plantId,
+    int? tankId,
     int? isActive,
   }) {
     return _api.getSettings(
@@ -41,6 +44,7 @@ class SettingRepositoryImpl implements SettingRepository {
       name: name,
       parameterType: parameterType,
       plantId: plantId,
+      tankId: tankId,
       isActive: isActive,
     );
   }
