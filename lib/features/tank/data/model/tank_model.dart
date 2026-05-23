@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'package:image_picker/image_picker.dart';
-import '../../../../core/config/env.dart';
 import '../../../site/presentation/model/site_model.dart';
 
 class Tank {
@@ -30,6 +28,7 @@ class Tank {
   final bool? useStrappingChart;
   final List<StrappingPoint>? strappingPoints;
   final List<ChannelData>? channelData;
+  final int ruleId;
 
   Tank({
     required this.tankId,
@@ -58,6 +57,7 @@ class Tank {
     this.tankName,
     this.deviceName,
     this.channelData,
+    required this.ruleId,
   });
 
   factory Tank.fromJson(Map<String, dynamic> json) {
@@ -127,6 +127,7 @@ class Tank {
           .map((e) => ChannelData.fromJson(e))
           .toList()
           : null,
+      ruleId: json['rule_id'] ?? 0,
     );
   }
 

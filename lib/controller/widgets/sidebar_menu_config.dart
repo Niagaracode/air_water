@@ -84,7 +84,6 @@ const userMenu = [
     icon: Icons.person_rounded,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),
-
   SidebarMenuItem(
     key: 'User Group',
     label: 'User Group',
@@ -94,7 +93,7 @@ const userMenu = [
 ];
 
 const eventsMenu = [
-    SidebarMenuItem(
+  SidebarMenuItem(
     key: 'Rule Group',
     label: 'Rule Group',
     icon: Icons.rule_folder_outlined,
@@ -141,6 +140,7 @@ const reportMenu = [
     icon: Icons.settings_rounded,
     allowedRoles: [], // Restricted
   ),
+
   SidebarMenuItem(
     key: 'Report',
     label: 'Report',

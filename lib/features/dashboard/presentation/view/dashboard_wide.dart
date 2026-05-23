@@ -241,13 +241,13 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
-                          vertical: 8,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
+                          color: primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: primary.withValues(alpha: 0.3),
+                            color: primary.withValues(alpha: 0.1),
                           ),
                         ),
                         child: Row(

@@ -3,7 +3,6 @@ import 'package:air_water/features/dashboard/data/models/tank_data_model.dart';
 import 'package:air_water/features/group/user_group_layout.dart';
 import 'package:air_water/features/message_template/message_template_layout.dart';
 import 'package:air_water/features/product/product_layout.dart';
-import 'package:air_water/features/reports/report_layout.dart';
 import 'package:air_water/features/roaster/roaster_layout.dart';
 import 'package:air_water/features/user/user_layout.dart';
 import 'package:air_water/features/asset_summary/asset_summary_layout.dart';
@@ -204,7 +203,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const MessageTemplateLayout(),
           ),
           GoRoute(path: '/roster', builder: (_, __) => const RoasterLayout()),
-          GoRoute(path: '/report', builder: (_, __) => const ReportLayout()),
           GoRoute(
             path: '/asset-summary',
             builder: (_, __) => const AssetSummaryLayout(),

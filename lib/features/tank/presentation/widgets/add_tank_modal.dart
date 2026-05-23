@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../site/presentation/model/site_model.dart';
 import '../../data/model/tank_model.dart';
+import '../../data/model/tank_rule_model.dart';
 import '../controller/tank_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
@@ -28,6 +29,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   List<TankProduct> _products = [];
   bool _isLoadingDropdowns = false;
 
+
+  List<TankRuleModel> _tankRules = [];
+  TankRuleModel? _selectedRule;
+
   dynamic _selectedUnit;
   dynamic _selectedTankType;
   dynamic _selectedProduct;
@@ -49,6 +54,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     }
 
     _loadDropdownData();
+    _loadDropdowns();
     _initializeChannels();
   }
 
@@ -166,6 +172,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
+    print('_selectedRule?.id:${_selectedRule?.id}');
     final channelData = getChannelData();
 
     final request = TankCreateRequest(
@@ -204,6 +211,23 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> _loadDropdowns() async {
+    setState(() => _isLoadingDropdowns = true);
+
+    try {
+      final repository = ref.read(tankRepositoryProvider);
+      final rules = await repository.getAllTankRules();
+
+      setState(() {
+        _tankRules = rules;
+      });
+    } catch (e) {
+      debugPrint('Error loading rules: $e');
+    } finally {
+      setState(() => _isLoadingDropdowns = false);
     }
   }
 
@@ -298,17 +322,20 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       ),
                     ),
                     const SizedBox(height: 25),
-                    _buildLabelField('EVENT RULE GROUP',
-                      _isLoadingDropdowns ? const LinearProgressIndicator(
-                        minHeight: 2,
-                      ) :
-                      AppDropdown<dynamic>(
-                        value: _selectedProduct,
-                        items: _products,
-                        itemLabel: (p) => p is TankProduct ? p.productName
-                            : p['product_name'],
+                    _buildLabelField(
+                      'EVENT RULE GROUP',
+                      _isLoadingDropdowns
+                          ? const LinearProgressIndicator(minHeight: 2)
+                          : AppDropdown<TankRuleModel>(
+                        value: _selectedRule,
+                        items: _tankRules,
+                        itemLabel: (rule) => rule.ruleName,
                         hint: 'Select rule',
-                        onChanged: (v) => setState(() => _selectedProduct = v),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedRule = value;
+                          });
+                        },
                       ),
                     ),
                     const SizedBox(height: 25),

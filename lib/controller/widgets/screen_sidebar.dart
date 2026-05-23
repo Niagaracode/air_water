@@ -72,7 +72,7 @@ class ScreenSidebar extends ConsumerWidget {
                 role: userRole,
               ),
               _buildGroup(
-                title: 'REPORT',
+                title: 'EVENTS',
                 items: reportMenu,
                 location: location,
                 isExpanded: isExpanded,
