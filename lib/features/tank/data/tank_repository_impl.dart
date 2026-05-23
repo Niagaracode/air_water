@@ -33,8 +33,9 @@ class TankRepositoryImpl implements TankRepository {
   @override
   Future<List<SiteAutocompleteInfo>> getSitesForTankAutocomplete({
     String? q,
+    int? companyId,
   }) {
-    return _api.getSitesForTankAutocomplete(q: q);
+    return _api.getSitesForTankAutocomplete(q: q, companyId: companyId);
   }
 
   @override

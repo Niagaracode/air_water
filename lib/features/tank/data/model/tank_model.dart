@@ -333,6 +333,7 @@ class TankCreateRequest {
   final int? addressId;
   final String? levelUnit;
   final List<dynamic>? channelData;
+  final int? companyId;
 
   TankCreateRequest({
     required this.tankNumber,
@@ -343,6 +344,7 @@ class TankCreateRequest {
     this.addressId,
     this.levelUnit,
     this.channelData,
+    this.companyId,
   });
 
   Map<String, dynamic> toJson() {
@@ -355,6 +357,7 @@ class TankCreateRequest {
       'address_id': addressId,
       'level_unit': levelUnit,
       'channel_data': channelData,
+      'company_id': companyId,
     };
   }
 }

@@ -12,7 +12,7 @@ abstract class TankRepository {
     int? status,
     List<int>? companyIds,
   });
-  Future<List<SiteAutocompleteInfo>> getSitesForTankAutocomplete({String? q});
+  Future<List<SiteAutocompleteInfo>> getSitesForTankAutocomplete({String? q, int? companyId});
   Future<void> createTank(TankCreateRequest request);
   Future<void> updateTank(int id, TankCreateRequest request);
   Future<void> deleteTank(int id);

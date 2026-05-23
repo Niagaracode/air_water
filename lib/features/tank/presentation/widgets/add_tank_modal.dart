@@ -8,6 +8,8 @@ import '../../data/model/tank_rule_model.dart';
 import '../controller/tank_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
+import '../../../user/presentation/controller/user_provider.dart';
+import '../../../user/presentation/model/user_model.dart';
 
 class AddTankModal extends ConsumerStatefulWidget {
   final Tank? tank;
@@ -23,8 +25,11 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   final _tonnesController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _siteAutocompleteController = TextEditingController();
+  final _companyAutocompleteController = TextEditingController();
+  final _companyFocusNode = FocusNode();
 
   SiteAutocompleteInfo? _selectedSite;
+  CompanyAutocomplete? _selectedCompany;
   Map<String, dynamic>? _dropdownData;
   List<TankProduct> _products = [];
   bool _isLoadingDropdowns = false;
@@ -50,6 +55,13 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       _descriptionController.text = tank.description ?? '';
       _siteAutocompleteController.text = tank.siteName ?? '';
       _status = tank.status;
+      if (tank.companyId != null && tank.companyName != null) {
+        _selectedCompany = CompanyAutocomplete(
+          id: tank.companyId!,
+          name: tank.companyName!,
+        );
+        _companyAutocompleteController.text = tank.companyName!;
+      }
     }
 
     _loadDropdownData();
@@ -171,6 +183,14 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
+    final isSuperAdmin = ref.read(userProvider).currentUser?.roleId == 1;
+    if (isSuperAdmin && _selectedCompany == null) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please select a Company')),
+      );
+      return;
+    }
+
     print('_selectedRule?.id:${_selectedRule?.id}');
     final channelData = getChannelData();
 
@@ -184,6 +204,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           ? _selectedProduct.productId
           : _selectedProduct?['id'],
       channelData: channelData['channels'],
+      companyId: _selectedCompany?.id ?? widget.tank?.companyId,
     );
 
     final success = widget.tank != null
@@ -305,6 +326,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                     const SizedBox(height: 48),
                     _buildLabelField('TANK NAME', _buildTankAutocomplete()),
                     const SizedBox(height: 25),
+                    if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
+                      _buildLabelField('PRIMARY COMPANY', _buildCompanyAutocomplete()),
+                      const SizedBox(height: 25),
+                    ],
                     _buildLabelField('SITE', _buildSiteAutocomplete()),
                     const SizedBox(height: 25),
                     _buildLabelField(
@@ -550,6 +575,68 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
+  Widget _buildCompanyAutocomplete() {
+    return LayoutBuilder(
+      builder: (context, constraints) => RawAutocomplete<CompanyAutocomplete>(
+        focusNode: _companyFocusNode,
+        textEditingController: _companyAutocompleteController,
+        optionsBuilder: (TextEditingValue v) => v.text.isEmpty
+            ? <CompanyAutocomplete>[]
+            : ref.read(userProvider.notifier).searchCompanies(v.text),
+        displayStringForOption: (o) => o.name,
+        fieldViewBuilder: (context, controller, focus, onSubmitted) =>
+            AppTextField(
+              controller: controller,
+              focusNode: focus,
+              hint: 'Search Company...',
+            ),
+        onSelected: (o) {
+          setState(() {
+            _selectedCompany = o;
+            _selectedSite = null;
+            _siteAutocompleteController.clear();
+          });
+        },
+        optionsViewBuilder: (context, onSelected, options) => Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: constraints.maxWidth,
+              constraints: const BoxConstraints(maxHeight: 300),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, i) {
+                  final option = options.elementAt(i);
+                  return ListTile(
+                    hoverColor: const Color(0xFFF3F4F6),
+                    title: Text(
+                      option.name,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    onTap: () => onSelected(option),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSiteAutocomplete() {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -562,7 +649,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
             }
             return await ref
                 .read(tankNotifierProvider.notifier)
-                .searchSites(textEditingValue.text);
+                .searchSites(
+                  textEditingValue.text,
+                  companyId: _selectedCompany?.id,
+                );
           },
           displayStringForOption: (SiteAutocompleteInfo option) =>
               option.displayName ?? option.siteName,
@@ -854,6 +944,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     _tankNumberController.dispose();
     _descriptionController.dispose();
     _siteAutocompleteController.dispose();
+    _companyAutocompleteController.dispose();
+    _companyFocusNode.dispose();
     super.dispose();
   }
 }

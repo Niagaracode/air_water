@@ -41,10 +41,14 @@ class TankApi {
 
   Future<List<SiteAutocompleteInfo>> getSitesForTankAutocomplete({
     String? q,
+    int? companyId,
   }) async {
     final Map<String, dynamic> query = {};
     if (q != null && q.isNotEmpty) {
       query['q'] = q;
+    }
+    if (companyId != null) {
+      query['company_id'] = companyId;
     }
     final response = await _client.get(
       '/plants/tank-autocomplete',

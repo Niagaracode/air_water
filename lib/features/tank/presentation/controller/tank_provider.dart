@@ -226,10 +226,10 @@ class TankNotifier extends Notifier<TankState> {
     }
   }
 
-  Future<List<SiteAutocompleteInfo>> searchSites(String query) async {
+  Future<List<SiteAutocompleteInfo>> searchSites(String query, {int? companyId}) async {
     try {
       final repository = ref.read(tankRepositoryProvider);
-      return await repository.getSitesForTankAutocomplete(q: query);
+      return await repository.getSitesForTankAutocomplete(q: query, companyId: companyId);
     } catch (e) {
       return [];
     }
