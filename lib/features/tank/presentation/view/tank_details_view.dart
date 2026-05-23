@@ -80,7 +80,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   PopupMenuButton<String>(
                     tooltip: 'Download Report',
                     onSelected: (value) async {
-
                       final readings = ref.read(
                         tankReadingsProvider(
                           TankReadingParams(
@@ -89,7 +88,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                           ),
                         ),
                       ).readings;
-
 
                       if (readings.isEmpty) return;
 
@@ -137,15 +135,13 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
-                        vertical: 8,
+                        vertical: 6,
                       ),
-
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
-
                         border: Border.all(
-                          color: primary.withValues(alpha: 0.3),
+                          color: primary.withValues(alpha: 0.1),
                         ),
                       ),
 
@@ -175,7 +171,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
               ),
             ),
 
-            /// TAB + SEGMENT
             _buildTabBar(),
 
             Expanded(
@@ -242,9 +237,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
           SizedBox(
             height: 34,
             child: SegmentedButton<String>(
-
               style: ButtonStyle(
-
                 side: WidgetStateProperty.resolveWith((states) {
                     return  BorderSide(
                       color: primary.withValues(alpha: 0.6),
@@ -252,7 +245,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                     );
                   },
                 ),
-
                 backgroundColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
                       return primary.withValues(alpha: 0.7);
@@ -260,7 +252,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                     return Colors.white;
                   },
                 ),
-
                 foregroundColor: WidgetStateProperty.resolveWith((states) {
                     if (states.contains(WidgetState.selected)) {
                       return Colors.white;
@@ -268,9 +259,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                     return primary;
                   },
                 ),
-
                 visualDensity: VisualDensity.compact,
-
                 padding: WidgetStateProperty.all(
                   const EdgeInsets.symmetric(horizontal: 8),
                 ),
