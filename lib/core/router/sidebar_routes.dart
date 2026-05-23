@@ -1,10 +1,12 @@
 const Map<String, String> menuRoutes = {
   'Dashboard': '/dashboard',
+
   'Company': '/company',
   'Site': '/site',
   'Tank': '/tank',
   'Device': '/device',
   'Product': '/product',
+
   'User': '/user',
   'User Group': '/asset-group',
   'Asset Group': '/asset-group',
@@ -13,12 +15,13 @@ const Map<String, String> menuRoutes = {
   'Rule Group': '/rule',
   'Message Template': '/message-template',
   'Roster': '/roster',
-  'Report': '/report',
+  'Event': '/event',
+
   'Asset Summary': '/asset-summary',
   'Schedule': '/asset-schedule',
   'Profile': '/profile',
   'Alarm': '/alarm',
-  'Event': '/event',
+
   'Setting': '/setting',
   'Notification': '/notification',
 };

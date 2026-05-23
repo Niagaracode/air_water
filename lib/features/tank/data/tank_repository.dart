@@ -1,6 +1,7 @@
 import '../../site/presentation/model/site_model.dart';
 import 'model/tank_event_model.dart';
 import 'model/tank_model.dart';
+import 'model/tank_rule_model.dart';
 
 abstract class TankRepository {
   Future<TankGroupedResponse> getTanksGrouped({
@@ -19,6 +20,8 @@ abstract class TankRepository {
   Future<List<String>> getTankNameSuggestions({String? q});
   Future<List<TankProduct>> getProducts();
   Future<List<Tank>> getTanks({int? siteId});
+
   Future<Map<String, dynamic>> getTankReadings(int tankId, String day);
   Future<List<TankEventModel>> getTankEvents(int tankId, String day);
+  Future<List<TankRuleModel>> getAllTankRules();
 }
