@@ -423,7 +423,6 @@ class _SettingWideState extends ConsumerState<SettingWide> {
             const AppTableHeaderCell('Parameter', flex: 2),
             const AppTableHeaderCell('Condition', flex: 2),
           ] else ...[
-            const AppTableHeaderCell('Rule Name', flex: 3),
             const AppTableHeaderCell('Company', flex: 2),
             const AppTableHeaderCell('Site', width: 100),
             const AppTableHeaderCell('Tank', width: 100),
@@ -440,6 +439,25 @@ class _SettingWideState extends ConsumerState<SettingWide> {
     );
   }
 
+  /// Flatten all settings from backend site-groups and re-group by rule name.
+  List<_RuleNameGroup> _groupByRuleName(List<SettingGroup> siteGroups) {
+    // Collect all settings in order
+    final allSettings = [
+      for (final g in siteGroups) ...g.settings,
+    ];
+
+    // Preserve insertion order of rule names
+    final Map<String, List<Setting>> byName = {};
+    for (final s in allSettings) {
+      final key = s.name.trim();
+      byName.putIfAbsent(key, () => []).add(s);
+    }
+
+    return byName.entries
+        .map((e) => _RuleNameGroup(name: e.key, settings: e.value))
+        .toList();
+  }
+
   Widget _buildVirtualizedTable(
     SettingState state,
     SettingNotifier notifier,
@@ -452,6 +470,19 @@ class _SettingWideState extends ConsumerState<SettingWide> {
           icon: Icons.settings_suggest_outlined,
           title: 'No devices found',
         ),
+      );
+    }
+
+    // For non-customer: regroup by rule name; for customer: keep site grouping
+    if (!isCustomer) {
+      final ruleGroups = _groupByRuleName(state.groupedSettings);
+      return ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemCount: ruleGroups.length,
+        itemBuilder: (context, index) {
+          return _buildRuleNameSection(index, ruleGroups[index], notifier);
+        },
       );
     }
 
@@ -475,6 +506,9 @@ class _SettingWideState extends ConsumerState<SettingWide> {
     final companyName = group.settings.isNotEmpty
         ? (group.settings.first.companyId == 0 ? 'ALL COMPANIES' : group.settings.first.companyName)
         : null;
+
+    // Use the rule name from the first setting (all settings in a group share the same name)
+    final ruleName = group.settings.isNotEmpty ? group.settings.first.name : '—';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -511,28 +545,34 @@ class _SettingWideState extends ConsumerState<SettingWide> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (!isCustomer)
+                  if (!isCustomer) ...[
                     Text(
-                      (companyName ?? '—').toUpperCase(),
+                      ruleName,
                       style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
                         color: const Color(0xFF111827),
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                  Text(
-                    group.siteName.toUpperCase(),
-                    style: GoogleFonts.inter(
-                      fontSize: isCustomer ? 13 : 11,
-                      fontWeight: isCustomer
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: isCustomer
-                          ? const Color(0xFF111827)
-                          : const Color(0xFF6B7280),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${(companyName ?? '—').toUpperCase()}  ·  ${group.siteName.toUpperCase()}',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF6B7280),
+                      ),
                     ),
-                  ),
+                  ] else
+                    Text(
+                      group.siteName.toUpperCase(),
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
                 ],
               ),
               const Spacer(),
@@ -658,7 +698,6 @@ class _SettingWideState extends ConsumerState<SettingWide> {
               ),
             ),
           ] else ...[
-            AppTableCell(setting.name, flex: 3, bold: true),
             AppTableCell(
               setting.companyId == 0 ? 'ALL' : (setting.companyName ?? '—'),
               flex: 2,
@@ -810,4 +849,87 @@ class _SettingWideState extends ConsumerState<SettingWide> {
       },
     );
   }
+
+  Widget _buildRuleNameSection(
+    int groupIndex,
+    _RuleNameGroup ruleGroup,
+    SettingNotifier notifier,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Group header: shows rule name once ──────────────────────────────
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF3F4F6),
+            border: Border(
+              left: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+              right: BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF141E7A),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '${groupIndex + 1}',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  ruleGroup.name,
+                  style: GoogleFonts.outfit(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111827),
+                    letterSpacing: 0.3,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0E7FF),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${ruleGroup.settings.length} ${ruleGroup.settings.length == 1 ? 'Rule' : 'Rules'}',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF141E7A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // ── Rows: company / site / tank / device / parameter / condition / status
+        for (final s in ruleGroup.settings)
+          _buildSettingRow(s, notifier, false),
+      ],
+    );
+  }
+}
+
+/// Simple data class for frontend-only rule-name grouping.
+class _RuleNameGroup {
+  final String name;
+  final List<Setting> settings;
+  const _RuleNameGroup({required this.name, required this.settings});
 }

@@ -158,7 +158,7 @@ class _AlarmWideState extends ConsumerState<AlarmWide> {
           const SizedBox(width: 16),
           AppTableHeaderCell('Condition / Value', flex: 4),
           const SizedBox(width: 16),
-          AppTableHeaderCell('Importance', width: 90),
+          AppTableHeaderCell('Status Label', width: 100),
           const SizedBox(width: 16),
           AppTableHeaderCell('Status', width: 80),
           const SizedBox(width: 16),

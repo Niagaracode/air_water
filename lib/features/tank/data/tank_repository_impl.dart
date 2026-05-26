@@ -88,5 +88,10 @@ class TankRepositoryImpl implements TankRepository {
     return _api.getAllTankRules();
   }
 
+  @override
+  Future<Tank> getTankById(int id) {
+    return _api.getTankById(id);
+  }
+
 
 }

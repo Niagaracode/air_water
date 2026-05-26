@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 // Features
 import '../../../asset_group/domain/models/asset_group_model.dart';
 import '../../../asset_group/presentation/controller/asset_group_provider.dart';
+import '../../../site/presentation/model/site_model.dart';
+import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
 
@@ -23,9 +25,12 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
   final _descController = TextEditingController();
   final _companyAutocompleteController = TextEditingController();
   final _companyFocusNode = FocusNode();
+  final _siteAutocompleteController = TextEditingController();
+  final _siteFocusNode = FocusNode();
   
   bool _isActive = true;
   CompanyAutocomplete? _selectedCompany;
+  SiteAutocompleteInfo? _selectedSite;
 
   @override
   void initState() {
@@ -50,6 +55,8 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
     _descController.dispose();
     _companyAutocompleteController.dispose();
     _companyFocusNode.dispose();
+    _siteAutocompleteController.dispose();
+    _siteFocusNode.dispose();
     super.dispose();
   }
 
@@ -83,7 +90,15 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
       displayInTree: _isActive,
       status: _isActive ? 1 : 0,
       domain: 'ROSTER',
-      criteria: const [],
+      criteria: _selectedSite != null
+          ? [
+              AssetCriteria(
+                parameter: 'Site Name',
+                logic: '=',
+                value: _selectedSite!.siteName,
+              ),
+            ]
+          : const [],
       companyId: _selectedCompany?.id ?? currentUser.companyId,
     );
 
@@ -204,6 +219,11 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                             _buildCompanyAutocomplete(),
                           ),
                           const SizedBox(height: 32),
+                          _buildLabelField(
+                            'SITE',
+                            _buildSiteAutocomplete(),
+                          ),
+                          const SizedBox(height: 32),
                         ],
 
                         // Status Toggle
@@ -314,7 +334,13 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
               focusNode: focus,
               hint: 'Search Company...',
             ),
-        onSelected: (o) => setState(() => _selectedCompany = o),
+        onSelected: (o) {
+          setState(() {
+            _selectedCompany = o;
+            _selectedSite = null;
+            _siteAutocompleteController.clear();
+          });
+        },
         optionsViewBuilder: (context, onSelected, options) => Align(
           alignment: Alignment.topLeft,
           child: Material(
@@ -338,6 +364,71 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                     hoverColor: const Color(0xFFF3F4F6),
                     title: Text(
                       option.name,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    onTap: () => onSelected(option),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSiteAutocomplete() {
+    return LayoutBuilder(
+      builder: (context, constraints) => RawAutocomplete<SiteAutocompleteInfo>(
+        focusNode: _siteFocusNode,
+        textEditingController: _siteAutocompleteController,
+        optionsBuilder: (TextEditingValue textEditingValue) async {
+          if (textEditingValue.text.isEmpty) {
+            return const Iterable<SiteAutocompleteInfo>.empty();
+          }
+          return await ref
+              .read(tankNotifierProvider.notifier)
+              .searchSites(
+                textEditingValue.text,
+                companyId: _selectedCompany?.id,
+              );
+        },
+        displayStringForOption: (SiteAutocompleteInfo option) =>
+            option.displayName ?? option.siteName,
+        fieldViewBuilder: (context, controller, focus, onSubmitted) =>
+            AppTextField(
+              controller: controller,
+              focusNode: focus,
+              hint: 'Search Site by Name',
+            ),
+        onSelected: (o) => setState(() => _selectedSite = o),
+        optionsViewBuilder: (context, onSelected, options) => Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: constraints.maxWidth,
+              constraints: const BoxConstraints(maxHeight: 300),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, i) {
+                  final option = options.elementAt(i);
+                  return ListTile(
+                    hoverColor: const Color(0xFFF3F4F6),
+                    title: Text(
+                      option.displayName ?? "${option.siteName} ${option.fullAddress}",
                       style: GoogleFonts.outfit(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,

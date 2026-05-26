@@ -232,6 +232,72 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  Future<void> _confirmDeleteGroup(AssetGroupModel group) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Delete Roster Group',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${group.name}"? This action cannot be undone and will delete the group.',
+          style: GoogleFonts.inter(),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: const Color(0xFF64748B)),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.inter(
+                color: const Color(0xFFDC2626),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && group.id != null) {
+      final success = await ref.read(assetGroupProvider.notifier).deleteGroup(group.id!);
+      if (success) {
+        ref.read(rosterGroupProvider.notifier).loadGroups();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Roster group deleted successfully')),
+          );
+          if (_selectedGroup?.id == group.id) {
+            setState(() {
+              _selectedGroup = null;
+              _groupUsers.clear();
+              _userConfigs.clear();
+              _selectedRosterIds.clear();
+            });
+          }
+        }
+      } else {
+        if (mounted) {
+          final error = ref.read(assetGroupProvider).error;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete group: ${error ?? "Unknown error"}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final groupState = ref.watch(rosterGroupProvider);
@@ -423,7 +489,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                   if (isSuperAdmin) AppTableHeaderCell('COMPANY', flex: 2),
                   AppTableHeaderCell('GROUP NAME', flex: 2),
                   AppTableHeaderCell('DESCRIPTION', flex: 3),
-                  AppTableHeaderCell('ACTION', width: 80),
+                  AppTableHeaderCell('ACTION', width: 120),
                 ],
               ),
             ),
@@ -495,22 +561,37 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
               ),
             ),
             SizedBox(
-              width: 80,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFF141E7A)
-                        : const Color(0xFF141E7A).withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
+              width: 120,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    onPressed: () => _confirmDeleteGroup(group),
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                    tooltip: 'Delete Group',
                   ),
-                  child: Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: isSelected ? Colors.white : const Color(0xFF141E7A),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFF141E7A)
+                          : const Color(0xFF141E7A).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: isSelected ? Colors.white : const Color(0xFF141E7A),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -572,21 +653,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                     ],
                   ),
                 ),
-                if (_selectedRosterIds.isNotEmpty) ...[
-                  IconButton(
-                    onPressed: _deleteSelectedRosters,
-                    icon: const Icon(
-                      Icons.delete_outline_rounded,
-                      color: Colors.white,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFDC2626),
-                      padding: const EdgeInsets.all(8),
-                    ),
-                    tooltip: 'Delete Configuration',
-                  ),
-                  const SizedBox(width: 8),
-                ],
+
                 IconButton(
                   onPressed: () => setState(() {
                     _selectedGroup = null;

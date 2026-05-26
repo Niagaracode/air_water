@@ -20,6 +20,7 @@ import '../../../message_template/presentation/controller/message_template_provi
 import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../product/data/product_model.dart';
 import '../../../../core/network/http/api_service.dart';
+import '../../../profile/presentation/controller/profile_provider.dart';
 
 class AddSettingModal extends ConsumerStatefulWidget {
   final Setting? initialSetting;
@@ -45,7 +46,7 @@ class SettingRowData {
   SettingRowData({
     this.id,
     this.parameterType = 'LEVEL',
-    this.conditionType = '>',
+    this.conditionType = '<',
     String threshold1 = '',
     String threshold2 = '',
     String threshold3 = '',
@@ -67,12 +68,25 @@ class SettingRowData {
 }
 
 class _AddSettingModalState extends ConsumerState<AddSettingModal> {
+  static const List<String> _defaultParameterTypes = [
+    'LEVEL',
+    'PRESSURE',
+    'BATTERY',
+    'DATA INTERVAL',
+    'SOLAR',
+    'DEVICE COMMUNICATE FAILED',
+  ];
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _deviceIdController = TextEditingController();
   final _simNumberController = TextEditingController();
   final _timeZoneController = TextEditingController();
+  final _companyReadOnlyController = TextEditingController();
+  final _siteReadOnlyController = TextEditingController();
+  final _tankReadOnlyController = TextEditingController();
+  final _nameFocusNode = FocusNode();
 
   CompanyGroup? _selectedCompanyGroup;
   List<Site> _selectedSites = [];
@@ -100,6 +114,9 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       _nameController.text = s.name;
       _descriptionController.text = s.description ?? '';
       _isActive = s.isActive;
+      _companyReadOnlyController.text = s.companyName ?? 'N/A';
+      _siteReadOnlyController.text = s.siteName ?? 'N/A';
+      _tankReadOnlyController.text = s.tankNumber ?? 'N/A';
 
       _rows.add(
         SettingRowData(
@@ -107,7 +124,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
           parameterType: (s.parameterType ?? 'LEVEL').toUpperCase() == 'MFACTOR'
               ? 'MFACTOR'
               : (s.parameterType ?? 'LEVEL'),
-          conditionType: s.conditionType ?? '>',
+          conditionType: s.conditionType ?? '<',
           threshold1: (s.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
               ? ((s.threshold1 ?? s.threshold2)?.toInt().toString().padLeft(2, '0') ?? '00')
               : (s.threshold1?.toString().replaceAll(RegExp(r'\.0$'), '') ??
@@ -122,18 +139,42 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
         ),
       );
     } else {
-      _rows.add(SettingRowData());
+      for (final param in _defaultParameterTypes) {
+        _rows.add(
+          SettingRowData(
+            parameterType: param,
+            conditionType: '<',
+          ),
+        );
+      }
     }
 
     Future.microtask(() => _loadData(productNotifierProvider));
   }
 
   Future<void> _fetchFullTankDetails(Tank t) async {
-    if (t.strappingPoints != null && t.strappingPoints!.isNotEmpty) return;
+    if (t.strappingPoints != null && t.strappingPoints!.isNotEmpty && t.channelData != null && t.channelData!.isNotEmpty) {
+      return;
+    }
 
     setState(() => _isLoadingData = true);
     try {
-      // Body intentionally empty — strapping points fetching disabled
+      final repo = ref.read(tankRepositoryProvider);
+      final fullTank = await repo.getTankById(t.tankId);
+      if (mounted) {
+        setState(() {
+          final index = _selectedTanks.indexWhere((x) => x.tankId == t.tankId);
+          if (index != -1) {
+            _selectedTanks[index] = fullTank;
+          } else {
+            _selectedTanks.add(fullTank);
+          }
+          final tIndex = _tanks.indexWhere((x) => x.tankId == t.tankId);
+          if (tIndex != -1) {
+            _tanks[tIndex] = fullTank;
+          }
+        });
+      }
     } catch (e) {
       debugPrint('Error fetching full tank details: $e');
     } finally {
@@ -146,6 +187,18 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     try {
       final companyRepo = ref.read(companyRepositoryProvider);
       final siteRepo = ref.read(siteRepositoryProvider);
+
+      final userRole = await ref.read(userRoleProvider.future);
+      final isCompanyAdmin = userRole == UserRole.companyAdmin;
+
+      int? userCompanyId;
+      if (isCompanyAdmin) {
+        final profileState = ref.read(profileNotifierProvider);
+        if (profileState.profile == null) {
+          await ref.read(profileNotifierProvider.notifier).loadProfile();
+        }
+        userCompanyId = ref.read(profileNotifierProvider).profile?.companyId;
+      }
 
       try {
         final companiesList = await companyRepo.getRuleCompanies();
@@ -266,7 +319,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                 parameterType: (r.parameterType ?? 'LEVEL').toUpperCase() == 'MFACTOR'
                     ? 'MFACTOR'
                     : (r.parameterType ?? 'LEVEL'),
-                conditionType: r.conditionType ?? '>',
+                conditionType: r.conditionType ?? '<',
                 threshold1: (r.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
                     ? ((r.threshold1 ?? r.threshold2)?.toInt().toString().padLeft(2, '0') ?? '00')
                     : (r.threshold1?.toString().replaceAll(RegExp(r'\.0$'), '') ??
@@ -288,12 +341,27 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
               _rows.add(rowData);
             }
 
-            _nameController.text = matchedRules.first.name;
-            _descriptionController.text = matchedRules.first.description ?? '';
-            _isActive = matchedRules.first.isActive;
+            // Append default/empty rows for any default parameters not present in loaded settings
+            final loadedTypes = _rows.map((row) => row.parameterType.toUpperCase().trim()).toSet();
+            for (final param in _defaultParameterTypes) {
+              if (!loadedTypes.contains(param.toUpperCase().trim())) {
+                _rows.add(SettingRowData(
+                  parameterType: param,
+                  conditionType: '<',
+                ));
+              }
+            }
+
+            _nameController.text = s.name;
+            _descriptionController.text = s.description ?? '';
+            _isActive = s.isActive;
           } else {
             if (s.messageTemplateId != null && _rows.isNotEmpty) {
-              _rows[0].selectedTemplate = _templates
+              final targetRow = _rows.firstWhere(
+                (r) => r.parameterType.toUpperCase().trim() == (s.parameterType ?? 'LEVEL').toUpperCase().trim(),
+                orElse: () => _rows[0],
+              );
+              targetRow.selectedTemplate = _templates
                   .where((t) => t.id == s.messageTemplateId)
                   .firstOrNull;
             }
@@ -305,6 +373,10 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
               s.simNumber ?? _selectedTanks.firstOrNull?.simNumber ?? '';
           _timeZoneController.text =
               s.timeZone ?? _selectedTanks.firstOrNull?.timeZone ?? '';
+
+          if (_selectedTanks.isNotEmpty) {
+            _fetchFullTankDetails(_selectedTanks.first);
+          }
         } else if (widget.preselectedTank != null) {
           final t = widget.preselectedTank!;
           final tank = _tanks.where((x) => x.tankId == t.tankId).firstOrNull ?? t;
@@ -331,7 +403,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                 parameterType: (r.parameterType ?? 'LEVEL').toUpperCase() == 'MFACTOR'
                     ? 'MFACTOR'
                     : (r.parameterType ?? 'LEVEL'),
-                conditionType: r.conditionType ?? '>',
+                conditionType: r.conditionType ?? '<',
                 threshold1: (r.parameterType?.toUpperCase().trim() == 'DATA INTERVAL')
                     ? ((r.threshold1 ?? r.threshold2)?.toInt().toString().padLeft(2, '0') ?? '00')
                     : (r.threshold1?.toString().replaceAll(RegExp(r'\.0$'), '') ??
@@ -353,13 +425,50 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
               _rows.add(rowData);
             }
 
-            _nameController.text = matchedRules.first.name;
-            _descriptionController.text = matchedRules.first.description ?? '';
-            _isActive = matchedRules.first.isActive;
+            // Append default/empty rows for any default parameters not present in loaded settings
+            final loadedTypes = _rows.map((row) => row.parameterType.toUpperCase().trim()).toSet();
+            for (final param in _defaultParameterTypes) {
+              if (!loadedTypes.contains(param.toUpperCase().trim())) {
+                _rows.add(SettingRowData(
+                  parameterType: param,
+                  conditionType: '<',
+                ));
+              }
+            }
+
+            final systemRuleNames = {
+              'data interval',
+              'device communicate failed',
+              'device communicate',
+              'solar',
+              'battery',
+              'pressure',
+              'level'
+            };
+            String groupName = matchedRules.first.name;
+            String? groupDesc = matchedRules.first.description;
+            int groupActive = matchedRules.first.isActive;
+            for (final r in matchedRules) {
+              final nameLower = r.name.trim().toLowerCase();
+              if (!systemRuleNames.contains(nameLower)) {
+                groupName = r.name;
+                groupDesc = r.description;
+                groupActive = r.isActive;
+                break;
+              }
+            }
+            _nameController.text = groupName;
+            _descriptionController.text = groupDesc ?? '';
+            _isActive = groupActive;
           }
 
           _fetchFullTankDetails(tank);
         } else {
+          if (isCompanyAdmin && userCompanyId != null) {
+            _selectedCompanyGroup = _companyGroups
+                .where((g) => g.addresses.any((a) => a.companyId == userCompanyId))
+                .firstOrNull;
+          }
           if (_tanks.length == 1) {
             _selectedTanks = [_tanks[0]];
             final s = _sites
@@ -378,6 +487,33 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
             _timeZoneController.text = _selectedTanks.firstOrNull?.timeZone ?? '';
             _fetchFullTankDetails(_selectedTanks[0]);
           }
+        }
+
+        if (widget.initialSetting != null) {
+          final s = widget.initialSetting!;
+          _companyReadOnlyController.text = () {
+            final cg = _selectedCompanyGroup;
+            if (cg == null) return s.companyName ?? 'N/A';
+            final name = cg.name.trim().isNotEmpty ? cg.name.trim() : '(Unnamed Company)';
+            final org = cg.organizationCode;
+            return (org != null && org.trim().isNotEmpty) ? "$name ($org)" : name;
+          }();
+          _siteReadOnlyController.text = _selectedSites.isNotEmpty
+              ? _selectedSites.map((site) {
+                  final loc = site.siteLocation;
+                  return loc.isNotEmpty ? "${site.name} ($loc)" : site.name;
+                }).join(', ')
+              : (s.siteName ?? 'N/A');
+          _tankReadOnlyController.text = _selectedTanks.isNotEmpty
+              ? _selectedTanks.map((t) => t.tankNumber).join(', ')
+              : (s.tankNumber ?? 'N/A');
+        } else if (isCompanyAdmin && _selectedCompanyGroup != null) {
+          _companyReadOnlyController.text = () {
+            final cg = _selectedCompanyGroup!;
+            final name = cg.name.trim().isNotEmpty ? cg.name.trim() : '(Unnamed Company)';
+            final org = cg.organizationCode;
+            return (org != null && org.trim().isNotEmpty) ? "$name ($org)" : name;
+          }();
         }
       });
     } catch (e) {
@@ -431,7 +567,27 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     final companyId = _selectedCompanyGroup!.addresses.first.companyId;
     final notifier = ref.read(settingProvider.notifier);
 
-    final List<Map<String, dynamic>> rowsData = _rows.map((row) {
+    // Filter out rows that do not have a threshold value configured
+    final activeRows = _rows.where((row) {
+      final param = row.parameterType.toUpperCase().trim();
+      if (param == 'CHART DATA') {
+        return row.selectedPoints.isNotEmpty;
+      }
+      return row.threshold1Controller.text.trim().isNotEmpty;
+    }).toList();
+
+    if (activeRows.isEmpty) {
+      if (!silent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please configure at least one rule parameter value.'),
+          ),
+        );
+      }
+      return false;
+    }
+
+    final List<Map<String, dynamic>> rowsData = activeRows.map((row) {
       final isDataInterval =
           row.parameterType.toUpperCase().trim() == 'DATA INTERVAL';
       return {
@@ -575,10 +731,27 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       }
 
       // Send MQTT command for each row
+      final activeRows = _rows.where((row) {
+        final param = row.parameterType.toUpperCase().trim();
+        if (param == 'CHART DATA') {
+          return row.selectedPoints.isNotEmpty;
+        }
+        return row.threshold1Controller.text.trim().isNotEmpty;
+      }).toList();
+
+      if (activeRows.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No active configurations to send to device')),
+          );
+        }
+        return;
+      }
+
       final List<String> sentParams = [];
       final List<String> failedParams = [];
 
-      for (final row in _rows) {
+      for (final row in activeRows) {
         final param = row.parameterType.toUpperCase().trim();
         final cond = row.conditionType;
         final thresh1 = row.threshold1Controller.text.trim();
@@ -733,6 +906,57 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
       error: (_, __) => false,
     );
 
+    final isCompanyAdmin = roleAsync.when(
+      data: (role) => role == UserRole.companyAdmin,
+      loading: () => false,
+      error: (_, __) => false,
+    );
+
+    final displayParams = List<String>.from(_defaultParameterTypes);
+    for (final row in _rows) {
+      final normalizedParam = row.parameterType.toUpperCase().trim();
+      if (!displayParams.any((p) => p.toUpperCase().trim() == normalizedParam)) {
+        displayParams.add(row.parameterType);
+      }
+    }
+
+    final enabledChannels = <String>{};
+    bool hasChannelData = false;
+    for (final tank in _selectedTanks) {
+      if (tank.channelData != null && tank.channelData!.isNotEmpty) {
+        hasChannelData = true;
+        for (final channel in tank.channelData!) {
+          if (channel.enabled && channel.type != null) {
+            enabledChannels.add(channel.type!.toUpperCase().trim());
+          }
+        }
+      }
+    }
+
+    if (hasChannelData) {
+      displayParams.removeWhere((param) {
+        final upperParam = param.toUpperCase().trim();
+        if (upperParam == 'LEVEL' || upperParam == 'PRESSURE') {
+          final isEnabled = enabledChannels.contains(upperParam);
+          final hasExistingRow = _rows.any((row) {
+            final rowParam = row.parameterType.toUpperCase().trim();
+            final hasValue = row.threshold1Controller.text.trim().isNotEmpty;
+            return rowParam == upperParam && hasValue;
+          });
+          return !isEnabled && !hasExistingRow;
+        }
+        return false;
+      });
+    }
+
+    final bool hasActiveDataInterval = _rows.any((r) =>
+        r.parameterType.toUpperCase().trim() == 'DATA INTERVAL' &&
+        r.threshold1Controller.text.trim().isNotEmpty);
+
+    final bool hasActiveDeviceCommFailed = _rows.any((r) =>
+        r.parameterType.toUpperCase().trim() == 'DEVICE COMMUNICATE FAILED' &&
+        r.threshold1Controller.text.trim().isNotEmpty);
+
     return Align(
       alignment: Alignment.centerRight,
       child: Material(
@@ -801,12 +1025,76 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                               const SizedBox(height: 24),
                               _buildLabelField(
                                 isCustomer ? 'SETTING NAME' : 'RULE NAME',
-                                AppTextField(
-                                  controller: _nameController,
-                                  hint: isCustomer
-                                      ? 'e.g. Critical Tank Level Low'
-                                      : 'e.g. High Pressure Warning',
-                                ),
+                                isEditMode
+                                    ? AppTextField(
+                                        controller: _nameController,
+                                        readOnly: true,
+                                        hint: isCustomer
+                                            ? 'e.g. Critical Tank Level Low'
+                                            : 'e.g. High Pressure Warning',
+                                      )
+                                    : RawAutocomplete<SettingAutocompleteInfo>(
+                                        textEditingController: _nameController,
+                                        focusNode: _nameFocusNode,
+                                        optionsBuilder: (TextEditingValue textEditingValue) async {
+                                          if (textEditingValue.text.isEmpty) {
+                                            return const Iterable<SettingAutocompleteInfo>.empty();
+                                          }
+                                          return await ref.read(settingProvider.notifier).searchSettings(textEditingValue.text);
+                                        },
+                                        displayStringForOption: (option) => option.name,
+                                        onSelected: (selection) {
+                                          _nameController.text = selection.name;
+                                        },
+                                        fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                                          return AppTextField(
+                                            controller: controller,
+                                            focusNode: focusNode,
+                                            hint: isCustomer
+                                                ? 'e.g. Critical Tank Level Low'
+                                                : 'e.g. High Pressure Warning',
+                                          );
+                                        },
+                                        optionsViewBuilder: (context, onSelected, options) {
+                                          return Align(
+                                            alignment: Alignment.topLeft,
+                                            child: Material(
+                                              elevation: 4.0,
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: Container(
+                                                width: 670,
+                                                constraints: const BoxConstraints(maxHeight: 250),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                child: ListView.builder(
+                                                  padding: EdgeInsets.zero,
+                                                  shrinkWrap: true,
+                                                  itemCount: options.length,
+                                                  itemBuilder: (context, index) {
+                                                    final option = options.elementAt(index);
+                                                    return ListTile(
+                                                      title: Text(
+                                                        option.name,
+                                                        style: GoogleFonts.inter(
+                                                          fontWeight: FontWeight.w600,
+                                                          fontSize: 13,
+                                                        ),
+                                                      ),
+                                                      subtitle: Text(
+                                                        option.siteName ?? '—',
+                                                        style: GoogleFonts.inter(fontSize: 12),
+                                                      ),
+                                                      onTap: () => onSelected(option),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
                               ),
                               const SizedBox(height: 8),
                               if (isEditMode) ...[
@@ -856,42 +1144,11 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         isSuperOrCompanyAdmin
                                             ? 'TANK'
                                             : 'TANK (OPTIONAL)',
-                                        (isCustomer && isEditMode)
-                                            ? AppTextField(
-                                                readOnly: true,
-                                                controller:
-                                                    TextEditingController(
-                                                      text:
-                                                          _selectedTanks.isNotEmpty
-                                                              ? _selectedTanks.first.tankNumber
-                                                              : 'N/A',
-                                                    ),
-                                                hint: 'Tank Name',
-                                              )
-                                            : AppMultiSelectDropdown<Tank>(
-                                                selectedItems: _selectedTanks,
-                                                items: tanksForSite,
-                                                hint: _selectedSites.isEmpty
-                                                    ? 'Select Site(s) First'
-                                                    : 'Select Tank(s)',
-                                                itemLabel: (t) => t.tankNumber,
-                                                enabled: _selectedSites.isNotEmpty,
-                                                onChanged: (tanks) {
-                                                  setState(() {
-                                                    _selectedTanks = tanks;
-                                                    if (tanks.isNotEmpty) {
-                                                      final t = tanks.first;
-                                                      _deviceIdController.text = t.deviceId ?? '';
-                                                      _simNumberController.text = t.simNumber ?? '';
-                                                      _timeZoneController.text = t.timeZone ?? '';
-                                                      if (t.productId != null && t.productId != 0) {
-                                                        _selectedProduct = _products.where((p) => p.id == t.productId).firstOrNull;
-                                                      }
-                                                      _fetchFullTankDetails(t);
-                                                    }
-                                                  });
-                                                },
-                                              ),
+                                        AppTextField(
+                                          readOnly: true,
+                                          controller: _tankReadOnlyController,
+                                          hint: 'Tank Name',
+                                        ),
                                       ),
                                     ),
                                     if (isSuperOrCompanyAdmin) const Spacer(),
@@ -906,21 +1163,27 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                     Expanded(
                                       child: _buildLabelField(
                                         'COMPANY',
-                                        AppDropdown<CompanyGroup>(
-                                          value: _selectedCompanyGroup,
-                                          items: _companyGroups,
-                                          hint: 'Select Company',
-                                          itemLabel: (cg) {
-                                            final name = cg.name.trim().isNotEmpty ? cg.name.trim() : '(Unnamed Company)';
-                                            final org = cg.organizationCode;
-                                            return (org != null && org.trim().isNotEmpty) ? "$name ($org)" : name;
-                                          },
-                                          onChanged: (cg) => setState(() {
-                                            _selectedCompanyGroup = cg;
-                                            _selectedSites = [];
-                                            _selectedTanks = [];
-                                          }),
-                                        ),
+                                        (isEditMode || isCompanyAdmin)
+                                            ? AppTextField(
+                                                readOnly: true,
+                                                controller: _companyReadOnlyController,
+                                                hint: 'Company Name',
+                                              )
+                                            : AppDropdown<CompanyGroup>(
+                                                value: _selectedCompanyGroup,
+                                                items: _companyGroups,
+                                                hint: 'Select Company',
+                                                itemLabel: (cg) {
+                                                  final name = cg.name.trim().isNotEmpty ? cg.name.trim() : '(Unnamed Company)';
+                                                  final org = cg.organizationCode;
+                                                  return (org != null && org.trim().isNotEmpty) ? "$name ($org)" : name;
+                                                },
+                                                onChanged: (cg) => setState(() {
+                                                  _selectedCompanyGroup = cg;
+                                                  _selectedSites = [];
+                                                  _selectedTanks = [];
+                                                }),
+                                              ),
                                       ),
                                     ),
                                     const SizedBox(width: 24),
@@ -929,22 +1192,28 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                         isSuperOrCompanyAdmin
                                             ? 'SITE'
                                             : 'SITE (OPTIONAL)',
-                                        AppMultiSelectDropdown<Site>(
-                                          selectedItems: _selectedSites,
-                                          items: filteredSites,
-                                          hint: _selectedCompanyGroup == null
-                                              ? 'Select Company First'
-                                              : 'Select Site(s)',
-                                          itemLabel: (s) {
-                                            final loc = s.siteLocation;
-                                            return loc.isNotEmpty ? "${s.name} ($loc)" : s.name;
-                                          },
-                                          enabled: _selectedCompanyGroup != null,
-                                          onChanged: (sites) => setState(() {
-                                            _selectedSites = sites;
-                                            _selectedTanks = [];
-                                          }),
-                                        ),
+                                        isEditMode
+                                            ? AppTextField(
+                                                readOnly: true,
+                                                controller: _siteReadOnlyController,
+                                                hint: 'Site Name',
+                                              )
+                                            : AppMultiSelectDropdown<Site>(
+                                                selectedItems: _selectedSites,
+                                                items: filteredSites,
+                                                hint: _selectedCompanyGroup == null
+                                                    ? 'Select Company First'
+                                                    : 'Select Site(s)',
+                                                itemLabel: (s) {
+                                                  final loc = s.siteLocation;
+                                                  return loc.isNotEmpty ? "${s.name} ($loc)" : s.name;
+                                                },
+                                                enabled: _selectedCompanyGroup != null,
+                                                onChanged: (sites) => setState(() {
+                                                  _selectedSites = sites;
+                                                  _selectedTanks = [];
+                                                }),
+                                              ),
                                       ),
                                     ),
                                   ],
@@ -1080,497 +1349,21 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                               ],
                               const SizedBox(height: 8),
                               const Divider(),
-                              ...List.generate(_rows.length, (index) {
-                                final row = _rows[index];
-                                final showStatusLabel = ![
-                                  'CAL TANK',
-                                  'CAL KILO LITER',
-                                  'SENSOR',
-                                  'SENSOR RATING',
-                                  'MFACTOR',
-                                  'SETBAR',
-                                  'SETCALBAR',
-                                  'CHART DATA',
-                                  'DATA INTERVAL',
-                                ].contains(row.parameterType.toUpperCase().trim());
-
-                                final showMessageTemplate = !isCustomer && ![
-                                  'CAL TANK',
-                                  'CAL KILO LITER',
-                                  'SENSOR',
-                                  'SENSOR RATING',
-                                  'MFACTOR',
-                                  'SETBAR',
-                                  'SETCALBAR',
-                                  'CHART DATA',
-                                  'DATA INTERVAL',
-                                  'TEMPERATURE',
-                                  'FLOW',
-                                ].contains(row.parameterType.toUpperCase().trim());
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (_rows.length > 1) ...[
-                                      const SizedBox(height: 20),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'Configuration Set ${index + 1}',
-                                            style: GoogleFonts.outfit(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w700,
-                                              color: const Color(0xFF141E7A),
-                                            ),
-                                          ),
-                                            TextButton.icon(
-                                              onPressed: () {
-                                                setState(() {
-                                                  row.dispose();
-                                                  _rows.removeAt(index);
-                                                });
-                                              },
-                                              icon: const Icon(
-                                                Icons.remove_circle_outline,
-                                                size: 18,
-                                                color: Colors.red,
-                                              ),
-                                              label: Text(
-                                                'Remove',
-                                                style: GoogleFonts.inter(
-                                                  color: Colors.red,
-                                                  fontSize: 13,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ] else ...[
-                                      const SizedBox(height: 20),
-                                    ],
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 3,
-                                          child: _buildLabelField(
-                                            'PARAMETER TYPE',
-                                            AppDropdown<String>(
-                                              value: row.parameterType,
-                                              items: const [
-                                                'LEVEL',
-                                                'BATTERY',
-                                                'PRESSURE',
-                                                'DATA INTERVAL',
-                                                'SOLAR',
-                                                'DEVICE COMMUNICATE FAILED',
-                                              ],
-                                              hint: 'Select Param',
-                                              itemLabel: (v) => v,
-                                              onChanged: (v) {
-                                                setState(() {
-                                                  final prevType = row
-                                                      .parameterType
-                                                      .toUpperCase()
-                                                      .trim();
-                                                  row.parameterType = v!;
-                                                  final dropdownTypes = ['LEVEL', 'BATTERY', 'PRESSURE'];
-                                                  final currentType = v.toUpperCase().trim();
-                                                  
-                                                  // Reset status label when switching between dropdown types and free-text types,
-                                                  // or between different dropdown types with different allowed values
-                                                  if (prevType != currentType) {
-                                                    if (!dropdownTypes.contains(currentType) || 
-                                                        !dropdownTypes.contains(prevType) ||
-                                                        (prevType == 'LEVEL' && currentType != 'LEVEL') ||
-                                                        (prevType != 'LEVEL' && currentType == 'LEVEL')) {
-                                                      row.statusLabelController.clear();
-                                                    }
-                                                  }
-                                                });
-                                                if (v == 'CHART DATA' &&
-                                                    _selectedTanks.isNotEmpty) {
-                                                  _fetchFullTankDetails(
-                                                    _selectedTanks.first,
-                                                  );
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                        ),
-                                        if (![
-                                          'CAL TANK',
-                                          'CAL KILO LITER',
-                                          'SENSOR',
-                                          'SENSOR RATING',
-                                          'MFACTOR',
-                                          'SETBAR',
-                                          'SETCALBAR',
-                                          'CHART DATA',
-                                          'DATA INTERVAL',
-                                        ].contains(
-                                          row.parameterType
-                                              .toUpperCase()
-                                              .trim(),
-                                        )) ...[
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            flex: 2,
-                                            child: _buildLabelField(
-                                              'CONDITION',
-                                              AppDropdown<String>(
-                                                value: row.conditionType,
-                                                items: const [
-                                                  '<',
-                                                  '>',
-                                                  '<=',
-                                                  '>=',
-                                                  '==',
-                                                  '!=',
-                                                  'BETWEEN',
-                                                ],
-                                                hint: 'Select Type',
-                                                itemLabel: (v) => v,
-                                                onChanged: (v) => setState(
-                                                  () => row.conditionType = v!,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 2,
-                                          child: _buildLabelField(
-                                            (row.parameterType
-                                                            .toUpperCase()
-                                                            .trim() ==
-                                                        'SENSOR' ||
-                                                    row.parameterType
-                                                            .toUpperCase()
-                                                            .trim() ==
-                                                        'SENSOR RATING')
-                                                ? 'SENSOR RATING'
-                                                : (row.parameterType
-                                                              .toUpperCase()
-                                                              .trim() ==
-                                                          'BATTERY' ||
-                                                      row.parameterType
-                                                              .toUpperCase()
-                                                              .trim() ==
-                                                          'SOLAR')
-                                                ? 'VOLTAGE'
-                                                : (row.parameterType.toUpperCase().trim() == 'DATA INTERVAL')
-                                                    ? 'Minutes'
-                                                    : (row.parameterType.toUpperCase().trim() == 'DEVICE COMMUNICATE FAILED')
-                                                        ? 'Minutes'
-                                                    : ([
-                                                        'CAL TANK',
-                                                        'CAL KILO LITER',
-                                                        'MFACTOR',
-                                                        'SETBAR',
-                                                        'SETCALBAR',
-                                                      ].contains(
-                                                        row.parameterType
-                                                            .toUpperCase()
-                                                            .trim(),
-                                                      ))
-                                                        ? '${row.parameterType} 1'
-                                                        : (row.parameterType.toUpperCase().trim() == 'CHART DATA')
-                                                            ? 'Field 1'
-                                                            : (row.conditionType ==
-                                                                      'BETWEEN'
-                                                                  ? 'MIN THRESHOLD'
-                                                                  : 'THRESHOLD VALUE'),
-                                            row.parameterType
-                                                        .toUpperCase()
-                                                        .trim() ==
-                                                    'CHART DATA'
-                                                ? AppMultiSelectDropdown<
-                                                    StrappingPoint
-                                                  >(
-                                                    selectedItems:
-                                                        row.selectedPoints,
-                                                    items:
-                                                        _selectedTanks.firstOrNull
-                                                            ?.strappingPoints ??
-                                                        [],
-                                                    hint: _selectedTanks.isEmpty
-                                                        ? 'Select Tank First'
-                                                        : (_selectedTanks.first
-                                                                      .strappingPoints ==
-                                                                  null ||
-                                                              _selectedTanks.first
-                                                                  .strappingPoints!
-                                                                  .isEmpty)
-                                                        ? 'No Points Available'
-                                                        : 'Select Point(s)',
-                                                    itemLabel: (p) =>
-                                                        'L: ${p.levelMm} | V: ${p.volumeM3}',
-                                                    onChanged: (list) {
-                                                      setState(() {
-                                                        row.selectedPoints =
-                                                            list;
-                                                        row
-                                                            .threshold1Controller
-                                                            .text = list
-                                                            .map(
-                                                              (p) => p.levelMm,
-                                                            )
-                                                            .join(',');
-                                                        row
-                                                            .threshold2Controller
-                                                            .text = list
-                                                            .map(
-                                                              (p) => p.volumeM3,
-                                                            )
-                                                            .join(',');
-                                                      });
-                                                    },
-                                                  )
-                                                : AppTextField(
-                                                    controller: row
-                                                        .threshold1Controller,
-                                                    hint: 'Value',
-                                                    keyboardType:
-                                                        const TextInputType.numberWithOptions(
-                                                          decimal: true,
-                                                        ),
-                                                  ),
-                                          ),
-                                        ),
-                                        if (row.conditionType == 'BETWEEN' ||
-                                            [
-                                              'CAL TANK',
-                                              'CAL KILO LITER',
-                                              'SENSOR',
-                                              'SENSOR RATING',
-                                              'MFACTOR',
-                                            ].contains(
-                                              row.parameterType
-                                                  .toUpperCase()
-                                                  .trim(),
-                                            )) ...[
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            flex: 2,
-                                            child: _buildLabelField(
-                                              (row.parameterType
-                                                              .toUpperCase()
-                                                              .trim() ==
-                                                          'SENSOR' ||
-                                                      row.parameterType
-                                                              .toUpperCase()
-                                                              .trim() ==
-                                                          'SENSOR RATING')
-                                                  ? 'CUBIC METER'
-                                                  : (row.parameterType.toUpperCase().trim() == 'DATA INTERVAL')
-                                                      ? 'Seconds'
-                                                      : ([
-                                                          'CAL TANK',
-                                                          'CAL KILO LITER',
-                                                          'MFACTOR',
-                                                        ].contains(
-                                                          row.parameterType
-                                                              .toUpperCase()
-                                                              .trim(),
-                                                        ))
-                                                          ? '${row.parameterType} 2'
-                                                          : 'MAX THRESHOLD',
-                                              AppTextField(
-                                                controller:
-                                                    row.threshold2Controller,
-                                                hint: 'Value',
-                                                readOnly:
-                                                    row.parameterType
-                                                        .toUpperCase()
-                                                        .trim() ==
-                                                    'CHART DATA',
-                                                keyboardType:
-                                                    const TextInputType.numberWithOptions(
-                                                      decimal: true,
-                                                    ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                        if (row.parameterType
-                                                .toUpperCase()
-                                                .trim() ==
-                                            'MFACTOR') ...[
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            flex: 2,
-                                            child: _buildLabelField(
-                                              '${row.parameterType} 3',
-                                              AppTextField(
-                                                controller:
-                                                    row.threshold3Controller,
-                                                hint: 'Value',
-                                                keyboardType:
-                                                    const TextInputType.numberWithOptions(
-                                                      decimal: true,
-                                                    ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                    if (showStatusLabel || showMessageTemplate) ...[
-                                      const SizedBox(height: 20),
-                                      Row(
-                                        children: [
-                                          if (showStatusLabel)
-                                            Expanded(
-                                              flex: 2,
-                                              child: _buildLabelField(
-                                                'STATUS LABEL (UI DISPLAY)',
-                                                ([
-                                                  'LEVEL',
-                                                  'BATTERY',
-                                                  'PRESSURE',
-                                                  'SOLAR'
-                                                ].contains(row.parameterType
-                                                        .toUpperCase()
-                                                        .trim()))
-                                                    ? AppDropdown<String>(
-                                                        value: () {
-                                                          const allowed = [
-                                                            'ReOrder',
-                                                            'Critical',
-                                                            'Low',
-                                                            'High',
-                                                          ];
-                                                          final current = row
-                                                              .statusLabelController
-                                                              .text;
-                                                          if (allowed.contains(
-                                                            current,
-                                                          )) return current;
-                                                          // Mapping existing values to prevent crash
-                                                          final upper = current
-                                                              .toUpperCase();
-                                                          if (upper ==
-                                                              'REORDER')
-                                                            return 'ReOrder';
-                                                          if (upper ==
-                                                              'CRITICAL')
-                                                            return 'Critical';
-                                                          if (upper.contains(
-                                                            'LOW',
-                                                          )) return 'Low';
-                                                          if (upper.contains(
-                                                            'HIGH',
-                                                          )) return 'High';
-                                                          return null;
-                                                        }(),
-                                                        items: ([
-                                                          'BATTERY',
-                                                          'PRESSURE',
-                                                          'SOLAR'
-                                                        ].contains(row
-                                                                .parameterType
-                                                                .toUpperCase()
-                                                                .trim()))
-                                                            ? const [
-                                                                'Critical',
-                                                                'Low',
-                                                                'High',
-                                                              ]
-                                                            : const [
-                                                                'ReOrder',
-                                                                'Critical',
-                                                                'Low',
-                                                                'High',
-                                                              ],
-                                                        hint: 'Select Label',
-                                                        itemLabel: (v) => v,
-                                                        onChanged: (v) => setState(
-                                                          () => row
-                                                                  .statusLabelController
-                                                                  .text =
-                                                              v ?? '',
-                                                        ),
-                                                      )
-                                                    : AppTextField(
-                                                        controller: row
-                                                            .statusLabelController,
-                                                        hint: 'e.g. LOW LEVEL',
-                                                      ),
-                                              ),
-                                            ),
-                                          if (showStatusLabel && showMessageTemplate)
-                                            const SizedBox(width: 16),
-                                          if (showMessageTemplate)
-                                            Expanded(
-                                              flex: 2,
-                                              child: _buildLabelField(
-                                                'MESSAGE TEMPLATE TO TRIGGER',
-                                                AppDropdown<MessageTemplate>(
-                                                  value: row.selectedTemplate,
-                                                  items: _templates,
-                                                  hint: 'Select Template',
-                                                  itemLabel: (t) => t.name,
-                                                  onChanged: (t) => setState(
-                                                    () =>
-                                                        row.selectedTemplate = t,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          if (showStatusLabel != showMessageTemplate) ...[
-                                            const SizedBox(width: 16),
-                                            const Spacer(flex: 2),
-                                          ],
-                                        ],
-                                      ),
-                                    ],
-                                    if (index < _rows.length - 1)
-                                      const Divider(height: 32),
-                                  ],
-                                );
-                              }),
-                              const SizedBox(height: 24),
-                              OutlinedButton.icon(
-                                onPressed: () => setState(
-                                  () => _rows.add(SettingRowData()),
-                                ),
-                                icon: const Icon(
-                                  Icons.add_circle_outline,
-                                  color: Color(0xFF141E7A),
-                                ),
-                                label: Text(
-                                  'ADD ANOTHER CONFIGURATION',
-                                  style: GoogleFonts.outfit(
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF141E7A),
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: Color(0xFF141E7A),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                    horizontal: 20,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                              ),
+                              ...displayParams.map((param) {
+                                final paramRows = _rows
+                                    .where((row) =>
+                                        row.parameterType.toUpperCase().trim() ==
+                                        param.toUpperCase().trim())
+                                    .toList();
+                                return _buildParamSection(
+                                    param, paramRows, isCustomer);
+                              }).toList(),
                               const SizedBox(height: 32),
                               _buildStatusSection(),
                               const SizedBox(height: 32),
                               Row(
                                 children: [
-                                  if (canSendToDevice && !isEditMode && _rows.isNotEmpty && _rows[0].parameterType.toUpperCase().trim() == 'DATA INTERVAL') ...[
+                                  if (canSendToDevice && !isEditMode && hasActiveDataInterval) ...[
                                     Expanded(
                                       child: SizedBox(
                                         height: 56,
@@ -1605,8 +1398,7 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                             (isCustomer &&
                                                 canSendToDevice &&
                                                 isEditMode &&
-                                                _rows.isNotEmpty &&
-                                                _rows[0].parameterType.toUpperCase().trim() == 'DATA INTERVAL')
+                                                hasActiveDataInterval)
                                             ? _sendToDevice
                                             : _save,
                                         style: ElevatedButton.styleFrom(
@@ -1620,21 +1412,16 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
                                           ),
                                           elevation: 0,
                                         ),
-                                          child: Text(
-                                            isEditMode
-                                                ? (isCustomer
-                                                      ? 'SEND DEVICE'
-                                                      : 'UPDATE RULE')
-                                                : (isCustomer
-                                                      ? (_rows.isNotEmpty &&
-                                                              _rows[0]
-                                                                      .parameterType
-                                                                      .toUpperCase()
-                                                                      .trim() ==
-                                                                  'DEVICE COMMUNICATE FAILED'
-                                                          ? 'CREATE SETTING'
-                                                          : 'SEND DEVICE')
-                                                      : 'CREATE RULE'),
+                                        child: Text(
+                                          isEditMode
+                                              ? (isCustomer
+                                                    ? 'SEND DEVICE'
+                                                    : 'UPDATE RULE')
+                                              : (isCustomer
+                                                    ? (hasActiveDeviceCommFailed
+                                                        ? 'CREATE SETTING'
+                                                        : 'SEND DEVICE')
+                                                    : 'CREATE RULE'),
                                           style: GoogleFonts.outfit(
                                             fontWeight: FontWeight.w700,
                                             fontSize: 16,
@@ -1714,6 +1501,429 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     );
   }
 
+  bool _showThreshold2(SettingRowData row) {
+    return row.conditionType == 'BETWEEN' ||
+        [
+          'CAL TANK',
+          'CAL KILO LITER',
+          'SENSOR',
+          'SENSOR RATING',
+          'MFACTOR',
+        ].contains(row.parameterType.toUpperCase().trim());
+  }
+
+  bool _showThreshold3(SettingRowData row) {
+    return row.parameterType.toUpperCase().trim() == 'MFACTOR';
+  }
+
+  String _getThresholdLabel(SettingRowData row) {
+    final param = row.parameterType.toUpperCase().trim();
+    if (param == 'SENSOR' || param == 'SENSOR RATING') {
+      return 'SENSOR RATING';
+    }
+    if (param == 'BATTERY' || param == 'SOLAR') {
+      return 'VOLTAGE';
+    }
+    if (param == 'DATA INTERVAL' || param == 'DEVICE COMMUNICATE FAILED') {
+      return 'Minutes';
+    }
+    if ([
+      'CAL TANK',
+      'CAL KILO LITER',
+      'MFACTOR',
+      'SETBAR',
+      'SETCALBAR',
+    ].contains(param)) {
+      return '${row.parameterType} 1';
+    }
+    if (param == 'CHART DATA') {
+      return 'Field 1';
+    }
+    return row.conditionType == 'BETWEEN' ? 'MIN THRESHOLD' : 'THRESHOLD VALUE';
+  }
+
+  String _getThreshold2Label(SettingRowData row) {
+    final param = row.parameterType.toUpperCase().trim();
+    if (param == 'SENSOR' || param == 'SENSOR RATING') {
+      return 'CUBIC METER';
+    }
+    if (param == 'DATA INTERVAL') {
+      return 'Seconds';
+    }
+    if ([
+      'CAL TANK',
+      'CAL KILO LITER',
+      'MFACTOR',
+    ].contains(param)) {
+      return '${row.parameterType} 2';
+    }
+    return 'MAX THRESHOLD';
+  }
+
+  Widget _buildThresholdField(SettingRowData row) {
+    if (row.parameterType.toUpperCase().trim() == 'CHART DATA') {
+      return AppMultiSelectDropdown<StrappingPoint>(
+        selectedItems: row.selectedPoints,
+        items: _selectedTanks.firstOrNull?.strappingPoints ?? [],
+        hint: _selectedTanks.isEmpty
+            ? 'Select Tank First'
+            : (_selectedTanks.first.strappingPoints == null ||
+                    _selectedTanks.first.strappingPoints!.isEmpty)
+                ? 'No Points Available'
+                : 'Select Point(s)',
+        itemLabel: (p) => 'L: ${p.levelMm} | V: ${p.volumeM3}',
+        onChanged: (list) {
+          setState(() {
+            row.selectedPoints = list;
+            row.threshold1Controller.text = list.map((p) => p.levelMm).join(',');
+            row.threshold2Controller.text = list.map((p) => p.volumeM3).join(',');
+          });
+        },
+      );
+    }
+    return AppTextField(
+      controller: row.threshold1Controller,
+      hint: 'Value',
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    );
+  }
+
+  Widget _buildThreshold2Field(SettingRowData row) {
+    return AppTextField(
+      controller: row.threshold2Controller,
+      hint: 'Value',
+      readOnly: row.parameterType.toUpperCase().trim() == 'CHART DATA',
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    );
+  }
+
+  Widget _buildThreshold3Field(SettingRowData row) {
+    return AppTextField(
+      controller: row.threshold3Controller,
+      hint: 'Value',
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    );
+  }
+
+  Widget _buildStatusLabelAndTemplate(SettingRowData row, bool isCustomer) {
+    final showStatusLabel = ![
+      'CAL TANK',
+      'CAL KILO LITER',
+      'SENSOR',
+      'SENSOR RATING',
+      'MFACTOR',
+      'SETBAR',
+      'SETCALBAR',
+      'CHART DATA',
+      'DATA INTERVAL',
+    ].contains(row.parameterType.toUpperCase().trim());
+
+    final showMessageTemplate = !isCustomer && ![
+      'CAL TANK',
+      'CAL KILO LITER',
+      'SENSOR',
+      'SENSOR RATING',
+      'MFACTOR',
+      'SETBAR',
+      'SETCALBAR',
+      'CHART DATA',
+      'DATA INTERVAL',
+      'TEMPERATURE',
+      'FLOW',
+    ].contains(row.parameterType.toUpperCase().trim());
+
+    if (!showStatusLabel && !showMessageTemplate) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Row(
+        children: [
+          if (showStatusLabel)
+            Expanded(
+              child: _buildLabelField(
+                'STATUS LABEL (UI DISPLAY)',
+                ([
+                  'LEVEL',
+                  'BATTERY',
+                  'PRESSURE',
+                  'SOLAR'
+                ].contains(row.parameterType.toUpperCase().trim()))
+                    ? AppDropdown<String>(
+                        value: () {
+                          const allowed = [
+                            'ReOrder',
+                            'Critical',
+                            'Low',
+                            'High',
+                          ];
+                          final current = row.statusLabelController.text;
+                          if (allowed.contains(current)) return current;
+                          final upper = current.toUpperCase();
+                          if (upper == 'REORDER') return 'ReOrder';
+                          if (upper == 'CRITICAL') return 'Critical';
+                          if (upper.contains('LOW')) return 'Low';
+                          if (upper.contains('HIGH')) return 'High';
+                          return null;
+                        }(),
+                        items: ([
+                          'BATTERY',
+                          'PRESSURE',
+                          'SOLAR'
+                        ].contains(row.parameterType.toUpperCase().trim()))
+                            ? const [
+                                'Critical',
+                                'Low',
+                                'High',
+                              ]
+                            : const [
+                                'ReOrder',
+                                'Critical',
+                                'Low',
+                                'High',
+                              ],
+                        hint: 'Select Label',
+                        itemLabel: (v) => v,
+                        onChanged: (v) => setState(
+                          () => row.statusLabelController.text = v ?? '',
+                        ),
+                      )
+                    : AppTextField(
+                        controller: row.statusLabelController,
+                        hint: 'e.g. LOW LEVEL',
+                      ),
+              ),
+            ),
+          if (showStatusLabel && showMessageTemplate)
+            const SizedBox(width: 16),
+          if (showMessageTemplate)
+            Expanded(
+              child: _buildLabelField(
+                'MESSAGE TEMPLATE TO TRIGGER',
+                AppDropdown<MessageTemplate>(
+                  value: row.selectedTemplate,
+                  items: _templates,
+                  hint: 'Select Template',
+                  itemLabel: (t) => t.name,
+                  onChanged: (t) => setState(
+                    () => row.selectedTemplate = t,
+                  ),
+                ),
+              ),
+            ),
+          if (showStatusLabel != showMessageTemplate)
+            const Expanded(child: SizedBox.shrink()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRowContainer(SettingRowData row, List<SettingRowData> paramRows, int index, bool isCustomer) {
+    final bool showCondition = ![
+      'CAL TANK',
+      'CAL KILO LITER',
+      'SENSOR',
+      'SENSOR RATING',
+      'MFACTOR',
+      'SETBAR',
+      'SETCALBAR',
+      'CHART DATA',
+      'DATA INTERVAL',
+    ].contains(row.parameterType.toUpperCase().trim());
+
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (paramRows.length > 1)
+            Align(
+              alignment: Alignment.topRight,
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    row.dispose();
+                    _rows.remove(row);
+                  });
+                },
+                icon: const Icon(
+                  Icons.remove_circle_outline,
+                  size: 16,
+                  color: Colors.red,
+                ),
+                label: Text(
+                  'Remove Condition',
+                  style: GoogleFonts.inter(
+                    color: Colors.red,
+                    fontSize: 12,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
+          if (paramRows.length > 1) const SizedBox(height: 8),
+          
+          if (showCondition)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: _buildLabelField(
+                    'CONDITION',
+                    AppDropdown<String>(
+                      value: row.conditionType,
+                      items: const [
+                        '<',
+                        '>',
+                        '<=',
+                        '>=',
+                        '==',
+                        '!=',
+                        'BETWEEN',
+                      ],
+                      hint: 'Select Type',
+                      itemLabel: (v) => v,
+                      onChanged: (v) => setState(() => row.conditionType = v!),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 3,
+                  child: _buildLabelField(
+                    _getThresholdLabel(row),
+                    _buildThresholdField(row),
+                  ),
+                ),
+                if (_showThreshold2(row)) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 3,
+                    child: _buildLabelField(
+                      _getThreshold2Label(row),
+                      _buildThreshold2Field(row),
+                    ),
+                  ),
+                ],
+                if (_showThreshold3(row)) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 3,
+                    child: _buildLabelField(
+                      '${row.parameterType} 3',
+                      _buildThreshold3Field(row),
+                    ),
+                  ),
+                ],
+              ],
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildLabelField(
+                    _getThresholdLabel(row),
+                    _buildThresholdField(row),
+                  ),
+                ),
+                if (_showThreshold2(row)) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildLabelField(
+                      _getThreshold2Label(row),
+                      _buildThreshold2Field(row),
+                    ),
+                  ),
+                ],
+                if (_showThreshold3(row)) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildLabelField(
+                      '${row.parameterType} 3',
+                      _buildThreshold3Field(row),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            
+          _buildStatusLabelAndTemplate(row, isCustomer),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParamSection(String param, List<SettingRowData> paramRows, bool isCustomer) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            '${param.toUpperCase()} CONFIGURATION',
+            style: GoogleFonts.outfit(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF141E7A),
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
+        ...paramRows.asMap().entries.map((entry) {
+          return _buildRowContainer(entry.value, paramRows, entry.key, isCustomer);
+        }).toList(),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: () => setState(() {
+            _rows.add(SettingRowData(
+              parameterType: param,
+              conditionType: '<',
+            ));
+          }),
+          icon: const Icon(
+            Icons.add_circle_outline,
+            color: Color(0xFF141E7A),
+            size: 16,
+          ),
+          label: Text(
+            'ADD ANOTHER CONFIGURATION',
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: const Color(0xFF141E7A),
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Color(0xFF141E7A)),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -1721,6 +1931,10 @@ class _AddSettingModalState extends ConsumerState<AddSettingModal> {
     _deviceIdController.dispose();
     _simNumberController.dispose();
     _timeZoneController.dispose();
+    _companyReadOnlyController.dispose();
+    _siteReadOnlyController.dispose();
+    _tankReadOnlyController.dispose();
+    _nameFocusNode.dispose();
     for (var row in _rows) {
       row.dispose();
     }
