@@ -99,21 +99,40 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
 
       final mqttApi = MqttApi(apiClient);
 
+      final deviceIds = response.data
+          .expand((tg) => tg.tanks)
+          .map((t) => t.deviceId ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+
+      final historyResults = await Future.wait(
+        deviceIds.map((id) => mqttApi.getDeviceHistory(id, days: 14).catchError((e) {
+          print('Error fetching history for $id: $e');
+          return <String, dynamic>{'history': [], 'last_100_date': null};
+        })),
+      );
+
+      final Map<String, Map<String, dynamic>> deviceHistoryMap = {};
+      for (int i = 0; i < deviceIds.length; i++) {
+        deviceHistoryMap[deviceIds[i]] = historyResults[i];
+      }
+
       for (final tankGroup in response.data) {
         for (final tank in tankGroup.tanks) {
           final deviceId = tank.deviceId ?? '';
           
           List<Map<String, dynamic>> deviceHistory = [];
           DateTime? last100Date;
-          if (deviceId.isNotEmpty) {
+          if (deviceId.isNotEmpty && deviceHistoryMap.containsKey(deviceId)) {
             try {
-              final historyData = await mqttApi.getDeviceHistory(deviceId, days: 14);
+              final historyData = deviceHistoryMap[deviceId]!;
               deviceHistory = (historyData['history'] as List).cast<Map<String, dynamic>>();
               if (historyData['last_100_date'] != null) {
                 last100Date = DateTime.parse(historyData['last_100_date'] as String).toLocal();
               }
             } catch (e) {
-              print('Error fetching history for $deviceId: $e');
+              print('Error parsing history for $deviceId: $e');
             }
           }
 
@@ -130,10 +149,8 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
               ? now.add(Duration(days: max(1, daysToRunout - 2), hours: 9))
               : null);
 
-          final forecasts = List.generate(14, (index) {
-            final date = now.add(Duration(days: index));
-            final dateStr = date.toIso8601String().split('T')[0];
-
+          final forecasts = List.generate(8, (index) {
+            final date = now.subtract(Duration(days: 7 - index));
             // Robust date comparison: compare YYYY-MM-DD strings
             final targetDateStr = date.toIso8601String().split('T')[0];
             
@@ -148,21 +165,29 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
 
             double? levelVal;
             double? batteryVal;
+            double? pressureVal;
+            double? solarVal;
 
             if (historyRecord != null) {
               final payload = historyRecord['payload'] as Map<String, dynamic>;
-              levelVal = (payload['TNP'] ?? 0.0).toDouble();
-              batteryVal = (payload['BAT'] ?? 0.0).toDouble();
+              levelVal = payload['TNP'] != null ? (payload['TNP'] as num).toDouble() : null;
+              batteryVal = payload['BAT'] != null ? (payload['BAT'] as num).toDouble() : null;
+              pressureVal = payload['PTN'] != null ? (payload['PTN'] as num).toDouble() : null;
+              solarVal = payload['SOL'] != null ? (payload['SOL'] as num).toDouble() : null;
             } else {
               // No real data for this day - set to null to show "--"
               levelVal = null;
               batteryVal = null;
+              pressureVal = null;
+              solarVal = null;
             }
             
             return AssetScheduleForecast(
               date: date,
               value: levelVal,
               batteryValue: batteryVal,
+              pressureValue: pressureVal,
+              solarValue: solarVal,
               status: (levelVal ?? 100) < 20
                   ? 'critical'
                   : ((levelVal ?? 100) < 40 ? 'warning' : 'normal'),

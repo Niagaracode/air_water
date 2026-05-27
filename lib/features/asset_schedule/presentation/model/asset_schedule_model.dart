@@ -2,12 +2,16 @@ class AssetScheduleForecast {
   final DateTime date;
   final double? value; // Level %
   final double? batteryValue; // Battery V
+  final double? pressureValue; // Pressure (bar)
+  final double? solarValue; // Solar V
   final String status; // 'normal', 'warning', 'critical'
 
   AssetScheduleForecast({
     required this.date,
     this.value,
     this.batteryValue,
+    this.pressureValue,
+    this.solarValue,
     required this.status,
   });
 }

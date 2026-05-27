@@ -57,10 +57,10 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
     }
     final List<String> groupKeys = groupedSchedules.keys.toList();
 
-    // Prepare day headers for forecast (14 days)
-    final now = DateTime.now();
-    final List<String> dayHeaders = List.generate(14, (index) {
-      final date = now.add(Duration(days: index));
+    // Prepare day headers for forecast (8 days)
+    final now = state.startDate ?? DateTime.now();
+    final List<String> dayHeaders = List.generate(8, (index) {
+      final date = now.subtract(Duration(days: 7 - index));
       return '${DateFormat('EEE').format(date).toUpperCase()} ${DateFormat('M/d').format(date)}';
     });
 
@@ -68,7 +68,7 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
       builder: (context, constraints) {
         // Calculate widths
         const double staticWidth = 70 + 150 + 180 + 150 + 150;
-        final double forecastWidth = dayHeaders.length * 80.0;
+        final double forecastWidth = dayHeaders.length * 90.0;
         // Include 32px for horizontal padding (16 left + 16 right)
         final double totalWidth = staticWidth + forecastWidth + 40;
 
@@ -136,7 +136,7 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
           const AppTableHeaderCell('SCHEDULE REFILL', width: 150),
           const AppTableHeaderCell('RUNOUT DATE', width: 150),
           // Day Headers
-          ...dayHeaders.map((h) => AppTableHeaderCell(h, width: 80)),
+          ...dayHeaders.map((h) => AppTableHeaderCell(h, width: 90)),
         ],
       ),
     );
@@ -320,7 +320,7 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
           // Forecast Cells
           ...schedule.forecast.map(
             (f) =>
-                AppTableCell(null, width: 80, child: _buildForecastCell(f)),
+                AppTableCell(null, width: 90, child: _buildForecastCell(f)),
           ),
         ],
       ),
@@ -328,60 +328,91 @@ class _AssetScheduleProTableState extends ConsumerState<AssetScheduleProTable> {
   }
 
   Widget _buildForecastCell(AssetScheduleForecast forecast) {
-    Color barColor = const Color(0xFF10B981); // Emerald 500 (Green - Full)
+    Color levelColor = const Color(0xFF10B981); // Green
     if (forecast.status == 'critical') {
-      barColor = const Color(0xFFEF4444); // Red 500 (Red - Empty)
+      levelColor = const Color(0xFFEF4444); // Red
     } else if (forecast.status == 'warning') {
-      barColor = const Color(0xFFF59E0B); // Amber 500 (Yellow - Warning)
+      levelColor = const Color(0xFFF59E0B); // Amber
     }
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          forecast.value != null ? '${forecast.value!.toStringAsFixed(0)}%' : '--',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF111827),
+    final labelStyle = GoogleFonts.inter(
+      fontSize: 8,
+      fontWeight: FontWeight.bold,
+      color: const Color(0xFF9CA3AF),
+    );
+    
+    final valueStyle = GoogleFonts.inter(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      color: const Color(0xFF1F2937),
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Row 1: LVL & BAT
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // LVL
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('LVL', style: labelStyle),
+                  Text(
+                    forecast.value != null ? '${forecast.value!.toStringAsFixed(0)}%' : '--',
+                    style: valueStyle.copyWith(
+                      color: forecast.value != null ? levelColor : const Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ],
+              ),
+              // BAT
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('BAT', style: labelStyle),
+                  Text(
+                    forecast.batteryValue != null ? '${forecast.batteryValue!.toStringAsFixed(1)}V' : '--',
+                    style: valueStyle,
+                  ),
+                ],
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 3),
-        // Level Bar
-        Container(
-          width: 50,
-          height: 2.5,
-          decoration: BoxDecoration(
-            color: forecast.value != null ? barColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(2),
+          const SizedBox(height: 6),
+          // Row 2: PRS & SOL
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // PRS (Pressure)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('PRS', style: labelStyle),
+                  Text(
+                    forecast.pressureValue != null ? '${forecast.pressureValue!.toStringAsFixed(1)}b' : '--',
+                    style: valueStyle,
+                  ),
+                ],
+              ),
+              // SOL (Solar)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('SOL', style: labelStyle),
+                  Text(
+                    forecast.solarValue != null ? '${forecast.solarValue!.toStringAsFixed(1)}V' : '--',
+                    style: valueStyle,
+                  ),
+                ],
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          forecast.batteryValue != null ? '${forecast.batteryValue!.toStringAsFixed(1)}V' : '--V',
-          style: GoogleFonts.inter(
-            fontSize: 10,
-            color: const Color(0xFF6B7280),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 2),
-        // Battery Bar
-        Container(
-          width: 50,
-          height: 2.5,
-          decoration: BoxDecoration(
-            color: forecast.batteryValue != null
-                ? (forecast.batteryValue! > 3.3
-                    ? const Color(0xFF10B981) // Green
-                    : (forecast.batteryValue! > 0.1
-                        ? const Color(0xFFF59E0B) // Orange/Intermediate
-                        : const Color(0xFFEF4444))) // Red/Low
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

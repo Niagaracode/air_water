@@ -6,7 +6,7 @@ class MqttApi {
   MqttApi(this._client);
 
   Future<Map<String, dynamic>> getDeviceHistory(String deviceId, {int days = 14}) async {
-    final response = await _client.get('/mqtt/history', query: {
+    final response = await _client.get('/mqtt/schedule-history', query: {
       'device_id': deviceId,
       'days': days,
     });
