@@ -12,6 +12,7 @@ import '../../../user/presentation/model/user_model.dart';
 
 // Shared
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_dropdown.dart';
 
 class AddRosterGroupModal extends ConsumerStatefulWidget {
   const AddRosterGroupModal({super.key});
@@ -31,6 +32,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
   bool _isActive = true;
   CompanyAutocomplete? _selectedCompany;
   SiteAutocompleteInfo? _selectedSite;
+  String? _selectedParameter = 'LEVEL';
 
   @override
   void initState() {
@@ -90,15 +92,28 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
       displayInTree: _isActive,
       status: _isActive ? 1 : 0,
       domain: 'ROSTER',
-      criteria: _selectedSite != null
-          ? [
-              AssetCriteria(
-                parameter: 'Site Name',
-                logic: '=',
-                value: _selectedSite!.siteName,
-              ),
-            ]
-          : const [],
+      siteId: _selectedSite?.siteId,
+      parameterName: _selectedParameter,
+      criteria: [
+        if (_selectedSite != null) ...[
+          AssetCriteria(
+            parameter: 'Site Name',
+            logic: '=',
+            value: _selectedSite!.siteName,
+          ),
+          AssetCriteria(
+            parameter: 'site_id',
+            logic: '=',
+            value: _selectedSite!.siteId.toString(),
+          ),
+        ],
+        if (_selectedParameter != null)
+          AssetCriteria(
+            parameter: 'Parameter',
+            logic: '=',
+            value: _selectedParameter!,
+          ),
+      ],
       companyId: _selectedCompany?.id ?? currentUser.companyId,
     );
 
@@ -219,12 +234,17 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                             _buildCompanyAutocomplete(),
                           ),
                           const SizedBox(height: 32),
-                          _buildLabelField(
-                            'SITE',
-                            _buildSiteAutocomplete(),
-                          ),
-                          const SizedBox(height: 32),
                         ],
+                        _buildLabelField(
+                          'SITE',
+                          _buildSiteAutocomplete(),
+                        ),
+                        const SizedBox(height: 32),
+                        _buildLabelField(
+                          'PARAMETER',
+                          _buildParameterDropdown(),
+                        ),
+                        const SizedBox(height: 32),
 
                         // Status Toggle
                         _buildStatusToggle(),
@@ -443,6 +463,22 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildParameterDropdown() {
+    return AppDropdown<String>(
+      value: _selectedParameter,
+      items: const ['LEVEL', 'BATTERY', 'PRESSURE', 'DEVICE COMMUNICATE FAILED'],
+      hint: 'Select Parameter',
+      itemLabel: (p) => p,
+      onChanged: (v) {
+        if (v != null) {
+          setState(() {
+            _selectedParameter = v;
+          });
+        }
+      },
     );
   }
 }

@@ -38,6 +38,9 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
   @override
   void initState() {
     super.initState();
+    Future.microtask(() {
+      ref.read(rosterGroupProvider.notifier).loadGroups();
+    });
   }
 
   Future<void> _selectGroup(AssetGroupModel group) async {
@@ -104,9 +107,10 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
 
       if (mounted) {
         setState(() {
+          _selectedGroup = detail;
           _groupUsers = users;
           _loadingUsers = false;
-          _parameter = savedParam;
+          _parameter = (savedParam != 'LEVEL') ? savedParam : (detail.parameterName ?? 'LEVEL');
           _selectedRosterIds = rosterIds;
           for (final u in users) {
             _userConfigs[u.userId] =
@@ -132,6 +136,16 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
 
     final notifier = ref.read(roasterNotifierProvider.notifier);
 
+    int? siteId;
+    if (_selectedGroup != null) {
+      for (final criterion in _selectedGroup!.criteria) {
+        if (criterion.parameter == 'site_id') {
+          siteId = int.tryParse(criterion.value);
+          break;
+        }
+      }
+    }
+
     // Create one roster per selected user
     int created = 0;
     for (final cfg in enabledUsers) {
@@ -141,6 +155,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         'enabled': 1,
         'parameter_name': _parameter,
         if (_selectedGroup!.companyId != null) 'company_id': _selectedGroup!.companyId,
+        if (siteId != null) 'site_id': siteId,
         'members': [
           {
             'user_id': cfg.userId,
@@ -149,6 +164,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
             'email_to_phone': cfg.sms ? 1 : 0,
             'enabled': cfg.enabled ? 1 : 0,
             'parameter_name': _parameter,
+            if (siteId != null) 'site_id': siteId,
           },
         ],
       };
@@ -537,15 +553,31 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
               ),
             Expanded(
               flex: 2,
-              child: Text(
-                group.name,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected
-                      ? const Color(0xFF141E7A)
-                      : const Color(0xFF1F2937),
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    group.name,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? const Color(0xFF141E7A)
+                          : const Color(0xFF1F2937),
+                    ),
+                  ),
+                  if (group.criteria.any((c) => c.parameter == 'Site Name'))
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Site: ${group.criteria.firstWhere((c) => c.parameter == 'Site Name').value}',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             Expanded(
@@ -634,13 +666,36 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _selectedGroup!.name,
-                        style: GoogleFonts.outfit(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            _selectedGroup!.name,
+                            style: GoogleFonts.outfit(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (_selectedGroup!.criteria.any((c) => c.parameter == 'Site Name')) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                _selectedGroup!.criteria.firstWhere((c) => c.parameter == 'Site Name').value,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -671,29 +726,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
             ),
           ),
 
-          // Parameter + Template row
-          // Parameter row
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildPanelField(
-                    label: 'PARAMETER',
-                    child: AppDropdown<String>(
-                      value: _parameter,
-                      items: _kParameters,
-                      hint: 'Select Parameter',
-                      itemLabel: (p) => p,
-                      onChanged: (v) {
-                        if (v != null) setState(() => _parameter = v);
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+
 
           const SizedBox(height: 16),
           const Divider(height: 1),
@@ -920,6 +953,8 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       ),
     );
   }
+
+
 }
 
 // ─── Per-user toggle state ──────────────────────────────────────────────────

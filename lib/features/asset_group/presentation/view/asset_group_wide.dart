@@ -25,6 +25,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
   void initState() {
     super.initState();
     Future.microtask(() {
+      ref.read(assetGroupProvider.notifier).loadGroups();
       ref.read(userProvider.notifier).loadUsers();
       ref.read(productNotifierProvider.notifier).loadProducts();
     });
