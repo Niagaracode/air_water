@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_table.dart';
+import '../../../../shared/widgets/view_header.dart';
 import '../controller/asset_group_provider.dart';
 import '../../../product/provider/product_provider.dart';
 import '../../domain/models/asset_group_model.dart';
@@ -75,12 +77,13 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
 
 
     return Scaffold(
-      backgroundColor: Colors.grey.withValues(alpha: 0.1),
+      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
         children: [
+          _buildHeader(context),
           Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: _buildHeader(state),
+            padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
+            child: _buildFilterRow(state),
           ),
           Expanded(
             child: state.isLoading
@@ -96,85 +99,55 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     );
   }
 
-  Widget _buildHeader(AssetGroupState state) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildHeader(BuildContext context) {
+    return ViewHeader(
+      title: 'ASSET GROUP MANAGER',
+      subtitle:
+      'Define dynamic grouping rules based on asset parameters and assign users.',
+      buttonText: 'CREATE GROUP',
+      onPressed: () => _showAddDialog(),
+    );
+  }
+
+  Widget _buildFilterRow(AssetGroupState state) {
+    return Row(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'ASSET GROUP MANAGER',
-                  style: GoogleFonts.outfit(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Define dynamic grouping rules based on asset parameters and assign users.',
-                  style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6B7280)),
-                ),
-              ],
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
             ),
-            ElevatedButton.icon(
-              onPressed: () => _showAddDialog(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF141E7A),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: TextField(
+              controller: _searchController,
+              style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+              decoration: InputDecoration(
+                hintText: 'Search groups by description...',
+                hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.all(14),
               ),
-              icon: const Icon(Icons.add, size: 20),
-              label: const Text('CREATE GROUP'),
+              onChanged: (v) {
+                // Implement local filter or call provider filter
+              },
             ),
-          ],
+          ),
         ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
-                  decoration: InputDecoration(
-                    hintText: 'Search groups by description...',
-                    hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.all(14),
-                  ),
-                  onChanged: (v) {
-                    // Implement local filter or call provider filter
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF141E7A).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.filter_list, color: Color(0xFF141E7A)),
-                tooltip: 'Clear all filters',
-                onPressed: () {
-                  _searchController.clear();
-                },
-              ),
-            ),
-          ],
+        const SizedBox(width: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF141E7A).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.filter_list, color: Color(0xFF141E7A)),
+            tooltip: 'Clear all filters',
+            onPressed: () {
+              _searchController.clear();
+            },
+          ),
         ),
       ],
     );
@@ -191,15 +164,12 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: const BoxDecoration(
-              color: Color(0xFF141E7A),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            color: primary.withValues(alpha: 0.1),
             child: Row(
               children: [
                 AppTableHeaderCell('Group Name', flex: 3),
