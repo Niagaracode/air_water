@@ -6,14 +6,12 @@ import 'package:air_water/features/product/product_layout.dart';
 import 'package:air_water/features/roaster/roaster_layout.dart';
 import 'package:air_water/features/rule_group/rule_group_layout.dart';
 import 'package:air_water/features/user/user_layout.dart';
-import 'package:air_water/features/asset_summary/asset_summary_layout.dart';
 import 'package:air_water/features/asset_schedule/asset_schedule_layout.dart';
 import 'package:air_water/features/profile/profile_layout.dart';
 import 'package:air_water/features/alarm/alarm_layout.dart';
 import 'package:air_water/features/events/event_layout.dart';
 import 'package:air_water/features/asset_group/asset_group_layout.dart';
 import 'package:air_water/features/notification/notification_layout.dart';
-import 'package:air_water/features/setting/setting_layout.dart';
 import 'package:air_water/features/user/presentation/controller/user_provider.dart';
 import 'package:air_water/core/user_config/user_role.dart';
 import 'package:air_water/core/user_config/user_role_provider.dart';
@@ -27,7 +25,6 @@ import '../../features/dashboard/dashboard_layout.dart';
 import '../../features/device/device_layout.dart';
 import '../../features/site/site_layout.dart';
 import '../../controller/screen_controller.dart';
-import '../../features/tank/data/model/tank_model.dart';
 import '../../features/tank/tank_layout.dart';
 import '../../features/tank/presentation/view/tank_details_view.dart';
 import 'router_refresh_notifier.dart';
@@ -199,25 +196,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/product', builder: (_, __) => const ProductLayout()),
           GoRoute(path: '/user', builder: (_, __) => const UserLayout()),
           GoRoute(path: '/group', builder: (_, __) => const UserGroupLayout()),
-          GoRoute(path: '/rule', builder: (_, __) => const SettingLayout()),
           GoRoute(
             path: '/message-template',
             builder: (_, __) => const MessageTemplateLayout(),
           ),
           GoRoute(path: '/roster', builder: (_, __) => const RoasterLayout()),
-          GoRoute(
-            path: '/asset-summary',
-            builder: (_, __) => const AssetSummaryLayout(),
-          ),
+
           GoRoute(
             path: '/asset-schedule',
             builder: (_, __) => const AssetScheduleLayout(),
           ),
           GoRoute(path: '/profile', builder: (_, __) => const ProfileLayout()),
           GoRoute(path: '/alarm', builder: (_, __) => const AlarmLayout()),
-          //GoRoute(path: '/event', builder: (_, __) => const EventLayout()),
+          GoRoute(path: '/event', builder: (_, __) => const EventLayout()),
           GoRoute(path: '/rule-group', builder: (_, __) => const RuleGroupLayout()),
-          GoRoute(path: '/setting', builder: (_, __) => const SettingLayout()),
           GoRoute(path: '/asset-group', builder: (_, __) => const AssetGroupLayout()),
           GoRoute(path: '/notification', builder: (_, __) => const NotificationLayout()),
         ],
