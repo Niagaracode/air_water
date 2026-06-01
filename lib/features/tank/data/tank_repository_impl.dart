@@ -1,3 +1,4 @@
+import 'package:air_water/features/tank/data/model/tank_channel_model.dart';
 import 'package:air_water/features/tank/data/tank_repository.dart';
 
 import 'model/tank_event_model.dart';
@@ -91,6 +92,11 @@ class TankRepositoryImpl implements TankRepository {
   @override
   Future<Tank> getTankById(int id) {
     return _api.getTankById(id);
+  }
+
+  @override
+  Future<List<TankChannelModel>> getTankChannels(int tankId) {
+    return _api.getTankChannels(tankId);
   }
 
 

@@ -4,6 +4,7 @@ import 'package:air_water/features/group/user_group_layout.dart';
 import 'package:air_water/features/message_template/message_template_layout.dart';
 import 'package:air_water/features/product/product_layout.dart';
 import 'package:air_water/features/roaster/roaster_layout.dart';
+import 'package:air_water/features/rule_group/rule_group_layout.dart';
 import 'package:air_water/features/user/user_layout.dart';
 import 'package:air_water/features/asset_summary/asset_summary_layout.dart';
 import 'package:air_water/features/asset_schedule/asset_schedule_layout.dart';
@@ -91,7 +92,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           '/message-template',
           '/roster',
           '/setting',
-          '/rule',
+          //'/rule',
+          '/rule-group',
           '/asset-group',
         ];
 
@@ -213,7 +215,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(path: '/profile', builder: (_, __) => const ProfileLayout()),
           GoRoute(path: '/alarm', builder: (_, __) => const AlarmLayout()),
-          GoRoute(path: '/event', builder: (_, __) => const EventLayout()),
+          //GoRoute(path: '/event', builder: (_, __) => const EventLayout()),
+          GoRoute(path: '/rule-group', builder: (_, __) => const RuleGroupLayout()),
           GoRoute(path: '/setting', builder: (_, __) => const SettingLayout()),
           GoRoute(path: '/asset-group', builder: (_, __) => const AssetGroupLayout()),
           GoRoute(path: '/notification', builder: (_, __) => const NotificationLayout()),

@@ -14,7 +14,7 @@ class SyncButton extends StatefulWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
   });
 
-  final Future<void> Function() onSync; // Changed to async
+  final Future<void> Function() onSync;
   final String label;
   final String syncingLabel;
   final IconData icon;
@@ -58,12 +58,12 @@ class _SyncButtonState extends State<SyncButton> {
         backgroundColor: widget.backgroundColor,
         foregroundColor: widget.foregroundColor,
         elevation: 2,
-        shadowColor: widget.backgroundColor.withOpacity(0.3),
+        shadowColor: widget.backgroundColor.withValues(alpha: 0.3),
         padding: widget.padding,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(widget.borderRadius),
         ),
-        disabledBackgroundColor: widget.backgroundColor.withOpacity(0.5),
+        disabledBackgroundColor: widget.backgroundColor.withValues(alpha: 0.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

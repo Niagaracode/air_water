@@ -24,28 +24,18 @@ class TankWide extends ConsumerStatefulWidget {
 class _TankWideState extends ConsumerState<TankWide> {
   final _siteSearchController = TextEditingController();
   final _tankSearchController = TextEditingController();
-  final _scrollController = ScrollController();
-  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
   }
 
-  void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent * 0.9) {
-      ref.read(tankNotifierProvider.notifier).loadMore();
-    }
-  }
+
 
   @override
   void dispose() {
     _siteSearchController.dispose();
     _tankSearchController.dispose();
-    _scrollController.dispose();
-    _debounce?.cancel();
     super.dispose();
   }
 
@@ -242,28 +232,25 @@ class _TankWideState extends ConsumerState<TankWide> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final tableWidth = constraints.maxWidth > 1000 ? constraints.maxWidth : 1000.0;
-                return Scrollbar(
-                  controller: _scrollController,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: tableWidth,
-                      child: Column(
-                        children: [
-                          if (!state.isLoading || state.groupedTanks.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                              child: _buildFixedTableHeader(),
-                            ),
-                          Expanded(
-                            child: state.isLoading && state.groupedTanks.isEmpty
-                                ? const AppTableInitialLoader()
-                                : _buildVirtualizedTable(state, notifier),
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Column(
+                      children: [
+                        if (!state.isLoading || state.groupedTanks.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            child: _buildFixedTableHeader(),
                           ),
-                          if (state.isLoading && state.groupedTanks.isNotEmpty)
-                            const AppTableLoadingMore(),
-                        ],
-                      ),
+                        Expanded(
+                          child: state.isLoading && state.groupedTanks.isEmpty
+                              ? const AppTableInitialLoader()
+                              : _buildVirtualizedTable(state, notifier),
+                        ),
+                        if (state.isLoading && state.groupedTanks.isNotEmpty)
+                          const AppTableLoadingMore(),
+                      ],
                     ),
                   ),
                 );
@@ -298,7 +285,6 @@ class _TankWideState extends ConsumerState<TankWide> {
     }
 
     return ListView.builder(
-      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       itemCount: items.length,
       itemBuilder: (context, index) {

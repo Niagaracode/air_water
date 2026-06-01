@@ -1,4 +1,5 @@
 import '../../site/presentation/model/site_model.dart';
+import 'model/tank_channel_model.dart';
 import 'model/tank_event_model.dart';
 import 'model/tank_model.dart';
 import 'model/tank_rule_model.dart';
@@ -25,4 +26,6 @@ abstract class TankRepository {
   Future<Map<String, dynamic>> getTankReadings(int tankId, String day);
   Future<List<TankEventModel>> getTankEvents(int tankId, String day);
   Future<List<TankRuleModel>> getAllTankRules();
+  Future<List<TankChannelModel>> getTankChannels(int tankId);
+
 }

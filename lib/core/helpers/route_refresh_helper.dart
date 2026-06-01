@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/company/presentation/controller/company_provider.dart';
 import '../../features/dashboard/provider/dashboard_provider.dart';
 import '../../features/device/presentation/controller/device_provider.dart';
+import '../../features/rule_group/provider/rule_group_provider.dart';
 import '../../features/site/presentation/controller/site_provider.dart';
 import '../../features/tank/presentation/controller/tank_provider.dart';
 import '../network/mqtt/providers/mqtt_providers.dart';
@@ -33,7 +34,6 @@ class RouteRefreshHelper {
         await ref.read(tankDataProvider.notifier).refresh();
         final mqttNotifier = ref.read(mqttProvider.notifier);
         final mqttState = ref.read(mqttProvider);
-        /// Reconnect MQTT if disconnected
         if (!mqttState.isConnected &&
             !mqttState.isConnecting) {
           await mqttNotifier.reconnectAndRestore();
@@ -62,6 +62,12 @@ class RouteRefreshHelper {
         await ref
             .read(deviceNotifierProvider.notifier)
             .loadGroupedDevices();
+        break;
+
+      case '/rule-group':
+        await ref
+            .read(ruleGroupProvider.notifier)
+            .loadRuleGroups();
         break;
 
       default:
