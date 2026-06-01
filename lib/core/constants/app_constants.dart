@@ -1,5 +1,9 @@
 class AppConstants {
 
+  static const String apiUrl =
+      'https://recall-skill-screensavers-specification.trycloudflare.com/api';
+
+
   static const String googleMapsApiKey =
       'AIzaSyBIsPNskLIYGQNBDajxsiMNdcB1NhgzFWI';
 
