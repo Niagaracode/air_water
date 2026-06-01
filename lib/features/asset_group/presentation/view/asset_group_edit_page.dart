@@ -33,7 +33,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   bool _didAutoAssign = false;
   bool _isLoadingDetails = false;
   int? _selectedCompanyId;
-  List<CompanyAutocompleteInfo> _companies = [];
+  List<CompanyAutocomplete> _companies = [];
   bool _isLoadingCompanies = false;
 
   final List<String> _parameters = [
@@ -76,20 +76,21 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
   Future<void> _checkSuperAdminAndLoadCompanies() async {
     final user = ref.read(userProvider).currentUser;
-    if (user != null && user.roleId == 1) {
-      setState(() => _isLoadingCompanies = true);
-      final results = await ref
-          .read(companyNotifierProvider.notifier)
-          .searchCompanies('');
-      if (mounted) {
+    if (user != null) {
+      if (user.roleId == 1) {
+        setState(() => _isLoadingCompanies = true);
+        final results = await ref
+            .read(userProvider.notifier)
+            .searchCompanies('');
+        if (mounted) {
+          setState(() {
+            _companies = results;
+            _isLoadingCompanies = false;
+          });
+        }
+      } else {
         setState(() {
-          _companies = results;
-          _isLoadingCompanies = false;
-          // If editing existing, ensure selected company is in the list
-          if (widget.group?.companyId != null &&
-              !_companies.any((c) => c.companyId == widget.group!.companyId)) {
-            // We might need to fetch this specific company if it's not in the first 10
-          }
+          _selectedCompanyId = user.companyId;
         });
       }
     }
@@ -203,6 +204,12 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(assetGroupProvider);
     final userState = ref.watch(userProvider);
+
+    ref.listen<UserState>(userProvider, (previous, next) {
+      if (previous?.currentUser == null && next.currentUser != null) {
+        _checkSuperAdminAndLoadCompanies();
+      }
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -410,13 +417,12 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                   child: Text('GROUP NAME', style: _headerStyle),
                 ),
                 Expanded(flex: 2, child: Text('ROLE', style: _headerStyle)),
-                const SizedBox(
+                SizedBox(
                   width: 48,
                   child: Center(
-                    child: Icon(
-                      Icons.settings,
-                      size: 14,
-                      color: Color(0xFF6B7280),
+                    child: Text(
+                      'ACTION',
+                      style: _headerStyle,
                     ),
                   ),
                 ),
@@ -564,7 +570,6 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                             ),
                           ),
 
-                          // REMOVE
                           SizedBox(
                             width: 48,
                             child: IconButton(
@@ -572,9 +577,15 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                                 () => _assignedUsers.remove(assignment),
                               ),
                               icon: const Icon(
-                                Icons.close,
-                                size: 18,
-                                color: Colors.grey,
+                                Icons.delete_outline,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.red.withOpacity(0.05),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
                             ),
                           ),
@@ -619,7 +630,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: _selectedUserForAssignment == null
                     ? null
                     : () {
@@ -651,7 +662,8 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text('Add'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add'),
               ),
             ],
           ),
@@ -780,13 +792,19 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                 hint: const Text('Select Company'),
                 items: _companies.map<DropdownMenuItem<int>>((c) {
                   return DropdownMenuItem<int>(
-                    value: c.companyId,
+                    value: c.id,
                     child: Text(c.name, style: GoogleFonts.inter(fontSize: 14)),
                   );
                 }).toList(),
                 onChanged: widget.group != null
                     ? null
-                    : (v) => setState(() => _selectedCompanyId = v),
+                    : (v) {
+                        setState(() {
+                          _selectedCompanyId = v;
+                          _assignedUsers.clear();
+                          _selectedUserForAssignment = null;
+                        });
+                      },
                 validator: (v) => v == null ? 'Please select a company' : null,
                 decoration: _inputDecoration(
                   'Which company does this group belong to?',
@@ -1531,23 +1549,25 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           const SizedBox(width: 12),
 
           // 5. CLEAR (DELETE)
-          SizedBox(
-            width: 48,
-            child: IconButton(
-              onPressed: () => _removeCriteria(index),
-              icon: const Icon(
-                Icons.delete_outline,
-                color: Colors.red,
-                size: 20,
-              ),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.red.withOpacity(0.05),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+          _criteria.length <= 1
+              ? const SizedBox(width: 48)
+              : SizedBox(
+                  width: 48,
+                  child: IconButton(
+                    onPressed: () => _removeCriteria(index),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.red.withOpacity(0.05),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
         ],
       ),
     );

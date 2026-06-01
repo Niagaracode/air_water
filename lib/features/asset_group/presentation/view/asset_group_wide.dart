@@ -11,6 +11,7 @@ import 'asset_group_edit_page.dart';
 import '../widgets/add_asset_group_modal.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
+import '../../../device/presentation/controller/device_provider.dart';
 
 
 class AssetGroupWide extends ConsumerStatefulWidget {
@@ -74,6 +75,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     final userState = ref.watch(userProvider);
     final productState = ref.watch(productNotifierProvider);
     final tankState = ref.watch(allTanksProvider);
+    final deviceState = ref.watch(deviceNotifierProvider);
 
 
     return Scaffold(
@@ -90,7 +92,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF141E7A)))
                 : Padding(
                   padding: const EdgeInsets.only(left: 24, right: 24, bottom: 8),
-                  child: _buildTable(state, userState, productState, tankState),
+                  child: _buildTable(state, userState, productState, tankState, deviceState),
                 ),
 
           ),
@@ -153,7 +155,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     );
   }
 
-  Widget _buildTable(AssetGroupState state, UserState userState, ProductState productState, AsyncValue<List<dynamic>> tankState) {
+  Widget _buildTable(AssetGroupState state, UserState userState, ProductState productState, AsyncValue<List<dynamic>> tankState, DeviceState deviceState) {
 
     if (state.groups.isEmpty) {
       return const AppTableEmptyState(
@@ -228,8 +230,29 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                         }
                       }
 
-                      
-                      buffer.write('${c.parameter} ${c.logic} $displayValue');
+                      // Resolve Device numeric ID to deviceId string if parameter is DeviceID
+                      if (c.parameter == 'DeviceID') {
+                        final deviceNumId = int.tryParse(c.value);
+                        if (deviceNumId != null) {
+                          final allDevices = deviceState.groupedDevices
+                              .expand((g) => g.devices)
+                              .toList();
+                          final device = allDevices.isEmpty
+                              ? null
+                              : allDevices.cast<dynamic>().firstWhere(
+                                  (d) => d.id == deviceNumId || d.id.toString() == c.value,
+                                  orElse: () => null,
+                                );
+                          if (device != null) {
+                            displayValue = device.deviceId;
+                          }
+                        }
+                      }
+
+                      // Map parameter display label
+                      final paramLabel = c.parameter == 'DeviceID' ? 'Device Name' : c.parameter;
+
+                      buffer.write('$paramLabel ${c.logic} $displayValue');
                       if (i < group.criteria.length - 1) {
                         buffer.write(' ${c.operator} ');
                       }
