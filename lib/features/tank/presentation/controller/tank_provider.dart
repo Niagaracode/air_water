@@ -79,6 +79,7 @@ class TankState {
 }
 
 class TankNotifier extends Notifier<TankState> {
+
   @override
   TankState build() {
     ref.keepAlive();
@@ -143,40 +144,6 @@ class TankNotifier extends Notifier<TankState> {
         isLoading: false,
         totalEntries: response.pagination.total,
         hasMore: response.pagination.page < response.pagination.totalPages,
-        expandedGroups: expandedGroups,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
-
-  Future<void> loadMore() async {
-    if (state.isLoading || !state.hasMore) return;
-
-    final nextPage = state.page + 1;
-    state = state.copyWith(isLoading: true);
-
-    try {
-      final repository = ref.read(tankRepositoryProvider);
-      final response = await repository.getTanksGrouped(
-        page: nextPage,
-        siteName: state.searchSite.isEmpty ? null : state.searchSite,
-        tankName: state.searchTank.isEmpty ? null : state.searchTank,
-        status: state.selectedStatus,
-      );
-
-      final updatedGroups = [...state.groupedTanks, ...response.data];
-      final expandedGroups = Set<String>.from(state.expandedGroups);
-      for (var group in response.data) {
-        expandedGroups.add(group.siteName);
-      }
-
-      state = state.copyWith(
-        groupedTanks: updatedGroups,
-        isLoading: false,
-        totalEntries: response.pagination.total,
-        hasMore: response.pagination.page < response.pagination.totalPages,
-        page: nextPage,
         expandedGroups: expandedGroups,
       );
     } catch (e) {

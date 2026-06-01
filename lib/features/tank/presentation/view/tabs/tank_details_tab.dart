@@ -1,9 +1,12 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../../core/app_theme/app_theme.dart';
+import '../../controller/tank_channel_provider.dart';
 import '../../controller/tank_readings_provider.dart';
 import '../../widgets/tank_multi_line_chart.dart';
+import '../threshold_side_sheet.dart';
 
 class TankDetailsTab extends ConsumerWidget {
   final int tankId;
@@ -19,11 +22,12 @@ class TankDetailsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final readingsState = ref.watch(
       tankReadingsProvider(
-        TankReadingParams(
-          tankId: tankId,
-          day: day,
-        ),
+        TankReadingParams(tankId: tankId, day: day),
       ),
+    );
+
+    final channelState = ref.watch(
+      tankChannelProvider(tankId),
     );
 
     if (readingsState.isLoading) {
@@ -37,38 +41,6 @@ class TankDetailsTab extends ConsumerWidget {
         child: Text('No readings available'),
       );
     }
-
-    /// Example channel data
-    final channels = [
-      {
-        'icon': Icons.gas_meter_outlined,
-        'description': 'Level',
-        'channel': '1',
-        'value': '93.6 % Full',
-        'thresholds': 'R: <= 40 %    C: <= 30 %',
-      },
-      {
-        'icon': Icons.speed,
-        'description': 'Pressure',
-        'channel': '2',
-        'value': '10.53 Bar',
-        'thresholds': 'Low: <= 15 Bar',
-      },
-      {
-        'icon': Icons.battery_0_bar_rounded,
-        'description': 'Battery',
-        'channel': 'BATT_VOLTAGE',
-        'value': '8.12 Volts',
-        'thresholds': 'Low: <= 10 Volts',
-      },
-      {
-        'icon': Icons.solar_power,
-        'description': 'Solar',
-        'channel': 'SOLAR_VOLTAGE',
-        'value': '12.45 Volts',
-        'thresholds': 'Low: <= 10 Volts',
-      },
-    ];
 
     return Container(
       padding: const EdgeInsets.only(left: 24, right: 16, top: 8),
@@ -97,7 +69,89 @@ class TankDetailsTab extends ConsumerWidget {
                   ),
                   Spacer(),
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+
+                      showGeneralDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        barrierLabel: 'Threshold',
+                        barrierColor: Colors.black54,
+                        transitionDuration: const Duration(milliseconds: 300),
+
+                        pageBuilder: (_, __, ___) {
+                          return Align(
+                            alignment: Alignment.centerRight,
+                            child: ThresholdSideSheet(
+                              channels: channelState.channels,
+                            ),
+                          );
+                        },
+
+                        transitionBuilder:
+                            (context, animation, secondaryAnimation, child) {
+
+                          final tween = Tween(
+                            begin: const Offset(1, 0),
+                            end: Offset.zero,
+                          );
+
+                          return SlideTransition(
+                            position: animation.drive(tween),
+                            child: child,
+                          );
+                        },
+                      );
+                    },
+
+                    icon: Icon(
+                      Icons.mode_edit_sharp,
+                      color: primary,
+                      size: 18,
+                    ),
+
+                    label: Text(
+                      'Edit Rule',
+                      style: TextStyle(
+                        color: primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  /*TextButton.icon(
+                    onPressed: () {
+
+                      showGeneralDialog(
+                        context: context,
+                        barrierDismissible: true,
+                        barrierLabel: 'Threshold',
+                        barrierColor: Colors.black54,
+                        transitionDuration: const Duration(
+                          milliseconds: 300,
+                        ),
+
+                        pageBuilder: (_, __, ___) {
+                          return const Align(
+                            alignment: Alignment.centerRight,
+                            child: ThresholdSideSheet(),
+                          );
+                        },
+
+                        transitionBuilder:
+                            (context, animation, secondaryAnimation, child) {
+
+                          final tween = Tween(
+                            begin: const Offset(1, 0),
+                            end: Offset.zero,
+                          );
+
+                          return SlideTransition(
+                            position: animation.drive(tween),
+                            child: child,
+                          );
+                        },
+                      );
+                    },
 
                     icon: Icon(
                       Icons.mode_edit_sharp,
@@ -127,7 +181,7 @@ class TankDetailsTab extends ConsumerWidget {
                       ),
                       backgroundColor: primary.withValues(alpha: 0.08),
                     ),
-                  ),
+                  ),*/
                   SizedBox(width: 8),
                 ],
               ),
@@ -151,7 +205,9 @@ class TankDetailsTab extends ConsumerWidget {
                     ),
                   ],
                 ),
-                child: DataTable2(
+                child: channelState.isLoading ? Center(
+                  child: CircularProgressIndicator(),
+                ) : DataTable2(
                   columnSpacing: 16,
                   horizontalMargin: 12,
                   minWidth: 800,
@@ -166,57 +222,64 @@ class TankDetailsTab extends ConsumerWidget {
                   ),
                   columns: const [
                     DataColumn2(
-                      label: Text(''),
-                      fixedWidth: 40,
+                      label: Text('CHANNEL'),
+                      fixedWidth: 70,
                     ),
+
                     DataColumn2(
                       label: Text('DESCRIPTION'),
                       size: ColumnSize.M,
                     ),
+
                     DataColumn2(
-                      label: Text('CHANNEL'),
+                      label: Text('LAST READING'),
                       size: ColumnSize.M,
                     ),
                     DataColumn2(
-                      label: Text('LAST READING'),
-                      fixedWidth: 150,
-                    ),
-                    DataColumn2(
                       label: Text('READING TIME'),
-                      fixedWidth: 150,
+                      size: ColumnSize.M,
                     ),
                     DataColumn2(
                       label: Text('THRESHOLDS'),
                       size: ColumnSize.M,
                     ),
                   ],
-                  rows: channels.map((item) {
+                  rows: channelState.channels.map((item) {
                     return DataRow(
                       cells: [
+
                         DataCell(
-                          Icon(
-                            item['icon'] as IconData,
-                            color: Colors.black87,
-                            size: 20,
+                          Center(child: Text(item.id.toString())),
+                        ),
+
+                        DataCell(Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              getChannelIcon(item.name),
+                              color: Colors.black87,
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Text(item.name),
+                          ],
+                        )),
+
+                        DataCell(
+                          Text('${item.value.toString()} ${getChannelUnit(item.name)}'),
+                        ),
+
+                        DataCell(
+                          Text(
+                            formatDateTime(item.readingTime),
                           ),
                         ),
-                        DataCell(
-                          Text(item['description'] as String),
-                        ),
-                        DataCell(
-                          Text(item['channel'] as String),
-                        ),
-                        DataCell(
-                          Text(item['value'] as String),
-                        ),
-                        DataCell(
-                          Text(day),
-                        ),
 
                         DataCell(
-                          Text(item['thresholds'] as String),
+                          Text(
+                            buildThresholdText(item.threshold),
+                          ),
                         ),
-
                       ],
                     );
                   }).toList(),
@@ -229,48 +292,82 @@ class TankDetailsTab extends ConsumerWidget {
       ),
     );
   }
-}
 
-/*
-class TankDetailsTab extends ConsumerWidget {
+  IconData getChannelIcon(String name) {
+    switch (name.toLowerCase()) {
+      case 'level':
+        return Icons.gas_meter_outlined;
 
-  final int tankId;
-  final String day;
+      case 'pressure':
+        return Icons.speed;
 
-  const TankDetailsTab({
-    super.key,
-    required this.tankId, required this.day,
-  });
+      case 'battery voltage':
+        return Icons.battery_0_bar_rounded;
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+      case 'solar voltage':
+        return Icons.solar_power;
 
-    final readingsState = ref.watch(tankReadingsProvider(
-        TankReadingParams(
-          tankId: tankId,
-          day: day,
-        ),
-      ),
-    );
-
-    if (readingsState.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      default:
+        return Icons.sensors;
     }
-
-    if (readingsState.readings.isEmpty) {
-      return const Center(
-        child: Text('No readings available'),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      color: Colors.white,
-      child: TankMultiLineChart(
-        data: readingsState.readings,
-      ),
-    );
   }
-}*/
+
+  String getChannelUnit(String name) {
+    switch (name.toLowerCase()) {
+      case 'level':
+        return '%';
+
+      case 'pressure':
+        return 'Bar';
+
+      case 'battery voltage':
+        return 'Volts';
+
+      case 'solar voltage':
+        return 'Volts';
+
+      default:
+        return '';
+    }
+  }
+
+  String buildThresholdText(dynamic threshold) {
+    List<String> items = [];
+
+    if (threshold.reorder != null) {
+      items.add(
+        'R: <= ${threshold.reorder!.value}',
+      );
+    }
+
+    if (threshold.low != null) {
+      items.add(
+        'L: <= ${threshold.low!.value}',
+      );
+    }
+
+    if (threshold.critical != null) {
+      items.add(
+        'C: <= ${threshold.critical!.value}',
+      );
+    }
+
+    return items.join('    ');
+  }
+
+  String formatDateTime(String dateTime) {
+    try {
+      final parsedDate =
+      DateFormat('dd/MM/yyyy HH:mm:ss')
+          .parse(dateTime);
+
+      return DateFormat(
+        'dd/MM/yyyy hh:mm a',
+      ).format(parsedDate);
+
+    } catch (e) {
+      return dateTime;
+    }
+  }
+
+}

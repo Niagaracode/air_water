@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../../site/presentation/model/site_model.dart';
 import '../../../core/network/http/api_service.dart';
+import 'model/tank_channel_model.dart';
 import 'model/tank_event_model.dart';
 import 'model/tank_model.dart';
 import 'model/tank_rule_model.dart';
@@ -125,6 +126,12 @@ class TankApi {
     final response = await _client.get('/rules/all');
     final List data = response.data['data'] ?? [];
     return data.map((e) => TankRuleModel.fromJson(e)).toList();
+  }
+
+  Future<List<TankChannelModel>> getTankChannels(int tankId) async {
+    final response = await _client.get('/tank/$tankId/channels');
+    final List data = response.data['data']['channel'] ?? [];
+    return data.map((e) => TankChannelModel.fromJson(e)).toList();
   }
 
 }
