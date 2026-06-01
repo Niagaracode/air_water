@@ -9,7 +9,6 @@ import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
 import '../../../message_template/presentation/controller/message_template_provider.dart';
 import '../../../message_template/presentation/model/message_template_model.dart';
-import '../../../setting/presentation/controller/setting_provider.dart';
 import '../../../../shared/widgets/app_multi_select_dropdown.dart';
 
 
@@ -57,19 +56,15 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     try {
       final userNotifier = ref.read(userProvider.notifier);
       final templateRepo = ref.read(messageTemplateRepositoryProvider);
-      final settingRepo = ref.read(settingRepositoryProvider);
 
       final roles = await userNotifier.getRoles();
       final templates = await templateRepo.getActiveTemplates();
-      final allowed = await settingRepo.getTemplatesByParameter(
-        _selectedParameter,
-      );
+
 
       if (mounted) {
         setState(() {
           _roles = roles;
           _templates = templates;
-          _allowedTemplates = allowed;
 
           if (widget.templateMembers != null) {
             final roleIds = widget.templateMembers!
@@ -93,25 +88,6 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
     }
   }
 
-
-  Future<void> _updateAllowedTemplates(String parameter) async {
-    try {
-      final settingRepo = ref.read(settingRepositoryProvider);
-      final allowed = await settingRepo.getTemplatesByParameter(parameter);
-
-      if (mounted) {
-        setState(() {
-          _allowedTemplates = allowed;
-          if (_selectedTemplate != null &&
-              !allowed.any((t) => t['id'] == _selectedTemplate!.id)) {
-            _selectedTemplate = null;
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint('Error updating allowed templates: $e');
-    }
-  }
 
   @override
   void dispose() {
@@ -277,7 +253,6 @@ class _AddRosterModalState extends ConsumerState<AddRosterModal> {
                                                 setState(
                                                   () => _selectedParameter = v,
                                                 );
-                                                _updateAllowedTemplates(v);
                                               }
                                             },
                                           ),

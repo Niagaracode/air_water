@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/responsive/page_layout_builder.dart';
 import '../../core/user_config/user_role.dart';
 import '../../core/user_config/user_role_provider.dart';
-import '../setting/presentation/view/setting_wide.dart';
 import 'presentation/view/event_narrow.dart';
 import 'presentation/view/event_middle.dart';
 import 'presentation/view/event_wide.dart';
@@ -17,10 +16,10 @@ class EventLayout extends ConsumerWidget {
     return roleAsync.when(
       data: (role) {
         if (role == UserRole.customer) {
-          return const SettingWide(
+          /*return const SettingWide(
             title: 'ASSIGNED RULES',
             subTitle: 'Monitor your device thresholds and notification settings.',
-          );
+          );*/
         }
         return const _EventPage();
       },

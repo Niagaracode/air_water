@@ -25,77 +25,72 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Consumer(
-                    builder: (context, ref, child) {
-                      final state = ref.watch(ruleGroupProvider);
 
-                      if (state.isLoading && state.ruleGroups.isEmpty) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: Consumer(
+                          builder: (context, ref, child) {
+                            final state = ref.watch(ruleGroupProvider);
 
-                      if (state.error != null) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.error_outline, size: 64,
-                                  color: Colors.red.shade300),
-                              const SizedBox(height: 16),
-                              Text(
-                                state.error!,
-                                style: TextStyle(color: Colors.grey.shade600),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
+                            if (state.isLoading && state.ruleGroups.isEmpty) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
 
-                      if (state.ruleGroups.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.rule_folder,
-                                  size: 64,
-                                  color: Colors.grey.shade400),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No Rule Groups Found',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
+                            if (state.error != null) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      size: 64,
+                                      color: Colors.red,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(state.error!),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Click "Add rule" to create your first rule group',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
+                              );
+                            }
 
-                      return ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: state.ruleGroups.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 20),
-                        itemBuilder: (context, index) {
-                          final rule = state.ruleGroups[index];
-                          return _buildRuleGroupCard(rule);
-                        },
-                      );
-                    },
-                  ),
+                            if (state.ruleGroups.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.rule_folder, size: 64),
+                                    const SizedBox(height: 16),
+                                    Text('No Rule Groups Found'),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: state.ruleGroups.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 20),
+                              itemBuilder: (context, index) {
+                                final rule = state.ruleGroups[index];
+                                return _buildRuleGroupCard(rule);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 );
+
               },
             ),
           ),
@@ -461,7 +456,7 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
   void _confirmDelete(RuleGroupModel rule) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Rule Group'),
         content: Text(
           'Are you sure you want to delete "${rule.ruleGroupName}"?',
@@ -471,11 +466,11 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(dialogContext, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -490,12 +485,17 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
     );
 
     if (confirm == true) {
-      await ref.read(ruleGroupProvider.notifier).deleteRuleGroup(rule.id);
+      await ref
+          .read(ruleGroupProvider.notifier)
+          .deleteRuleGroup(rule.id);
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Rule group deleted successfully'),
-            backgroundColor: Colors.green.shade600,
+            content: const Text(
+              'Rule group deleted successfully',
+            ),
+            backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),

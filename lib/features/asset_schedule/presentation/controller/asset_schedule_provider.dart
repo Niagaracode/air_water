@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math';
 import '../../../tank/data/tank_api.dart';
-import '../../../setting/data/api/setting_api.dart';
 import '../../../../core/network/http/api_service.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../model/asset_schedule_model.dart';
@@ -73,7 +72,6 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
     try {
       final apiClient = ref.read(apiClientProvider);
       final tankApi = TankApi(apiClient);
-      final settingApi = SettingApi(apiClient);
 
       final now = state.startDate ?? DateTime.now();
 
@@ -84,15 +82,6 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
       );
 
       final user = ref.read(userProvider).currentUser;
-      final userRosters = user?.rosters ?? [];
-      final bool isTechnician = user?.roleId == 5;
-
-      // Fetch all active settings to map them to tanks/parameters
-      final settingsResponse = await settingApi.getSettings(
-        limit: 1000,
-        isActive: 1,
-      );
-      final allSettings = settingsResponse.data;
 
       final List<AssetScheduleModel> newSchedules = [];
       final random = Random();

@@ -124,30 +124,37 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
   Future<void> subscribeToTopic(String topic, {
         Function(MqttMessageModel)? onMessage,
       }) async {
-
+    /// Subscribe only once to broker
     if (!_subscribedTopics.contains(topic)) {
       _subscribedTopics.add(topic);
       await _mqttService.subscribe(topic);
     }
-
+    /// BUT ALWAYS re-add callback
     if (onMessage != null) {
-      _topicCallbacks.putIfAbsent(topic, () => <Function(MqttMessageModel)>{});
+      _topicCallbacks.putIfAbsent(
+        topic, () => <Function(MqttMessageModel)>{},
+      );
       _topicCallbacks[topic]!.add(onMessage);
+      debugPrint(
+        'Callbacks for $topic : ${_topicCallbacks[topic]!.length}',
+      );
     }
   }
 
-  void unsubscribeFromTopic(
-      String topic, {
+  void unsubscribeFromTopic(String topic, {
         Function(MqttMessageModel)? onMessage,
       }) {
 
-    if (_topicCallbacks.containsKey(topic) && onMessage != null) {
+    if (!_topicCallbacks.containsKey(topic)) {
+      return;
+    }
+    if (onMessage != null) {
       _topicCallbacks[topic]!.remove(onMessage);
-      if (_topicCallbacks[topic]!.isEmpty) {
-        _topicCallbacks.remove(topic);
-        _subscribedTopics.remove(topic);
-        _mqttService.unsubscribe(topic);
-      }
+    }
+
+    /// Remove empty callback set
+    if (_topicCallbacks[topic]!.isEmpty) {
+      _topicCallbacks.remove(topic);
     }
   }
 

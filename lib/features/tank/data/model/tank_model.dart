@@ -26,7 +26,6 @@ class Tank {
   final String? timeZone;
   final int status;
   final bool? useStrappingChart;
-  final List<StrappingPoint>? strappingPoints;
   final List<ChannelData>? channelData;
   final int ruleId;
 
@@ -53,7 +52,6 @@ class Tank {
     this.timeZone,
     required this.status,
     this.useStrappingChart,
-    this.strappingPoints,
     this.tankName,
     this.deviceName,
     this.channelData,
@@ -92,34 +90,7 @@ class Tank {
       useStrappingChart:
           json['use_strapping_chart'] == 1 ||
           json['use_strapping_chart'] == true,
-      strappingPoints: (() {
-        if (json['strapping_points'] != null &&
-            (json['strapping_points'] as List).isNotEmpty) {
-          return (json['strapping_points'] as List)
-              .map((i) => StrappingPoint.fromJson(i as Map<String, dynamic>))
-              .toList();
-        }
-        if (json['strapping_points_json'] != null &&
-            json['strapping_points_json'] is String &&
-            json['strapping_points_json'].toString().trim().isNotEmpty &&
-            json['strapping_points_json'].toString().trim() != '[]') {
-          try {
-            final decoded = jsonDecode(
-              json['strapping_points_json'].toString().trim(),
-            );
-            if (decoded is List) {
-              return decoded
-                  .map(
-                    (i) => StrappingPoint.fromJson(i as Map<String, dynamic>),
-                  )
-                  .toList();
-            }
-          } catch (e) {
-            return null;
-          }
-        }
-        return null;
-      })(),
+
       tankName: json['tank_name'] as String?,
 
       channelData: json['channel_data'] != null
@@ -334,6 +305,7 @@ class TankCreateRequest {
   final String? levelUnit;
   final List<dynamic>? channelData;
   final int? companyId;
+  final int? ruleId;
 
   TankCreateRequest({
     required this.tankNumber,
@@ -345,6 +317,7 @@ class TankCreateRequest {
     this.levelUnit,
     this.channelData,
     this.companyId,
+    this.ruleId,
   });
 
   Map<String, dynamic> toJson() {
@@ -358,53 +331,7 @@ class TankCreateRequest {
       'level_unit': levelUnit,
       'channel_data': channelData,
       'company_id': companyId,
-    };
-  }
-}
-
-class StrappingPoint {
-  final double levelMm;
-  final double volumeM3;
-  final String? levelUnit;
-  final String? volumeUnit;
-
-  StrappingPoint({
-    required this.levelMm,
-    required this.volumeM3,
-    this.levelUnit,
-    this.volumeUnit,
-  });
-
-  factory StrappingPoint.fromJson(Map<String, dynamic> json) {
-    return StrappingPoint(
-      levelMm: _toDouble(
-        json['level_mm'] ?? json['levelmm'] ?? json['level'] ?? 0.0,
-      ),
-      volumeM3: _toDouble(
-        json['volume_m3'] ?? json['volumem3'] ?? json['volume'] ?? 0.0,
-      ),
-      levelUnit:
-          (json['levelunit'] ?? json['level_unit'] ?? json['levelUnit'])
-              as String?,
-      volumeUnit:
-          (json['volumeunit'] ?? json['volume_m3_unit'] ?? json['volumeUnit'])
-              as String?,
-    );
-  }
-
-  static double _toDouble(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is num) return value.toDouble();
-    if (value is String) return double.tryParse(value) ?? 0.0;
-    return 0.0;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'level_mm': levelMm,
-      'volume_m3': volumeM3,
-      'level_unit': levelUnit,
-      'volume_unit': volumeUnit,
+      'rule_id': ruleId,
     };
   }
 }
