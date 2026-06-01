@@ -30,7 +30,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
 
   SiteAutocompleteInfo? _selectedSite;
   CompanyAutocomplete? _selectedCompany;
-  Map<String, dynamic>? _dropdownData;
   List<TankProduct> _products = [];
   bool _isLoadingDropdowns = false;
 
@@ -65,9 +64,9 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     }
 
     _loadDropdownData();
-    _loadDropdowns();
     _initializeChannels();
   }
+
 
   Future<void> _loadDropdownData() async {
     setState(() => _isLoadingDropdowns = true);
@@ -75,29 +74,36 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       final results = await Future.wait([
         ref.read(tankNotifierProvider.notifier).getDropdowns(),
         ref.read(tankNotifierProvider.notifier).getProducts(),
+        ref.read(tankRepositoryProvider).getAllTankRules(),
       ]);
 
       final data = results[0] as Map<String, dynamic>;
       final products = results[1] as List<TankProduct>;
+      final rules = results[2] as List<TankRuleModel>;
+      print(widget.tank!.ruleId);
+
+      final foundRule = _tankRules.where((tr) => tr.id == widget.tank!.ruleId);
+      _selectedRule = foundRule.isNotEmpty ? foundRule.first : null;
 
       setState(() {
-        _dropdownData = data;
         _products = products;
+        _tankRules = rules;
         if (widget.tank != null) {
           _selectedUnit = (data['units'] as List).firstWhere(
             (u) => u['id'] == widget.tank!.unitId,
             orElse: () => null,
           );
+
           _selectedTankType = (data['tank_types'] as List).firstWhere(
             (tt) => tt['id'] == widget.tank!.tankTypeId,
             orElse: () => null,
           );
-          final foundProducts = products.where(
-            (p) => p.productId == widget.tank!.productId,
-          );
-          _selectedProduct = foundProducts.isNotEmpty
-              ? foundProducts.first
-              : null;
+
+          final foundProducts = products.where((p) => p.productId == widget.tank!.productId);
+          _selectedProduct = foundProducts.isNotEmpty ? foundProducts.first : null;
+
+          final foundRule = _tankRules.where((tr) => tr.id == widget.tank!.ruleId);
+          _selectedRule = foundRule.isNotEmpty ? foundRule.first : null;
         }
       });
     } catch (e) {
@@ -191,7 +197,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
-    print('_selectedRule?.id:${_selectedRule?.id}');
     final channelData = getChannelData();
 
     final request = TankCreateRequest(
@@ -205,6 +210,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           : _selectedProduct?['id'],
       channelData: channelData['channels'],
       companyId: _selectedCompany?.id ?? widget.tank?.companyId,
+      ruleId: _selectedRule?.id,
     );
 
     final success = widget.tank != null
@@ -234,22 +240,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     }
   }
 
-  Future<void> _loadDropdowns() async {
-    setState(() => _isLoadingDropdowns = true);
-
-    try {
-      final repository = ref.read(tankRepositoryProvider);
-      final rules = await repository.getAllTankRules();
-
-      setState(() {
-        _tankRules = rules;
-      });
-    } catch (e) {
-      debugPrint('Error loading rules: $e');
-    } finally {
-      setState(() => _isLoadingDropdowns = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -302,7 +292,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                     : 'Fill in the information below to register a new tank unit.',
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
-                                  color: primary.withValues(alpha: 0.5),
+                                  color: Colors.grey
                                 ),
                               ),
                             ],

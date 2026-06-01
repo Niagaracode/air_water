@@ -1,5 +1,7 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
+
+import 'package:flutter/cupertino.dart';
+
 import '../../site/presentation/model/site_model.dart';
 import '../../../core/network/http/api_service.dart';
 import 'model/tank_channel_model.dart';
@@ -34,6 +36,8 @@ class TankApi {
     }
 
     final response = await _client.get('/tanks/grouped', query: query);
+
+    debugPrint(jsonEncode(response.data));
 
     return TankGroupedResponse.fromJson(
       Map<String, dynamic>.from(response.data),

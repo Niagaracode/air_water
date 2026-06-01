@@ -53,7 +53,9 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   }
 
   Future<void> _initialize() async {
+
     await mqttNotifier.initializeAndConnect();
+
     if (!mounted) return;
 
     _mqttCallback = (msg) {
@@ -63,6 +65,8 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
       ref.read(tankDataProvider.notifier)
           .updateFromMqtt(parsed);
     };
+
+    /// Always subscribe again
     await mqttNotifier.subscribeToTopic(
       topic,
       onMessage: _mqttCallback,
@@ -498,9 +502,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
   @override
   void dispose() {
-    mqttNotifier.unsubscribeFromTopic(topic,
-      onMessage: _mqttCallback,
-    );
     _searchController.dispose();
     super.dispose();
   }
