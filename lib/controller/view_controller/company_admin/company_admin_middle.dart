@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class CompanyAdminTablet extends StatelessWidget {
-  const CompanyAdminTablet({super.key, required this.child});
+class CompanyAdminMiddle extends StatelessWidget {
+  const CompanyAdminMiddle({super.key, required this.child});
   final Widget child;
 
   @override

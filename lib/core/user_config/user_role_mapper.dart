@@ -8,20 +8,8 @@ UserRole mapUserRole(String role) {
     case 'COMPANY_ADMIN':
       return UserRole.companyAdmin;
 
-    case 'DISTRIBUTOR':
-      return UserRole.distributor;
-
-    case 'SUPERVISOR':
-      return UserRole.supervisor;
-
-    case 'TECHNICIAN':
-      return UserRole.technician;
-
     case 'CUSTOMER':
       return UserRole.customer;
-
-    case 'IOT_MANAGER':
-      return UserRole.iotManager;
 
     default:
       throw Exception('Unknown role: $role');

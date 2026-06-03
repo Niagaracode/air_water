@@ -1,7 +1,6 @@
 
 import 'package:air_water/layout/user_layout.dart';
 import 'package:flutter/cupertino.dart';
-
 import '../core/responsive/screen_layout_builder.dart';
 import '../core/user_config/user_role.dart';
 
@@ -30,17 +29,7 @@ class LayoutSelector extends StatelessWidget {
         return CompanyAdminLayout(userRole: userRole,
         child: child);
 
-      case UserRole.distributor:
-        return DistributorLayout(child: child);
-
-      case UserRole.supervisor:
-        return SupervisorLayout(child: child);
-
-      case UserRole.technician:
-        return TechnicianLayout(child: child);
-
       case UserRole.customer:
-      case UserRole.iotManager:
         return CustomerLayout(child: child);
     }
   }

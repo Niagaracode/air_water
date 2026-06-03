@@ -10,10 +10,6 @@ const mainMenu = [
     allowedRoles: [
       UserRole.superAdmin,
       UserRole.companyAdmin,
-      UserRole.distributor,
-      UserRole.supervisor,
-      UserRole.technician,
-      UserRole.iotManager,
     ],
   ),
   SidebarMenuItem(
@@ -21,9 +17,6 @@ const mainMenu = [
     label: 'Asset Summary',
     icon: Icons.inventory_2_outlined,
     allowedRoles: [
-      UserRole.distributor,
-      UserRole.supervisor,
-      UserRole.technician,
       UserRole.customer,
     ],
   ),
@@ -32,9 +25,6 @@ const mainMenu = [
     label: 'Schedule',
     icon: Icons.calendar_month_outlined,
     allowedRoles: [
-      UserRole.distributor,
-      UserRole.supervisor,
-      UserRole.technician,
       UserRole.customer,
     ],
   ),
@@ -60,7 +50,6 @@ const configurationMenu = [
     allowedRoles: [
       UserRole.superAdmin,
       UserRole.companyAdmin,
-      UserRole.distributor,
     ],
   ),
   SidebarMenuItem(
@@ -119,9 +108,6 @@ const reportMenu = [
     label: 'Alarm',
     icon: Icons.notifications_active_outlined,
     allowedRoles: [
-      UserRole.distributor,
-      UserRole.supervisor,
-      UserRole.technician,
       UserRole.customer,
     ],
   ),
@@ -130,7 +116,6 @@ const reportMenu = [
     label: 'Event',
     icon: Icons.event_note_rounded,
     allowedRoles: [
-      UserRole.technician,
       UserRole.customer
     ],
   ),
@@ -148,7 +133,6 @@ const reportMenu = [
     allowedRoles: [
       UserRole.superAdmin,
       UserRole.companyAdmin,
-      UserRole.technician,
       UserRole.customer,
     ],
   ),

@@ -89,7 +89,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           '/message-template',
           '/roster',
           '/setting',
-          //'/rule',
           '/rule-group',
           '/asset-group',
         ];
@@ -132,13 +131,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return '/asset-summary';
             }
           }
-          
-          if (roleFromStorage == UserRole.technician) {
-             if (restrictedRoutes.contains(location) || 
-                systemRoutes.contains(location)) {
-              return '/dashboard';
-            }
-          }
+
 
           if (roleFromStorage == UserRole.superAdmin || roleFromStorage == UserRole.companyAdmin) {
             if (roleFromStorage == UserRole.companyAdmin && restrictedRoutes.contains(location)) {

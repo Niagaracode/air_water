@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../controller/user_controller/company_admin/company_admin_desktop.dart';
-import '../controller/user_controller/company_admin/company_admin_mobile.dart';
-import '../controller/user_controller/company_admin/company_admin_tablet.dart';
-import '../controller/user_controller/customer/customer_desktop.dart';
-import '../controller/user_controller/customer/customer_mobile.dart';
-import '../controller/user_controller/customer/customer_tablet.dart';
-import '../controller/user_controller/distributor/distributor_desktop.dart';
-import '../controller/user_controller/distributor/distributor_mobile.dart';
-import '../controller/user_controller/distributor/distributor_tablet.dart';
-import '../controller/user_controller/super_admin/super_admin_desktop.dart';
-import '../controller/user_controller/super_admin/super_admin_mobile.dart';
-import '../controller/user_controller/super_admin/super_admin_tablet.dart';
-import '../controller/user_controller/supervisor/supervisor_desktop.dart';
-import '../controller/user_controller/supervisor/supervisor_mobile.dart';
-import '../controller/user_controller/supervisor/supervisor_tablet.dart';
-import '../controller/user_controller/technician/technician_desktop.dart';
-import '../controller/user_controller/technician/technician_mobile.dart';
-import '../controller/user_controller/technician/technician_tablet.dart';
+import '../controller/view_controller/company_admin/company_admin_wide.dart';
+import '../controller/view_controller/company_admin/company_admin_narrow.dart';
+import '../controller/view_controller/company_admin/company_admin_middle.dart';
+import '../controller/view_controller/customer/customer_wide.dart';
+import '../controller/view_controller/customer/customer_narrow.dart';
+import '../controller/view_controller/customer/customer_middle.dart';
+import '../controller/view_controller/distributor/distributor_desktop.dart';
+import '../controller/view_controller/distributor/distributor_mobile.dart';
+import '../controller/view_controller/distributor/distributor_tablet.dart';
+import '../controller/view_controller/super_admin/super_admin_wide.dart';
+import '../controller/view_controller/super_admin/super_admin_narrow.dart';
+import '../controller/view_controller/super_admin/super_admin_middle.dart';
 import '../core/responsive/screen_layout_builder.dart';
 import '../core/user_config/user_role.dart';
 
@@ -28,15 +22,15 @@ class SuperAdminLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildNarrow(BuildContext context) =>
-      SuperAdminMobile(child: child);
+      SuperAdminNarrow(child: child);
 
   @override
   Widget buildMiddle(BuildContext context) =>
-      SuperAdminTablet(child: child);
+      SuperAdminMiddle(child: child);
 
   @override
   Widget buildWide(BuildContext context) =>
-      SuperAdminDesktop(child: child);
+      SuperAdminWide(child: child);
 }
 
 class CompanyAdminLayout extends ScreenLayoutBuilder {
@@ -45,90 +39,34 @@ class CompanyAdminLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildNarrow(BuildContext context) =>
-      CompanyAdminMobile(child: child);
+      CompanyAdminNarrow(child: child);
 
   @override
   Widget buildMiddle(BuildContext context) =>
-      CompanyAdminTablet(child: child);
+      CompanyAdminMiddle(child: child);
 
   @override
   Widget buildWide(BuildContext context) =>
-      CompanyAdminDesktop(child: child);
+      CompanyAdminWide(child: child);
 
 }
 
-class DistributorLayout extends ScreenLayoutBuilder {
-  const DistributorLayout({super.key, required super.child});
-
-  @override
-  Widget buildNarrow(BuildContext context) {
-    return const DistributorMobile();
-  }
-
-  @override
-  Widget buildMiddle(BuildContext context) {
-    return const DistributorTablet();
-  }
-
-  @override
-  Widget buildWide(BuildContext context) {
-    return const DistributorDesktop();
-  }
-}
-
-class SupervisorLayout extends ScreenLayoutBuilder {
-  const SupervisorLayout({super.key, required super.child});
-
-  @override
-  Widget buildNarrow(BuildContext context) {
-    return const SupervisorMobile();
-  }
-
-  @override
-  Widget buildMiddle(BuildContext context) {
-    return const SupervisorTablet();
-  }
-
-  @override
-  Widget buildWide(BuildContext context) {
-    return const SupervisorDesktop();
-  }
-}
-
-class TechnicianLayout extends ScreenLayoutBuilder {
-  const TechnicianLayout({super.key, required super.child});
-
-  @override
-  Widget buildNarrow(BuildContext context) {
-    return TechnicianMobile(child: child);
-  }
-
-  @override
-  Widget buildMiddle(BuildContext context) {
-    return TechnicianTablet(child: child);
-  }
-
-  @override
-  Widget buildWide(BuildContext context) {
-    return TechnicianDesktop(child: child);
-  }
-}
 
 class CustomerLayout extends ScreenLayoutBuilder {
   const CustomerLayout({super.key, required super.child});
 
   @override
   Widget buildNarrow(BuildContext context) {
-    return CustomerMobile(child: child);
+    return CustomerNarrow(child: child);
   }
 
   @override
   Widget buildMiddle(BuildContext context) {
-    return CustomerTablet(child: child);
+    return CustomerMiddle(child: child);
   }
 
   @override
   Widget buildWide(BuildContext context) {
-    return CustomerDesktop(child: child);
+    return CustomerWide(child: child);
   }
 }
