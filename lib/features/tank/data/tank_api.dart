@@ -138,4 +138,8 @@ class TankApi {
     return data.map((e) => TankChannelModel.fromJson(e)).toList();
   }
 
+  Future<void> updateTankEvent(int tankId, Map<String, dynamic> data) async {
+    await _client.put('/tank/$tankId/channel_events', data: data);
+  }
+
 }

@@ -224,13 +224,6 @@ class RoasterNotifier extends Notifier<RoasterState> {
     }
   }
 
-
-
-
-
-
-
-
 }
 
 final roasterNotifierProvider = NotifierProvider<RoasterNotifier, RoasterState>(

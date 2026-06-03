@@ -8,9 +8,8 @@ const Map<String, String> menuRoutes = {
   'Product': '/product',
 
   'User': '/user',
-  'User Group': '/asset-group',
   'Asset Group': '/asset-group',
-  'Group': '/asset-group',
+  //'Group': '/asset-group',
 
   'Rule Group': '/rule-group',
   'Message Template': '/message-template',

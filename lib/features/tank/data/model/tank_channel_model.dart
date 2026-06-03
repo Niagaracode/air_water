@@ -14,62 +14,92 @@ class TankChannelModel {
   });
 
   factory TankChannelModel.fromJson(Map<String, dynamic> json) {
+    print("Tank channel:$json");
     return TankChannelModel(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
       value: json['value'],
       readingTime: json['cd_ct'] ?? '',
       threshold: ThresholdModel.fromJson(
-        json['threshold'] ?? {},
+        json['threshold'] is Map ? json['threshold'] : {}, // Type check for safety
       ),
     );
   }
 }
 
 class ThresholdModel {
-  final ThresholdValue? critical;
+  final ThresholdValue? full;
   final ThresholdValue? reorder;
+  final ThresholdValue? critical;
   final ThresholdValue? low;
-  final ThresholdValue? dataInterval;
   final ThresholdValue? missingInterval;
 
   ThresholdModel({
-    this.critical,
+    this.full,
     this.reorder,
+    this.critical,
     this.low,
-    this.dataInterval,
     this.missingInterval,
   });
 
   factory ThresholdModel.fromJson(Map<String, dynamic> json) {
+
+    ThresholdValue? parseThreshold(dynamic value) {
+      if (value != null && value is Map) {
+        Map<String, dynamic> convertedMap = {};
+        value.forEach((key, value) {
+          convertedMap[key.toString()] = value;
+        });
+        return ThresholdValue.fromJson(convertedMap);
+      }
+      return null;
+    }
+
     return ThresholdModel(
-      critical: json['critical'] != null
-          ? ThresholdValue.fromJson(json['critical'])
-          : null,
-      reorder: json['reorder'] != null
-          ? ThresholdValue.fromJson(json['reorder'])
-          : null,
-      low: json['low'] != null
-          ? ThresholdValue.fromJson(json['low'])
-          : null,
-      dataInterval: json['data_interval'] != null
-          ? ThresholdValue.fromJson(json['data_interval'])
-          : null,
-      missingInterval: json['missing_interval'] != null
-          ? ThresholdValue.fromJson(json['missing_interval'])
-          : null,
+      full: parseThreshold(json['high']),
+      reorder: parseThreshold(json['reorder']),
+      critical: parseThreshold(json['critical']),
+      low: parseThreshold(json['low']),
+      missingInterval: parseThreshold(json['missing_interval']),
     );
   }
 }
 
 class ThresholdValue {
   final dynamic value;
+  final String comparator;
+  List<String> rosterIds;
 
-  ThresholdValue({this.value});
+  ThresholdValue({
+    this.value,
+    required this.comparator,
+    required this.rosterIds
+  });
 
   factory ThresholdValue.fromJson(Map<String, dynamic> json) {
+
+    List<String> rosterIds = [];
+    if (json['rosterIds'] != null) {
+      if (json['rosterIds'] is List) {
+        rosterIds = (json['rosterIds'] as List)
+            .map((e) => e.toString())
+            .toList();
+      }
+    }
+
     return ThresholdValue(
       value: json['value'],
+      comparator: json['comparator']?.toString() ?? '',
+      rosterIds: rosterIds,
     );
+  }
+
+  // Optional: Add toJson for saving
+  Map<String, dynamic> toJson() {
+    return {
+      'value': value,
+      'comparator': comparator,
+      'rosterIds': rosterIds,
+    };
   }
 }

@@ -19,11 +19,6 @@ abstract class RoasterRepository {
     int? status,
   });
 
-
-
-
-
-
   // Legacy
   Future<void> manageAssignments(int roasterId, List<dynamic> assignments);
 }

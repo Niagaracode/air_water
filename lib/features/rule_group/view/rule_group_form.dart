@@ -457,7 +457,7 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
           // Value Input
           Expanded(
             flex: 2,
-            child: Container(
+            child: SizedBox(
               width: 100,
               child: TextFormField(
                 controller: controller,

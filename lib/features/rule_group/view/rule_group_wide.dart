@@ -36,6 +36,7 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
                         ),
                         child: Consumer(
                           builder: (context, ref, child) {
+
                             final state = ref.watch(ruleGroupProvider);
 
                             if (state.isLoading && state.ruleGroups.isEmpty) {
