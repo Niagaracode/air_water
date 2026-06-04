@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class CustomerNarrow extends StatelessWidget {
+class CustomerLayoutNarrow extends StatelessWidget {
   final Widget child;
 
-  const CustomerNarrow({super.key, required this.child});
+  const CustomerLayoutNarrow({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

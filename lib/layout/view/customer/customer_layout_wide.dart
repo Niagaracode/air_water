@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-class CustomerWide extends StatelessWidget {
+class CustomerLayoutWide extends StatelessWidget {
   final Widget child;
 
-  const CustomerWide({super.key, required this.child});
+  const CustomerLayoutWide({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

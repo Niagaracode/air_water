@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../layout/provider/sidebar_provider.dart';
 
-import '../provider/sidebar_provider.dart';
 
 class SidebarHeader extends ConsumerWidget {
   final bool isExpanded;

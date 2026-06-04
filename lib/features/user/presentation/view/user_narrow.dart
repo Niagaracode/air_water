@@ -53,7 +53,7 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
     final state = ref.watch(userProvider);
     final notifier = ref.read(userProvider.notifier);
 
-    // Sync search controller
+    // Sync search layout_controller
     if (state.searchQuery != _searchController.text &&
         state.searchQuery.isEmpty) {
       _searchController.text = '';

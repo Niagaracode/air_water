@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-
 import '../../../core/user_config/user_role.dart';
 import '../../widgets/screen_header.dart';
 import '../../widgets/screen_sidebar.dart';
 
-class CompanyAdminWide extends StatelessWidget {
-  const CompanyAdminWide({super.key, required this.child});
+class OthersLayoutWide extends StatelessWidget {
+  const OthersLayoutWide({super.key, required this.child, required this.userRole});
+  final UserRole userRole;
   final Widget child;
 
   @override
@@ -18,7 +18,7 @@ class CompanyAdminWide extends StatelessWidget {
           Expanded(
             child: Row(
               children: [
-                ScreenSidebar(userRole: UserRole.companyAdmin),
+                ScreenSidebar(userRole: userRole),
                 Expanded(child: child),
               ],
             ),

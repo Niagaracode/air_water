@@ -24,9 +24,9 @@ import '../../app_startup/app_startup.dart';
 import '../../features/dashboard/dashboard_layout.dart';
 import '../../features/device/device_layout.dart';
 import '../../features/site/site_layout.dart';
-import '../../controller/screen_controller.dart';
 import '../../features/tank/tank_layout.dart';
 import '../../features/tank/presentation/view/tank_details_view.dart';
+import '../../layout/screen_controller.dart';
 import 'router_refresh_notifier.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
