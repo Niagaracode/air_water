@@ -4,6 +4,7 @@ class TankChannelModel {
   final dynamic value;
   final String readingTime;
   final ThresholdModel threshold;
+  final bool channelEnable;
 
   TankChannelModel({
     required this.id,
@@ -11,6 +12,7 @@ class TankChannelModel {
     required this.value,
     required this.readingTime,
     required this.threshold,
+    required this.channelEnable,
   });
 
   factory TankChannelModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class TankChannelModel {
       threshold: ThresholdModel.fromJson(
         json['threshold'] is Map ? json['threshold'] : {},
       ),
+      channelEnable: json['channel_enable'] == 1,
     );
   }
 }
@@ -93,7 +96,6 @@ class ThresholdValue {
     );
   }
 
-  // Optional: Add toJson for saving
   Map<String, dynamic> toJson() {
     return {
       'value': value,

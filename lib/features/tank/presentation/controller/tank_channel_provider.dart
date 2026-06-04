@@ -1,16 +1,20 @@
 import 'package:flutter_riverpod/legacy.dart';
-
 import '../../data/model/tank_channel_model.dart';
 import '../../data/tank_repository.dart';
 import 'tank_provider.dart';
 
-final tankChannelProvider = StateNotifierProvider.family<
+final tankChannelProvider =
+StateNotifierProvider.autoDispose.family<
     TankChannelNotifier,
     TankChannelState,
     int>((ref, tankId) {
 
-  return TankChannelNotifier(ref.read(tankRepositoryProvider), tankId);
+  return TankChannelNotifier(
+    ref.read(tankRepositoryProvider),
+    tankId,
+  );
 });
+
 
 class TankChannelState {
   final bool isLoading;
@@ -44,12 +48,28 @@ class TankChannelNotifier extends StateNotifier<TankChannelState> {
   }
 
   Future<void> loadChannels() async {
+
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+    );
+
     try {
-      state = state.copyWith(isLoading: true, error: null);
-      final channels = await repository.getTankChannels(tankId);
-      state = state.copyWith(isLoading: false, channels: channels);
+
+      final channels =
+      await repository.getTankChannels(tankId);
+
+      if (!mounted) return;
+
+      state = state.copyWith(
+        isLoading: false,
+        channels: [...channels],
+      );
 
     } catch (e) {
+
+      if (!mounted) return;
+
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),

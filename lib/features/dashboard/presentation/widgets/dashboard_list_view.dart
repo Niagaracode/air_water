@@ -401,13 +401,15 @@ class DashboardListView extends ConsumerWidget {
                 width: 100,
                 child: Center(
                   child: Text(
-                    '${tank.batteryV.toStringAsFixed(1)} v',
+                    tank.isBatteryEnabled
+                        ? '${tank.batteryV.toStringAsFixed(1)} v'
+                        : '--',
                     style: GoogleFonts.outfit(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: _getBatSolColor(
+                      color: tank.isBatteryEnabled ? _getBatSolColor(
                         tank.batteryV,
-                      ),
+                      ) : Colors.grey,
                     ),
                   ),
                 ),
@@ -418,13 +420,15 @@ class DashboardListView extends ConsumerWidget {
                 width: 80,
                 child: Center(
                   child: Text(
-                    '${tank.solarV.toStringAsFixed(1)} v',
+                    tank.isSolarEnabled
+                        ? '${tank.solarV.toStringAsFixed(1)} v'
+                        : '--',
                     style: GoogleFonts.outfit(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: _getBatSolColor(
+                      color: tank.isSolarEnabled ? _getBatSolColor(
                         tank.solarV,
-                      ),
+                      ): Colors.grey,
                     ),
                   ),
                 ),

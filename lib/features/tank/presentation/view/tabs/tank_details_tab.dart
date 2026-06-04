@@ -59,8 +59,10 @@ class TankDetailsTab extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Data Channels',
-                    style: Theme.of(context).textTheme.titleLarge,
+                    'DATA CHANNELS',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   Spacer(),
                   TextButton.icon(
@@ -202,7 +204,8 @@ class TankDetailsTab extends ConsumerWidget {
                       size: ColumnSize.M,
                     ),
                   ],
-                  rows: channelState.channels.map((item) {
+                  rows: channelState.channels
+                      .where((item) => item.channelEnable).map((item) {
                     return DataRow(
                       cells: [
 
