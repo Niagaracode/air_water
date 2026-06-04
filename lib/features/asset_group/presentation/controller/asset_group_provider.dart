@@ -93,7 +93,7 @@ class AssetGroupNotifier extends Notifier<AssetGroupState> {
     }
   }
 
-  Future<bool> saveGroup(
+  Future<int?> saveGroupAndGetId(
     AssetGroupModel group, {
     List<AssetGroupUser>? users,
   }) async {
@@ -105,25 +105,36 @@ class AssetGroupNotifier extends Notifier<AssetGroupState> {
         data['users'] = users.map((u) => u.toJson()).toList();
       }
 
+      int? savedId;
       if (group.id != null) {
         await client.put('/asset-groups/${group.id}', data: data);
+        savedId = group.id;
       } else {
-        await client.post('/asset-groups', data: data);
+        final response = await client.post('/asset-groups', data: data);
+        savedId = response.data['id'] as int?;
       }
 
       state = state.copyWith(isProcessing: false);
       await loadGroups();
       // Reload users to update the counts in the manager list
       await ref.read(userProvider.notifier).loadUsers();
-      return true;
+      return savedId;
     } on DioException catch (e) {
       final errorMessage = e.response?.data['message'] ?? e.response?.data['error'] ?? e.message;
       state = state.copyWith(isProcessing: false, error: errorMessage.toString());
-      return false;
+      return null;
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
-      return false;
+      return null;
     }
+  }
+
+  Future<bool> saveGroup(
+    AssetGroupModel group, {
+    List<AssetGroupUser>? users,
+  }) async {
+    final id = await saveGroupAndGetId(group, users: users);
+    return id != null;
   }
 
   Future<void> loadPreview(int id) async {

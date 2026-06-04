@@ -14,6 +14,7 @@ class AssetGroupModel {
   final String? companyName;
   final int? siteId;
   final String? parameterName;
+  final dynamic tankId;
 
   AssetGroupModel({
     this.id,
@@ -29,6 +30,7 @@ class AssetGroupModel {
     this.companyName,
     this.siteId,
     this.parameterName,
+    this.tankId,
   });
 
   factory AssetGroupModel.fromJson(Map<String, dynamic> json) {
@@ -61,6 +63,7 @@ class AssetGroupModel {
       companyName: json['company_name'],
       siteId: json['site_id'] is String ? int.tryParse(json['site_id']) : json['site_id'],
       parameterName: json['parameter_name'],
+      tankId: json['tank_id'] is String ? int.tryParse(json['tank_id']) : json['tank_id'],
     );
   }
 
@@ -77,6 +80,7 @@ class AssetGroupModel {
       if (companyId != null) 'company_id': companyId,
       if (siteId != null) 'site_id': siteId,
       if (parameterName != null) 'parameter_name': parameterName,
+      if (tankId != null) 'tank_id': tankId,
     };
   }
 }

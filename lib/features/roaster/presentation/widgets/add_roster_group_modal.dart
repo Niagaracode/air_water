@@ -5,20 +5,21 @@ import 'package:google_fonts/google_fonts.dart';
 // Features
 import '../../../asset_group/domain/models/asset_group_model.dart';
 import '../../../asset_group/presentation/controller/asset_group_provider.dart';
-import '../../../site/presentation/model/site_model.dart';
-import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
+import '../controller/roaster_provider.dart';
+import '../../../message_template/presentation/controller/message_template_provider.dart';
 
 // Shared
 import '../../../../shared/widgets/app_text_field.dart';
-import '../../../../shared/widgets/app_dropdown.dart';
 
 class AddRosterGroupModal extends ConsumerStatefulWidget {
-  const AddRosterGroupModal({super.key});
+  final CompanyAutocomplete? initialCompany;
+  const AddRosterGroupModal({super.key, this.initialCompany});
 
   @override
-  ConsumerState<AddRosterGroupModal> createState() => _AddRosterGroupModalState();
+  ConsumerState<AddRosterGroupModal> createState() =>
+      _AddRosterGroupModalState();
 }
 
 class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
@@ -26,29 +27,121 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
   final _descController = TextEditingController();
   final _companyAutocompleteController = TextEditingController();
   final _companyFocusNode = FocusNode();
-  final _siteAutocompleteController = TextEditingController();
-  final _siteFocusNode = FocusNode();
-  
-  bool _isActive = true;
+
   CompanyAutocomplete? _selectedCompany;
-  SiteAutocompleteInfo? _selectedSite;
-  String? _selectedParameter = 'LEVEL';
+
+  // Assigned users and their notification config
+  final List<AssetGroupUser> _assignedUsers = [];
+  final Map<int, _UserConfig> _userConfigs = {};
+  User? _selectedUserToAdd;
+
+  // Companies loaded for super admin
+  List<CompanyAutocomplete> _companies = [];
+  bool _isLoadingCompanies = false;
+
+  // Users loaded for the selected company
+  List<User> _companyUsers = [];
+  bool _isLoadingUsers = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+
+    // Pre-fill company if provided (e.g. opened from Add User form)
+    if (widget.initialCompany != null) {
+      _selectedCompany = widget.initialCompany;
+      _companyAutocompleteController.text = widget.initialCompany!.name;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Load message templates
+      ref.read(messageTemplateProvider.notifier).loadTemplates();
+
       final currentUser = ref.read(userProvider).currentUser;
-      if (currentUser != null && currentUser.roleId != 1) {
-        setState(() {
-          _selectedCompany = CompanyAutocomplete(
-            id: currentUser.companyId!,
-            name: currentUser.companyName!,
-          );
-          _companyAutocompleteController.text = currentUser.companyName!;
-        });
+      final isSuperAdmin = currentUser?.roleId == 1;
+
+      if (isSuperAdmin) {
+        await _loadCompanies();
+      }
+
+      // For non-super-admin: auto-set their company
+      if (widget.initialCompany == null &&
+          currentUser != null &&
+          currentUser.roleId != 1 &&
+          currentUser.companyId != null) {
+        final company = CompanyAutocomplete(
+          id: currentUser.companyId!,
+          name: currentUser.companyName ?? '',
+        );
+        if (mounted) {
+          setState(() {
+            _selectedCompany = company;
+            _companyAutocompleteController.text = company.name;
+          });
+          await _loadCompanyUsers(company.id);
+        }
+        return;
+      }
+
+      // If a company was already pre-selected, load its users
+      if (_selectedCompany != null && mounted) {
+        await _loadCompanyUsers(_selectedCompany!.id);
       }
     });
+  }
+
+  Future<void> _loadCompanies() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingCompanies = true;
+    });
+    try {
+      final results = await ref.read(userProvider.notifier).searchCompanies('');
+      if (mounted) {
+        setState(() {
+          _companies = results;
+          // Ensure widget.initialCompany is in the list
+          if (widget.initialCompany != null &&
+              !_companies.any((c) => c.id == widget.initialCompany!.id)) {
+            _companies.insert(0, widget.initialCompany!);
+          }
+          _isLoadingCompanies = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading companies: $e');
+      if (mounted) {
+        setState(() {
+          _companies = widget.initialCompany != null ? [widget.initialCompany!] : [];
+          _isLoadingCompanies = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadCompanyUsers(int companyId) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingUsers = true;
+      _companyUsers = [];
+      _selectedUserToAdd = null;
+    });
+    try {
+      final repository = ref.read(userRepositoryProvider);
+      final response = await repository.searchUsers(
+        page: 1,
+        companyId: companyId,
+      );
+      if (mounted) {
+        setState(() {
+          _companyUsers = response.data;
+          _isLoadingUsers = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading company users: $e');
+      if (mounted) setState(() => _isLoadingUsers = false);
+    }
   }
 
   @override
@@ -57,15 +150,13 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
     _descController.dispose();
     _companyAutocompleteController.dispose();
     _companyFocusNode.dispose();
-    _siteAutocompleteController.dispose();
-    _siteFocusNode.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     final messenger = ScaffoldMessenger.of(context);
     final groupName = _nameController.text.trim();
-    
+
     if (groupName.isEmpty) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Please enter Group Name')),
@@ -76,54 +167,62 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
     final currentUser = ref.read(userProvider).currentUser;
     if (currentUser == null) return;
 
-    final isSuperAdmin = currentUser.roleId == 1;
-    if (isSuperAdmin && _selectedCompany == null) {
+    if (currentUser.roleId == 1 && _selectedCompany == null) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Please select a Company')),
       );
       return;
     }
 
-    final groupDesc = _descController.text.trim();
-
     final newGroup = AssetGroupModel(
       name: groupName,
-      description: groupDesc,
-      displayInTree: _isActive,
-      status: _isActive ? 1 : 0,
+      description: _descController.text.trim(),
+      displayInTree: true,
+      status: 1,
       domain: 'ROSTER',
-      siteId: _selectedSite?.siteId,
-      parameterName: _selectedParameter,
-      criteria: [
-        if (_selectedSite != null) ...[
-          AssetCriteria(
-            parameter: 'Site Name',
-            logic: '=',
-            value: _selectedSite!.siteName,
-          ),
-          AssetCriteria(
-            parameter: 'site_id',
-            logic: '=',
-            value: _selectedSite!.siteId.toString(),
-          ),
-        ],
-        if (_selectedParameter != null)
-          AssetCriteria(
-            parameter: 'Parameter',
-            logic: '=',
-            value: _selectedParameter!,
-          ),
-      ],
+      siteId: null,
+      parameterName: null,
+      criteria: const [],
       companyId: _selectedCompany?.id ?? currentUser.companyId,
     );
 
-    final success = await ref.read(assetGroupProvider.notifier).saveGroup(newGroup);
+    final createdId = await ref
+        .read(assetGroupProvider.notifier)
+        .saveGroupAndGetId(newGroup, users: _assignedUsers);
 
     if (!mounted) return;
 
-    if (success) {
+    if (createdId != null) {
+      final rosterNotifier = ref.read(roasterNotifierProvider.notifier);
+      for (final cfg in _userConfigs.values) {
+        final user =
+            _assignedUsers.firstWhere((u) => u.userId == cfg.userId);
+        await rosterNotifier.createRoster({
+          'description': '$groupName – ${user.username}',
+          'enabled': 1,
+          'parameter_name': 'LEVEL',
+          'company_id': _selectedCompany?.id ?? currentUser.companyId,
+          if (cfg.messageTemplateId != null)
+            'message_template_id': cfg.messageTemplateId,
+          'roster_group_id': createdId,
+          'members': [
+            {
+              'user_id': cfg.userId,
+              'email_notif': cfg.email ? 1 : 0,
+              'push_notif': cfg.push ? 1 : 0,
+              'email_to_phone': cfg.sms ? 1 : 0,
+              'enabled': cfg.enabled ? 1 : 0,
+              'parameter_name': 'LEVEL',
+              if (cfg.messageTemplateId != null)
+                'message_template_id': cfg.messageTemplateId,
+            },
+          ],
+        });
+      }
+
+      if (!mounted) return;
       ref.read(rosterGroupProvider.notifier).loadGroups();
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(createdId);
       messenger.showSnackBar(
         const SnackBar(content: Text('Roster group created successfully')),
       );
@@ -131,18 +230,42 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
       final error = ref.read(assetGroupProvider).error;
       messenger.showSnackBar(
         SnackBar(
-          content: Text('Failed to create group: ${error ?? "Unknown error"}'),
+          content: Text(
+              'Failed to create group: ${error ?? "Unknown error"}'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
 
+  void _addSelectedUser() {
+    if (_selectedUserToAdd == null) return;
+    setState(() {
+      _assignedUsers.add(AssetGroupUser(
+        userId: _selectedUserToAdd!.userId,
+        username: _selectedUserToAdd!.username,
+        firstName: _selectedUserToAdd!.firstName,
+        lastName: _selectedUserToAdd!.lastName,
+        roleName: _selectedUserToAdd!.roleName,
+      ));
+      _userConfigs[_selectedUserToAdd!.userId] = _UserConfig(
+        userId: _selectedUserToAdd!.userId,
+      );
+      _selectedUserToAdd = null;
+    });
+  }
+
+  // ─── BUILD ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(assetGroupProvider);
     final currentUser = ref.watch(userProvider).currentUser;
     final isSuperAdmin = currentUser?.roleId == 1;
+
+    final eligibleUsers = _companyUsers.where((u) {
+      final alreadyAdded = _assignedUsers.any((a) => a.userId == u.userId);
+      return !alreadyAdded && u.roleId != 1;
+    }).toList();
 
     return Align(
       alignment: Alignment.centerRight,
@@ -153,7 +276,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           bottomLeft: Radius.circular(16),
         ),
         child: SizedBox(
-          width: 500,
+          width: 640,
           height: MediaQuery.of(context).size.height,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -163,114 +286,296 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                 height: 4,
                 decoration: const BoxDecoration(
                   color: Color(0xFF141E7A),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(16)),
+                  borderRadius:
+                      BorderRadius.only(topLeft: Radius.circular(16)),
                 ),
               ),
+
+              // Scrollable body
               Expanded(
                 child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 40, vertical: 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Header ─────────────────────────────────────────
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Create Roster Group',
                                   style: GoogleFonts.outfit(
-                                    fontSize: 28,
+                                    fontSize: 26,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF111827),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 Text(
-                                  'Define basic roster group information.',
-                                  style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF6B7280)),
+                                  'Define group info and assign users with notifications.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: const Color(0xFF6B7280),
+                                  ),
                                 ),
                               ],
                             ),
-                            IconButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              icon: const Icon(Icons.close_rounded),
-                              style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xFFF3F4F6),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          const SizedBox(width: 16),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFF3F4F6),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+
+                      // ── GROUP NAME ─────────────────────────────────────
+                      _buildLabel('GROUP NAME*'),
+                      const SizedBox(height: 10),
+                      AppTextField(
+                        controller: _nameController,
+                        hint: 'e.g. Battery Maintenance Group',
+                      ),
+                      const SizedBox(height: 24),
+
+                      // ── DESCRIPTION ────────────────────────────────────
+                      _buildLabel('DESCRIPTION'),
+                      const SizedBox(height: 10),
+                      AppTextField(
+                        controller: _descController,
+                        hint: 'e.g. Roster group for notifications',
+                      ),
+                      const SizedBox(height: 24),
+
+                      // ── COMPANY (Super Admin only) ──────────────────────
+                      if (isSuperAdmin) ...[
+                        _buildLabel('COMPANY*'),
+                        const SizedBox(height: 10),
+                        _buildCompanyDropdown(),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // ── ASSIGN USERS (always visible) ──────────────────
+                      _buildLabel('ASSIGN USERS'),
+                      const SizedBox(height: 10),
+
+                      // User selector row: dropdown + Add button
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: _selectedCompany == null
+                                ? _buildDisabledDropdown(
+                                    isSuperAdmin
+                                        ? 'Select a company first…'
+                                        : 'Loading users…',
+                                  )
+                                : _isLoadingUsers
+                                    ? _buildLoadingDropdown()
+                                    : _buildUserDropdown(eligibleUsers),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            height: 50,
+                            child: ElevatedButton.icon(
+                              onPressed:
+                                  (_selectedCompany == null ||
+                                          _selectedUserToAdd == null ||
+                                          _isLoadingUsers)
+                                      ? null
+                                      : _addSelectedUser,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF141E7A),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor:
+                                    const Color(0xFFE5E7EB),
+                                disabledForegroundColor:
+                                    const Color(0xFF9CA3AF),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 20),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(10)),
+                                elevation: 0,
+                              ),
+                              icon: const Icon(Icons.person_add_alt_1,
+                                  size: 18),
+                              label: Text(
+                                'Add User',
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-                        
-                        // Group Name
-                        _buildLabelField(
-                          'GROUP NAME*',
-                          AppTextField(
-                            controller: _nameController,
-                            hint: 'e.g. Battery Maintenance Group',
                           ),
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Description
-                        _buildLabelField(
-                          'DESCRIPTION',
-                          AppTextField(
-                            controller: _descController,
-                            hint: 'e.g. Roster group for notifications',
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-
-                        // Company Autocomplete (Super Admin Only)
-                        if (isSuperAdmin) ...[
-                          _buildLabelField(
-                            'COMPANY*',
-                            _buildCompanyAutocomplete(),
-                          ),
-                          const SizedBox(height: 32),
                         ],
-                        _buildLabelField(
-                          'SITE',
-                          _buildSiteAutocomplete(),
-                        ),
-                        const SizedBox(height: 32),
-                        _buildLabelField(
-                          'PARAMETER',
-                          _buildParameterDropdown(),
-                        ),
-                        const SizedBox(height: 32),
+                      ),
 
-                        // Status Toggle
-                        _buildStatusToggle(),
-                        const SizedBox(height: 48),
+                      // Hint when company users are empty
+                      if (_selectedCompany != null &&
+                          !_isLoadingUsers &&
+                          _companyUsers.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline,
+                                  size: 14, color: Color(0xFF9CA3AF)),
+                              const SizedBox(width: 6),
+                              Text(
+                                'No users found for this company.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: const Color(0xFF9CA3AF),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
 
-                        // Create Button
-                        SizedBox(
+                      // ── Assigned users notification table ───────────────
+                      if (_assignedUsers.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        Container(
                           width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: state.isProcessing ? null : _save,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF141E7A),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            child: state.isProcessing
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : Text(
-                                    'CREATE GROUP',
-                                    style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFF),
+                            borderRadius: BorderRadius.circular(12),
+                            border:
+                                Border.all(color: const Color(0xFFDDE1FF)),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Sub-header
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.notifications_active_outlined,
+                                    size: 15,
+                                    color: Color(0xFF141E7A),
                                   ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'NOTIFICATION SETTINGS',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF141E7A),
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF141E7A)
+                                          .withValues(alpha: 0.08),
+                                      borderRadius:
+                                          BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${_assignedUsers.length} user${_assignedUsers.length == 1 ? '' : 's'}',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF141E7A),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              const Divider(height: 1),
+                              const SizedBox(height: 8),
+
+                              // Column headers
+                              Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: Text(
+                                      'USER',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF6B7280),
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                  ),
+                                  _tableHeader('EMAIL'),
+                                  _tableHeader('PUSH'),
+                                  _tableHeader('SMS'),
+                                  _tableHeaderWide('TEMPLATE'),
+                                  const SizedBox(width: 36),
+                                ],
+                              ),
+                              const Divider(height: 1),
+
+                              // User rows
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics:
+                                    const NeverScrollableScrollPhysics(),
+                                itemCount: _assignedUsers.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (_, i) =>
+                                    _buildUserRow(_assignedUsers[i]),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
+
+                      const SizedBox(height: 32),
+
+                      // ── CREATE GROUP button ─────────────────────────────
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: state.isProcessing ? null : _save,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF141E7A),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                            elevation: 2,
+                          ),
+                          child: state.isProcessing
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2),
+                                )
+                              : Text(
+                                  'CREATE GROUP',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -281,204 +586,537 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
     );
   }
 
-  Widget _buildLabelField(String label, Widget field) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.outfit(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-            color: const Color(0xFF141E7A),
-            letterSpacing: 1.1,
+  // ─── Disabled placeholder dropdown ────────────────────────────────────────
+  Widget _buildDisabledDropdown(String hint) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          const Icon(Icons.person_search_outlined,
+              size: 18, color: Color(0xFFD1D5DB)),
+          const SizedBox(width: 8),
+          Text(
+            hint,
+            style: GoogleFonts.inter(
+                fontSize: 13, color: const Color(0xFFD1D5DB)),
           ),
-        ),
-        const SizedBox(height: 12),
-        field,
-      ],
+          const Spacer(),
+          const Icon(Icons.arrow_drop_down,
+              color: Color(0xFFD1D5DB)),
+        ],
+      ),
     );
   }
 
-  Widget _buildStatusToggle() {
+  // ─── Loading state dropdown ────────────────────────────────────────────────
+  Widget _buildLoadingDropdown() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      height: 50,
       decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFD1D5DB)),
+        borderRadius: BorderRadius.circular(10),
         color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'STATUS',
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 12, color: const Color(0xFF141E7A)),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Toggle group active/inactive status.',
-                  style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
-                ),
-              ],
-            ),
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
-          Switch(
-            value: _isActive,
-            onChanged: (v) => setState(() => _isActive = v),
-            activeTrackColor: const Color(0xFF141E7A),
-            activeThumbColor: Colors.white,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: const Color(0xFFE5E7EB),
+          const SizedBox(width: 10),
+          Text(
+            'Loading users…',
+            style: GoogleFonts.inter(
+                fontSize: 13, color: const Color(0xFF6B7280)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCompanyAutocomplete() {
-    return LayoutBuilder(
-      builder: (context, constraints) => RawAutocomplete<CompanyAutocomplete>(
-        focusNode: _companyFocusNode,
-        textEditingController: _companyAutocompleteController,
-        optionsBuilder: (TextEditingValue v) => v.text.isEmpty
-            ? <CompanyAutocomplete>[]
-            : ref.read(userProvider.notifier).searchCompanies(v.text),
-        displayStringForOption: (o) => o.name,
-        fieldViewBuilder: (context, controller, focus, onSubmitted) =>
-            AppTextField(
-              controller: controller,
-              focusNode: focus,
-              hint: 'Search Company...',
-            ),
-        onSelected: (o) {
-          setState(() {
-            _selectedCompany = o;
-            _selectedSite = null;
-            _siteAutocompleteController.clear();
-          });
-        },
-        optionsViewBuilder: (context, onSelected, options) => Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: constraints.maxWidth,
-              constraints: const BoxConstraints(maxHeight: 300),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+  // ─── User selector dropdown ────────────────────────────────────────────────
+  Widget _buildUserDropdown(List<User> eligibleUsers) {
+    return DropdownButtonFormField<User>(
+      isExpanded: true,
+      itemHeight: 56,
+      value: eligibleUsers.contains(_selectedUserToAdd)
+          ? _selectedUserToAdd
+          : null,
+      selectedItemBuilder: (BuildContext context) {
+        return eligibleUsers.map<Widget>((u) {
+          final parts = [u.firstName, u.lastName]
+              .whereType<String>()
+              .where((s) => s.isNotEmpty)
+              .toList();
+          final displayName =
+              parts.isNotEmpty ? parts.join(' ') : u.username;
+          return Row(
+            children: [
+              CircleAvatar(
+                radius: 12,
+                backgroundColor:
+                    const Color(0xFF141E7A).withValues(alpha: 0.08),
+                child: Text(
+                  displayName.isNotEmpty
+                      ? displayName[0].toUpperCase()
+                      : '?',
+                  style: GoogleFonts.outfit(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF141E7A),
+                  ),
+                ),
               ),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: options.length,
-                itemBuilder: (context, i) {
-                  final option = options.elementAt(i);
-                  return ListTile(
-                    hoverColor: const Color(0xFFF3F4F6),
-                    title: Text(
-                      option.name,
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                    onTap: () => onSelected(option),
-                  );
-                },
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  displayName,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF111827),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSiteAutocomplete() {
-    return LayoutBuilder(
-      builder: (context, constraints) => RawAutocomplete<SiteAutocompleteInfo>(
-        focusNode: _siteFocusNode,
-        textEditingController: _siteAutocompleteController,
-        optionsBuilder: (TextEditingValue textEditingValue) async {
-          if (textEditingValue.text.isEmpty) {
-            return const Iterable<SiteAutocompleteInfo>.empty();
-          }
-          return await ref
-              .read(tankNotifierProvider.notifier)
-              .searchSites(
-                textEditingValue.text,
-                companyId: _selectedCompany?.id,
-              );
-        },
-        displayStringForOption: (SiteAutocompleteInfo option) =>
-            option.displayName ?? option.siteName,
-        fieldViewBuilder: (context, controller, focus, onSubmitted) =>
-            AppTextField(
-              controller: controller,
-              focusNode: focus,
-              hint: 'Search Site by Name',
-            ),
-        onSelected: (o) => setState(() => _selectedSite = o),
-        optionsViewBuilder: (context, onSelected, options) => Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: constraints.maxWidth,
-              constraints: const BoxConstraints(maxHeight: 300),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: options.length,
-                itemBuilder: (context, i) {
-                  final option = options.elementAt(i);
-                  return ListTile(
-                    hoverColor: const Color(0xFFF3F4F6),
-                    title: Text(
-                      option.displayName ?? "${option.siteName} ${option.fullAddress}",
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                    onTap: () => onSelected(option),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildParameterDropdown() {
-    return AppDropdown<String>(
-      value: _selectedParameter,
-      items: const ['LEVEL', 'BATTERY', 'PRESSURE', 'DEVICE COMMUNICATE FAILED'],
-      hint: 'Select Parameter',
-      itemLabel: (p) => p,
-      onChanged: (v) {
-        if (v != null) {
-          setState(() {
-            _selectedParameter = v;
-          });
-        }
+            ],
+          );
+        }).toList();
       },
+      hint: Text(
+        eligibleUsers.isEmpty
+            ? 'All users already assigned'
+            : 'Select a user to assign…',
+        style:
+            GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
+      ),
+      items: eligibleUsers.map((u) {
+        final parts = [u.firstName, u.lastName]
+            .whereType<String>()
+            .where((s) => s.isNotEmpty)
+            .toList();
+        final displayName =
+            parts.isNotEmpty ? parts.join(' ') : u.username;
+        return DropdownMenuItem(
+          value: u,
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor:
+                    const Color(0xFF141E7A).withValues(alpha: 0.08),
+                child: Text(
+                  displayName.isNotEmpty
+                      ? displayName[0].toUpperCase()
+                      : '?',
+                  style: GoogleFonts.outfit(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF141E7A),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      displayName,
+                      style: GoogleFonts.inter(
+                          fontSize: 13, fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      u.roleName ?? 'User',
+                      style: GoogleFonts.inter(
+                          fontSize: 11, color: const Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: eligibleUsers.isEmpty
+          ? null
+          : (v) => setState(() => _selectedUserToAdd = v),
+      decoration: InputDecoration(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        border:
+            OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide:
+              const BorderSide(color: Color(0xFF141E7A), width: 1.5),
+        ),
+        fillColor: Colors.white,
+        filled: true,
+      ),
+    );
+  }
+
+  // ─── Single assigned user row ──────────────────────────────────────────────
+  Widget _buildUserRow(AssetGroupUser user) {
+    final cfg = _userConfigs[user.userId]!;
+    final parts = [user.firstName, user.lastName]
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
+        .toList();
+    final displayName =
+        parts.isNotEmpty ? parts.join(' ') : user.username;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          // Avatar + name
+          Expanded(
+            flex: 3,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 15,
+                  backgroundColor:
+                      const Color(0xFF141E7A).withValues(alpha: 0.08),
+                  child: Text(
+                    displayName.isNotEmpty
+                        ? displayName[0].toUpperCase()
+                        : '?',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF141E7A),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF111827),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (user.roleName != null)
+                        Text(
+                          user.roleName!,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Email toggle
+          _toggle(cfg.email, (v) {
+            setState(() =>
+                _userConfigs[user.userId] = cfg.copyWith(email: v));
+          }),
+
+          // Push toggle
+          _toggle(cfg.push, (v) {
+            setState(
+                () => _userConfigs[user.userId] = cfg.copyWith(push: v));
+          }),
+
+          // SMS toggle
+          _toggle(cfg.sms, (v) {
+            setState(
+                () => _userConfigs[user.userId] = cfg.copyWith(sms: v));
+          }),
+
+          // Template dropdown
+          SizedBox(
+            width: 140,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                border: Border.all(color: const Color(0xFFD1D5DB)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  isExpanded: true,
+                  value: cfg.messageTemplateId,
+                  hint: Text(
+                    'Template',
+                    style: GoogleFonts.inter(
+                        fontSize: 11, color: const Color(0xFF9CA3AF)),
+                  ),
+                  icon:
+                      const Icon(Icons.arrow_drop_down, size: 16),
+                  items: [
+                    DropdownMenuItem<int>(
+                      value: null,
+                      child: Text('None',
+                          style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: const Color(0xFF6B7280))),
+                    ),
+                    ...ref
+                        .watch(messageTemplateProvider)
+                        .templates
+                        .map((t) => DropdownMenuItem<int>(
+                              value: t.id,
+                              child: Text(
+                                t.name,
+                                style: GoogleFonts.inter(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            )),
+                  ],
+                  onChanged: (v) {
+                    setState(() {
+                      _userConfigs[user.userId] = cfg.copyWith(
+                        messageTemplateId: v,
+                        clearTemplate: v == null,
+                      );
+                    });
+                  },
+                ),
+              ),
+            ),
+          ),
+
+          // Remove button
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: IconButton(
+              onPressed: () {
+                setState(() {
+                  _assignedUsers
+                      .removeWhere((g) => g.userId == user.userId);
+                  _userConfigs.remove(user.userId);
+                });
+              },
+              icon: const Icon(Icons.close_rounded,
+                  color: Colors.red, size: 16),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.red.withValues(alpha: 0.08),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Company dropdown (super admin only) ───────────────────────────────────
+  Widget _buildCompanyDropdown() {
+    if (_isLoadingCompanies) {
+      return Container(
+        height: 50,
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFD1D5DB)),
+          borderRadius: BorderRadius.circular(10),
+          color: const Color(0xFFF9FAFB),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'Loading companies…',
+              style: GoogleFonts.inter(
+                  fontSize: 13, color: const Color(0xFF6B7280)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return DropdownButtonFormField<CompanyAutocomplete>(
+      isExpanded: true,
+      value: _companies.any((c) => c.id == _selectedCompany?.id)
+          ? _companies.firstWhere((c) => c.id == _selectedCompany?.id)
+          : null,
+      hint: Text(
+        'Select a company…',
+        style:
+            GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
+      ),
+      items: _companies.map((c) {
+        return DropdownMenuItem<CompanyAutocomplete>(
+          value: c,
+          child: Text(
+            c.name,
+            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
+            overflow: TextOverflow.ellipsis,
+          ),
+        );
+      }).toList(),
+      onChanged: (o) {
+        if (o == null) return;
+        setState(() {
+          _selectedCompany = o;
+          _companyAutocompleteController.text = o.name;
+          _assignedUsers.clear();
+          _userConfigs.clear();
+          _selectedUserToAdd = null;
+          _companyUsers = [];
+        });
+        _loadCompanyUsers(o.id);
+      },
+      decoration: InputDecoration(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        border:
+            OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide:
+              const BorderSide(color: Color(0xFF141E7A), width: 1.5),
+        ),
+        fillColor: Colors.white,
+        filled: true,
+      ),
+    );
+  }
+
+  // ─── Helpers ───────────────────────────────────────────────────────────────
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: GoogleFonts.outfit(
+        fontWeight: FontWeight.w700,
+        fontSize: 11,
+        color: const Color(0xFF374151),
+        letterSpacing: 1.1,
+      ),
+    );
+  }
+
+  Widget _tableHeader(String text) {
+    return SizedBox(
+      width: 60,
+      child: Center(
+        child: Text(
+          text,
+          style: GoogleFonts.outfit(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF6B7280),
+            letterSpacing: 0.8,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tableHeaderWide(String text) {
+    return SizedBox(
+      width: 140,
+      child: Center(
+        child: Text(
+          text,
+          style: GoogleFonts.outfit(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF6B7280),
+            letterSpacing: 0.8,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _toggle(bool value, ValueChanged<bool> onChanged) {
+    return SizedBox(
+      width: 60,
+      child: Center(
+        child: Switch(
+          value: value,
+          onChanged: onChanged,
+          activeTrackColor: const Color(0xFF141E7A),
+          activeThumbColor: Colors.white,
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: const Color(0xFFE5E7EB),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Per-user notification config ─────────────────────────────────────────────
+class _UserConfig {
+  final int userId;
+  final bool email;
+  final bool push;
+  final bool sms;
+  final bool enabled;
+  final int? messageTemplateId;
+
+  const _UserConfig({
+    required this.userId,
+    this.email = false,
+    this.push = false,
+    this.sms = false,
+    this.enabled = true,
+    this.messageTemplateId,
+  });
+
+  _UserConfig copyWith({
+    bool? email,
+    bool? push,
+    bool? sms,
+    bool? enabled,
+    int? messageTemplateId,
+    bool clearTemplate = false,
+  }) {
+    return _UserConfig(
+      userId: userId,
+      email: email ?? this.email,
+      push: push ?? this.push,
+      sms: sms ?? this.sms,
+      enabled: enabled ?? this.enabled,
+      messageTemplateId: clearTemplate
+          ? null
+          : (messageTemplateId ?? this.messageTemplateId),
     );
   }
 }

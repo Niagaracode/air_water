@@ -206,9 +206,9 @@ class _UserWideState extends ConsumerState<UserWide> {
             cells: [
               DataCell(TableDataCell(label: '${index + 1}')),
               DataCell(TableDataCell(label: user.fullName, bold: true)),
-              DataCell(TableDataCell(label: user.companyName!)),
-              DataCell(TableDataCell(label: user.mobileNumber!)),
-              DataCell(TableDataCell(label: user.email!)),
+              DataCell(TableDataCell(label: user.companyName ?? '—')),
+              DataCell(TableDataCell(label: user.mobileNumber ?? '—')),
+              DataCell(TableDataCell(label: user.email ?? '—')),
               DataCell(
                 Align(
                   alignment: Alignment.centerLeft,

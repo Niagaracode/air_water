@@ -47,7 +47,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     'Tank Name',
   ];
   final List<String> _logics = ['Like', '=', '!='];
-  final List<String> _operators = ['And', 'Or'];
+  final List<String> _operators = ['And'];
 
   @override
   void initState() {
@@ -154,18 +154,6 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   }
 
   void _removeCriteria(int index) {
-    if (_criteria.length <= 1) {
-      // If last rule, just reset it instead of removing
-      setState(() {
-        _criteria[0] = AssetCriteria(
-          parameter: 'City',
-          logic: 'Like',
-          value: '',
-          operator: 'And',
-        );
-      });
-      return;
-    }
     setState(() {
       _criteria.removeAt(index);
     });
@@ -283,13 +271,16 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
         .where(
           (u) =>
               u.roleId != 1 &&
-              u.roleId != 2 &&
               u.companyId == _selectedCompanyId,
         )
         .toList();
 
+    final isEditingAllGroup =
+        _nameController.text.trim().toLowerCase() == 'all';
+
     // Auto-assign "All" group users if the group is currently empty and not manually cleared
-    if (_assignedUsers.isEmpty &&
+    if (isEditingAllGroup &&
+        _assignedUsers.isEmpty &&
         !_didAutoAssign &&
         !userState.isLoading &&
         allGroupUsers.isNotEmpty) {
@@ -310,15 +301,12 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       }
     }
 
-    final isEditingAllGroup =
-        _nameController.text.trim().toLowerCase() == 'all';
-
     final eligibleUsers = userState.users.where((u) {
       final isAlreadyAssigned = _assignedUsers.any(
         (au) => au.userId == u.userId,
       );
-      // Exclude Super Admin (1) and Company Admin (2)
-      final isRestrictedRole = u.roleId == 1 || u.roleId == 2;
+      // Exclude Super Admin (1)
+      final isRestrictedRole = u.roleId == 1;
 
       // If we are NOT editing the "All" group, exclude users who are already in the "All" group globally
       final isInAllGroupGlobally =
@@ -367,6 +355,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                           ),
                         );
                       }
+                      _selectedUserForAssignment = null;
                     });
                   },
                   icon: const Icon(Icons.group_add_outlined, size: 18),
@@ -498,8 +487,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                     final role = user.roleName?.toLowerCase() ?? '';
                     final isRestricted =
                         role == 'customer' ||
-                        role.contains('super admin') ||
-                        role.contains('company admin');
+                        role.contains('super admin');
 
                     return Container(
                       padding: const EdgeInsets.symmetric(
@@ -605,7 +593,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
               Expanded(
                 flex: 3,
                 child: DropdownButtonFormField<User>(
-                  value: _selectedUserForAssignment,
+                  value: eligibleUsers.contains(_selectedUserForAssignment)
+                      ? _selectedUserForAssignment
+                      : null,
                   hint: const Text('Select User'),
                   items: eligibleUsers.map((u) {
                     return DropdownMenuItem(
@@ -967,48 +957,43 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                     onPressed: () {
                       setState(() {
                         _criteria.clear();
-                        _addCriteria();
                       });
                     },
                     icon: const Icon(Icons.delete_sweep_outlined, size: 18),
                     label: const Text('CLEAR ALL'),
                     style: TextButton.styleFrom(foregroundColor: Colors.red),
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: _addCriteria,
-                    icon: const Icon(
-                      Icons.add_circle_outline_rounded,
-                      size: 18,
-                    ),
-                    label: const Text('ADD RULE'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF141E7A),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          _buildCriteriaHeader(),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _criteria.length,
-            separatorBuilder: (context, index) =>
-                Divider(height: 1, color: Colors.grey.shade200),
-            itemBuilder: (context, index) => _buildCriteriaRow(index),
-          ),
+          if (_criteria.isEmpty) ...[
+            const SizedBox(height: 24),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  'No selection criteria added.',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: const Color(0xFF6B7280),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 24),
+            _buildCriteriaHeader(),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _criteria.length,
+              separatorBuilder: (context, index) =>
+                  Divider(height: 1, color: Colors.grey.shade200),
+              itemBuilder: (context, index) => _buildCriteriaRow(index),
+            ),
+          ],
         ],
       ),
     );
@@ -1074,20 +1059,27 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           .toList();
       companies.sort((a, b) => a['name']!.compareTo(b['name']!));
 
-      final currentValue = companies.any((c) => c['id'] == rule.value)
-          ? rule.value
-          : (companies.isNotEmpty ? companies.first['id'] : '');
-      if (rule.value.isEmpty && companies.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => setState(() => rule.value = companies.first['id']!),
-        );
-      }
+      // Filter out companies selected in other rows
+      final selectedVals = _criteria
+          .asMap()
+          .entries
+          .where((e) => e.key != index && e.value.parameter == 'Customer Name' && e.value.value.isNotEmpty)
+          .map((e) => e.value.value)
+          .toSet();
+
+      final filteredCompanies = companies
+          .where((c) => 
+              (!selectedVals.contains(c['id']) && !selectedVals.contains(c['name'])) || 
+              c['id'] == rule.value || 
+              c['name'] == rule.value)
+          .toList();
+
+      final matchIndex = filteredCompanies.indexWhere((c) => c['id'] == rule.value || c['name'] == rule.value);
+      final dropdownValue = matchIndex != -1 ? filteredCompanies[matchIndex]['id'] : null;
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && companies.isNotEmpty
-            ? companies.first['id']
-            : (companies.any((c) => c['id'] == rule.value) ? rule.value : null),
-        items: companies
+        value: dropdownValue,
+        items: filteredCompanies
             .map(
               (c) => DropdownMenuItem<String>(
                 value: c['id'] as String,
@@ -1104,7 +1096,6 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     }
 
     if (rule.parameter == 'Product Name') {
-
       final state = ref.watch(productNotifierProvider);
       final products = state.products.map((p) {
         return {
@@ -1115,17 +1106,27 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
       products.sort((a, b) => a['name']!.compareTo(b['name']!));
 
-      if (rule.value.isEmpty && products.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => setState(() => rule.value = products.first['id']!),
-        );
-      }
+      // Filter out products selected in other rows
+      final selectedVals = _criteria
+          .asMap()
+          .entries
+          .where((e) => e.key != index && e.value.parameter == 'Product Name' && e.value.value.isNotEmpty)
+          .map((e) => e.value.value)
+          .toSet();
+
+      final filteredProducts = products
+          .where((p) => 
+              (!selectedVals.contains(p['id']) && !selectedVals.contains(p['name'])) || 
+              p['id'] == rule.value || 
+              p['name'] == rule.value)
+          .toList();
+
+      final matchIndex = filteredProducts.indexWhere((p) => p['id'] == rule.value || p['name'] == rule.value);
+      final dropdownValue = matchIndex != -1 ? filteredProducts[matchIndex]['id'] : null;
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && products.isNotEmpty
-            ? products.first['id']
-            : (products.any((p) => p['id'] == rule.value) ? rule.value : null),
-        items: products
+        value: dropdownValue,
+        items: filteredProducts
             .map(
               (p) => DropdownMenuItem<String>(
                 value: p['id'] as String,
@@ -1156,17 +1157,21 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           .whereType<String>();
       final cities = <String>{...companyCities, ...siteCities}.toList()..sort();
 
-      if (rule.value.isEmpty && cities.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => setState(() => rule.value = cities.first),
-        );
-      }
+      // Filter out cities selected in other rows
+      final selectedVals = _criteria
+          .asMap()
+          .entries
+          .where((e) => e.key != index && e.value.parameter == 'City' && e.value.value.isNotEmpty)
+          .map((e) => e.value.value)
+          .toSet();
+
+      final filteredCities = cities
+          .where((c) => !selectedVals.contains(c) || c == rule.value)
+          .toList();
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && cities.isNotEmpty
-            ? cities.first
-            : (cities.contains(rule.value) ? rule.value : null),
-        items: cities
+        value: filteredCities.contains(rule.value) ? rule.value : null,
+        items: filteredCities
             .map(
               (c) => DropdownMenuItem(
                 value: c,
@@ -1198,17 +1203,21 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       final countries = <String>{...companyCountries, ...siteCountries}.toList()
         ..sort();
 
-      if (rule.value.isEmpty && countries.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => setState(() => rule.value = countries.first),
-        );
-      }
+      // Filter out countries selected in other rows
+      final selectedVals = _criteria
+          .asMap()
+          .entries
+          .where((e) => e.key != index && e.value.parameter == 'Country' && e.value.value.isNotEmpty)
+          .map((e) => e.value.value)
+          .toSet();
+
+      final filteredCountries = countries
+          .where((c) => !selectedVals.contains(c) || c == rule.value)
+          .toList();
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && countries.isNotEmpty
-            ? countries.first
-            : (countries.contains(rule.value) ? rule.value : null),
-        items: countries
+        value: filteredCountries.contains(rule.value) ? rule.value : null,
+        items: filteredCountries
             .map(
               (c) => DropdownMenuItem(
                 value: c,
@@ -1239,17 +1248,21 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           .whereType<String>();
       final states = <String>{...companyStates, ...siteStates}.toList()..sort();
 
-      if (rule.value.isEmpty && states.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => setState(() => rule.value = states.first),
-        );
-      }
+      // Filter out states selected in other rows
+      final selectedVals = _criteria
+          .asMap()
+          .entries
+          .where((e) => e.key != index && e.value.parameter == 'State or Province' && e.value.value.isNotEmpty)
+          .map((e) => e.value.value)
+          .toSet();
+
+      final filteredStates = states
+          .where((s) => !selectedVals.contains(s) || s == rule.value)
+          .toList();
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && states.isNotEmpty
-            ? states.first
-            : (states.contains(rule.value) ? rule.value : null),
-        items: states
+        value: filteredStates.contains(rule.value) ? rule.value : null,
+        items: filteredStates
             .map(
               (s) => DropdownMenuItem(
                 value: s,
@@ -1274,17 +1287,27 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           .toList();
       devices.sort((a, b) => (a['name'] ?? '').compareTo(b['name'] ?? ''));
 
-      if (rule.value.isEmpty && devices.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => setState(() => rule.value = devices.first['id']!),
-        );
-      }
+      // Filter out devices selected in other rows
+      final selectedVals = _criteria
+          .asMap()
+          .entries
+          .where((e) => e.key != index && e.value.parameter == 'DeviceID' && e.value.value.isNotEmpty)
+          .map((e) => e.value.value)
+          .toSet();
+
+      final filteredDevices = devices
+          .where((d) => 
+              (!selectedVals.contains(d['id']) && !selectedVals.contains(d['name'])) || 
+              d['id'] == rule.value || 
+              d['name'] == rule.value)
+          .toList();
+
+      final matchIndex = filteredDevices.indexWhere((d) => d['id'] == rule.value || d['name'] == rule.value);
+      final dropdownValue = matchIndex != -1 ? filteredDevices[matchIndex]['id'] : null;
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && devices.isNotEmpty
-            ? devices.first['id']
-            : (devices.any((d) => d['id'] == rule.value) ? rule.value : null),
-        items: devices
+        value: dropdownValue,
+        items: filteredDevices
             .map(
               (d) => DropdownMenuItem<String>(
                 value: d['id'] as String,
@@ -1342,17 +1365,21 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
         );
       }
 
-      if (rule.value.isEmpty && sites.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => setState(() => rule.value = sites.first),
-        );
-      }
+      // Filter out sites selected in other rows
+      final selectedVals = _criteria
+          .asMap()
+          .entries
+          .where((e) => e.key != index && e.value.parameter == 'Site Name' && e.value.value.isNotEmpty)
+          .map((e) => e.value.value)
+          .toSet();
+
+      final filteredSites = sites
+          .where((s) => !selectedVals.contains(s) || s == rule.value)
+          .toList();
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && sites.isNotEmpty
-            ? sites.first
-            : (sites.contains(rule.value) ? rule.value : null),
-        items: sites
+        value: filteredSites.contains(rule.value) ? rule.value : null,
+        items: filteredSites
             .map(
               (s) => DropdownMenuItem(
                 value: s,
@@ -1415,17 +1442,27 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
         );
       }
 
-      if (rule.value.isEmpty && tanks.isNotEmpty) {
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => setState(() => rule.value = tanks.first['id']!),
-        );
-      }
+      // Filter out tanks selected in other rows
+      final selectedVals = _criteria
+          .asMap()
+          .entries
+          .where((e) => e.key != index && e.value.parameter == 'Tank Name' && e.value.value.isNotEmpty)
+          .map((e) => e.value.value)
+          .toSet();
+
+      final filteredTanks = tanks
+          .where((t) => 
+              (!selectedVals.contains(t['id']) && !selectedVals.contains(t['name'])) || 
+              t['id'] == rule.value || 
+              t['name'] == rule.value)
+          .toList();
+
+      final matchIndex = filteredTanks.indexWhere((t) => t['id'] == rule.value || t['name'] == rule.value);
+      final dropdownValue = matchIndex != -1 ? filteredTanks[matchIndex]['id'] : null;
 
       return DropdownButtonFormField<String>(
-        value: rule.value.isEmpty && tanks.isNotEmpty
-            ? tanks.first['id']
-            : (tanks.any((t) => t['id'] == rule.value) ? rule.value : null),
-        items: tanks
+        value: dropdownValue,
+        items: filteredTanks
             .map(
               (t) => DropdownMenuItem<String>(
                 value: t['id'] as String,
@@ -1548,26 +1585,23 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           ),
           const SizedBox(width: 12),
 
-          // 5. CLEAR (DELETE)
-          _criteria.length <= 1
-              ? const SizedBox(width: 48)
-              : SizedBox(
-                  width: 48,
-                  child: IconButton(
-                    onPressed: () => _removeCriteria(index),
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.red,
-                      size: 20,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.05),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
+          SizedBox(
+            width: 48,
+            child: IconButton(
+              onPressed: () => _removeCriteria(index),
+              icon: const Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+                size: 20,
+              ),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.red.withOpacity(0.05),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
+              ),
+            ),
+          ),
         ],
       ),
     );

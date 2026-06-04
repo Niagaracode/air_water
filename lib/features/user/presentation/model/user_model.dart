@@ -20,6 +20,7 @@ class User {
   final String? messageCategoryName;
   final List<String>? rosters;
   final List<String>? groupNames;
+  final int? rosterGroupId; // Added this
 
   User({
     required this.userId,
@@ -43,6 +44,7 @@ class User {
     this.messageCategoryName,
     this.rosters,
     this.groupNames,
+    this.rosterGroupId, // Added this
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -77,6 +79,7 @@ class User {
       groupNames: json['group_names'] != null
           ? (json['group_names'] as List).map((e) => e as String).toList()
           : null,
+      rosterGroupId: json['roster_group_id'] as int?, // Added this
     );
   }
 
@@ -175,6 +178,7 @@ class UserCreateRequest {
   final List<int>? assignedSites;
   final List<int>? assignedTanks;
   final int? messageCategoryId;
+  final int? rosterGroupId; // Added this
 
   UserCreateRequest({
     required this.username,
@@ -191,6 +195,7 @@ class UserCreateRequest {
     this.assignedSites,
     this.assignedTanks,
     this.messageCategoryId,
+    this.rosterGroupId, // Added this
   });
 
   Map<String, dynamic> toJson() {
@@ -209,6 +214,7 @@ class UserCreateRequest {
       'assigned_plants': assignedSites,
       'assigned_tanks': assignedTanks,
       'message_category_id': messageCategoryId,
+      if (rosterGroupId != null) 'roster_group_id': rosterGroupId, // Added this
     };
   }
 }

@@ -12,6 +12,7 @@ class Roster {
   final String? messageTemplateNames;
   final List<int> roleIds;
   final List<RosterMember>? members; // Added this
+  final int? rosterGroupId; // Added this
 
   Roster({
     required this.id,
@@ -25,6 +26,7 @@ class Roster {
     this.messageTemplateNames,
     this.roleIds = const [],
     this.members, // Added this
+    this.rosterGroupId, // Added this
   });
 
   factory Roster.fromJson(Map<String, dynamic> json) {
@@ -44,6 +46,7 @@ class Roster {
               .map((i) => RosterMember.fromJson(i as Map<String, dynamic>))
               .toList()
           : null,
+      rosterGroupId: json['roster_group_id'] as int?, // Added this
     );
   }
 
