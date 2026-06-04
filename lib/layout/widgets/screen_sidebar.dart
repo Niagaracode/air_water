@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/app_theme/app_theme.dart';
 import '../../core/router/sidebar_routes.dart';
 import '../../core/user_config/user_role.dart';
-import '../provider/sidebar_provider.dart';
+import '../../layout/provider/sidebar_provider.dart';
 import 'sidebar_menu_config.dart';
 import 'sidebar_menu_item.dart';
 import 'nave_menu.dart';

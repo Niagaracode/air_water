@@ -3,7 +3,7 @@ import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../controller/provider/sidebar_provider.dart';
+import '../../../../layout/provider/sidebar_provider.dart';
 import '../../data/models/site_group_model.dart';
 import '../../data/models/tank_data_model.dart';
 

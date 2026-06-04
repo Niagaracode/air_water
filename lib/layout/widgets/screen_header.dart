@@ -1,4 +1,4 @@
-import 'package:air_water/controller/widgets/sidebar_header.dart';
+import 'package:air_water/layout/widgets/sidebar_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,10 +13,9 @@ import '../../core/user_config/user_role.dart';
 import '../../core/user_config/user_role_provider.dart';
 import '../../features/dashboard/presentation/widgets/mqtt_connection_status.dart';
 import '../../features/dashboard/presentation/widgets/sync_button.dart';
-import '../../features/dashboard/provider/dashboard_provider.dart';
 import '../../features/notification/presentation/widgets/notification_dropdown.dart';
 import '../../features/notification/presentation/controller/notification_provider.dart';
-import '../provider/sidebar_provider.dart';
+import '../../layout/provider/sidebar_provider.dart';
 
 class ScreenHeader extends ConsumerWidget {
   const ScreenHeader({super.key});

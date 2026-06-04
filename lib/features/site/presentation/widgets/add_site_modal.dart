@@ -850,7 +850,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         setState(() {});
       },
       optionsBuilder: (textEditingValue) async {
-        // If text is empty and we have an initial value in controller, show all or filtered?
+        // If text is empty and we have an initial value in layout_controller, show all or filtered?
         // Actually, just follow standard behavior.
         if (textEditingValue.text.isEmpty) {
           return const Iterable<String>.empty();

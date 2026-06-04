@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/user_config/user_role_provider.dart';
-import '../layout/layout_selector.dart';
+import 'layout_selector.dart';
 
 class ScreenController extends ConsumerWidget {
   final Widget child;
