@@ -657,7 +657,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
               .where((s) => s.isNotEmpty)
               .toList();
           final displayName =
-              parts.isNotEmpty ? parts.join(' ') : u.username;
+              parts.isNotEmpty ? parts.join(', ') : u.username;
           return Row(
             children: [
               CircleAvatar(
@@ -704,7 +704,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
             .where((s) => s.isNotEmpty)
             .toList();
         final displayName =
-            parts.isNotEmpty ? parts.join(' ') : u.username;
+            parts.isNotEmpty ? parts.join(', ') : u.username;
         return DropdownMenuItem(
           value: u,
           child: Row(
@@ -779,7 +779,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
         .where((s) => s.isNotEmpty)
         .toList();
     final displayName =
-        parts.isNotEmpty ? parts.join(' ') : user.username;
+        parts.isNotEmpty ? parts.join(', ') : user.username;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),

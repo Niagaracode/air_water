@@ -714,7 +714,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
 
   Widget _headerCell(String text) {
     return SizedBox(
-      width: 72,
+      width: 60,
       child: Center(
         child: Text(
           text,
@@ -731,7 +731,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
 
   Widget _templateHeaderCell(String text) {
     return SizedBox(
-      width: 150,
+      width: 140,
       child: Center(
         child: Text(
           text,
@@ -751,11 +751,11 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
     final fullName = [
       user.firstName,
       user.lastName,
-    ].whereType<String>().where((s) => s.isNotEmpty).join(' ');
+    ].whereType<String>().where((s) => s.isNotEmpty).join(', ');
     final displayName = fullName.isNotEmpty ? fullName : user.username;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
           Expanded(
@@ -821,7 +821,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
             setState(() => _userConfigs[user.userId] = cfg.copyWith(sms: v));
           }),
           Container(
-            width: 150,
+            width: 140,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
@@ -862,7 +862,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
             ),
           ),
           SizedBox(
-            width: 48,
+            width: 36,
             child: Center(
               child: IconButton(
                 onPressed: () {
@@ -887,7 +887,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
 
   Widget _toggle(bool value, ValueChanged<bool> onChanged) {
     return SizedBox(
-      width: 72,
+      width: 60,
       child: Center(
         child: Switch(
           value: value,
@@ -977,7 +977,12 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
           : null,
       selectedItemBuilder: (BuildContext context) {
         return eligibleUsers.map<Widget>((u) {
-          final displayName = u.fullName;
+          final parts = [u.firstName, u.lastName]
+              .whereType<String>()
+              .where((s) => s.isNotEmpty)
+              .toList();
+          final displayName =
+              parts.isNotEmpty ? parts.join(', ') : u.username;
           return Row(
             children: [
               CircleAvatar(
@@ -1019,7 +1024,12 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
             GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
       ),
       items: eligibleUsers.map((u) {
-        final displayName = u.fullName;
+        final parts = [u.firstName, u.lastName]
+            .whereType<String>()
+            .where((s) => s.isNotEmpty)
+            .toList();
+        final displayName =
+            parts.isNotEmpty ? parts.join(', ') : u.username;
         return DropdownMenuItem(
           value: u,
           child: Row(

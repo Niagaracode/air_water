@@ -91,9 +91,9 @@ class RosterMember {
   String get displayName {
     final f = (firstName == null || firstName == 'null') ? '' : firstName!;
     final l = (lastName == null || lastName == 'null') ? '' : lastName!;
-    final full = '$f $l'.trim();
-    if (full.isEmpty) return username ?? 'Unknown Member';
-    return full;
+    final parts = [f, l].where((s) => s.isNotEmpty).toList();
+    if (parts.isEmpty) return username ?? 'Unknown Member';
+    return parts.join(', ');
   }
 
   RosterMember({

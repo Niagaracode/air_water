@@ -456,7 +456,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                             const SizedBox(height: 24),
                           ],
 
-                          if (_selectedCompany != null && widget.user == null) ...[
+                          if (_selectedCompany != null && widget.user == null && ref.watch(userProvider).currentUser?.roleId == 1) ...[
                             _buildLabelField(
                               'ROSTER GROUP',
                               _buildRosterGroupDropdown(),
