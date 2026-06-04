@@ -99,5 +99,9 @@ class TankRepositoryImpl implements TankRepository {
     return _api.getTankChannels(tankId);
   }
 
+  @override
+  Future<void> updateTankChannelEvent(int tankId, Map<String, dynamic> data) {
+    return _api.updateTankEvent(tankId, data);
+  }
 
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class CompanyAdminMobile extends StatelessWidget {
-  const CompanyAdminMobile({super.key, required this.child});
+class CompanyAdminNarrow extends StatelessWidget {
+  const CompanyAdminNarrow({super.key, required this.child});
   final Widget child;
 
   @override

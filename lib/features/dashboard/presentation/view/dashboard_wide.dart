@@ -37,7 +37,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
 
   final TextEditingController _searchController = TextEditingController();
 
-
   String _selectedStatus = 'All Status';
   String _selectedRegion = 'All Regions';
   String _searchQuery = '';

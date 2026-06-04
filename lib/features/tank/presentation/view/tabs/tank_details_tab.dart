@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../../core/app_theme/app_theme.dart';
+import '../../../data/model/tank_channel_model.dart';
 import '../../controller/tank_channel_provider.dart';
+import '../../controller/tank_provider.dart';
 import '../../controller/tank_readings_provider.dart';
 import '../../widgets/tank_multi_line_chart.dart';
 import '../threshold_side_sheet.dart';
@@ -26,20 +28,14 @@ class TankDetailsTab extends ConsumerWidget {
       ),
     );
 
-    final channelState = ref.watch(
-      tankChannelProvider(tankId),
-    );
+    final channelState = ref.watch(tankChannelProvider(tankId));
 
     if (readingsState.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (readingsState.readings.isEmpty) {
-      return const Center(
-        child: Text('No readings available'),
-      );
+      return const Center(child: Text('No readings available'));
     }
 
     return Container(
@@ -50,7 +46,6 @@ class TankDetailsTab extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
         
-            /// CHART
             SizedBox(
               height: 350,
               child: TankMultiLineChart(
@@ -83,12 +78,39 @@ class TankDetailsTab extends ConsumerWidget {
                             alignment: Alignment.centerRight,
                             child: ThresholdSideSheet(
                               channels: channelState.channels,
+                              onSave: (Map<String, dynamic> payload) async {
+                                // payload contains the complete JSON structure with tankId
+                                print('Complete payload to save: $payload');
+
+                                try {
+                                  // Call the repository to update
+                                  final tankRepository = ref.read(tankRepositoryProvider);
+                                  await tankRepository.updateTankChannelEvent(tankId, payload);
+
+                                  // Show success message
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Thresholds updated successfully'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+
+                                } catch (e) {
+                                  // Show error message
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error updating thresholds: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+
+                              },
                             ),
                           );
                         },
 
-                        transitionBuilder:
-                            (context, animation, secondaryAnimation, child) {
+                        transitionBuilder: (context, animation, secondaryAnimation, child) {
 
                           final tween = Tween(
                             begin: const Offset(1, 0),
@@ -104,13 +126,13 @@ class TankDetailsTab extends ConsumerWidget {
                     },
 
                     icon: Icon(
-                      Icons.mode_edit_sharp,
+                      Icons.view_headline_sharp,
                       color: primary,
                       size: 18,
                     ),
 
                     label: Text(
-                      'Edit Rule',
+                      'View Event Details',
                       style: TextStyle(
                         color: primary,
                         fontWeight: FontWeight.w600,
@@ -118,70 +140,6 @@ class TankDetailsTab extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  /*TextButton.icon(
-                    onPressed: () {
-
-                      showGeneralDialog(
-                        context: context,
-                        barrierDismissible: true,
-                        barrierLabel: 'Threshold',
-                        barrierColor: Colors.black54,
-                        transitionDuration: const Duration(
-                          milliseconds: 300,
-                        ),
-
-                        pageBuilder: (_, __, ___) {
-                          return const Align(
-                            alignment: Alignment.centerRight,
-                            child: ThresholdSideSheet(),
-                          );
-                        },
-
-                        transitionBuilder:
-                            (context, animation, secondaryAnimation, child) {
-
-                          final tween = Tween(
-                            begin: const Offset(1, 0),
-                            end: Offset.zero,
-                          );
-
-                          return SlideTransition(
-                            position: animation.drive(tween),
-                            child: child,
-                          );
-                        },
-                      );
-                    },
-
-                    icon: Icon(
-                      Icons.mode_edit_sharp,
-                      color: primary,
-                      size: 18,
-                    ),
-
-                    label: Text(
-                      'Edit Rule',
-                      style: TextStyle(
-                        color: primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(
-                          color: primary.withValues(alpha: 0.15),
-                        ),
-                      ),
-                      backgroundColor: primary.withValues(alpha: 0.08),
-                    ),
-                  ),*/
                   SizedBox(width: 8),
                 ],
               ),
@@ -331,24 +289,30 @@ class TankDetailsTab extends ConsumerWidget {
     }
   }
 
-  String buildThresholdText(dynamic threshold) {
+  String buildThresholdText(ThresholdModel threshold) {
     List<String> items = [];
 
-    if (threshold.reorder != null) {
+    if (threshold.full != null) {
       items.add(
-        'R: <= ${threshold.reorder!.value}',
+        'F: ${threshold.full!.comparator} ${threshold.full!.value}',
       );
     }
 
-    if (threshold.low != null) {
+    if (threshold.reorder != null) {
       items.add(
-        'L: <= ${threshold.low!.value}',
+        'R: ${threshold.reorder!.comparator} ${threshold.reorder!.value}',
       );
     }
 
     if (threshold.critical != null) {
       items.add(
-        'C: <= ${threshold.critical!.value}',
+        'C: ${threshold.critical!.comparator} ${threshold.critical!.value}',
+      );
+    }
+
+    if (threshold.low != null) {
+      items.add(
+        'L: ${threshold.low!.comparator} ${threshold.low!.value}',
       );
     }
 
