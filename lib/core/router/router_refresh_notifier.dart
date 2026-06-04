@@ -7,23 +7,33 @@ import '../../core/user_config/user_role_provider.dart';
 import '../../features/user/presentation/controller/user_provider.dart';
 
 class RouterRefreshNotifier extends ChangeNotifier {
+
   late final ProviderSubscription _startupSub;
   late final ProviderSubscription _userSub;
-  late final ProviderSubscription _roleSub;
+  late final ProviderSubscription<UserRole?> _roleSub;
 
   RouterRefreshNotifier(Ref ref) {
+
     _startupSub = ref.listen<AsyncValue<AppStartupState>>(
-      appStartupProvider,
-      (_, __) => notifyListeners(),
-    );
+      appStartupProvider, (_, __) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    });
+
     _userSub = ref.listen<UserState>(
-      userProvider,
-      (_, __) => notifyListeners(),
-    );
-    _roleSub = ref.listen<AsyncValue<UserRole>>(
-      userRoleProvider,
-      (_, __) => notifyListeners(),
-    );
+      userProvider, (_, __) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    });
+
+    _roleSub = ref.listen<UserRole?>(
+      userRoleProvider, (_, __) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
+    });
   }
 
   @override

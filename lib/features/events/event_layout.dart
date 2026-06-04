@@ -12,20 +12,21 @@ class EventLayout extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final roleAsync = ref.watch(userRoleProvider);
-    return roleAsync.when(
-      data: (role) {
-        if (role == UserRole.customer) {
-          /*return const SettingWide(
-            title: 'ASSIGNED RULES',
-            subTitle: 'Monitor your device thresholds and notification settings.',
-          );*/
-        }
-        return const _EventPage();
-      },
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (_, __) => const _EventPage(),
-    );
+    final role = ref.watch(userRoleProvider);
+
+    if (role == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (role == UserRole.customer) {
+
+    }
+
+    return const _EventPage();
   }
 }
 
