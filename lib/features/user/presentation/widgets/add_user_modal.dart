@@ -343,7 +343,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       status: _status,
       sessionHours: int.tryParse(_timeoutController.text) ?? 24,
       sessionMinutes: 0,
-      rosterGroupId: _selectedRosterGroup?.id,
+      rosterGroupId: widget.user != null ? widget.user!.rosterGroupId : _selectedRosterGroup?.id,
     );
 
     final userNotifier = ref.read(userProvider.notifier);
@@ -456,7 +456,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                             const SizedBox(height: 24),
                           ],
 
-                          if (_selectedCompany != null) ...[
+                          if (_selectedCompany != null && widget.user == null) ...[
                             _buildLabelField(
                               'ROSTER GROUP',
                               _buildRosterGroupDropdown(),
