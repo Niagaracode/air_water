@@ -53,14 +53,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (status == AppStartupState.authenticated) {
         final currentUser = userState.currentUser;
-        final roleFromStorage = ref.read(userRoleProvider).value;
+        final roleFromStorage = ref.read(userRoleProvider);
 
         if (location == '/login' || location == '/loading') {
           // Priority 1: Check profile role (Most accurate)
           if (currentUser != null) {
             final roleId = currentUser.roleId;
             if (roleId == 6) return '/asset-summary';
-            if (roleId == 5) return '/dashboard';
             return '/dashboard';
           }
 
@@ -73,7 +72,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return null;
         }
 
-        // --- 🛡️ ACCESS CONTROL ---
+        // --- ACCESS CONTROL ---
         
         // Combine routes to restrict for non-admin roles
         final restrictedRoutes = [
@@ -131,7 +130,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               return '/asset-summary';
             }
           }
-
 
           if (roleFromStorage == UserRole.superAdmin || roleFromStorage == UserRole.companyAdmin) {
             if (roleFromStorage == UserRole.companyAdmin && restrictedRoutes.contains(location)) {
@@ -194,7 +192,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const MessageTemplateLayout(),
           ),
           GoRoute(path: '/roster', builder: (_, __) => const RoasterLayout()),
-
           GoRoute(
             path: '/asset-schedule',
             builder: (_, __) => const AssetScheduleLayout(),

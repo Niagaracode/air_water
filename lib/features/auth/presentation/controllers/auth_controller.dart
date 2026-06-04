@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app_startup/app_startup.dart';
+import '../../../../core/user_config/user_role_mapper.dart';
 import '../../../../core/user_config/user_role_provider.dart';
 import '../../domain/repository/auth_repository.dart';
 import '../../../user/presentation/controller/user_provider.dart';
@@ -27,23 +28,30 @@ class AuthController extends AsyncNotifier<void> {
     state = const AsyncLoading();
 
     state = await AsyncValue.guard(() async {
+
       await _repo.login(username, password);
+
+      final role = await _repo.getUserRole();
+
+      if (role != null) {
+        ref.read(userRoleProvider.notifier).state =
+            mapUserRole(role);
+      }
 
       ref.read(appStartupProvider.notifier)
           .setAuthenticated();
 
       ref.invalidate(userNameProvider);
-      ref.invalidate(userRoleProvider);
       ref.invalidate(userProvider);
-
     });
   }
+
 
   Future<void> logout() async {
     await _repo.logout();
 
-    /// clear cached providers
-    ref.invalidate(userRoleProvider);
+    ref.read(userRoleProvider.notifier).state = null;
+
     ref.invalidate(userNameProvider);
     ref.invalidate(userProvider);
     ref.invalidate(companyNotifierProvider);
@@ -55,8 +63,5 @@ class AuthController extends AsyncNotifier<void> {
     ref.invalidate(roasterNotifierProvider);
     ref.invalidate(productNotifierProvider);
     ref.invalidate(tankDataProvider);
-
-    ref.read(appStartupProvider.notifier)
-        .setUnauthenticated();
   }
 }

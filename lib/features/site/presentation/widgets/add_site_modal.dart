@@ -112,7 +112,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       _companyGroups = response.data;
 
       // Explicitly wait for role if it's still loading
-      final roleAsync = await ref.read(userRoleProvider.future);
+      final roleAsync = ref.read(userRoleProvider);
       final isSuperAdmin = roleAsync == UserRole.superAdmin;
 
       if (_companyGroups.isNotEmpty && !isSuperAdmin) {
@@ -459,7 +459,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                       ? const LinearProgressIndicator(
                                           minHeight: 2,
                                         )
-                                      : (ref.watch(userRoleProvider).value == UserRole.superAdmin)
+                                      : (ref.watch(userRoleProvider) == UserRole.superAdmin)
                                           ? AppDropdown<CompanyGroup>(
                                               value: _selectedGroup,
                                               items: _companyGroups,

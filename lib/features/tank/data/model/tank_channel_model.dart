@@ -14,14 +14,13 @@ class TankChannelModel {
   });
 
   factory TankChannelModel.fromJson(Map<String, dynamic> json) {
-    print("Tank channel:$json");
     return TankChannelModel(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
       value: json['value'],
       readingTime: json['cd_ct'] ?? '',
       threshold: ThresholdModel.fromJson(
-        json['threshold'] is Map ? json['threshold'] : {}, // Type check for safety
+        json['threshold'] is Map ? json['threshold'] : {},
       ),
     );
   }

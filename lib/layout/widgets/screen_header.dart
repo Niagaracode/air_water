@@ -23,15 +23,8 @@ class ScreenHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userNameAsync = ref.watch(userNameProvider);
-    final roleAsync = ref.watch(userRoleProvider);
     final userName = userNameAsync.value ?? 'User';
     final isExpanded = ref.watch(sidebarExpandedProvider);
-    
-    final isCustomer = roleAsync.when(
-      data: (role) => role == UserRole.customer,
-      loading: () => false,
-      error: (_, __) => false,
-    );
 
 
     return SizedBox(
@@ -152,37 +145,6 @@ class ScreenHeader extends ConsumerWidget {
                 ),
               ),
               itemBuilder: (context) => [
-                if (!isCustomer) ...[
-                  PopupMenuItem(
-                    value: 'profile',
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: ListTile(
-                      dense: true,
-                      leading: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.person_outline_rounded,
-                          size: 18,
-                          color: Color(0xFF374151),
-                        ),
-                      ),
-                      title: Text(
-                        'Profile',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF1A1A2E),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const PopupMenuDivider(height: 4),
-                ],
                 PopupMenuItem(
                   value: 'logout',
                   padding: const EdgeInsets.symmetric(horizontal: 8),
