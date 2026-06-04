@@ -262,7 +262,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
                       padding: const EdgeInsets.only(bottom: 24),
                       child: _buildRuleSection(channel),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
@@ -328,6 +328,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
   // =========================================================
 
   Widget _buildRuleSection(TankChannelModel channel) {
+
     final rules = [
       if (channel.threshold.full != null)
         {
@@ -374,6 +375,10 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
           "key": "${channel.id}_low",
         },
     ];
+
+    if (!channel.channelEnable) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       decoration: BoxDecoration(

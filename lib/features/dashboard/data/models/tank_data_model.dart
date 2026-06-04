@@ -18,12 +18,13 @@ class TankDataModel {
   final double pressure;
   final double batteryV;
   final double solarV;
-  final String thresholds;
   final String status;
   final DateTime lastUpdate;
   final String region;
   final double latitude;
   final double longitude;
+  final String thresholds;
+  final String channelStatus;
 
   TankDataModel({
     required this.id,
@@ -35,12 +36,13 @@ class TankDataModel {
     required this.pressure,
     required this.batteryV,
     required this.solarV,
-    required this.thresholds,
     required this.status,
     required this.lastUpdate,
     required this.region,
     required this.latitude,
     required this.longitude,
+    required this.thresholds,
+    required this.channelStatus,
   });
 
   factory TankDataModel.fromJson(Map<String, dynamic> json) {
@@ -54,16 +56,31 @@ class TankDataModel {
       pressure: _toDouble(json['ptn']),
       batteryV: _toDouble(json['bat']),
       solarV: _toDouble(json['sol']),
-      thresholds: json['thresholds'] ?? '00:00_3.5_25.0_1.0_20.0',
       status: json['status'] ?? 'Unknown',
       lastUpdate: parseDateTime(json['lastUpdate']),
       region: json['region'] ?? '',
       latitude: double.tryParse('${json['latitude']}') ?? 0,
       longitude: double.tryParse('${json['longitude']}') ?? 0,
+      thresholds: json['thresholds'] ?? '00:00_3.5_25.0_1.0_20.0',
+      channelStatus: json['channel_status'] ?? '1_1_1_1',
     );
   }
 
   TankThreshold get thresholdValues => TankThreshold.fromString(thresholds);
+
+  List<String> get _channelParts => channelStatus.split('_');
+
+  bool get isBatteryEnabled =>
+      _channelParts.isNotEmpty && _channelParts[0] == '1';
+
+  bool get isLevelEnabled =>
+      _channelParts.length > 1 && _channelParts[1] == '1';
+
+  bool get isPressureEnabled =>
+      _channelParts.length > 2 && _channelParts[2] == '1';
+
+  bool get isSolarEnabled =>
+      _channelParts.length > 3 && _channelParts[3] == '1';
 
   TankDataModel copyWith({
     double? level,
@@ -83,14 +100,16 @@ class TankDataModel {
       pressure: pressure ?? this.pressure,
       batteryV: batteryV ?? this.batteryV,
       solarV: solarV ?? this.solarV,
-      thresholds: thresholds,
       status: status ?? this.status,
       lastUpdate: lastUpdate ?? this.lastUpdate,
       region: region,
       latitude: latitude,
       longitude: longitude,
+      thresholds: thresholds,
+      channelStatus: channelStatus,
     );
   }
+
 }
 
 class TankThreshold {
@@ -133,7 +152,6 @@ class TankThreshold {
 
     final parts = value.split('_');
 
-    // Handle legacy 4-part format
     if (parts.length == 5) {
       return TankThreshold(
         duration: parts[0],
@@ -149,7 +167,6 @@ class TankThreshold {
       );
     }
 
-    // New 9-part format: duration, bat_val, bat_stat, lvl_val, lvl_stat, prs_val, prs_stat, reo_val, reo_stat
     if (parts.length >= 9) {
       return TankThreshold(
         duration: parts[0],
@@ -177,3 +194,4 @@ class TankThreshold {
     );
   }
 }
+
