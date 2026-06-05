@@ -197,6 +197,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
       case 'high':
         return Colors.orange;
       case 'medium':
+      case 'reorder':
         return Colors.amber;
       case 'low':
         return Colors.blue;

@@ -9,6 +9,7 @@ class AssetGroupModel {
   final String domain;
   final List<AssetCriteria> criteria;
   final int? userCount;
+  final int? rosterCount;
   final List<AssetGroupUser>? users;
   final int? companyId;
   final String? companyName;
@@ -25,6 +26,7 @@ class AssetGroupModel {
     this.domain = 'AIRWATER',
     required this.criteria,
     this.userCount,
+    this.rosterCount,
     this.users,
     this.companyId,
     this.companyName,
@@ -56,6 +58,7 @@ class AssetGroupModel {
       domain: json['domain'] ?? 'AIRWATER',
       criteria: parsedCriteria,
       userCount: json['user_count'],
+      rosterCount: json['roster_count'],
       users: json['users'] != null 
           ? (json['users'] as List).map((u) => AssetGroupUser.fromJson(u)).toList()
           : null,
@@ -81,6 +84,7 @@ class AssetGroupModel {
       if (siteId != null) 'site_id': siteId,
       if (parameterName != null) 'parameter_name': parameterName,
       if (tankId != null) 'tank_id': tankId,
+      if (rosterCount != null) 'roster_count': rosterCount,
     };
   }
 }

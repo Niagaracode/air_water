@@ -22,4 +22,5 @@ const Map<String, String> menuRoutes = {
 
   'Setting': '/setting',
   'Notification': '/notification',
+  'Report': '/notification',
 };

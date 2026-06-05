@@ -9,11 +9,8 @@ import '../../core/helpers/route_refresh_helper.dart';
 import '../../features/auth/presentation/controllers/auth_providers.dart';
 
 
-import '../../core/user_config/user_role.dart';
-import '../../core/user_config/user_role_provider.dart';
 import '../../features/dashboard/presentation/widgets/mqtt_connection_status.dart';
 import '../../features/dashboard/presentation/widgets/sync_button.dart';
-import '../../features/notification/presentation/widgets/notification_dropdown.dart';
 import '../../features/notification/presentation/controller/notification_provider.dart';
 import '../../layout/provider/sidebar_provider.dart';
 
@@ -60,22 +57,11 @@ class ScreenHeader extends ConsumerWidget {
               },
             ),
             const SizedBox(width: 16),
-            PopupMenuButton<void>(
-              offset: const Offset(0, 48),
-              elevation: 8,
-              color: Colors.white,
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFFE5E7EB)),
-              ),
-              itemBuilder: (context) => [
-                PopupMenuItem<void>(
-                  enabled: false,
-                  padding: EdgeInsets.zero,
-                  child: const NotificationDropdown(),
-                ),
-              ],
+            InkWell(
+              onTap: () {
+                context.go('/notification');
+              },
+              borderRadius: BorderRadius.circular(8),
               child: Container(
                 width: 38,
                 height: 38,

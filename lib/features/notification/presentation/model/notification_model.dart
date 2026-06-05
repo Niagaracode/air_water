@@ -13,6 +13,7 @@ class NotificationModel {
   final String? companyName;
   final String? subject;
   final String? body;
+  final String? statusLabel;
 
   NotificationModel({
     required this.id,
@@ -29,24 +30,72 @@ class NotificationModel {
     this.companyName,
     this.subject,
     this.body,
+    this.statusLabel,
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    final rawRuleName = json['rule_name'] as String?;
+    String? resolvedRuleName = rawRuleName;
+
+    if (rawRuleName != null && rawRuleName.toLowerCase() == 'default rule group') {
+      final type = (json['parameter_type'] as String?)?.toUpperCase() ?? '';
+      final importance = (json['status_label'] as String?) ?? (json['importance'] as String?) ?? 'Alert';
+      final rawValue = json['value'] ?? json['triggered_value'];
+      
+      String valueStr = '';
+      if (rawValue != null && rawValue.toString().isNotEmpty) {
+        var cleanVal = rawValue.toString();
+        if (cleanVal.endsWith('.0000')) cleanVal = cleanVal.substring(0, cleanVal.length - 5);
+        if (cleanVal.endsWith('.00')) cleanVal = cleanVal.substring(0, cleanVal.length - 3);
+        
+        if (type == 'LEVEL') {
+          valueStr = ' reached $cleanVal%';
+        } else if (type == 'BATTERY') {
+          valueStr = ' reached $cleanVal V';
+        } else if (type == 'SOLAR') {
+          valueStr = ' reached $cleanVal V';
+        } else if (type == 'PRESSURE') {
+          valueStr = ' reached $cleanVal Bar';
+        } else {
+          valueStr = ' reached $cleanVal';
+        }
+      }
+
+      String label = '';
+      final capitalizedImportance = importance.isEmpty
+          ? ''
+          : '${importance[0].toUpperCase()}${importance.substring(1).toLowerCase()}';
+      if (type == 'LEVEL') {
+        label = '$capitalizedImportance Level';
+      } else if (type == 'BATTERY') {
+        label = '$capitalizedImportance Battery';
+      } else if (type == 'SOLAR') {
+        label = '$capitalizedImportance Solar';
+      } else if (type == 'PRESSURE') {
+        label = '$capitalizedImportance Pressure';
+      } else {
+        label = '$capitalizedImportance $type';
+      }
+
+      resolvedRuleName = '$label$valueStr';
+    }
+
     return NotificationModel(
       id: json['id'] as int,
       ruleId: json['rule_id'] as int?,
       tankId: json['tank_id'] as int?,
       parameterType: json['parameter_type'] as String?,
-      value: json['value'],
-      importance: json['importance'] as String?,
+      value: json['value'] ?? json['triggered_value'],
+      importance: (json['status_label'] as String?) ?? (json['importance'] as String?),
       status: json['status'] as String?,
       createdAt: json['created_at'] as String?,
-      ruleName: json['rule_name'] as String?,
+      ruleName: resolvedRuleName,
       tankNumber: json['tank_number'] as String?,
       plantName: json['plant_name'] as String?,
       companyName: json['company_name'] as String?,
       subject: json['subject'] as String?,
       body: json['body'] as String?,
+      statusLabel: json['status_label'] as String?,
     );
   }
 }

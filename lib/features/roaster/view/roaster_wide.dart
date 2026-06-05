@@ -51,7 +51,9 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Roster Group'),
-        content: Text('Are you sure you want to delete the group "${group.name}"?'),
+        content: Text(
+          'Are you sure you want to delete the group "${group.name}"?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -66,7 +68,9 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     );
 
     if (confirm == true && group.id != null) {
-      final success = await ref.read(assetGroupProvider.notifier).deleteGroup(group.id!);
+      final success = await ref
+          .read(assetGroupProvider.notifier)
+          .deleteGroup(group.id!);
       if (success) {
         ref.read(rosterGroupProvider.notifier).loadGroups();
         if (mounted) {
@@ -79,7 +83,9 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
           final error = ref.read(assetGroupProvider).error;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to delete group: ${error ?? "Unknown error"}'),
+              content: Text(
+                'Failed to delete group: ${error ?? "Unknown error"}',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -106,9 +112,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                 : groupState.error != null
                 ? Center(child: Text(groupState.error!))
                 : _buildGroupTable(
-                    groupState.groups
-                        .where((g) => g.status == 1)
-                        .toList(),
+                    groupState.groups.where((g) => g.status == 1).toList(),
                     isSuperAdmin,
                   ),
           ),
@@ -151,7 +155,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'ROASTER MANAGEMENT',
+                        'ROSTER MANAGEMENT',
                         style: GoogleFonts.outfit(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -254,14 +258,13 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: const BoxDecoration(
-                color: Color(0xFF141E7A),
-              ),
+              decoration: const BoxDecoration(color: Color(0xFF141E7A)),
               child: Row(
                 children: [
                   AppTableHeaderCell('SI.NO', width: 60),
-                  if (isSuperAdmin) AppTableHeaderCell('COMPANY', flex: 2),
                   AppTableHeaderCell('GROUP NAME', flex: 2),
+                  if (isSuperAdmin) AppTableHeaderCell('COMPANY', flex: 2),
+                  AppTableHeaderCell('ROSTER COUNT', width: 120),
                   AppTableHeaderCell('DESCRIPTION', flex: 3),
                   AppTableHeaderCell('ACTION', width: 120),
                 ],
@@ -287,19 +290,11 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       onTap: () => _editGroup(group),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: const BoxDecoration(
-          color: Colors.transparent,
-        ),
+        decoration: const BoxDecoration(color: Colors.transparent),
         child: Row(
           children: [
             AppTableCell((index + 1).toString().padLeft(2, '0'), width: 60),
-            if (isSuperAdmin)
-              AppTableCell(
-                group.companyName ?? '-',
-                flex: 2,
-                color: const Color(0xFF141E7A),
-                bold: true,
-              ),
+
             Expanded(
               flex: 2,
               child: Column(
@@ -326,6 +321,17 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                     ),
                 ],
               ),
+            ),
+            if (isSuperAdmin)
+              AppTableCell(
+                group.companyName ?? '-',
+                flex: 2,
+                color: const Color(0xFF141E7A),
+                bold: true,
+              ),
+            AppTableCell(
+              (group.rosterCount ?? 0).toString(),
+              width: 120,
             ),
             Expanded(
               flex: 3,
