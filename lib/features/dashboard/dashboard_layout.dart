@@ -1,22 +1,23 @@
-import 'package:air_water/features/dashboard/presentation/view/dashboard_middle.dart';
-import 'package:air_water/features/dashboard/presentation/view/dashboard_narrow.dart';
-import 'package:air_water/features/dashboard/presentation/view/dashboard_wide.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/user_config/user_role.dart';
+import '../../core/user_config/user_role_provider.dart';
+import 'customer/customer_dashboard_layout.dart';
+import 'others/others_dashboard_layout.dart';
 
-import '../../core/responsive/page_layout_builder.dart';
+class DashboardLayout extends ConsumerWidget {
 
-class DashboardLayout extends PageLayoutBuilder {
-  const DashboardLayout({super.key});
-
-  @override
-  Widget buildNarrow(BuildContext context) =>
-      const DashboardNarrow();
-
-  @override
-  Widget buildMiddle(BuildContext context) =>
-      const DashboardMiddle();
+  const DashboardLayout({
+    super.key,
+  });
 
   @override
-  Widget buildWide(BuildContext context) =>
-      const DashboardWide();
+  Widget build(BuildContext context, WidgetRef ref) {
+
+    final role = ref.read(userRoleProvider);
+    if (role == UserRole.customer) {
+      return const CustomerDashboardLayout();
+    }
+    return const OthersDashboardLayout();
+  }
 }

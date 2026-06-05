@@ -28,7 +28,7 @@ class StatisticsCards extends StatelessWidget {
               Color(0xFFA7F3D0),
               Color(0xFF6EE7B7),
             ],
-          ), subtitle: 'Online',),
+          ), subtitle: 'Online', total: total,),
         const SizedBox(width: 16),
 
         // Offline Devices - Soft Gray
@@ -38,17 +38,17 @@ class StatisticsCards extends StatelessWidget {
                 Color(0xFFD1D5DB),
                 Color(0xFF9CA3AF),
               ],
-            ), subtitle: 'Offline',),
+            ), subtitle: 'Offline', total: total,),
         const SizedBox(width: 16),
 
         // Low Battery - Soft Yellow
-        StatusChip(title: 'Low Battery', value: lowBattery, color: Colors.yellow,
+        StatusChip(title: 'Low Batt/Solar', value: lowBattery, color: Colors.yellow,
           icon: Icons.battery_alert, gradient: const LinearGradient(
               colors: [
                 Color(0xFFFDE68A),
                 Color(0xFFFBBF24),
               ],
-            ), subtitle: 'Needs Charging',),
+            ), subtitle: 'Needs Charging', total: total,),
         const SizedBox(width: 16),
 
         // Low Level - Soft Orange
@@ -58,7 +58,7 @@ class StatisticsCards extends StatelessWidget {
                 Color(0xFFFED7AA),
                 Color(0xFFF97316),
               ],
-            ), subtitle: 'Below Threshold',),
+            ), subtitle: 'Below Threshold', total: total,),
         const SizedBox(width: 16),
 
         // Reorder Level - Soft Amber
@@ -68,86 +68,8 @@ class StatisticsCards extends StatelessWidget {
                 Color(0xFFFEF3C7),
                 Color(0xFFFBBF24),
               ],
-            ), subtitle: 'Need Restock',),
+            ), subtitle: 'Need Restock', total: total,),
 
-      ],
-    );
-
-    return Row(
-      children: [
-        // Active Devices - Soft Green
-        StatCard(
-          title: 'Active Devices',
-          value: '$active/$total',
-          subtitle: 'Online',
-          icon: Icons.devices,
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFFA7F3D0),
-              Color(0xFF6EE7B7),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-
-        // Offline Devices - Soft Gray
-        StatCard(
-          title: 'Offline Devices',
-          value: '$offline/$total',
-          subtitle: 'Offline',
-          icon: Icons.offline_bolt,
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFFD1D5DB),
-              Color(0xFF9CA3AF),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-
-        // Low Battery - Soft Yellow
-        StatCard(
-          title: 'Low Battery',
-          value: '$lowBattery/$total',
-          subtitle: 'Needs Charging',
-          icon: Icons.battery_alert,
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFFFDE68A),
-              Color(0xFFFBBF24),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-
-        // Low Level - Soft Orange
-        StatCard(
-          title: 'Low Level',
-          value: '$lowLevel/$total',
-          subtitle: 'Below Threshold',
-          icon: Icons.water_drop,
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFFFED7AA),
-              Color(0xFFF97316),
-            ],
-          ),
-        ),
-        const SizedBox(width: 16),
-
-        // Reorder Level - Soft Amber
-        StatCard(
-          title: 'Reorder Level',
-          value: '$reorderLevel/$total',
-          subtitle: 'Need Restock',
-          icon: Icons.inventory,
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFFFEF3C7),
-              Color(0xFFFBBF24),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -157,6 +79,7 @@ class StatusChip extends StatelessWidget {
   final String title;
   final String subtitle;
   final int value;
+  final int total;
   final Color color;
   final Gradient gradient;
   final IconData icon;
@@ -168,6 +91,7 @@ class StatusChip extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.value,
+    required this.total,
     required this.color,
     required this.gradient,
     required this.icon,
@@ -177,7 +101,6 @@ class StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isZero = value == 0;
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -186,7 +109,7 @@ class StatusChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: (color ?? _getShadowColor()).withOpacity(0.3),
+            color: (color).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -230,13 +153,32 @@ class StatusChip extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 22),
-          Text(
-            '$value',
-            style: GoogleFonts.outfit(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: Colors.black.withValues(alpha: textColorOpacity),
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+
+              Text(
+                '$value',
+                style: GoogleFonts.outfit(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black.withValues(
+                    alpha: textColorOpacity,
+                  ),
+                ),
+              ),
+
+              Text(
+                'of $total',
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black.withValues(
+                    alpha: 0.5,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 5),
         ],
@@ -244,13 +186,4 @@ class StatusChip extends StatelessWidget {
     );
   }
 
-  Color _getShadowColor() {
-    if (gradient is LinearGradient) {
-      final colors = (gradient as LinearGradient).colors;
-      if (colors.isNotEmpty) {
-        return colors.first;
-      }
-    }
-    return Colors.black;
-  }
 }

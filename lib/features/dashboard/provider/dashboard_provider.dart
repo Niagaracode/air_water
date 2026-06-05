@@ -85,10 +85,14 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
       }).length;
 
       final lowBattery = tanks.where((t) {
-        final batteryLow = t.batteryV <= t.thresholdValues.battery;
-        final solarLow = t.solarV <= t.thresholdValues.battery;
+        final batteryLow = t.isBatteryEnabled &&
+                t.batteryV <= t.thresholdValues.battery;
+        final solarLow = t.isSolarEnabled &&
+                t.solarV <= t.thresholdValues.battery;
         return batteryLow || solarLow;
       }).length;
+
+
 
       final lowLevel = tanks.where((t) {
         final isLowLevel = t.level <= t.thresholdValues.level;

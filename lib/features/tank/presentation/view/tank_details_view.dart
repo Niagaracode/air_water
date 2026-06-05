@@ -49,6 +49,12 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
 
     return Scaffold(
@@ -311,6 +317,8 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   }
 
   Future<void> exportTankReadingsExcel(List<TankReadingModel> readings) async {
+
+    if (!mounted) return;
 
     final workbook = xls.Workbook();
 

@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
-import '../../../core/user_config/user_role.dart';
-import '../../widgets/screen_header.dart';
-import '../../widgets/screen_sidebar.dart';
+import '../../core/user_config/user_role.dart';
+import '../header/screen_header.dart';
+import '../sidebar/screen_sidebar.dart';
 
 class OthersLayoutWide extends StatelessWidget {
-  const OthersLayoutWide({super.key, required this.child, required this.userRole});
-  final UserRole userRole;
+
   final Widget child;
+  final UserRole userRole;
+
+  const OthersLayoutWide({
+    super.key,
+    required this.child,
+    required this.userRole,
+  });
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       body: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          const ScreenHeader(),
+          ScreenHeader(userRole: userRole),
           Expanded(
             child: Row(
               children: [

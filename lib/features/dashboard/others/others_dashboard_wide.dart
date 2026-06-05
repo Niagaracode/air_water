@@ -1,41 +1,32 @@
-import 'package:air_water/core/app_theme/app_theme.dart';
-import 'package:air_water/features/tank/presentation/view/tank_details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import 'package:skeletonizer/skeletonizer.dart';
-import '../../../../core/network/mqtt/models/mqtt_message.dart';
-import '../../../../core/network/mqtt/providers/mqtt_notifier.dart';
-import '../../../../core/network/mqtt/providers/mqtt_providers.dart';
-import '../../data/models/tank_data_model.dart';
-import '../../provider/dashboard_provider.dart';
 
-import '../widgets/dashboard_list_view.dart';
-import '../widgets/dashboard_map_view.dart';
-import '../widgets/search_and_filters.dart';
-import '../widgets/statistics_cards.dart';
-import '../widgets/view_toggle.dart';
+import '../../../core/app_theme/app_theme.dart';
+import '../../tank/presentation/view/tank_details_view.dart';
+import '../data/models/tank_data_model.dart';
+import '../presentation/widgets/build_loading_view.dart';
+import '../presentation/widgets/dashboard_list_view.dart';
+import '../presentation/widgets/dashboard_map_view.dart';
+import '../presentation/widgets/search_and_filters.dart';
+import '../presentation/widgets/statistics_cards.dart';
+import '../presentation/widgets/view_toggle.dart';
+import '../provider/dashboard_controller.dart';
+import '../provider/dashboard_provider.dart';
 
 import 'dart:typed_data';
 import 'package:file_saver/file_saver.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xls;
 import 'package:pdf/widgets.dart' as pw;
 
-
-class DashboardWide extends ConsumerStatefulWidget {
-  const DashboardWide({super.key});
-
+class OthersDashboardWide extends ConsumerStatefulWidget {
+  const OthersDashboardWide({super.key});
 
   @override
-  ConsumerState<DashboardWide> createState() => _DashboardWideState();
+  ConsumerState<OthersDashboardWide> createState() =>
+      _OthersDashboardWideState();
 }
 
-class _DashboardWideState extends ConsumerState<DashboardWide> {
-
-
-  final String topic = 'tweet';
-  late final MqttNotifier mqttNotifier;
-  late final Function(MqttMessageModel) _mqttCallback;
+class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -45,143 +36,48 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
   bool _isListView = true;
 
   @override
-  void initState() {
-    super.initState();
-    mqttNotifier = ref.read(mqttProvider.notifier);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initialize();
-    });
-
-  }
-
-  Future<void> _initialize() async {
-
-    await mqttNotifier.initializeAndConnect();
-
-    if (!mounted) return;
-
-    _mqttCallback = (msg) {
-      if (!mounted) return;
-      print("✅ MQTT MESSAGE: ${msg.rawPayload}");
-      final parsed = _parseMqtt(msg.data);
-      ref.read(tankDataProvider.notifier)
-          .updateFromMqtt(parsed);
-    };
-
-    /// Always subscribe again
-    await mqttNotifier.subscribeToTopic(
-      topic,
-      onMessage: _mqttCallback,
-    );
-  }
-
-
-  Map<String, dynamic> _parseMqtt(Map<String, dynamic> json) {
-    final result = <String, dynamic>{};
-
-    result['deviceId'] = json['cC'];
-    final cM = json['cM'] ?? '';
-    final matches = RegExp(r'([A-Z]+):([\d.]+)').allMatches(cM);
-
-    for (var m in matches) {
-      final key = m.group(1);
-      final value = double.tryParse(m.group(2)!);
-
-      switch (key) {
-        case 'TNP':
-          result['level'] = value;
-          break;
-
-        case 'PTN':
-          result['pressure'] = value;
-          break;
-
-        case 'BAT':
-          result['batteryV'] = value;
-          break;
-
-        case 'SOL':
-          result['solarV'] = value;
-          break;
-      }
-    }
-
-    /// Parse date + time
-    final date = json['cD']?.toString().trim() ?? '';
-    final time = json['cT']?.toString().trim() ?? '';
-
-    if (date.isNotEmpty && time.isNotEmpty) {
-      try {
-        result['lastUpdate'] = DateFormat('dd/MM/yyyy HH:mm:ss')
-                .parse('$date $time');
-      } catch (_) {
-        result['lastUpdate'] = DateTime.now();
-      }
-    }
-
-    return result;
-  }
-
-
-  @override
   Widget build(BuildContext context) {
+
+    /// MQTT + realtime init
+    ref.watch(dashboardControllerProvider);
     final tanksAsync = ref.watch(tankDataProvider);
     final groupedTanks = ref.watch(groupedTanksProvider);
     final statistics = ref.watch(tankStatisticsProvider);
 
     return Container(
       color: Colors.white.withValues(alpha: 0.2),
+
       child: tanksAsync.when(
-        loading: () => _buildLoadingView(),
+        loading: () => buildLoadingView(),
         error: (error, _) => Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                getErrorMessage(error),
-                style: const TextStyle(color: Colors.red),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  ref.read(tankDataProvider.notifier).refresh();
-                },
-                child: const Text("Retry"),
-              ),
-            ],
-          ),
+          child: Text(error.toString()),
         ),
+
         data: (tanks) {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /// Statistics
-                StatisticsCards(
-                  statistics: statistics,
-                ),
-
+                StatisticsCards(statistics: statistics),
                 const SizedBox(height: 30),
-
-                /// Search & Filters
-                SearchAndFilters(
-                  onSearchChanged: (val) {
+                SearchAndFilters(onSearchChanged: (val) {
                     setState(() {
                       _searchQuery = val;
                     });
                   },
+
                   onRegionChanged: (val) {
                     setState(() {
                       _selectedRegion = val;
                     });
                   },
+
                   onStatusChanged: (val) {
                     setState(() {
                       _selectedStatus = val;
                     });
                   },
+
                   onClearFilters: () {
                     setState(() {
                       _selectedRegion = 'All Regions';
@@ -190,13 +86,12 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                     });
                     _searchController.clear();
                   },
+
                   selectedRegion: _selectedRegion,
+
                   selectedStatus: _selectedStatus,
                 ),
-
                 const SizedBox(height: 16),
-
-                /// Toggle
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -267,10 +162,7 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
-                /// Main View
                 _isListView ? DashboardListView(
                   groupedTanks: groupedTanks,
                   filteredTanks: tanks,
@@ -278,112 +170,11 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
                   selectedStatus: _selectedStatus,
                   searchQuery: _searchQuery,
                   onTankTap: _callDetailsPage,
-                ) : DashboardMapView(
-                  tanksData: tanks,
-                ),
+                ) : DashboardMapView(tanksData: tanks),
               ],
             ),
           );
         },
-      ),
-    );
-  }
-
-  String getErrorMessage(dynamic error) {
-    final msg = error.toString();
-    if (msg.contains('SocketException')) {
-      return 'No internet connection';
-    } else if (msg.contains('TimeoutException')) {
-      return 'Server timeout. Please try again';
-    } else if (msg.contains('401')) {
-      return 'Unauthorized access';
-    } else if (msg.contains('500')) {
-      return 'Internal server error';
-    }
-    return 'Unable to load data';
-  }
-
-  Widget _buildLoadingView() {
-    return Skeletonizer(
-      enabled: true,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: List.generate(5,
-                    (index) => Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      right: index != 4 ? 16 : 0,
-                    ),
-                    child: _skeletonBox(height: 60),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            /// Header
-            _skeletonBox(width: 250, height: 28, radius: 8),
-            const SizedBox(height: 20),
-            /// Search Filters
-            Row(
-              children: [
-                Expanded(flex: 3, child: _skeletonBox(height: 42)),
-                const SizedBox(width: 16),
-                Expanded(flex: 2, child: _skeletonBox(height: 42)),
-                const SizedBox(width: 16),
-                Expanded(flex: 2, child: _skeletonBox(height: 42)),
-                const SizedBox(width: 16),
-                _skeletonBox(width: 40, height: 42),
-              ],
-            ),
-            const SizedBox(height: 20),
-            /// Toggle
-            Row(
-              children: [
-                _skeletonBox(width: 120, height: 34),
-                const SizedBox(width: 12),
-                _skeletonBox(width: 120, height: 34),
-              ],
-            ),
-            const SizedBox(height: 24),
-            /// Device Cards
-            ...List.generate(6,
-                  (index) => Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    _skeletonBox(width: 40, height: 20),
-                    const SizedBox(width: 8),
-                    Expanded(child: _skeletonBox(height: 20)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _skeletonBox({
-    double? width,
-    double height = 16,
-    double radius = 12,
-  }) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(radius),
       ),
     );
   }
@@ -500,12 +291,6 @@ class _DashboardWideState extends ConsumerState<DashboardWide> {
       ext: 'pdf',
       mimeType: MimeType.pdf,
     );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
 }

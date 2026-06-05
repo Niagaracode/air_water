@@ -10,22 +10,22 @@ import '../../features/auth/presentation/controllers/auth_providers.dart';
 
 
 import '../../core/user_config/user_role.dart';
-import '../../core/user_config/user_role_provider.dart';
 import '../../features/dashboard/presentation/widgets/mqtt_connection_status.dart';
 import '../../features/dashboard/presentation/widgets/sync_button.dart';
 import '../../features/notification/presentation/widgets/notification_dropdown.dart';
 import '../../features/notification/presentation/controller/notification_provider.dart';
-import '../../layout/provider/sidebar_provider.dart';
+import '../provider/sidebar_provider.dart';
 
 class ScreenHeader extends ConsumerWidget {
-  const ScreenHeader({super.key});
+  const ScreenHeader({super.key, required this.userRole});
+
+  final UserRole userRole;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userNameAsync = ref.watch(userNameProvider);
     final userName = userNameAsync.value ?? 'User';
     final isExpanded = ref.watch(sidebarExpandedProvider);
-
 
     return SizedBox(
       height: 65,
@@ -181,5 +181,4 @@ class ScreenHeader extends ConsumerWidget {
       ),
     );
   }
-
 }

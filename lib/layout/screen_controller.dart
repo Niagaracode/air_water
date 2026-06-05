@@ -4,10 +4,10 @@ import '../core/user_config/user_role_provider.dart';
 import 'layout_selector.dart';
 
 class ScreenController extends ConsumerWidget {
+
   final Widget child;
 
-  const ScreenController({
-    super.key,
+  const ScreenController({super.key,
     required this.child,
   });
 
@@ -18,8 +18,8 @@ class ScreenController extends ConsumerWidget {
 
     if (role == null) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
+        body: Center(child:
+          CircularProgressIndicator(),
         ),
       );
     }

@@ -4,15 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/router/sidebar_routes.dart';
 import '../../core/user_config/user_role.dart';
-import '../../layout/provider/sidebar_provider.dart';
-import 'sidebar_menu_config.dart';
-import 'sidebar_menu_item.dart';
-import 'nave_menu.dart';
+import '../provider/sidebar_provider.dart';
+import '../widgets/sidebar_menu_config.dart';
+import '../widgets/sidebar_menu_item.dart';
+import '../widgets/nave_menu.dart';
 
 class ScreenSidebar extends ConsumerWidget {
   const ScreenSidebar({super.key, required this.userRole});
   final UserRole userRole;
-
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
