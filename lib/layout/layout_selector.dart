@@ -1,10 +1,10 @@
-
-import 'package:air_water/layout/user_layout.dart';
 import 'package:flutter/cupertino.dart';
-import '../core/responsive/screen_layout_builder.dart';
 import '../core/user_config/user_role.dart';
+import 'customer/customer_layout.dart';
+import 'others/others_layout.dart';
 
 class LayoutSelector extends StatelessWidget {
+
   final UserRole userRole;
   final Widget child;
 
@@ -16,18 +16,23 @@ class LayoutSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return getScreenLayout(child);
-  }
 
-  ScreenLayoutBuilder getScreenLayout(Widget child) {
     switch (userRole) {
+
       case UserRole.customer:
-        return CustomerLayout(child: child);
+
+        return CustomerLayout(
+          userRole: userRole,
+          child: child,
+        );
 
       case UserRole.superAdmin:
       case UserRole.companyAdmin:
-        return OthersLayout(userRole: userRole,
-        child: child);
+
+        return OthersLayout(
+          userRole: userRole,
+          child: child,
+        );
     }
   }
 }

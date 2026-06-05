@@ -3,6 +3,7 @@ import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../../../layout/provider/sidebar_provider.dart';
 import '../../data/models/site_group_model.dart';
 import '../../data/models/tank_data_model.dart';
@@ -218,7 +219,7 @@ class DashboardListView extends ConsumerWidget {
             child: Text('STATUS', style: _headerStyle(), textAlign: TextAlign.center),
           ),
           SizedBox(
-            width: 150,
+            width: 160,
             child: Text('READING TIME', style: _headerStyle(), textAlign: TextAlign.center),
           ),
         ],
@@ -486,9 +487,7 @@ class DashboardListView extends ConsumerWidget {
                 width: 150,
                 child: Center(
                   child: Text(
-                    _formatDateTime(
-                      tank.lastUpdate,
-                    ),
+                    _formatDateTime(tank.lastUpdate),
                     style: GoogleFonts.outfit(
                       fontSize: 12,
                       color: Colors.grey.shade600,
@@ -502,182 +501,6 @@ class DashboardListView extends ConsumerWidget {
       ),
     );
   }
-
-  /*Widget _buildTankRow(TankDataModel tank) {
-    return GestureDetector(
-      onTap: () => onTankTap?.call(tank),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 24),
-                child: Text(
-                  tank.tankName,
-                  style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade600),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            // Device ID
-            SizedBox(
-              width: 200,
-              child: Text(
-                tank.deviceId,
-                style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w500),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // Level
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${tank.level.toStringAsFixed(1)}%',
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: _getLevelColor(tank.level),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: tank.level / 100,
-                      backgroundColor: Colors.grey.shade200,
-                      color: _getLevelColor(tank.level),
-                      minHeight: 4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Pressure
-            SizedBox(
-              width: 100,
-              child: Center(
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: tank.pressure.toStringAsFixed(1),
-                        style: GoogleFonts.outfit(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.black,
-                        ),
-                      ),
-                      TextSpan(
-                        text: '  Bar',
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Battery
-            SizedBox(
-              width: 100,
-              child: Center(
-                child: Text(
-                  '${tank.batteryV.toStringAsFixed(1)} v',
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: _getBatSolColor(tank.batteryV),
-                  ),
-                ),
-              ),
-            ),
-            // Solar
-            SizedBox(
-              width: 80,
-              child: Center(
-                child: Text(
-                  '${tank.solarV.toStringAsFixed(1)} v',
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: _getBatSolColor(tank.solarV),
-                  ),
-                ),
-              ),
-            ),
-            // Status
-            SizedBox(
-              width: 100,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(tank.status).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(tank.status),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        tank.status,
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: _getStatusColor(tank.status),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // Last Update
-            SizedBox(
-              width: 150,
-              child: Center(
-                child: Text(
-                  _formatDateTime(tank.lastUpdate),
-                  style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade600),
-                ),
-              ),
-            ),
-            // Actions Menu
-            SizedBox(
-              width: 45,
-              child: PopupMenuButton(
-                onSelected: (value) => onMenuTap?.call(tank, value.toString()),
-                icon: const Icon(Icons.more_vert, size: 20),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'view', child: Text('View Details')),
-                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  const PopupMenuItem(value: 'alerts', child: Text('Set Alerts')),
-                  const PopupMenuItem(value: 'history', child: Text('View History')),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }*/
 
   Color _getBatSolColor(double level) {
     if (level <= 3) return Colors.red;
@@ -704,18 +527,37 @@ class DashboardListView extends ConsumerWidget {
 
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
-    final diff = now.difference(dateTime);
 
-    if (diff.inMinutes < 1) {
-      return 'Just now';
+    final today = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    );
+
+    final yesterday = today.subtract(
+      const Duration(days: 1),
+    );
+
+    final messageDate = DateTime(
+      dateTime.year,
+      dateTime.month,
+      dateTime.day,
+    );
+
+    final time =
+    DateFormat('hh:mm a').format(dateTime);
+
+    if (messageDate == today) {
+      return 'Today at $time';
     }
-    if (diff.inMinutes < 60) {
-      return '${diff.inMinutes} mins ago';
+
+    if (messageDate == yesterday) {
+      return 'Yesterday at $time';
     }
-    if (diff.inHours < 24) {
-      return '${diff.inHours} hrs ago';
-    }
-    return '${diff.inDays} days ago';
+
+    return DateFormat(
+      'dd MMM yyyy \'at\' hh:mm a',
+    ).format(dateTime);
   }
 
 }

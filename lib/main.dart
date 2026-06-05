@@ -1,15 +1,19 @@
-// main.dart - Fixed version
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-
 import 'core/app_theme/app_theme.dart';
 import 'core/network/mqtt/providers/mqtt_providers.dart';
 import 'core/router/app_router.dart';
 
 void main() {
+
   usePathUrlStrategy();
-  runApp(const ProviderScope(child: MyApp()));
+
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends ConsumerStatefulWidget {
@@ -20,46 +24,40 @@ class MyApp extends ConsumerStatefulWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
-  bool _isInitialized = false;
+
+  late final router;
+  bool _mqttInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    // Use addPostFrameCallback to ensure ref is ready
+
+    router = AppRouter.createRouter(ref);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_isInitialized) {
-        _initializeMqtt();
-      }
+      _initializeMqtt();
     });
   }
 
   Future<void> _initializeMqtt() async {
-    if (_isInitialized) return;
-
+    if (_mqttInitialized) return;
+    _mqttInitialized = true;
     try {
-      final mqttNotifier = ref.read(mqttProvider.notifier);
-      await mqttNotifier.initializeAndConnect();
-      if (mounted) {
-        _isInitialized = true;
-      }
+      final mqtt = ref.read(mqttProvider.notifier);
+      await mqtt.initializeAndConnect();
+
     } catch (e) {
-      debugPrint('Failed to initialize MQTT: $e');
+      debugPrint(
+        'MQTT Init Error: $e',
+      );
     }
   }
 
   @override
-  void dispose() {
-    _isInitialized = false;
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final router = ref.watch(appRouterProvider);
-
     return MaterialApp.router(
-      routerConfig: router,
+      title: 'Air Water',
       debugShowCheckedModeBanner: false,
+      routerConfig: router,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,

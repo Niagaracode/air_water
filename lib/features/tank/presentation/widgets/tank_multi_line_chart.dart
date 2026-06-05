@@ -30,17 +30,27 @@ class _TankMultiLineChartState extends State<TankMultiLineChart> {
   @override
   void initState() {
     super.initState();
+
     _trackball = TrackballBehavior(
       enable: true,
       activationMode: ActivationMode.singleTap,
-      tooltipSettings: const InteractiveTooltip(
-        enable: true,
-        format: 'point.x : point.y',
-      ),
+      tooltipDisplayMode:
+      TrackballDisplayMode.groupAllPoints,
       lineType: TrackballLineType.vertical,
-      lineColor: Colors.grey.withOpacity(0.5),
+      lineColor: Colors.grey.withValues(alpha: 0.5),
       lineWidth: 1,
+      tooltipSettings: InteractiveTooltip(
+        enable: true,
+        color: const Color(0xFF1E293B),
+        borderWidth: 0,
+        textStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     );
+
     _zoomPan = ZoomPanBehavior(
       enablePinching: true,
       enablePanning: true,

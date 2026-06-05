@@ -1,4 +1,3 @@
-// lib/network/mqtt/mqtt_service.dart
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:mqtt_client/mqtt_browser_client.dart';
@@ -8,17 +7,6 @@ import 'package:uuid/uuid.dart';
 import '../../config/env.dart';
 import '../../constants/app_constants.dart';
 
-// lib/network/mqtt/mqtt_service.dart
-
-import 'dart:async';
-
-import 'package:flutter/foundation.dart';
-import 'package:mqtt_client/mqtt_browser_client.dart';
-import 'package:mqtt_client/mqtt_client.dart';
-import 'package:uuid/uuid.dart';
-
-import '../../config/env.dart';
-import '../../constants/app_constants.dart';
 
 class MqttService {
   static MqttService? _instance;
@@ -57,15 +45,9 @@ class MqttService {
   void Function(int attempt, int maxAttempts)? onReconnecting;
 
   // Connection stream
-  final StreamController<bool> _connectionStateController =
-  StreamController<bool>.broadcast();
-
-  Stream<bool> get connectionStateStream =>
-      _connectionStateController.stream;
-
-  bool get isConnected =>
-      _client?.connectionStatus?.state ==
-          MqttConnectionState.connected;
+  final StreamController<bool> _connectionStateController = StreamController<bool>.broadcast();
+  Stream<bool> get connectionStateStream => _connectionStateController.stream;
+  bool get isConnected => _client?.connectionStatus?.state == MqttConnectionState.connected;
 
   MqttService._internal();
 
@@ -82,16 +64,11 @@ class MqttService {
     );
 
     _client!.websocketProtocols = ['mqtt'];
-
     _client!.port = AppConstants.mqttWebPort;
-
     _client!.keepAlivePeriod = 30;
-
     // Manual reconnect handling
     _client!.autoReconnect = false;
-
     _client!.logging(on: false);
-
     _client!.onConnected = _handleConnected;
     _client!.onDisconnected = _handleDisconnected;
     _client!.onSubscribed = _handleSubscribed;
@@ -101,9 +78,7 @@ class MqttService {
         .authenticateAs(
       AppConstants.mqttUserName,
       AppConstants.mqttPassword,
-    )
-        .startClean()
-        .keepAliveFor(30);
+    ).startClean().keepAliveFor(30);
 
     _client!.connectionMessage = connMessage;
   }
@@ -119,9 +94,7 @@ class MqttService {
       await _client!.connect();
     } catch (e) {
       debugPrint('MQTT Connection error: $e');
-
       _connectionStateController.add(false);
-
       _attemptReconnection();
     }
   }
@@ -135,16 +108,12 @@ class MqttService {
     }
 
     _isReconnecting = true;
-
     _reconnectTimer?.cancel();
-
     _reconnectTimer = Timer(reconnectDelay, () async {
       _reconnectAttempts++;
-
       debugPrint(
         'Reconnection attempt $_reconnectAttempts/$maxReconnectAttempts',
       );
-
       onReconnecting?.call(
         _reconnectAttempts,
         maxReconnectAttempts,
@@ -195,14 +164,11 @@ class MqttService {
 
   Future<void> subscribe(String topic) async {
     _activeSubscriptions.add(topic);
-
     int retries = 0;
-
     while (!isConnected && retries < 10) {
       await Future.delayed(
         const Duration(milliseconds: 500),
       );
-
       retries++;
     }
 
@@ -249,11 +215,8 @@ class MqttService {
 
   void unsubscribe(String topic) {
     _activeSubscriptions.remove(topic);
-
     if (_client == null) return;
-
     _client!.unsubscribe(topic);
-
     debugPrint('Unsubscribed from topic: $topic');
   }
 
@@ -270,7 +233,6 @@ class MqttService {
     }
 
     final builder = MqttClientPayloadBuilder();
-
     builder.addString(message);
 
     try {
@@ -290,19 +252,12 @@ class MqttService {
 
   Future<void> disconnect() async {
     _isManualDisconnect = true;
-
     _reconnectTimer?.cancel();
-
     _connectionCheckTimer?.cancel();
-
     _reconnectAttempts = 0;
-
     _isReconnecting = false;
-
     await _updatesSubscription?.cancel();
-
     _updatesSubscription = null;
-
     if (_client != null && isConnected) {
       _client!.disconnect();
     }
@@ -310,32 +265,21 @@ class MqttService {
 
   void _handleConnected() async {
     _reconnectAttempts = 0;
-
     _reconnectTimer?.cancel();
-
     _isReconnecting = false;
-
     _isManualDisconnect = false;
-
     _startConnectionChecker();
-
     _connectionStateController.add(true);
-
     debugPrint('MQTT Connected successfully');
-
     // Restore topics
     await _resubscribeToAllTopics();
-
     onConnected?.call();
   }
 
   void _handleDisconnected() {
     _connectionCheckTimer?.cancel();
-
     _connectionStateController.add(false);
-
     onDisconnected?.call();
-
     debugPrint('MQTT Disconnected');
 
     if (!_isManualDisconnect) {
@@ -345,19 +289,14 @@ class MqttService {
 
   void _handleSubscribed(String topic) {
     debugPrint('MQTT Subscribed to: $topic');
-
     onSubscribed?.call(topic);
   }
 
   void dispose() {
     _reconnectTimer?.cancel();
-
     _connectionCheckTimer?.cancel();
-
     _updatesSubscription?.cancel();
-
     _connectionStateController.close();
-
     disconnect();
   }
 }

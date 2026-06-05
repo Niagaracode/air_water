@@ -12,9 +12,6 @@ import 'package:air_water/features/alarm/alarm_layout.dart';
 import 'package:air_water/features/events/event_layout.dart';
 import 'package:air_water/features/asset_group/asset_group_layout.dart';
 import 'package:air_water/features/notification/notification_layout.dart';
-import 'package:air_water/features/user/presentation/controller/user_provider.dart';
-import 'package:air_water/core/user_config/user_role.dart';
-import 'package:air_water/core/user_config/user_role_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,181 +26,115 @@ import '../../features/tank/presentation/view/tank_details_view.dart';
 import '../../layout/screen_controller.dart';
 import 'router_refresh_notifier.dart';
 
-final appRouterProvider = Provider<GoRouter>((ref) {
-  final refresh = ref.read(routerRefreshProvider);
 
-  return GoRouter(
-    initialLocation: '/loading',
-    refreshListenable: refresh,
 
-    redirect: (context, state) {
-      final startup = ref.read(appStartupProvider);
-      final userState = ref.read(userProvider);
-      final location = state.matchedLocation;
+class AppRouter {
 
-      if (startup.isLoading) {
-        return location == '/loading' ? null : '/loading';
-      }
+  static GoRouter createRouter(
+      WidgetRef ref,
+      ) {
 
-      final status = startup.value;
+    return GoRouter(
 
-      if (status == AppStartupState.unauthenticated) {
-        return location == '/login' ? null : '/login';
-      }
+      initialLocation: '/loading',
+      refreshListenable: ref.read(routerRefreshProvider),
 
-      if (status == AppStartupState.authenticated) {
-        final currentUser = userState.currentUser;
-        final roleFromStorage = ref.read(userRoleProvider);
+      redirect: (context, state) {
 
-        if (location == '/login' || location == '/loading') {
-          // Priority 1: Check profile role (Most accurate)
-          if (currentUser != null) {
-            final roleId = currentUser.roleId;
-            if (roleId == 6) return '/asset-summary';
+        final startup = ref.read(appStartupProvider);
+        final location = state.matchedLocation;
+
+        /// LOADING
+        if (startup.isLoading) {
+          return location == '/loading' ? null : '/loading';
+        }
+
+        final status = startup.value;
+
+        /// NOT AUTHENTICATED
+        if (status == AppStartupState.unauthenticated) {
+          return location == '/login' ? null : '/login';
+        }
+
+        /// AUTHENTICATED
+        if (status == AppStartupState.authenticated) {
+          if (location == '/login' || location == '/loading') {
             return '/dashboard';
           }
-
-          // Priority 2: Storage fallback (Faster during load)
-          if (roleFromStorage != null) {
-            if (roleFromStorage == UserRole.customer) return '/asset-summary';
-            return '/dashboard';
-          }
-
           return null;
         }
+        return null;
+      },
 
-        // --- ACCESS CONTROL ---
-        
-        // Combine routes to restrict for non-admin roles
-        final restrictedRoutes = [
-          '/company',
-          '/product',
-        ];
+      routes: [
 
-        // Combine system configuration routes (Only for Admins)
-        final systemRoutes = [
-          '/user',
-          '/group',
-          '/device',
-          '/message-template',
-          '/roster',
-          '/setting',
-          '/rule-group',
-          '/asset-group',
-        ];
-
-        if (currentUser != null) {
-          final roleId = currentUser.roleId;
-
-          // Customers (Role 6)
-          if (roleId == 6) {
-            if (restrictedRoutes.contains(location) || 
-                systemRoutes.contains(location) || 
-                location == '/dashboard') {
-              return '/asset-summary';
-            }
-          }
-          
-          // Technicians (Role 5)
-          if (roleId == 5) {
-            if (restrictedRoutes.contains(location) || 
-                systemRoutes.contains(location)) {
-              return '/dashboard';
-            }
-          }
-
-          // Super Admin (Role 1) & Company Admin (Role 2)
-          if (roleId == 1 || roleId == 2) {
-            if (roleId == 2 && restrictedRoutes.contains(location)) {
-              return '/dashboard';
-            }
-            if (location == '/asset-summary' || location == '/asset-schedule') {
-              return '/dashboard';
-            }
-          }
-        } else if (roleFromStorage != null) {
-          // Fallback during load/refresh
-          if (roleFromStorage == UserRole.customer) {
-            if (restrictedRoutes.contains(location) || 
-                systemRoutes.contains(location) || 
-                location == '/dashboard') {
-              return '/asset-summary';
-            }
-          }
-
-          if (roleFromStorage == UserRole.superAdmin || roleFromStorage == UserRole.companyAdmin) {
-            if (roleFromStorage == UserRole.companyAdmin && restrictedRoutes.contains(location)) {
-              return '/dashboard';
-            }
-            if (location == '/asset-summary' || location == '/asset-schedule') {
-              return '/dashboard';
-            }
-          }
-        }
-      }
-
-      return null;
-    },
-
-    routes: [
-      GoRoute(
-        path: '/loading',
-        builder: (_, __) =>
-            const Scaffold(body: Center(child: CircularProgressIndicator())),
-      ),
-
-      GoRoute(
-        path: '/login',
-        builder: (_, __) => LoginLayout(child: SizedBox()),
-      ),
-
-      // SHELL / SCREEN CONTROLLER
-      ShellRoute(
-        builder: (context, state, child) {
-          return ScreenController(child: child);
-        },
-        routes: [
-          GoRoute(
-            path: '/dashboard',
-            builder: (_, __) => const DashboardLayout(),
-          ),
-          GoRoute(path: '/company', builder: (_, __) => const CompanyLayout()),
-          GoRoute(path: '/site', builder: (_, __) => const SiteLayout()),
-          GoRoute(
-            path: '/tank',
-            builder: (_, __) => const TankLayout(),
-            routes: [
-              GoRoute(
-                path: 'details/:id',
-                builder: (context, state) {
-                  final id = int.parse(state.pathParameters['id']!);
-                  final tank = state.extra as TankDataModel?;
-                  return TankDetailsView(tankId: id, tank: tank!);
-                },
+        /// LOADING
+        GoRoute(
+          path: '/loading',
+          builder: (_, __) {
+            return const Scaffold(body: Center(child:
+                CircularProgressIndicator(),
               ),
-            ],
-          ),
-          GoRoute(path: '/device', builder: (_, __) => const DeviceLayout()),
-          GoRoute(path: '/product', builder: (_, __) => const ProductLayout()),
-          GoRoute(path: '/user', builder: (_, __) => const UserLayout()),
-          GoRoute(path: '/group', builder: (_, __) => const UserGroupLayout()),
-          GoRoute(
-            path: '/message-template',
-            builder: (_, __) => const MessageTemplateLayout(),
-          ),
-          GoRoute(path: '/roster', builder: (_, __) => const RoasterLayout()),
-          GoRoute(
-            path: '/asset-schedule',
-            builder: (_, __) => const AssetScheduleLayout(),
-          ),
-          GoRoute(path: '/profile', builder: (_, __) => const ProfileLayout()),
-          GoRoute(path: '/alarm', builder: (_, __) => const AlarmLayout()),
-          GoRoute(path: '/event', builder: (_, __) => const EventLayout()),
-          GoRoute(path: '/rule-group', builder: (_, __) => const RuleGroupLayout()),
-          GoRoute(path: '/asset-group', builder: (_, __) => const AssetGroupLayout()),
-          GoRoute(path: '/notification', builder: (_, __) => const NotificationLayout()),
-        ],
-      ),
-    ],
-  );
-});
+            );
+          },
+        ),
+
+        /// LOGIN
+        GoRoute(
+          path: '/login',
+          builder: (_, __) {
+            return const LoginLayout(child: SizedBox());
+          },
+        ),
+
+        /// MAIN APP
+        ShellRoute(
+          builder: (context, state, child) {
+            return ScreenController(child: child);
+          },
+          routes: [
+            GoRoute(
+              path: '/dashboard',
+              builder: (_, __) => const DashboardLayout(),
+            ),
+            GoRoute(path: '/company', builder: (_, __) => const CompanyLayout()),
+            GoRoute(path: '/site', builder: (_, __) => const SiteLayout()),
+            GoRoute(
+              path: '/tank',
+              builder: (_, __) => const TankLayout(),
+              routes: [
+                GoRoute(
+                  path: 'details/:id',
+                  builder: (context, state) {
+                    final id = int.parse(state.pathParameters['id']!);
+                    final tank = state.extra as TankDataModel?;
+                    return TankDetailsView(tankId: id, tank: tank!);
+                  },
+                ),
+              ],
+            ),
+            GoRoute(path: '/device', builder: (_, __) => const DeviceLayout()),
+            GoRoute(path: '/product', builder: (_, __) => const ProductLayout()),
+            GoRoute(path: '/user', builder: (_, __) => const UserLayout()),
+            GoRoute(path: '/group', builder: (_, __) => const UserGroupLayout()),
+            GoRoute(
+              path: '/message-template',
+              builder: (_, __) => const MessageTemplateLayout(),
+            ),
+            GoRoute(path: '/roster', builder: (_, __) => const RoasterLayout()),
+            GoRoute(
+              path: '/asset-schedule',
+              builder: (_, __) => const AssetScheduleLayout(),
+            ),
+            GoRoute(path: '/profile', builder: (_, __) => const ProfileLayout()),
+            GoRoute(path: '/alarm', builder: (_, __) => const AlarmLayout()),
+            GoRoute(path: '/event', builder: (_, __) => const EventLayout()),
+            GoRoute(path: '/rule-group', builder: (_, __) => const RuleGroupLayout()),
+            GoRoute(path: '/asset-group', builder: (_, __) => const AssetGroupLayout()),
+            GoRoute(path: '/notification', builder: (_, __) => const NotificationLayout()),
+          ],
+        ),
+      ],
+    );
+  }
+}
