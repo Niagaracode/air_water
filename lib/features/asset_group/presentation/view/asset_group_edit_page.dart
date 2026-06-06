@@ -1508,7 +1508,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                     ),
                   )
                   .toList(),
-              onChanged: index < _initialCriteriaCount
+              onChanged: (index < _initialCriteriaCount &&
+                          !(ref.watch(userProvider).currentUser?.roleId == 1 ||
+                            ref.watch(userProvider).currentUser?.roleId == 2))
                   ? null
                   : (v) {
                       setState(() {

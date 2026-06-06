@@ -7,9 +7,6 @@ import 'package:google_fonts/google_fonts.dart';
 // Features
 import 'package:air_water/features/user/presentation/model/user_model.dart';
 import 'package:air_water/features/user/presentation/controller/user_provider.dart';
-import 'package:air_water/features/asset_group/domain/models/asset_group_model.dart';
-import 'package:air_water/core/network/http/api_service.dart';
-import 'package:air_water/features/roaster/presentation/widgets/add_roster_group_modal.dart';
 
 // Shared
 import 'package:air_water/shared/widgets/app_text_field.dart';
@@ -50,46 +47,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   bool _isLoadingRoles = false;
   int _status = 1;
 
-  List<AssetGroupModel> _rosterGroups = [];
-  AssetGroupModel? _selectedRosterGroup;
-  bool _isLoadingRosterGroups = false;
 
-  Future<void> _loadRosterGroups(int companyId) async {
-    setState(() {
-      _isLoadingRosterGroups = true;
-      _rosterGroups = [];
-      _selectedRosterGroup = null;
-    });
-
-    try {
-      final client = ref.read(apiClientProvider);
-      final response = await client.get('/asset-groups', query: {
-        'domain': 'ROSTER',
-        'company_id': companyId,
-      });
-
-      final List<AssetGroupModel> groups = (response.data['data'] as List)
-          .map((json) => AssetGroupModel.fromJson(json))
-          .toList();
-
-      if (mounted) {
-        setState(() {
-          _rosterGroups = groups;
-          if (widget.user?.rosterGroupId != null) {
-            _selectedRosterGroup = _rosterGroups
-                .where((g) => g.id == widget.user!.rosterGroupId)
-                .firstOrNull;
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading roster groups: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingRosterGroups = false);
-      }
-    }
-  }
 
   @override
   void initState() {
@@ -110,7 +68,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           id: widget.user!.companyId!,
           name: widget.user!.companyName!,
         );
-        _loadRosterGroups(widget.user!.companyId!);
       }
     } else {
       _timeoutController.text = '24';
@@ -128,7 +85,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
             );
             _companyAutocompleteController.text = currentUser.companyName!;
           });
-          _loadRosterGroups(currentUser.companyId!);
         }
       }
     });
@@ -343,7 +299,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       status: _status,
       sessionHours: int.tryParse(_timeoutController.text) ?? 24,
       sessionMinutes: 0,
-      rosterGroupId: widget.user != null ? widget.user!.rosterGroupId : _selectedRosterGroup?.id,
+      rosterGroupId: widget.user?.rosterGroupId,
     );
 
     final userNotifier = ref.read(userProvider.notifier);
@@ -456,13 +412,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                             const SizedBox(height: 24),
                           ],
 
-                          if (_selectedCompany != null && widget.user == null && ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                            _buildLabelField(
-                              'ROSTER GROUP',
-                              _buildRosterGroupDropdown(),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
+
 
                           _buildLabelField(
                             'USERNAME*',
@@ -858,9 +808,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
         onSelected: (o) {
           setState(() {
             _selectedCompany = o;
-            _selectedRosterGroup = null;
           });
-          _loadRosterGroups(o.id);
         },
         optionsViewBuilder: (context, onSelected, options) => Align(
           alignment: Alignment.topLeft,
@@ -899,72 +847,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildRosterGroupDropdown() {
-    if (_isLoadingRosterGroups) {
-      return const LinearProgressIndicator(minHeight: 2);
-    }
-    return Row(
-      children: [
-        Expanded(
-          child: AppDropdown<AssetGroupModel>(
-            value: _selectedRosterGroup,
-            items: _rosterGroups,
-            itemLabel: (g) => g.name,
-            onChanged: (v) => setState(() => _selectedRosterGroup = v),
-            hint: 'Select Roster Group',
-          ),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton.icon(
-          onPressed: () async {
-            final result = await showGeneralDialog<dynamic>(
-              context: context,
-              barrierDismissible: true,
-              barrierLabel: 'Dismiss',
-              barrierColor: Colors.black.withValues(alpha: 0.5),
-              transitionDuration: const Duration(milliseconds: 300),
-              pageBuilder: (context, anim1, anim2) => AddRosterGroupModal(
-                initialCompany: _selectedCompany,
-              ),
-              transitionBuilder: (context, anim1, anim2, child) {
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: const Offset(1, 0),
-                    end: Offset.zero,
-                  ).animate(anim1),
-                  child: child,
-                );
-              },
-            );
-            if (result != null && result is int && mounted) {
-              await _loadRosterGroups(_selectedCompany!.id);
-              if (mounted) {
-                setState(() {
-                  _selectedRosterGroup = _rosterGroups
-                      .where((g) => g.id == result)
-                      .firstOrNull;
-                });
-              }
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF141E7A),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          icon: const Icon(Icons.add, size: 18),
-          label: Text(
-            'Create Group',
-            style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 13),
-          ),
-        ),
-      ],
     );
   }
 }
