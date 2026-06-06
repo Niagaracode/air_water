@@ -194,8 +194,8 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                       final c = group.criteria[i];
                       String displayValue = c.value;
                       
-                      // Resolve Product ID to Name if parameter is Product Name
-                      if (c.parameter == 'Product Name') {
+                      // Resolve Product ID to Name if parameter is Product
+                      if (c.parameter == 'Product') {
                         final productId = int.tryParse(c.value);
                         if (productId != null) {
                           final productList = productState.products;

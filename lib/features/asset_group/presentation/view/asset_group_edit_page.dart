@@ -41,13 +41,13 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     'Country',
     'Customer Name',
     'DeviceID',
-    'Product Name',
+    'Product',
     'Site Name',
     'State or Province',
     'Tank Name',
   ];
   final List<String> _logics = ['Like', '=', '!='];
-  final List<String> _operators = ['And'];
+  final List<String> _operators = ['Or', 'And'];
 
   @override
   void initState() {
@@ -141,13 +141,18 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   }
 
   void _addCriteria() {
+    final selectedParameters = _criteria.map((c) => c.parameter).toSet();
+    final nextParameter = _parameters.firstWhere(
+      (p) => !selectedParameters.contains(p),
+      orElse: () => _parameters.first,
+    );
     setState(() {
       _criteria.add(
         AssetCriteria(
-          parameter: 'City',
+          parameter: nextParameter,
           logic: 'Like',
           value: '',
-          operator: 'And',
+          operator: 'Or',
         ),
       );
     });
@@ -1095,7 +1100,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       );
     }
 
-    if (rule.parameter == 'Product Name') {
+    if (rule.parameter == 'Product') {
       final state = ref.watch(productNotifierProvider);
       final products = state.products.map((p) {
         return {
@@ -1110,7 +1115,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       final selectedVals = _criteria
           .asMap()
           .entries
-          .where((e) => e.key != index && e.value.parameter == 'Product Name' && e.value.value.isNotEmpty)
+          .where((e) => e.key != index && e.value.parameter == 'Product' && e.value.value.isNotEmpty)
           .map((e) => e.value.value)
           .toSet();
 
@@ -1501,6 +1506,16 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             child: DropdownButtonFormField<String>(
               value: rule.parameter,
               items: _parameters
+                  .where((p) {
+                    if (index < 3) {
+                      return true;
+                    } else {
+                      final isSelectedInFirstThree = _criteria.asMap().entries.any(
+                            (e) => e.key < 3 && e.value.parameter == p,
+                          );
+                      return !isSelectedInFirstThree || p == rule.parameter;
+                    }
+                  })
                   .map(
                     (p) => DropdownMenuItem(
                       value: p,

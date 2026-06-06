@@ -44,13 +44,13 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
     'Country',
     'Customer Name',
     'DeviceID',
-    'Product Name',
+    'Product',
     'Site Name',
     'State or Province',
     'Tank Name',
   ];
   final List<String> _logics = ['Like', '=', '!='];
-  final List<String> _operators = ['And'];
+  final List<String> _operators = ['Or', 'And'];
 
   @override
   void initState() {
@@ -140,13 +140,18 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   }
 
   void _addCriteria() {
+    final selectedParameters = _criteria.map((c) => c.parameter).toSet();
+    final nextParameter = _parameters.firstWhere(
+      (p) => !selectedParameters.contains(p),
+      orElse: () => _parameters.first,
+    );
     setState(() {
       _criteria.add(
         AssetCriteria(
-          parameter: 'City',
+          parameter: nextParameter,
           logic: 'Like',
           value: '',
-          operator: 'And',
+          operator: 'Or',
         ),
       );
     });
@@ -717,10 +722,13 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       );
     }
 
-    if (rule.parameter == 'Product Name') {
+    if (rule.parameter == 'Product') {
       final state = ref.watch(productNotifierProvider);
       final products = state.products.map((p) {
-        return {'id': p.id.toString(), 'name': p.name};
+        return {
+          'id': p.id.toString(),
+          'name': p.name,
+        };
       }).toList();
 
       products.sort((a, b) => a['name']!.compareTo(b['name']!));
@@ -729,7 +737,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       final selectedVals = _criteria
           .asMap()
           .entries
-          .where((e) => e.key != index && e.value.parameter == 'Product Name' && e.value.value.isNotEmpty)
+          .where((e) => e.key != index && e.value.parameter == 'Product' && e.value.value.isNotEmpty)
           .map((e) => e.value.value)
           .toSet();
 
@@ -1131,6 +1139,16 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
               isExpanded: true,
               value: rule.parameter,
               items: _parameters
+                  .where((p) {
+                    if (index < 3) {
+                      return true;
+                    } else {
+                      final isSelectedInFirstThree = _criteria.asMap().entries.any(
+                            (e) => e.key < 3 && e.value.parameter == p,
+                          );
+                      return !isSelectedInFirstThree || p == rule.parameter;
+                    }
+                  })
                   .map(
                     (p) => DropdownMenuItem(
                       value: p,
@@ -1138,7 +1156,9 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     ),
                   )
                   .toList(),
-              onChanged: index < _initialCriteriaCount
+              onChanged: (index < _initialCriteriaCount &&
+                          !(ref.watch(userProvider).currentUser?.roleId == 1 ||
+                            ref.watch(userProvider).currentUser?.roleId == 2))
                   ? null
                   : (v) {
                       setState(() {
