@@ -144,6 +144,16 @@ class DeviceGroup {
   // Alias for backward compatibility
   String? get siteOrganizationCode => plantOrganizationCode;
 
+  String get fullAddress {
+    final parts = [
+      addressLine1,
+      city,
+      state,
+      country,
+    ].where((p) => p != null && p.trim().isNotEmpty).toList();
+    return parts.join(', ');
+  }
+
   DeviceGroup({
     this.plantOrganizationCode,
     this.siteName,

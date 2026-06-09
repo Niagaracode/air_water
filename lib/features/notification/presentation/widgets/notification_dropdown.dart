@@ -227,7 +227,7 @@ class _NotificationDropdownState extends ConsumerState<NotificationDropdown> {
   String _formatTime(String? dateStr) {
     if (dateStr == null) return '';
     try {
-      final date = DateTime.parse(dateStr);
+      final date = DateTime.parse(dateStr).toLocal();
       final now = DateTime.now();
       final diff = now.difference(date);
 

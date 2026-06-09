@@ -37,7 +37,12 @@ class NotificationModel {
     final rawRuleName = json['rule_name'] as String?;
     String? resolvedRuleName = rawRuleName;
 
-    if (rawRuleName != null && rawRuleName.toLowerCase() == 'default rule group') {
+    if (rawRuleName != null && (
+        rawRuleName.toLowerCase() == 'default rule group' ||
+        rawRuleName.toLowerCase().contains('standard rule') ||
+        rawRuleName.toLowerCase().contains('default rule') ||
+        rawRuleName.toLowerCase().contains('standard rule group')
+    )) {
       final type = (json['parameter_type'] as String?)?.toUpperCase() ?? '';
       final importance = (json['status_label'] as String?) ?? (json['importance'] as String?) ?? 'Alert';
       final rawValue = json['value'] ?? json['triggered_value'];

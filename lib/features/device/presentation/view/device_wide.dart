@@ -273,7 +273,11 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
               ),
             ),
             Text(
-                group.siteName ?? '',
+              group.siteName != null
+                  ? (group.fullAddress.isNotEmpty
+                      ? '${group.siteName} - ${group.fullAddress}'
+                      : group.siteName!)
+                  : '',
               style: GoogleFonts.outfit(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,

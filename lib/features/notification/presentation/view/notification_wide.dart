@@ -283,7 +283,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
   String _formatDate(String? dateStr) {
     if (dateStr == null) return '—';
     try {
-      final date = DateTime.parse(dateStr);
+      final date = DateTime.parse(dateStr).toLocal();
       return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     } catch (e) {
       return dateStr;

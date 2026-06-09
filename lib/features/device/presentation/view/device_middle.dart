@@ -223,9 +223,9 @@ class _DeviceMiddleState extends ConsumerState<DeviceMiddle> {
           group.siteName ?? '',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: group.devices.isNotEmpty
+        subtitle: group.fullAddress.isNotEmpty
             ? Text(
-                '${group.devices.first.siteInformation?.fullAddress ?? ''}',
+                group.fullAddress,
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
               )
             : null,

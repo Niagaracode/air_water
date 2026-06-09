@@ -225,6 +225,12 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
             group.siteName ?? '',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           ),
+          subtitle: group.fullAddress.isNotEmpty
+              ? Text(
+                  group.fullAddress,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                )
+              : null,
           children: group.devices
               .map((device) => _buildDeviceCard(device, notifier))
               .toList(),
