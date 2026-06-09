@@ -80,11 +80,47 @@ class NotificationModel {
       resolvedRuleName = '$label$valueStr';
     }
 
+    final commFailRegex = RegExp(
+      r'(Comm fail\s+)?device\s+communicate\s+failed(\s+reached\s+\d+)?',
+      caseSensitive: false,
+    );
+
+    if (resolvedRuleName != null) {
+      resolvedRuleName = resolvedRuleName.replaceAll(
+        commFailRegex,
+        'Device not available offline',
+      );
+    }
+
+    String? subject = json['subject'] as String?;
+    if (subject != null) {
+      subject = subject.replaceAll(
+        commFailRegex,
+        'Device not available offline',
+      );
+    }
+
+    String? body = json['body'] as String?;
+    if (body != null) {
+      body = body.replaceAll(
+        commFailRegex,
+        'Device not available offline',
+      );
+    }
+
+    String? parameterType = json['parameter_type'] as String?;
+    if (parameterType != null) {
+      parameterType = parameterType.replaceAll(
+        commFailRegex,
+        'Device not available offline',
+      );
+    }
+
     return NotificationModel(
       id: json['id'] as int,
       ruleId: json['rule_id'] as int?,
       tankId: json['tank_id'] as int?,
-      parameterType: json['parameter_type'] as String?,
+      parameterType: parameterType,
       value: json['value'] ?? json['triggered_value'],
       importance: (json['status_label'] as String?) ?? (json['importance'] as String?),
       status: json['status'] as String?,
@@ -93,8 +129,8 @@ class NotificationModel {
       tankNumber: json['tank_number'] as String?,
       plantName: json['plant_name'] as String?,
       companyName: json['company_name'] as String?,
-      subject: json['subject'] as String?,
-      body: json['body'] as String?,
+      subject: subject,
+      body: body,
       statusLabel: json['status_label'] as String?,
     );
   }

@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/profile_provider.dart';
 import '../model/profile_model.dart';
-import '../../../../shared/widgets/location_picker.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileWide extends ConsumerStatefulWidget {
   const ProfileWide({super.key});
@@ -22,8 +22,6 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  final _companyNameController = TextEditingController();
-  List<AddressControllerGroup> _addressControllers = [];
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -49,10 +47,6 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
     _mobileController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _companyNameController.dispose();
-    for (var group in _addressControllers) {
-      group.dispose();
-    }
     super.dispose();
   }
 
@@ -62,53 +56,9 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
     _lastNameController.text = profile.lastName ?? '';
     _emailController.text = profile.email ?? '';
     _mobileController.text = profile.mobileNumber ?? '';
-    _companyNameController.text = profile.companyName ?? '';
-
-    // Clear existing address controllers
-    for (var group in _addressControllers) {
-      group.dispose();
-    }
-
-    setState(() {
-      _addressControllers = profile.addresses
-          .map(
-            (addr) => AddressControllerGroup(
-              id: addr.id,
-              address: addr.addressLine1 ?? '',
-              city: addr.city ?? '',
-              state: addr.state ?? '',
-              country: addr.country ?? '',
-              pincode: addr.pincode ?? '',
-            ),
-          )
-          .toList();
-
-      if (_addressControllers.isEmpty) {
-        _addAddress();
-      }
-    });
   }
 
-  void _addAddress() {
-    setState(() {
-      _addressControllers.add(
-        AddressControllerGroup(
-          address: '',
-          city: '',
-          state: '',
-          country: '',
-          pincode: '',
-        ),
-      );
-    });
-  }
 
-  void _removeAddress(int index) {
-    setState(() {
-      _addressControllers[index].dispose();
-      _addressControllers.removeAt(index);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +104,7 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
                               children: [
                                 Expanded(child: _buildPersonalCard(state)),
                                 const SizedBox(width: 32),
-                                Expanded(child: _buildCompanyCard(state)),
+                                Expanded(child: _buildChangePasswordCard(state)),
                               ],
                             ),
                             const SizedBox(height: 32),
@@ -203,6 +153,11 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
       ),
       child: Row(
         children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF141E7A), size: 24),
+            onPressed: () => context.go('/dashboard'),
+          ),
+          const SizedBox(width: 16),
           CircleAvatar(
             radius: 40,
             backgroundColor: const Color(0xFF141E7A),
@@ -335,11 +290,26 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
               keyboardType: TextInputType.phone,
               prefixIcon: const Icon(Icons.phone_outlined, size: 18),
             ),
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChangePasswordCard(ProfileState state) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             _buildSectionTitle(Icons.lock_outline, 'Change Password'),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             _buildFieldLabel('New Password'),
             AppTextField(
               controller: _passwordController,
@@ -366,127 +336,6 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
     );
   }
 
-  Widget _buildCompanyCard(ProfileState state) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: Color(0xFFE5E7EB)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildSectionTitle(
-                  Icons.business_outlined,
-                  'Company Information',
-                ),
-                TextButton.icon(
-                  onPressed: _addAddress,
-                  icon: const Icon(Icons.add_location_alt_outlined, size: 18),
-                  label: const Text('ADD ADDRESS'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF141E7A),
-                    textStyle: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildFieldLabel('Company Name'),
-            AppTextField(
-              controller: _companyNameController,
-              hint: 'Company Name',
-              prefixIcon: const Icon(Icons.business_rounded, size: 18),
-            ),
-            const SizedBox(height: 24),
-            const Divider(),
-            const SizedBox(height: 24),
-            ...List.generate(_addressControllers.length, (index) {
-              final group = _addressControllers[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'ADDRESS ${index + 1}',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF141E7A),
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        if (_addressControllers.length > 1)
-                          IconButton(
-                            onPressed: () => _removeAddress(index),
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              color: Colors.redAccent,
-                              size: 20,
-                            ),
-                            tooltip: 'Remove Address',
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _buildFieldLabel('Address Line'),
-                    AppTextField(
-                      controller: group.addressController,
-                      hint: 'Street address, Apartment, etc.',
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 16),
-                    const SizedBox(height: 16),
-                    LocationPicker(
-                      currentCountry: group.country,
-                      currentState: group.state,
-                      currentCity: group.city,
-                      onCountryChanged: (value) =>
-                          setState(() => group.country = value),
-                      onStateChanged: (value) =>
-                          setState(() => group.state = value),
-                      onCityChanged: (value) =>
-                          setState(() => group.city = value),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildFieldLabel('Pincode'),
-                              AppTextField(
-                                controller: group.pincodeController,
-                                hint: 'Pincode',
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Expanded(child: SizedBox()),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildSectionTitle(IconData icon, String title) {
     return Row(
@@ -570,19 +419,7 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
       lastName: _lastNameController.text,
       email: _emailController.text,
       mobileNumber: _mobileController.text,
-      companyName: _companyNameController.text,
-      addresses: _addressControllers
-          .map(
-            (g) => AddressModel(
-              id: g.id,
-              addressLine1: g.addressController.text,
-              city: g.city,
-              state: g.state,
-              country: g.country,
-              pincode: g.pincodeController.text,
-            ),
-          )
-          .toList(),
+
     );
 
     final success = await ref
@@ -606,29 +443,3 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
   }
 }
 
-class AddressControllerGroup {
-  final int? id;
-  final TextEditingController addressController;
-  final TextEditingController pincodeController;
-  String? city;
-  String? state;
-  String? country;
-
-  AddressControllerGroup({
-    this.id,
-    required String address,
-    required String city,
-    required String state,
-    required String country,
-    required String pincode,
-  }) : addressController = TextEditingController(text: address),
-       pincodeController = TextEditingController(text: pincode),
-       city = city,
-       state = state,
-       country = country;
-
-  void dispose() {
-    addressController.dispose();
-    pincodeController.dispose();
-  }
-}

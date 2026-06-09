@@ -9,6 +9,9 @@ import '../../../../shared/widgets/table_header_cell.dart';
 import '../../../../shared/widgets/view_header.dart';
 import '../controller/notification_provider.dart';
 import '../model/notification_model.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/user_config/user_role_provider.dart';
+import '../../../../core/user_config/user_role.dart';
 
 class NotificationWide extends ConsumerStatefulWidget {
   const NotificationWide({super.key});
@@ -33,7 +36,10 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                 _buildSummaryCards(state.summary),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 8.0,
+                    ),
                     child: _buildTableBody(state, notifier),
                   ),
                 ),
@@ -43,11 +49,14 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
   }
 
   Widget _buildHeader() {
-    return const ViewHeader(
+    final userRole = ref.watch(userRoleProvider);
+    return ViewHeader(
       title: 'NOTIFICATIONS',
-      subtitle: 'Real-time alerts and system notifications for levels, battery, and critical events.',
+      subtitle:
+          'Real-time alerts and system notifications for levels, battery, and critical events.',
       showButton: false,
-      showBackButton: true,
+      showBackButton: userRole == UserRole.customer,
+      onBack: () => context.go('/dashboard'),
     );
   }
 
@@ -110,7 +119,10 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
     );
   }
 
-  Widget _buildTableBody(NotificationState state, NotificationNotifier notifier) {
+  Widget _buildTableBody(
+    NotificationState state,
+    NotificationNotifier notifier,
+  ) {
     if (state.notifications.isEmpty && !state.isLoading) {
       return const AppTableEmptyState(
         icon: Icons.notifications_none_outlined,
@@ -130,59 +142,121 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
         minWidth: 1000,
         dataRowHeight: 55,
         headingRowHeight: 45,
-        headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.05)),
+        headingRowColor: WidgetStateProperty.all(
+          primary.withValues(alpha: 0.05),
+        ),
         dividerThickness: 0.4,
         columns: const [
-          DataColumn2(label: TableHeaderCell(label: 'Timestamp'), size: ColumnSize.M),
-          DataColumn2(label: TableHeaderCell(label: 'Type'), size: ColumnSize.S),
-          DataColumn2(label: TableHeaderCell(label: 'Tank/Site'), size: ColumnSize.L),
-          DataColumn2(label: TableHeaderCell(label: 'Rule'), size: ColumnSize.M),
-          DataColumn2(label: TableHeaderCell(label: 'Value'), size: ColumnSize.S),
-          DataColumn2(label: TableHeaderCell(label: 'Importance'), fixedWidth: 100),
-          DataColumn2(label: TableHeaderCell(label: 'Company'), size: ColumnSize.M),
-          DataColumn2(label: TableHeaderCell(label: 'Subject'), size: ColumnSize.L),
-          DataColumn2(label: TableHeaderCell(label: 'Description'), size: ColumnSize.L),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Timestamp'),
+            size: ColumnSize.M,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Type'),
+            size: ColumnSize.S,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Tank/Site'),
+            size: ColumnSize.L,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Rule'),
+            size: ColumnSize.M,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Value'),
+            size: ColumnSize.S,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Importance'),
+            fixedWidth: 100,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Company'),
+            size: ColumnSize.M,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Subject'),
+            size: ColumnSize.L,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Description'),
+            size: ColumnSize.L,
+          ),
         ],
         rows: state.notifications.map((n) {
           final color = _getImportanceColor(n.importance);
           return DataRow(
             cells: [
               DataCell(TableDataCell(label: _formatDate(n.createdAt))),
-              DataCell(TableDataCell(label: n.parameterType ?? '—', bold: true)),
-              DataCell(Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(n.tankNumber ?? 'N/A', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text(n.plantName ?? '', style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
-                ],
-              )),
+              DataCell(
+                TableDataCell(label: n.parameterType ?? '—', bold: true),
+              ),
+              DataCell(
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      n.tankNumber ?? 'N/A',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    Text(
+                      n.plantName ?? '',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               DataCell(TableDataCell(label: n.ruleName ?? '—')),
               DataCell(TableDataCell(label: n.value?.toString() ?? '—')),
-              DataCell(Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
+              DataCell(
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    n.importance?.toUpperCase() ?? 'WARNING',
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
                 ),
-                child: Text(
-                  n.importance?.toUpperCase() ?? 'WARNING',
-                  style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: color),
-                ),
-              )),
+              ),
               DataCell(TableDataCell(label: n.companyName ?? '—')),
-              DataCell(Text(
-                n.subject ?? '—',
-                style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              )),
-              DataCell(Text(
-                n.body ?? '—',
-                style: GoogleFonts.inter(fontSize: 11, color: Colors.black54),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              )),
+              DataCell(
+                Text(
+                  n.subject ?? '—',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              DataCell(
+                Text(
+                  n.body ?? '—',
+                  style: GoogleFonts.inter(fontSize: 11, color: Colors.black54),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           );
         }).toList(),

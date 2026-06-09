@@ -14,6 +14,7 @@ import '../../features/dashboard/widgets/sync_button.dart';
 import '../../features/notification/presentation/widgets/notification_dropdown.dart';
 import '../../features/notification/presentation/controller/notification_provider.dart';
 import '../provider/sidebar_provider.dart';
+import '../../features/user/presentation/controller/user_provider.dart';
 
 class ScreenHeader extends ConsumerWidget {
   const ScreenHeader({super.key, required this.userRole});
@@ -25,6 +26,12 @@ class ScreenHeader extends ConsumerWidget {
     final userNameAsync = ref.watch(userNameProvider);
     final userName = userNameAsync.value ?? 'User';
     final isExpanded = ref.watch(sidebarExpandedProvider);
+    final userState = ref.watch(userProvider);
+    final currentUser = userState.currentUser;
+    final displayName = currentUser != null
+        ? '${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}'.trim()
+        : '';
+    final finalDisplayName = displayName.isNotEmpty ? displayName : userName;
 
     return SizedBox(
       height: 65,
@@ -41,7 +48,7 @@ class ScreenHeader extends ConsumerWidget {
             SidebarHeader(isExpanded: isExpanded, userRole: userRole),
             const SizedBox(width: 16),
             Text(
-              'Welcome back, $userName!',
+              'Welcome back, $finalDisplayName!',
               style: GoogleFonts.outfit(
                 fontSize: 20,
                 color: Colors.black54,
@@ -147,6 +154,37 @@ class ScreenHeader extends ConsumerWidget {
                 ),
               ),
               itemBuilder: (context) => [
+                if (userRole == UserRole.superAdmin ||
+                    userRole == UserRole.companyAdmin ||
+                    userRole == UserRole.customer)
+                  PopupMenuItem(
+                    value: 'profile',
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: ListTile(
+                      dense: true,
+                      leading: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.person_outline_rounded,
+                          size: 18,
+                          color: primary,
+                        ),
+                      ),
+                      title: Text(
+                        'Profile',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF374151),
+                        ),
+                      ),
+                    ),
+                  ),
                 PopupMenuItem(
                   value: 'logout',
                   padding: const EdgeInsets.symmetric(horizontal: 8),

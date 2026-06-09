@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/profile_provider.dart';
 import '../model/profile_model.dart';
-import '../../../../shared/widgets/location_picker.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileMiddle extends ConsumerStatefulWidget {
   const ProfileMiddle({super.key});
@@ -22,8 +22,6 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  final _companyNameController = TextEditingController();
-  List<AddressControllerGroup> _addressControllers = [];
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -49,10 +47,6 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
     _mobileController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _companyNameController.dispose();
-    for (var group in _addressControllers) {
-      group.dispose();
-    }
     super.dispose();
   }
 
@@ -62,46 +56,6 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
     _lastNameController.text = profile.lastName ?? '';
     _emailController.text = profile.email ?? '';
     _mobileController.text = profile.mobileNumber ?? '';
-    _companyNameController.text = profile.companyName ?? '';
-    
-    // Clear existing address controllers
-    for (var group in _addressControllers) {
-      group.dispose();
-    }
-    
-    setState(() {
-      _addressControllers = profile.addresses.map((addr) => AddressControllerGroup(
-        id: addr.id,
-        address: addr.addressLine1 ?? '',
-        city: addr.city ?? '',
-        state: addr.state ?? '',
-        country: addr.country ?? '',
-        pincode: addr.pincode ?? '',
-      )).toList();
-
-      if (_addressControllers.isEmpty) {
-        _addAddress();
-      }
-    });
-  }
-
-  void _addAddress() {
-    setState(() {
-      _addressControllers.add(AddressControllerGroup(
-        address: '',
-        city: '',
-        state: '',
-        country: '',
-        pincode: '',
-      ));
-    });
-  }
-
-  void _removeAddress(int index) {
-    setState(() {
-      _addressControllers[index].dispose();
-      _addressControllers.removeAt(index);
-    });
   }
 
   @override
@@ -117,6 +71,10 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
         title: Text('Profile Settings', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -180,8 +138,6 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
-                        _buildCompanySection(state),
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -198,110 +154,6 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
     );
   }
 
-  Widget _buildCompanySection(ProfileState state) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.business_outlined, size: 20, color: Color(0xFF141E7A)),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Company Details',
-                    style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF111827)),
-                  ),
-                ],
-              ),
-              TextButton.icon(
-                onPressed: _addAddress,
-                icon: const Icon(Icons.add_location_alt_outlined, size: 16),
-                label: const Text('ADD ADDRESS'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF141E7A),
-                  textStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildField('Company Name', _companyNameController, prefixIcon: Icons.business_rounded),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 24),
-          ...List.generate(_addressControllers.length, (index) {
-            final group = _addressControllers[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'ADDRESS ${index + 1}',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF141E7A),
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      if (_addressControllers.length > 1)
-                        IconButton(
-                          onPressed: () => _removeAddress(index),
-                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          tooltip: 'Remove Address',
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildField('Street Address', group.addressController, maxLines: 2),
-                  const SizedBox(height: 16),
-                  const SizedBox(height: 16),
-                  LocationPicker(
-                    currentCountry: group.country,
-                    currentState: group.state,
-                    currentCity: group.city,
-                    onCountryChanged: (value) => setState(() => group.country = value),
-                    onStateChanged: (value) => setState(() => group.state = value),
-                    onCityChanged: (value) => setState(() => group.city = value),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(child: _buildField('Pincode', group.pincodeController)),
-                      const SizedBox(width: 16),
-                      const Expanded(child: SizedBox()),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
 
   Widget _buildHeader(ProfileState state) {
     final profile = state.profile;
@@ -444,15 +296,7 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
       lastName: _lastNameController.text,
       email: _emailController.text,
       mobileNumber: _mobileController.text,
-      companyName: _companyNameController.text,
-      addresses: _addressControllers.map((g) => AddressModel(
-        id: g.id,
-        addressLine1: g.addressController.text,
-        city: g.city,
-        state: g.state,
-        country: g.country,
-        pincode: g.pincodeController.text,
-      )).toList(),
+
     );
 
     final success = await ref.read(profileNotifierProvider.notifier).updateProfile(request);
@@ -466,32 +310,5 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error ?? 'Update failed')));
       }
     }
-  }
-}
-
-class AddressControllerGroup {
-  final int? id;
-  final TextEditingController addressController;
-  final TextEditingController pincodeController;
-  String? city;
-  String? state;
-  String? country;
-
-  AddressControllerGroup({
-    this.id,
-    required String address,
-    required String city,
-    required String state,
-    required String country,
-    required String pincode,
-  })  : addressController = TextEditingController(text: address),
-        pincodeController = TextEditingController(text: pincode),
-        city = city,
-        state = state,
-        country = country;
-
-  void dispose() {
-    addressController.dispose();
-    pincodeController.dispose();
   }
 }

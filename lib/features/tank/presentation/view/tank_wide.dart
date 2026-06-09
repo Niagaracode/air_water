@@ -352,29 +352,62 @@ class _TankWideState extends ConsumerState<TankWide> {
                 ),
               ),
             ),
-            Text(
-              group.siteName,
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF111827),
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: [
+                  Text(
+                    group.siteName,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${group.tanks.length} tanks',
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 5),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
+            const Expanded(
+              flex: 2,
+              child: SizedBox(),
+            ),
+            Expanded(
+              flex: 3,
               child: Text(
-                '${group.tanks.length} tanks',
-                style: GoogleFonts.outfit(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: primary,
+                group.fullAddress,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
+            ),
+            const Expanded(
+              flex: 1,
+              child: SizedBox(),
+            ),
+            const Expanded(
+              flex: 1,
+              child: SizedBox(),
+            ),
+            const SizedBox(
+              width: 80,
             ),
           ],
         ),
@@ -418,7 +451,7 @@ class _TankWideState extends ConsumerState<TankWide> {
 
             AppTableCell(tank.deviceId ?? '--', flex: 2),
 
-            AppTableCell(group.fullAddress, flex: 3),
+            AppTableCell('', flex: 3),
 
             AppTableCell(tank.productName ?? '--', flex: 1, textAlign: TextAlign.center,),
 
