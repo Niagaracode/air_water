@@ -1,15 +1,10 @@
+import 'package:air_water/core/user_config/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/app_theme/app_theme.dart';
 import '../../tank/presentation/view/tank_details_view.dart';
 import '../data/models/tank_data_model.dart';
-import '../presentation/widgets/build_loading_view.dart';
-import '../presentation/widgets/dashboard_list_view.dart';
-import '../presentation/widgets/dashboard_map_view.dart';
-import '../presentation/widgets/search_and_filters.dart';
-import '../presentation/widgets/statistics_cards.dart';
-import '../presentation/widgets/view_toggle.dart';
 import '../provider/dashboard_controller.dart';
 import '../provider/dashboard_provider.dart';
 
@@ -17,6 +12,13 @@ import 'dart:typed_data';
 import 'package:file_saver/file_saver.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xls;
 import 'package:pdf/widgets.dart' as pw;
+
+import '../widgets/build_loading_view.dart';
+import '../widgets/dashboard_list_view.dart';
+import '../widgets/dashboard_map_view.dart';
+import '../widgets/search_and_filters.dart';
+import '../widgets/statistics_cards.dart';
+import '../widgets/view_toggle.dart';
 
 class OthersDashboardWide extends ConsumerStatefulWidget {
   const OthersDashboardWide({super.key});
@@ -169,6 +171,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                   selectedRegion: _selectedRegion,
                   selectedStatus: _selectedStatus,
                   searchQuery: _searchQuery,
+                  userRole: UserRole.superAdmin,
                   onTankTap: _callDetailsPage,
                 ) : DashboardMapView(tanksData: tanks),
               ],

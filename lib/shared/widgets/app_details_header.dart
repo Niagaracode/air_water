@@ -1,4 +1,5 @@
 import 'package:air_water/core/app_theme/app_theme.dart';
+import 'package:air_water/core/user_config/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -18,23 +19,28 @@ class AppDetailsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final canPop = Navigator.canPop(context);
+
     return Row(
       children: [
-        Tooltip(
-          message: 'Back',
-          child: InkWell(
-            onTap: onBack,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: primary,
-                borderRadius: BorderRadius.circular(8),
+        if(canPop)...[
+          Tooltip(
+            message: 'Back',
+            child: InkWell(
+              onTap: onBack,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.white),
               ),
-              child: Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.white),
             ),
           ),
-        ),
-        const SizedBox(width: 24),
+          const SizedBox(width: 24),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

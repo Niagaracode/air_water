@@ -93,7 +93,6 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
       }).length;
 
 
-
       final lowLevel = tanks.where((t) {
         final isLowLevel = t.level <= t.thresholdValues.level;
         final isReorder = t.level <= t.thresholdValues.reorder;

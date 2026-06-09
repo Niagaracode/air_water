@@ -1,3 +1,4 @@
+import 'package:air_water/core/user_config/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../layout/provider/sidebar_provider.dart';
@@ -5,10 +6,12 @@ import '../../layout/provider/sidebar_provider.dart';
 
 class SidebarHeader extends ConsumerWidget {
   final bool isExpanded;
+  final UserRole userRole;
 
   const SidebarHeader({
     super.key,
     required this.isExpanded,
+    required this.userRole,
   });
 
   @override
@@ -29,18 +32,20 @@ class SidebarHeader extends ConsumerWidget {
               'assets/png/app_logo_white.png',
               height: 32,
             ),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(
-                Icons.keyboard_double_arrow_left_rounded,
-                size: 20,
+            if(userRole != UserRole.customer)...[
+              const Spacer(),
+              IconButton(
+                icon: const Icon(
+                  Icons.keyboard_double_arrow_left_rounded,
+                  size: 20,
+                ),
+                color: Colors.black.withValues(alpha: 0.60),
+                splashRadius: 20,
+                onPressed: () {
+                  ref.read(sidebarExpandedProvider.notifier).toggle();
+                },
               ),
-              color: Colors.black.withValues(alpha: 0.60),
-              splashRadius: 20,
-              onPressed: () {
-                ref.read(sidebarExpandedProvider.notifier).toggle();
-              },
-            ),
+            ]
           ],
         ) :
         Center(

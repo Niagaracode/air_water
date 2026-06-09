@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/app_theme/app_theme.dart';
 import '../../core/helpers/route_refresh_helper.dart';
-import '../../core/user_config/user_role.dart';
 import '../../features/auth/presentation/controllers/auth_providers.dart';
-import '../../features/dashboard/presentation/widgets/mqtt_connection_status.dart';
-import '../../features/dashboard/presentation/widgets/sync_button.dart';
+
+import '../../core/user_config/user_role.dart';
+import '../../features/dashboard/widgets/mqtt_connection_status.dart';
+import '../../features/dashboard/widgets/sync_button.dart';
+import '../../features/notification/presentation/widgets/notification_dropdown.dart';
 import '../../features/notification/presentation/controller/notification_provider.dart';
 import '../provider/sidebar_provider.dart';
 
@@ -36,7 +38,7 @@ class ScreenHeader extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            SidebarHeader(isExpanded: isExpanded),
+            SidebarHeader(isExpanded: isExpanded, userRole: userRole),
             const SizedBox(width: 16),
             Text(
               'Welcome back, $userName!',
@@ -57,31 +59,45 @@ class ScreenHeader extends ConsumerWidget {
               },
             ),
             const SizedBox(width: 16),
-            InkWell(
-              onTap: () {
-                context.go('/notification');
-              },
-              borderRadius: BorderRadius.circular(8),
+            PopupMenuButton<void>(
+              offset: const Offset(0, 48),
+              elevation: 8,
+              color: Colors.white,
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+              position: PopupMenuPosition.under,
               child: Container(
-                width: 38,
-                height: 38,
+                width: 35,
+                height: 35,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9FAFB),
-                  borderRadius: BorderRadius.circular(8),
+                  color: primary,
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
-                child: Badge(
-                  alignment: const AlignmentDirectional(0.6, -0.6),
-                  smallSize: 7,
-                  backgroundColor: Colors.red.shade500,
-                  isLabelVisible: ref.watch(notificationNotifierProvider).notifications.isNotEmpty,
-                  child: const Icon(
-                    Icons.notifications_none_rounded,
-                    size: 20,
-                    color: Color(0xFF6B7280),
+                child: Center(
+                  child: Badge(
+                    alignment: const AlignmentDirectional(0.8, -0.8),
+                    smallSize: 8,
+                    backgroundColor: Colors.red.shade500,
+                    isLabelVisible: ref.watch(notificationNotifierProvider).notifications.isNotEmpty,
+                    child: const Icon(
+                      Icons.notifications_none_rounded,
+                      size: 20,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
+              itemBuilder: (context) => [
+                const PopupMenuItem<void>(
+                  enabled: false,
+                  padding: EdgeInsets.zero,
+                  child: NotificationDropdown(),
+                ),
+              ],
             ),
             const SizedBox(width: 16),
             PopupMenuButton<String>(
