@@ -150,7 +150,7 @@ class TankDetailsTab extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(left: 16, top: 12),
               child: Container(
-                height: 200,
+                height: _calculateTableHeight(channelState.channels),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -252,6 +252,19 @@ class TankDetailsTab extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  double _calculateTableHeight(List<dynamic> channels) {
+    final enabledChannelsCount = channels.where((item) => item.channelEnable).length;
+    if (enabledChannelsCount == 0) {
+      return 100;
+    }
+
+    final headingRowHeight = 35.0;
+    final dataRowHeight = 40.0;
+    final bottomPadding = 10.0;
+
+    return headingRowHeight + (enabledChannelsCount * dataRowHeight) + bottomPadding;
   }
 
   IconData getChannelIcon(String name) {

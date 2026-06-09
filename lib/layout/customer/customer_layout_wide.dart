@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/user_config/user_role.dart';
+import '../header/screen_header.dart';
 import '../sidebar/screen_sidebar.dart';
 
 class CustomerLayoutWide extends StatelessWidget {
@@ -17,15 +18,12 @@ class CustomerLayoutWide extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      drawer: Drawer(
-        child: ScreenSidebar(
-          userRole: userRole,
-        ),
+      body: Column(
+        children: [
+          ScreenHeader(userRole: userRole),
+          Expanded(child: child),
+        ],
       ),
-      appBar: AppBar(
-        title: Text(userRole.name),
-      ),
-      body: child,
     );
   }
 }

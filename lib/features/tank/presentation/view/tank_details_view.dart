@@ -68,7 +68,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
               padding: const EdgeInsets.only(left: 24, right: 24),
               child: Row(
                 children: [
-
                   /// HEADER
                   Expanded(
                     child: AppDetailsHeader(
@@ -79,9 +78,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                       onBack: () => context.pop(),
                     ),
                   ),
-
                   const SizedBox(width: 16),
-
                   /// DOWNLOAD BUTTON
                   PopupMenuButton<String>(
                     tooltip: 'Download Report',
@@ -246,7 +243,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
               style: ButtonStyle(
                 side: WidgetStateProperty.resolveWith((states) {
                     return  BorderSide(
-                      color: primary.withValues(alpha: 0.6),
+                      color: Colors.grey.withValues(alpha: 0.6),
                       width: 1,
                     );
                   },

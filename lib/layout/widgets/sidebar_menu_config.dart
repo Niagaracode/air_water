@@ -10,16 +10,10 @@ const mainMenu = [
     allowedRoles: [
       UserRole.superAdmin,
       UserRole.companyAdmin,
-    ],
-  ),
-  SidebarMenuItem(
-    key: 'Asset Summary',
-    label: 'Asset Summary',
-    icon: Icons.inventory_2_outlined,
-    allowedRoles: [
       UserRole.customer,
     ],
   ),
+
   SidebarMenuItem(
     key: 'Schedule',
     label: 'Schedule',

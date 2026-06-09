@@ -95,13 +95,13 @@ class AppRouter {
           routes: [
             GoRoute(
               path: '/dashboard',
-              builder: (_, __) => const DashboardLayout(),
+              builder: (_, _) => const DashboardLayout(),
             ),
             GoRoute(path: '/company', builder: (_, __) => const CompanyLayout()),
             GoRoute(path: '/site', builder: (_, __) => const SiteLayout()),
             GoRoute(
               path: '/tank',
-              builder: (_, __) => const TankLayout(),
+              builder: (_, _) => const TankLayout(),
               routes: [
                 GoRoute(
                   path: 'details/:id',
