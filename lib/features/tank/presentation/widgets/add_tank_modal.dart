@@ -67,9 +67,9 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     _initializeChannels();
   }
 
-
   Future<void> _loadDropdownData() async {
     setState(() => _isLoadingDropdowns = true);
+
     try {
       final results = await Future.wait([
         ref.read(tankNotifierProvider.notifier).getDropdowns(),
@@ -80,38 +80,52 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       final data = results[0] as Map<String, dynamic>;
       final products = results[1] as List<TankProduct>;
       final rules = results[2] as List<TankRuleModel>;
-      print(widget.tank!.ruleId);
-
-      final foundRule = _tankRules.where((tr) => tr.id == widget.tank!.ruleId);
-      _selectedRule = foundRule.isNotEmpty ? foundRule.first : null;
 
       setState(() {
         _products = products;
         _tankRules = rules;
+
         if (widget.tank != null) {
-          _selectedUnit = (data['units'] as List).firstWhere(
-            (u) => u['id'] == widget.tank!.unitId,
-            orElse: () => null,
-          );
 
-          _selectedTankType = (data['tank_types'] as List).firstWhere(
-            (tt) => tt['id'] == widget.tank!.tankTypeId,
-            orElse: () => null,
-          );
+          // UNIT
+          final units = (data['units'] as List?) ?? [];
+          final unitMatches =
+          units.where((u) => u['id'] == widget.tank!.unitId);
 
-          final foundProducts = products.where((p) => p.productId == widget.tank!.productId);
-          _selectedProduct = foundProducts.isNotEmpty ? foundProducts.first : null;
+          _selectedUnit =
+          unitMatches.isNotEmpty ? unitMatches.first : null;
 
-          final foundRule = _tankRules.where((tr) => tr.id == widget.tank!.ruleId);
-          _selectedRule = foundRule.isNotEmpty ? foundRule.first : null;
+          // TANK TYPE
+          final tankTypes = (data['tank_types'] as List?) ?? [];
+          final tankTypeMatches =
+          tankTypes.where((tt) => tt['id'] == widget.tank!.tankTypeId);
+
+          _selectedTankType =
+          tankTypeMatches.isNotEmpty ? tankTypeMatches.first : null;
+
+          // PRODUCT
+          final foundProducts =
+          products.where((p) => p.productId == widget.tank!.productId);
+
+          _selectedProduct =
+          foundProducts.isNotEmpty ? foundProducts.first : null;
+
+          // RULE
+          final foundRule =
+          rules.where((tr) => tr.id == widget.tank!.ruleId);
+
+          _selectedRule =
+          foundRule.isNotEmpty ? foundRule.first : null;
         }
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Error loading dropdowns: $e');
+      debugPrintStack(stackTrace: stackTrace);
     } finally {
       setState(() => _isLoadingDropdowns = false);
     }
   }
+
 
   void _initializeChannels() {
     final apiChannels = widget.tank?.channelData ?? [];
