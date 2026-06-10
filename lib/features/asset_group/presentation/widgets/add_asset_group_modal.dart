@@ -914,6 +914,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
           .watch(deviceNotifierProvider)
           .groupedDevices
           .expand((g) => g.devices)
+          .where((d) => _selectedCompanyId == null || d.companyId == _selectedCompanyId)
           .map((d) => {'id': d.id.toString(), 'name': d.deviceId})
           .toList();
       devices.sort((a, b) => (a['name'] ?? '').compareTo(b['name'] ?? ''));

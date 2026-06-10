@@ -356,12 +356,15 @@ class _TankWideState extends ConsumerState<TankWide> {
               flex: 2,
               child: Row(
                 children: [
-                  Text(
-                    group.siteName,
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF111827),
+                  Flexible(
+                    child: Text(
+                      group.siteName,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF111827),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 5),

@@ -21,10 +21,32 @@ class NotificationWide extends ConsumerStatefulWidget {
 }
 
 class _NotificationWideState extends ConsumerState<NotificationWide> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(notificationNotifierProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(notificationNotifierProvider);
     final notifier = ref.read(notificationNotifierProvider.notifier);
+    final userRole = ref.watch(userRoleProvider);
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -40,7 +62,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                       horizontal: 24.0,
                       vertical: 8.0,
                     ),
-                    child: _buildTableBody(state, notifier),
+                    child: _buildTableBody(state, notifier, userRole),
                   ),
                 ),
               ],
@@ -122,6 +144,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
   Widget _buildTableBody(
     NotificationState state,
     NotificationNotifier notifier,
+    UserRole? userRole,
   ) {
     if (state.notifications.isEmpty && !state.isLoading) {
       return const AppTableEmptyState(
@@ -137,6 +160,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: DataTable2(
+        scrollController: _scrollController,
         columnSpacing: 12,
         horizontalMargin: 12,
         minWidth: 1000,
@@ -146,120 +170,153 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
           primary.withValues(alpha: 0.05),
         ),
         dividerThickness: 0.4,
-        columns: const [
-          DataColumn2(
-            label: TableHeaderCell(label: 'Timestamp'),
+        columns: [
+          const DataColumn2(
+            label: TableHeaderCell(label: 'Last Updated'),
             size: ColumnSize.M,
           ),
-          DataColumn2(
+          const DataColumn2(
             label: TableHeaderCell(label: 'Type'),
             size: ColumnSize.S,
           ),
-          DataColumn2(
+          const DataColumn2(
             label: TableHeaderCell(label: 'Tank/Site'),
             size: ColumnSize.L,
           ),
-          DataColumn2(
+          const DataColumn2(
             label: TableHeaderCell(label: 'Rule'),
             size: ColumnSize.M,
           ),
-          DataColumn2(
+          const DataColumn2(
             label: TableHeaderCell(label: 'Value'),
             size: ColumnSize.S,
           ),
-          DataColumn2(
+          const DataColumn2(
             label: TableHeaderCell(label: 'Importance'),
             fixedWidth: 100,
           ),
-          DataColumn2(
-            label: TableHeaderCell(label: 'Company'),
-            size: ColumnSize.M,
-          ),
-          DataColumn2(
+          if (userRole == UserRole.superAdmin)
+            const DataColumn2(
+              label: TableHeaderCell(label: 'Company'),
+              size: ColumnSize.M,
+            ),
+          const DataColumn2(
             label: TableHeaderCell(label: 'Subject'),
             size: ColumnSize.L,
           ),
-          DataColumn2(
+          const DataColumn2(
             label: TableHeaderCell(label: 'Description'),
             size: ColumnSize.L,
           ),
         ],
-        rows: state.notifications.map((n) {
-          final color = _getImportanceColor(n.importance);
-          return DataRow(
-            cells: [
-              DataCell(TableDataCell(label: _formatDate(n.createdAt))),
-              DataCell(
-                TableDataCell(label: n.parameterType ?? '—', bold: true),
-              ),
-              DataCell(
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      n.tankNumber ?? 'N/A',
+        rows: [
+          ...state.notifications.map((n) {
+            final color = _getImportanceColor(n.importance);
+            return DataRow(
+              cells: [
+                DataCell(TableDataCell(label: _formatDate(n.createdAt))),
+                DataCell(
+                  TableDataCell(label: n.parameterType ?? '—', bold: true),
+                ),
+                DataCell(
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        n.tankNumber ?? 'N/A',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        n.plantName ?? '',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                DataCell(TableDataCell(label: n.ruleName ?? '—')),
+                DataCell(TableDataCell(label: n.value?.toString() ?? '—')),
+                DataCell(
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      n.importance?.toUpperCase() ?? 'WARNING',
                       style: GoogleFonts.inter(
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        color: color,
                       ),
                     ),
-                    Text(
-                      n.plantName ?? '',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              DataCell(TableDataCell(label: n.ruleName ?? '—')),
-              DataCell(TableDataCell(label: n.value?.toString() ?? '—')),
-              DataCell(
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    n.importance?.toUpperCase() ?? 'WARNING',
+                if (userRole == UserRole.superAdmin)
+                  DataCell(TableDataCell(label: n.companyName ?? '—')),
+                DataCell(
+                  Text(
+                    n.subject ?? '—',
                     style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: color,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    n.body ?? '—',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: Colors.black54,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            );
+          }),
+          if (state.hasMore)
+            DataRow(
+              cells: [
+                const DataCell(
+                  Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFF141E7A),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              DataCell(TableDataCell(label: n.companyName ?? '—')),
-              DataCell(
-                Text(
-                  n.subject ?? '—',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              DataCell(
-                Text(
-                  n.body ?? '—',
-                  style: GoogleFonts.inter(fontSize: 11, color: Colors.black54),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          );
-        }).toList(),
+                const DataCell(SizedBox.shrink()),
+                const DataCell(SizedBox.shrink()),
+                const DataCell(SizedBox.shrink()),
+                const DataCell(SizedBox.shrink()),
+                const DataCell(SizedBox.shrink()),
+                if (userRole == UserRole.superAdmin)
+                  const DataCell(SizedBox.shrink()),
+                const DataCell(SizedBox.shrink()),
+                const DataCell(SizedBox.shrink()),
+              ],
+            ),
+        ],
       ),
     );
   }

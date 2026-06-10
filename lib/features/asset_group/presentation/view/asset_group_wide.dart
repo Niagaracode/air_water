@@ -171,7 +171,14 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            color: primary.withValues(alpha: 0.1),
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.1),
+              border: Border(
+                left: BorderSide(color: Colors.grey.shade300, width: 1),
+                right: BorderSide(color: Colors.grey.shade300, width: 1),
+                bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+              ),
+            ),
             child: Row(
               children: [
                 AppTableHeaderCell('Group Name', flex: 3),
@@ -185,6 +192,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
           ),
           ...state.groups.asMap().entries.map((entry) {
             final group = entry.value;
+            final isLast = entry.key == state.groups.length - 1;
             final isAllGroup = group.name.toLowerCase() == 'all';
             final criteriaStr = isAllGroup 
                 ? 'Includes all assets'
@@ -277,7 +285,19 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                border: Border(
+                  left: BorderSide(color: Colors.grey.shade300, width: 1),
+                  right: BorderSide(color: Colors.grey.shade300, width: 1),
+                  bottom: isLast
+                      ? BorderSide(color: Colors.grey.shade300, width: 1)
+                      : const BorderSide(color: Color(0xFFF3F4F6)),
+                ),
+                borderRadius: isLast
+                    ? const BorderRadius.only(
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                      )
+                    : BorderRadius.zero,
               ),
               child: Row(
                 children: [
@@ -382,7 +402,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
               ),
             );
           }),
-          const AppTableBottomCap(),
           const SizedBox(height: 32),
         ],
       ),

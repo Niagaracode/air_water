@@ -249,48 +249,71 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: const BoxDecoration(color: Color(0xFF141E7A)),
-              child: Row(
-                children: [
-                  AppTableHeaderCell('SI.NO', width: 60),
-                  AppTableHeaderCell('GROUP NAME', flex: 2),
-                  if (isSuperAdmin) AppTableHeaderCell('COMPANY', flex: 2),
-                  AppTableHeaderCell('ROSTER COUNT', width: 120),
-                  AppTableHeaderCell('DESCRIPTION', flex: 3),
-                  AppTableHeaderCell('ACTION', width: 120),
-                ],
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF141E7A).withValues(alpha: 0.1),
+              border: Border(
+                left: BorderSide(color: Colors.grey.shade300, width: 1),
+                right: BorderSide(color: Colors.grey.shade300, width: 1),
+                bottom: BorderSide(color: Colors.grey.shade300, width: 1),
               ),
             ),
-            Expanded(
-              child: ListView.separated(
-                itemCount: groups.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (_, i) =>
-                    _buildGroupRow(groups[i], i, isSuperAdmin),
+            child: Row(
+              children: [
+                AppTableHeaderCell('SI.NO', width: 60),
+                AppTableHeaderCell('GROUP NAME', flex: 2),
+                if (isSuperAdmin) AppTableHeaderCell('COMPANY', flex: 2),
+                AppTableHeaderCell('ROSTER COUNT', width: 120),
+                AppTableHeaderCell('DESCRIPTION', flex: 3),
+                AppTableHeaderCell('ACTION', width: 120),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: groups.length,
+              itemBuilder: (_, i) => _buildGroupRow(
+                groups[i],
+                i,
+                i == groups.length - 1,
+                isSuperAdmin,
               ),
             ),
-            const AppTableBottomCap(),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildGroupRow(AssetGroupModel group, int index, bool isSuperAdmin) {
+  Widget _buildGroupRow(
+    AssetGroupModel group,
+    int index,
+    bool isLast,
+    bool isSuperAdmin,
+  ) {
     return InkWell(
       onTap: () => _editGroup(group),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: const BoxDecoration(color: Colors.transparent),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(color: Colors.grey.shade300, width: 1),
+            right: BorderSide(color: Colors.grey.shade300, width: 1),
+            bottom: isLast
+                ? BorderSide(color: Colors.grey.shade300, width: 1)
+                : const BorderSide(color: Color(0xFFF3F4F6)),
+          ),
+          borderRadius: isLast
+              ? const BorderRadius.only(
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                )
+              : BorderRadius.zero,
+        ),
         child: Row(
           children: [
             AppTableCell((index + 1).toString().padLeft(2, '0'), width: 60),
