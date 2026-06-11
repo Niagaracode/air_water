@@ -73,7 +73,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
   Widget _buildHeader() {
     final userRole = ref.watch(userRoleProvider);
     return ViewHeader(
-      title: 'NOTIFICATIONS',
+      title: 'Events',
       subtitle:
           'Real-time alerts and system notifications for levels, battery, and critical events.',
       showButton: false,
