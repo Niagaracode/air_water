@@ -12,6 +12,8 @@ import '../widgets/add_asset_group_modal.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../device/presentation/controller/device_provider.dart';
+import '../../../company/presentation/controller/company_provider.dart';
+import '../../../company/presentation/model/company_model.dart';
 
 
 class AssetGroupWide extends ConsumerStatefulWidget {
@@ -31,6 +33,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
       ref.read(assetGroupProvider.notifier).loadGroups();
       ref.read(userProvider.notifier).loadUsers();
       ref.read(productNotifierProvider.notifier).loadProducts();
+      ref.read(companyNotifierProvider.notifier).loadGroupedCompanies();
     });
   }
 
@@ -76,6 +79,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     final productState = ref.watch(productNotifierProvider);
     final tankState = ref.watch(allTanksProvider);
     final deviceState = ref.watch(deviceNotifierProvider);
+    final companyState = ref.watch(companyNotifierProvider);
 
 
     return Scaffold(
@@ -92,7 +96,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF141E7A)))
                 : Padding(
                   padding: const EdgeInsets.only(left: 24, right: 24, bottom: 8),
-                  child: _buildTable(state, userState, productState, tankState, deviceState),
+                  child: _buildTable(state, userState, productState, tankState, deviceState, companyState),
                 ),
 
           ),
@@ -155,7 +159,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     );
   }
 
-  Widget _buildTable(AssetGroupState state, UserState userState, ProductState productState, AsyncValue<List<dynamic>> tankState, DeviceState deviceState) {
+  Widget _buildTable(AssetGroupState state, UserState userState, ProductState productState, AsyncValue<List<dynamic>> tankState, DeviceState deviceState, CompanyState companyState) {
 
     if (state.groups.isEmpty) {
       return const AppTableEmptyState(
@@ -253,6 +257,23 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                                 );
                           if (device != null) {
                             displayValue = device.deviceId;
+                          }
+                        }
+                      }
+
+                      // Resolve Company ID to Name if parameter is Customer Name
+                      if (c.parameter == 'Customer Name') {
+                        final companyId = int.tryParse(c.value);
+                        if (companyId != null) {
+                          final companyList = companyState.groupedCompanies;
+                          final company = companyList.isEmpty 
+                              ? null 
+                              : companyList.firstWhere(
+                                  (g) => g.addresses.isNotEmpty && g.addresses.first.companyId == companyId,
+                                  orElse: () => CompanyGroup(name: '', addresses: []),
+                                );
+                          if (company != null && company.name.isNotEmpty) {
+                            displayValue = company.name;
                           }
                         }
                       }

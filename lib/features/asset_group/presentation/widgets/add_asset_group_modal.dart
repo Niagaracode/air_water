@@ -42,7 +42,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   final List<String> _parameters = [
     'City',
     'Country',
-    'Customer Name',
     'DeviceID',
     'Product',
     'Site Name',
@@ -1386,7 +1385,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
     final allGroupUsers = userState.users
         .where(
           (u) =>
-              u.roleId != 1 &&
               u.companyId == _selectedCompanyId,
         )
         .toList();
@@ -1419,7 +1417,8 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       final isAlreadyAssigned = _assignedUsers.any(
         (au) => au.userId == u.userId,
       );
-      final isRestrictedRole = u.roleId == 1;
+      // Do not exclude Super Admin or Company Admin
+      final isRestrictedRole = false;
       final isInAllGroupGlobally =
           u.groupNames?.any((n) => n.trim().toLowerCase() == 'all') ?? false;
       if (!isEditingAllGroup && isInAllGroupGlobally) return false;
@@ -1588,10 +1587,11 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                       ),
                     );
 
-                    final role = user.roleName?.toLowerCase() ?? '';
+                    final role = (assignment.roleName ?? user.roleName ?? '').toLowerCase();
                     final isRestricted =
                         role == 'customer' ||
-                        role.contains('super admin');
+                        role.contains('super admin') ||
+                        role.contains('super_admin');
 
                     return Container(
                       padding: const EdgeInsets.symmetric(
@@ -1610,12 +1610,21 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                         children: [
                           Expanded(
                             flex: 3,
-                            child: Text(
-                              user.fullName,
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            child: Builder(
+                              builder: (context) {
+                                final fName = assignment.firstName ?? user.firstName ?? '';
+                                final lName = assignment.lastName ?? user.lastName ?? '';
+                                final fullName = (fName.isEmpty && lName.isEmpty)
+                                    ? (user.fullName.isNotEmpty ? user.fullName : assignment.username)
+                                    : '$fName $lName'.trim();
+                                return Text(
+                                  fullName,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           // Expanded(
@@ -1652,7 +1661,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                           Expanded(
                             flex: 2,
                             child: Text(
-                              user.roleName ?? 'User',
+                              assignment.roleName ?? user.roleName ?? 'User',
                               style: GoogleFonts.inter(fontSize: 13),
                             ),
                           ),
