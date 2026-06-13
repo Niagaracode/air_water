@@ -85,7 +85,7 @@ const eventsMenu = [
   ),
   SidebarMenuItem(
     key: 'Roster',
-    label: 'Roster',
+    label: 'Roster Group',
     icon: Icons.people_alt_rounded,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),

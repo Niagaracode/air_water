@@ -30,8 +30,6 @@ class _TankWideState extends ConsumerState<TankWide> {
     super.initState();
   }
 
-
-
   @override
   void dispose() {
     _siteSearchController.dispose();
@@ -44,7 +42,7 @@ class _TankWideState extends ConsumerState<TankWide> {
     return ViewHeader(
       title: 'TANK MANAGEMENT',
       subtitle:
-      'Centralize tank information including dimensions, types, products and site associations.',
+          'Centralize tank information including dimensions, types, products and site associations.',
       buttonText: 'Add tank',
       onPressed: () => _showAddDialog(),
     );
@@ -62,7 +60,8 @@ class _TankWideState extends ConsumerState<TankWide> {
           child: AppDropdown<int?>(
             value: state.selectedStatus,
             items: const [null, 1, 0],
-            itemLabel: (v) => v == null ? 'All Status' : (v == 1 ? 'Active' : 'Inactive'),
+            itemLabel: (v) =>
+                v == null ? 'All Status' : (v == 1 ? 'Active' : 'Inactive'),
             hint: 'Status',
             onChanged: (v) => notifier.setStatus(v),
           ),
@@ -91,7 +90,8 @@ class _TankWideState extends ConsumerState<TankWide> {
             }
             return await notifier.searchSites(textEditingValue.text);
           },
-          displayStringForOption: (SiteAutocompleteInfo option) => option.siteName,
+          displayStringForOption: (SiteAutocompleteInfo option) =>
+              option.siteName,
           onSelected: (option) {
             notifier.setSearchSite(option.siteName);
             notifier.loadGroupedTanks();
@@ -215,7 +215,6 @@ class _TankWideState extends ConsumerState<TankWide> {
 
   @override
   Widget build(BuildContext context) {
-
     final state = ref.watch(tankNotifierProvider);
     final notifier = ref.read(tankNotifierProvider.notifier);
 
@@ -231,7 +230,9 @@ class _TankWideState extends ConsumerState<TankWide> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = constraints.maxWidth > 1000 ? constraints.maxWidth : 1000.0;
+                final tableWidth = constraints.maxWidth > 1000
+                    ? constraints.maxWidth
+                    : 1000.0;
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
@@ -240,7 +241,9 @@ class _TankWideState extends ConsumerState<TankWide> {
                       children: [
                         if (!state.isLoading || state.groupedTanks.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                            ),
                             child: _buildFixedTableHeader(),
                           ),
                         Expanded(
@@ -297,7 +300,7 @@ class _TankWideState extends ConsumerState<TankWide> {
             item['index'] as int,
             isLast,
           );
-        }else {
+        } else {
           return _buildTankRow(
             item['tank'] as Tank,
             notifier,
@@ -318,9 +321,9 @@ class _TankWideState extends ConsumerState<TankWide> {
           AppTableHeaderCell('SI.NO', width: 60),
           AppTableHeaderCell('Site/ Tank', flex: 2),
           AppTableHeaderCell('Device id', flex: 2),
-          AppTableHeaderCell('Site Information', flex: 3),
           AppTableHeaderCell('Product', flex: 1, textAlign: TextAlign.center),
           AppTableHeaderCell('Status', flex: 1),
+          AppTableHeaderCell('Site Information', flex: 3),
           AppTableHeaderCell('Actions', width: 80),
         ],
       ),
@@ -344,7 +347,7 @@ class _TankWideState extends ConsumerState<TankWide> {
             SizedBox(
               width: 60,
               child: Text(
-                index.toString().padLeft(2, '0'),
+                index.toString().padLeft(2),
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -369,7 +372,10 @@ class _TankWideState extends ConsumerState<TankWide> {
                   ),
                   const SizedBox(width: 5),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -386,10 +392,9 @@ class _TankWideState extends ConsumerState<TankWide> {
                 ],
               ),
             ),
-            const Expanded(
-              flex: 2,
-              child: SizedBox(),
-            ),
+            const Expanded(flex: 2, child: SizedBox()),
+            const Expanded(flex: 1, child: SizedBox()),
+            const Expanded(flex: 1, child: SizedBox()),
             Expanded(
               flex: 3,
               child: Text(
@@ -401,24 +406,19 @@ class _TankWideState extends ConsumerState<TankWide> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const Expanded(
-              flex: 1,
-              child: SizedBox(),
-            ),
-            const Expanded(
-              flex: 1,
-              child: SizedBox(),
-            ),
-            const SizedBox(
-              width: 80,
-            ),
+            const SizedBox(width: 80),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTankRow(Tank tank, TankNotifier notifier, bool isLast, TankGroup group) {
+  Widget _buildTankRow(
+    Tank tank,
+    TankNotifier notifier,
+    bool isLast,
+    TankGroup group,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -429,7 +429,8 @@ class _TankWideState extends ConsumerState<TankWide> {
               ? BorderSide(color: Colors.grey.shade300, width: 1)
               : const BorderSide(color: Color(0xFFF3F4F6)),
         ),
-        borderRadius: isLast ? const BorderRadius.only(
+        borderRadius: isLast
+            ? const BorderRadius.only(
                 bottomLeft: Radius.circular(16),
                 bottomRight: Radius.circular(16),
               )
@@ -443,10 +444,14 @@ class _TankWideState extends ConsumerState<TankWide> {
             Expanded(
               flex: 2,
               child: InkWell(
-                onTap: () => context.go('/tank/details/${tank.tankId}', extra: tank),
+                // onTap: () =>
+                //     context.go('/tank/details/${tank.tankId}', extra: tank),
                 child: Text(
                   tank.tankNumber,
-                  style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade600),
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -454,9 +459,11 @@ class _TankWideState extends ConsumerState<TankWide> {
 
             AppTableCell(tank.deviceId ?? '--', flex: 2),
 
-            AppTableCell('', flex: 3),
-
-            AppTableCell(tank.productName ?? '--', flex: 1, textAlign: TextAlign.center,),
+            AppTableCell(
+              tank.productName ?? '--',
+              flex: 1,
+              textAlign: TextAlign.center,
+            ),
 
             Expanded(
               flex: 1,
@@ -465,6 +472,9 @@ class _TankWideState extends ConsumerState<TankWide> {
                 child: AppStatusBadge(status: tank.status),
               ),
             ),
+
+            AppTableCell('', flex: 3),
+
             SizedBox(
               width: 80,
               child: Row(
@@ -509,12 +519,7 @@ class _TankWideState extends ConsumerState<TankWide> {
           position: Tween<Offset>(
             begin: const Offset(1, 0),
             end: Offset.zero,
-          ).animate(
-            CurvedAnimation(
-              parent: anim1,
-              curve: Curves.easeOut,
-            ),
-          ),
+          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
           child: child,
         );
       },

@@ -15,7 +15,6 @@ import '../../../device/presentation/controller/device_provider.dart';
 import '../../../company/presentation/controller/company_provider.dart';
 import '../../../company/presentation/model/company_model.dart';
 
-
 class AssetGroupWide extends ConsumerStatefulWidget {
   const AssetGroupWide({super.key});
 
@@ -46,9 +45,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
   void _navigateToEdit([AssetGroupModel? group]) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => AssetGroupEditPage(group: group),
-      ),
+      MaterialPageRoute(builder: (context) => AssetGroupEditPage(group: group)),
     );
   }
 
@@ -59,13 +56,14 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
       barrierLabel: 'AddAssetGroup',
       barrierColor: Colors.black45,
       transitionDuration: const Duration(milliseconds: 180),
-      pageBuilder: (context, anim1, anim2) => AddAssetGroupModal(initialGroup: group),
+      pageBuilder: (context, anim1, anim2) =>
+          AddAssetGroupModal(initialGroup: group),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: anim1, curve: Curves.fastOutSlowIn)),
+          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+              .animate(
+                CurvedAnimation(parent: anim1, curve: Curves.fastOutSlowIn),
+              ),
           child: child,
         );
       },
@@ -81,7 +79,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     final deviceState = ref.watch(deviceNotifierProvider);
     final companyState = ref.watch(companyNotifierProvider);
 
-
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
@@ -93,12 +90,24 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
           ),
           Expanded(
             child: state.isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF141E7A)))
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+                  )
                 : Padding(
-                  padding: const EdgeInsets.only(left: 24, right: 24, bottom: 8),
-                  child: _buildTable(state, userState, productState, tankState, deviceState, companyState),
-                ),
-
+                    padding: const EdgeInsets.only(
+                      left: 24,
+                      right: 24,
+                      bottom: 8,
+                    ),
+                    child: _buildTable(
+                      state,
+                      userState,
+                      productState,
+                      tankState,
+                      deviceState,
+                      companyState,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -109,7 +118,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     return ViewHeader(
       title: 'ASSET GROUP MANAGER',
       subtitle:
-      'Define dynamic grouping rules based on asset parameters and assign users.',
+          'Define dynamic grouping rules based on asset parameters and assign users.',
       buttonText: 'CREATE GROUP',
       onPressed: () => _showAddDialog(),
     );
@@ -127,10 +136,16 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
             ),
             child: TextField(
               controller: _searchController,
-              style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: const Color(0xFF1A1A2E),
+              ),
               decoration: InputDecoration(
                 hintText: 'Search groups by description...',
-                hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                hintStyle: GoogleFonts.outfit(
+                  color: Colors.grey.shade400,
+                  fontSize: 14,
+                ),
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.all(14),
@@ -159,8 +174,14 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     );
   }
 
-  Widget _buildTable(AssetGroupState state, UserState userState, ProductState productState, AsyncValue<List<dynamic>> tankState, DeviceState deviceState, CompanyState companyState) {
-
+  Widget _buildTable(
+    AssetGroupState state,
+    UserState userState,
+    ProductState productState,
+    AsyncValue<List<dynamic>> tankState,
+    DeviceState deviceState,
+    CompanyState companyState,
+  ) {
     if (state.groups.isEmpty) {
       return const AppTableEmptyState(
         icon: Icons.layers_outlined,
@@ -189,7 +210,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                 AppTableHeaderCell('Criteria & Description', flex: 4),
                 AppTableHeaderCell('Users', width: 100),
                 AppTableHeaderCell('Company', width: 150),
-                AppTableHeaderCell('Display', width: 100),
+                // AppTableHeaderCell('Display', width: 100),
                 AppTableHeaderCell('Action', width: 100),
               ],
             ),
@@ -198,42 +219,48 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
             final group = entry.value;
             final isLast = entry.key == state.groups.length - 1;
             final isAllGroup = group.name.toLowerCase() == 'all';
-            final criteriaStr = isAllGroup 
+            final criteriaStr = isAllGroup
                 ? 'Includes all assets'
                 : () {
                     final buffer = StringBuffer();
                     for (int i = 0; i < group.criteria.length; i++) {
                       final c = group.criteria[i];
                       String displayValue = c.value;
-                      
+
                       // Resolve Product ID to Name if parameter is Product
                       if (c.parameter == 'Product') {
                         final productId = int.tryParse(c.value);
                         if (productId != null) {
                           final productList = productState.products;
-                          final product = productList.isEmpty 
-                              ? null 
+                          final product = productList.isEmpty
+                              ? null
                               : productList.cast<dynamic>().firstWhere(
-                                  (p) => p.id == productId || p.id.toString() == c.value,
+                                  (p) =>
+                                      p.id == productId ||
+                                      p.id.toString() == c.value,
                                   orElse: () => null,
                                 );
                           if (product != null) {
-                            displayValue = product.productCode != null && product.productCode.isNotEmpty 
-                                ? product.productCode 
+                            displayValue =
+                                product.productCode != null &&
+                                    product.productCode.isNotEmpty
+                                ? product.productCode
                                 : product.name;
                           }
                         }
                       }
-                      
+
                       // Resolve Tank ID to Name if parameter is Tank Name
                       if (c.parameter == 'Tank Name') {
                         final tankId = int.tryParse(c.value);
                         if (tankId != null) {
                           final tankList = tankState.value ?? [];
-                          final tank = tankList.isEmpty 
-                              ? null 
+                          final tank = tankList.isEmpty
+                              ? null
                               : tankList.cast<dynamic>().firstWhere(
-                                  (t) => t.tankId == tankId || t.tankId.toString() == c.value,
+                                  (t) =>
+                                      t.tankId == tankId ||
+                                      t.tankId.toString() == c.value,
                                   orElse: () => null,
                                 );
                           if (tank != null) {
@@ -252,7 +279,9 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                           final device = allDevices.isEmpty
                               ? null
                               : allDevices.cast<dynamic>().firstWhere(
-                                  (d) => d.id == deviceNumId || d.id.toString() == c.value,
+                                  (d) =>
+                                      d.id == deviceNumId ||
+                                      d.id.toString() == c.value,
                                   orElse: () => null,
                                 );
                           if (device != null) {
@@ -266,11 +295,14 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                         final companyId = int.tryParse(c.value);
                         if (companyId != null) {
                           final companyList = companyState.groupedCompanies;
-                          final company = companyList.isEmpty 
-                              ? null 
+                          final company = companyList.isEmpty
+                              ? null
                               : companyList.firstWhere(
-                                  (g) => g.addresses.isNotEmpty && g.addresses.first.companyId == companyId,
-                                  orElse: () => CompanyGroup(name: '', addresses: []),
+                                  (g) =>
+                                      g.addresses.isNotEmpty &&
+                                      g.addresses.first.companyId == companyId,
+                                  orElse: () =>
+                                      CompanyGroup(name: '', addresses: []),
                                 );
                           if (company != null && company.name.isNotEmpty) {
                             displayValue = company.name;
@@ -279,7 +311,9 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                       }
 
                       // Map parameter display label
-                      final paramLabel = c.parameter == 'DeviceID' ? 'Device Name' : c.parameter;
+                      final paramLabel = c.parameter == 'DeviceID'
+                          ? 'Device Name'
+                          : c.parameter;
 
                       buffer.write('$paramLabel ${c.logic} $displayValue');
                       if (i < group.criteria.length - 1) {
@@ -295,9 +329,11 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                 return false;
               }
 
-              final isInAllGroup = u.groupNames?.any((n) => n.trim().toLowerCase() == 'all') ?? false;
+              final isInAllGroup =
+                  u.groupNames?.any((n) => n.trim().toLowerCase() == 'all') ??
+                  false;
               if (isAllGroup) return isInAllGroup;
-              
+
               final isInThisGroup = u.groupNames?.contains(group.name) ?? false;
               return isInThisGroup && !isInAllGroup;
             }).length;
@@ -326,7 +362,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                     null,
                     flex: 3,
                     child: InkWell(
-                      onTap: () => _navigateToEdit(group),
+                      // onTap: () => _navigateToEdit(group),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -335,7 +371,9 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              color: const Color(0xFF141E7A), // Make it look clickable
+                              // color: const Color(
+                              //   0xFF141E7A,
+                              // ), // Make it look clickable
                             ),
                           ),
                           if (group.description.isNotEmpty)
@@ -345,7 +383,10 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                                 group.description,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(fontSize: 11, color: Colors.grey),
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ),
                         ],
@@ -359,21 +400,31 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                       criteriaStr,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(fontSize: 12, color: Colors.blueGrey, fontWeight: FontWeight.w500),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.blueGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
-                  AppTableCell(displayUserCount.toString(), width: 100, textAlign: TextAlign.center),
-                  AppTableCell(group.companyName ?? '-', width: 150),
-                  SizedBox(
+                  AppTableCell(
+                    displayUserCount.toString(),
                     width: 100,
-                    child: Switch(
-                      value: group.displayInTree,
-                      onChanged: (v) {
-                        ref.read(assetGroupProvider.notifier).updateGroupStatus(group.id!, v);
-                      },
-                      activeColor: const Color(0xFF141E7A),
-                    ),
+                    textAlign: TextAlign.center,
                   ),
+                  AppTableCell(group.companyName ?? '-', width: 150),
+                  // SizedBox(
+                  //   width: 100,
+                  //   child: Switch(
+                  //     value: group.displayInTree,
+                  //     onChanged: (v) {
+                  //       ref
+                  //           .read(assetGroupProvider.notifier)
+                  //           .updateGroupStatus(group.id!, v);
+                  //     },
+                  //     activeColor: const Color(0xFF141E7A),
+                  //   ),
+                  // ),
                   SizedBox(
                     width: 100,
                     child: Row(
@@ -395,20 +446,35 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                               context: context,
                               builder: (context) => AlertDialog(
                                 title: const Text('Delete Asset Group'),
-                                content: Text('Are you sure you want to delete "${group.name}"? This action cannot be undone.'),
+                                content: Text(
+                                  'Are you sure you want to delete "${group.name}"? This action cannot be undone.',
+                                ),
                                 actions: [
-                                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('CANCEL'),
+                                  ),
                                   TextButton(
                                     onPressed: () async {
                                       Navigator.pop(context);
-                                      final success = await ref.read(assetGroupProvider.notifier).deleteGroup(group.id!);
+                                      final success = await ref
+                                          .read(assetGroupProvider.notifier)
+                                          .deleteGroup(group.id!);
                                       if (mounted && !success) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Error: ${ref.read(assetGroupProvider).error ?? 'Failed to delete group'}')),
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Error: ${ref.read(assetGroupProvider).error ?? 'Failed to delete group'}',
+                                            ),
+                                          ),
                                         );
                                       }
                                     },
-                                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
                                     child: const Text('DELETE'),
                                   ),
                                 ],

@@ -69,7 +69,8 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                     width: tableWidth,
                     child: Column(
                       children: [
-                        if (!siteState.isLoading || siteState.groupedSites.isNotEmpty)
+                        if (!siteState.isLoading ||
+                            siteState.groupedSites.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24.0,
@@ -77,7 +78,9 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                             child: _buildFixedTableHeader(),
                           ),
                         Expanded(
-                          child: siteState.isLoading && siteState.groupedSites.isEmpty
+                          child:
+                              siteState.isLoading &&
+                                  siteState.groupedSites.isEmpty
                               ? const AppTableInitialLoader()
                               : _buildVirtualizedTable(siteState, siteNotifier),
                         ),
@@ -101,7 +104,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
     return ViewHeader(
       title: 'SITE MANAGEMENT',
       subtitle:
-      'Centralize site information including identification, locations, and status management.',
+          'Centralize site information including identification, locations, and status management.',
       buttonText: 'Add Site',
       onPressed: () {
         showGeneralDialog(
@@ -113,13 +116,10 @@ class _SiteWideState extends ConsumerState<SiteWide> {
           pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
           transitionBuilder: (context, anim1, anim2, child) {
             return SlideTransition(
-              position:
-              Tween<Offset>(
+              position: Tween<Offset>(
                 begin: const Offset(1, 0),
                 end: Offset.zero,
-              ).animate(
-                CurvedAnimation(parent: anim1, curve: Curves.easeOut),
-              ),
+              ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
               child: child,
             );
           },
@@ -321,7 +321,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
             SizedBox(
               width: 70,
               child: Text(
-                index.toString().padLeft(2, '0'),
+                index.toString().padLeft(2),
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -373,10 +373,11 @@ class _SiteWideState extends ConsumerState<SiteWide> {
               ? BorderSide(color: Colors.grey.shade300, width: 1)
               : const BorderSide(color: Color(0xFFF3F4F6)),
         ),
-        borderRadius: isLast ? const BorderRadius.only(
-          bottomLeft: Radius.circular(16),
-          bottomRight: Radius.circular(16),
-        )
+        borderRadius: isLast
+            ? const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              )
             : BorderRadius.zero,
       ),
       child: Padding(

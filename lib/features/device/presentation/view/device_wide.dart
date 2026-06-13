@@ -57,7 +57,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     return ViewHeader(
       title: 'DEVICE MANAGEMENT',
       subtitle:
-      'Monitor and configure your water monitoring hardware across various sites.',
+          'Monitor and configure your water monitoring hardware across various sites.',
       buttonText: 'Add Device',
       onPressed: () => _showAddModal(),
     );
@@ -66,16 +66,10 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
   Widget _buildFilterRow(DeviceState state, DeviceNotifier notifier) {
     return Row(
       children: [
-        Expanded(
-          flex: 2,
-          child: _buildSiteAutocomplete(notifier),
-        ),
+        Expanded(flex: 2, child: _buildSiteAutocomplete(notifier)),
         const SizedBox(width: 12),
         // Device search — dashboard style
-        Expanded(
-          flex: 2,
-          child: _buildDeviceAutocomplete(notifier),
-        ),
+        Expanded(flex: 2, child: _buildDeviceAutocomplete(notifier)),
         const SizedBox(width: 12),
         // Filter/Clear icon button — dashboard style
         Container(
@@ -147,7 +141,9 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = constraints.maxWidth > 1200 ? constraints.maxWidth : 1200.0;
+                final tableWidth = constraints.maxWidth > 1200
+                    ? constraints.maxWidth
+                    : 1200.0;
                 return Scrollbar(
                   controller: _scrollController,
                   child: SingleChildScrollView(
@@ -156,17 +152,26 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                       width: tableWidth,
                       child: Column(
                         children: [
-                          if (!state.isLoading || state.groupedDevices.isNotEmpty)
+                          if (!state.isLoading ||
+                              state.groupedDevices.isNotEmpty)
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24.0,
+                              ),
                               child: _buildFixedTableHeader(),
                             ),
                           Expanded(
-                            child: state.isLoading && state.groupedDevices.isEmpty
-                                ? const Center(child: CircularProgressIndicator(color: Color(0xFF141E7A)))
+                            child:
+                                state.isLoading && state.groupedDevices.isEmpty
+                                ? const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF141E7A),
+                                    ),
+                                  )
                                 : _buildVirtualizedTable(state, notifier),
                           ),
-                          if (state.isLoading && state.groupedDevices.isNotEmpty)
+                          if (state.isLoading &&
+                              state.groupedDevices.isNotEmpty)
                             const AppTableLoadingMore(),
                         ],
                       ),
@@ -218,11 +223,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             isLast,
           );
         } else {
-          return _buildDeviceRow(
-            item['device'] as Device,
-            notifier,
-            isLast,
-          );
+          return _buildDeviceRow(item['device'] as Device, notifier, isLast);
         }
       },
     );
@@ -241,6 +242,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
           AppTableHeaderCell('Sim Number', flex: 2),
           AppTableHeaderCell('Tank', flex: 2),
           AppTableHeaderCell('Status', flex: 2),
+          AppTableHeaderCell('Site Information', flex: 3),
           AppTableHeaderCell('Action', width: 100),
         ],
       ),
@@ -264,7 +266,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             SizedBox(
               width: 70,
               child: Text(
-                index.toString().padLeft(2, '0'),
+                index.toString().padLeft(2),
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -272,19 +274,34 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                 ),
               ),
             ),
-            Text(
-              group.siteName != null
-                  ? (group.fullAddress.isNotEmpty
-                      ? '${group.siteName} - ${group.fullAddress}'
-                      : group.siteName!)
-                  : '',
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF111827),
+            Expanded(
+              flex: 5,
+              child: Text(
+                group.siteName ?? '',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF111827),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-
+            const Expanded(flex: 2, child: SizedBox()),
+            const Expanded(flex: 2, child: SizedBox()),
+            const Expanded(flex: 2, child: SizedBox()),
+            const Expanded(flex: 2, child: SizedBox()),
+            Expanded(
+              flex: 3,
+              child: Text(
+                group.fullAddress,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 100),
           ],
         ),
       ),
@@ -327,6 +344,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                 child: AppStatusBadge(status: device.status),
               ),
             ),
+            const AppTableCell('', flex: 3),
             AppTableCell(
               null,
               width: 100,
@@ -366,7 +384,8 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             }
             return await notifier.searchSites(textEditingValue.text);
           },
-          displayStringForOption: (SiteAutocompleteInfo option) => option.siteName,
+          displayStringForOption: (SiteAutocompleteInfo option) =>
+              option.siteName,
           onSelected: (option) {
             notifier.setSearchSite(option.siteName);
             notifier.loadGroupedDevices();
@@ -385,10 +404,16 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                   notifier.setSearchSite(v);
                   if (v.isEmpty) notifier.loadGroupedDevices();
                 },
-                style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  color: const Color(0xFF1A1A2E),
+                ),
                 decoration: InputDecoration(
                   hintText: 'Filter By Site Name',
-                  hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                  hintStyle: GoogleFonts.outfit(
+                    color: Colors.grey.shade400,
+                    fontSize: 14,
+                  ),
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(14),
@@ -418,9 +443,15 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                       return ListTile(
                         title: Text(
                           option.siteName,
-                          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600),
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        subtitle: Text(option.fullAddress, style: GoogleFonts.inter(fontSize: 11)),
+                        subtitle: Text(
+                          option.fullAddress,
+                          style: GoogleFonts.inter(fontSize: 11),
+                        ),
                         onTap: () => onSelected(option),
                       );
                     },
@@ -444,7 +475,9 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             if (textEditingValue.text.isEmpty) {
               return const Iterable<String>.empty();
             }
-            return await notifier.getDeviceNameSuggestions(textEditingValue.text);
+            return await notifier.getDeviceNameSuggestions(
+              textEditingValue.text,
+            );
           },
           displayStringForOption: (String option) => option,
           onSelected: (option) {
@@ -465,10 +498,16 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                   notifier.setSearchDevice(v);
                   if (v.isEmpty) notifier.loadGroupedDevices();
                 },
-                style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF1A1A2E)),
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  color: const Color(0xFF1A1A2E),
+                ),
                 decoration: InputDecoration(
                   hintText: 'Search devices...',
-                  hintStyle: GoogleFonts.outfit(color: Colors.grey.shade400, fontSize: 14),
+                  hintStyle: GoogleFonts.outfit(
+                    color: Colors.grey.shade400,
+                    fontSize: 14,
+                  ),
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(14),
@@ -496,7 +535,10 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                     itemBuilder: (context, index) {
                       final option = options.elementAt(index);
                       return ListTile(
-                        title: Text(option, style: GoogleFonts.inter(fontSize: 13)),
+                        title: Text(
+                          option,
+                          style: GoogleFonts.inter(fontSize: 13),
+                        ),
                         onTap: () => onSelected(option),
                       );
                     },
@@ -517,7 +559,10 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
         title: const Text('Delete Device'),
         content: const Text('Are you sure you want to delete this device?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -528,12 +573,13 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     if (confirm == true) {
       final success = await notifier.deleteDevice(device.id);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Device deleted successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Device deleted successfully')),
+        );
       }
     }
   }
 }
-
 
 class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;

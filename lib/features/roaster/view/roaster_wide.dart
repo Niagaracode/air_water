@@ -295,7 +295,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     bool isSuperAdmin,
   ) {
     return InkWell(
-      onTap: () => _editGroup(group),
+      //onTap: () => _editGroup(group),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
@@ -316,7 +316,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         ),
         child: Row(
           children: [
-            AppTableCell((index + 1).toString().padLeft(2, '0'), width: 60),
+            AppTableCell((index + 1).toString().padLeft(2), width: 60),
 
             Expanded(
               flex: 2,
@@ -352,10 +352,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                 color: const Color(0xFF141E7A),
                 bold: true,
               ),
-            AppTableCell(
-              (group.rosterCount ?? 0).toString(),
-              width: 120,
-            ),
+            AppTableCell((group.rosterCount ?? 0).toString(), width: 120),
             Expanded(
               flex: 3,
               child: Text(
@@ -385,16 +382,19 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                     tooltip: 'Delete Group',
                   ),
                   const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF141E7A).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 14,
-                      color: Color(0xFF141E7A),
+                  InkWell(
+                    onTap: () => _editGroup(group),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF141E7A).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: Color(0xFF141E7A),
+                      ),
                     ),
                   ),
                 ],
