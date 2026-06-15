@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:mqtt_client/mqtt_browser_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../config/env.dart';
 import '../../constants/app_constants.dart';
+import 'mqtt_client_setup.dart';
 
 
 class MqttService {
@@ -16,7 +16,7 @@ class MqttService {
     return _instance!;
   }
 
-  MqttBrowserClient? _client;
+  MqttClient? _client;
 
   // Single updates listener
   StreamSubscription? _updatesSubscription;
@@ -58,12 +58,11 @@ class MqttService {
 
     final clientId = const Uuid().v4();
 
-    _client = MqttBrowserClient(
+    _client = setupMqttClient(
       Env.mqttWebUrl,
       clientId,
     );
 
-    _client!.websocketProtocols = ['mqtt'];
     _client!.port = AppConstants.mqttWebPort;
     _client!.keepAlivePeriod = 30;
     // Manual reconnect handling

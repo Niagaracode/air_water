@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_web_plugins/url_strategy.dart';
+import 'core/url_strategy/url_strategy.dart';
 import 'core/app_theme/app_theme.dart';
 import 'core/network/mqtt/providers/mqtt_providers.dart';
 import 'core/router/app_router.dart';
