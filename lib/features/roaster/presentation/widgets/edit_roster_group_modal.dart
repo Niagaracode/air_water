@@ -157,20 +157,14 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
       try {
         var rosterResp = await client.get(
           '/roster',
-          query: {
-            'roster_group_id': widget.group.id,
-            'limit': 100,
-          },
+          query: {'roster_group_id': widget.group.id, 'limit': 100},
         );
         rosters = rosterResp.data['data'] as List?;
 
         if (rosters == null || rosters.isEmpty) {
           rosterResp = await client.get(
             '/roster',
-            query: {
-              'description': widget.group.name,
-              'limit': 100,
-            },
+            query: {'description': widget.group.name, 'limit': 100},
           );
           rosters = rosterResp.data['data'] as List?;
         }
@@ -201,13 +195,15 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                       messageTemplateId: m['message_template_id'] as int?,
                     );
 
-                    loadedUsers.add(AssetGroupUser(
-                      userId: uid,
-                      username: m['username'] ?? '',
-                      firstName: m['first_name'],
-                      lastName: m['last_name'],
-                      roleName: m['role_name'],
-                    ));
+                    loadedUsers.add(
+                      AssetGroupUser(
+                        userId: uid,
+                        username: m['username'] ?? '',
+                        firstName: m['first_name'],
+                        lastName: m['last_name'],
+                        roleName: m['role_name'],
+                      ),
+                    );
                   }
                 }
               }
@@ -231,15 +227,17 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
           if (_selectedCompany != null) {
             _companyAutocompleteController.text = _selectedCompany!.name;
           }
-          
+
           _userConfigs.clear();
           for (final gu in loadedUsers) {
             _userConfigs[gu.userId] = savedConfigs[gu.userId]!;
           }
           _groupUsers = loadedUsers;
-          
+
           _loadingUsers = false;
-          _parameter = (savedParam != 'LEVEL') ? savedParam : (detail.parameterName ?? 'LEVEL');
+          _parameter = (savedParam != 'LEVEL')
+              ? savedParam
+              : (detail.parameterName ?? 'LEVEL');
           _selectedRosterIds = rosterIds;
           _selectedUserToAdd = null;
         });
@@ -259,7 +257,9 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
     final messenger = ScaffoldMessenger.of(context);
     final groupName = _nameController.text.trim();
     if (groupName.isEmpty) {
-      messenger.showSnackBar(const SnackBar(content: Text('Please enter Group Name')));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please enter Group Name')),
+      );
       return;
     }
 
@@ -267,7 +267,9 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
     if (currentUser == null) return;
 
     if (currentUser.roleId == 1 && _selectedCompany == null) {
-      messenger.showSnackBar(const SnackBar(content: Text('Please select a Company')));
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please select a Company')),
+      );
       return;
     }
 
@@ -331,7 +333,8 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
         'parameter_name': _parameter,
         'company_id': _selectedCompany?.id ?? currentUser.companyId,
         if (siteId != null) 'site_id': siteId,
-        if (cfg.messageTemplateId != null) 'message_template_id': cfg.messageTemplateId,
+        if (cfg.messageTemplateId != null)
+          'message_template_id': cfg.messageTemplateId,
         'roster_group_id': savedId,
         'members': [
           {
@@ -342,7 +345,8 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
             'enabled': cfg.enabled ? 1 : 0,
             'parameter_name': _parameter,
             if (siteId != null) 'site_id': siteId,
-            if (cfg.messageTemplateId != null) 'message_template_id': cfg.messageTemplateId,
+            if (cfg.messageTemplateId != null)
+              'message_template_id': cfg.messageTemplateId,
           },
         ],
       };
@@ -355,7 +359,11 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
     if (mounted) {
       setState(() => _savingRoster = false);
       messenger.showSnackBar(
-        SnackBar(content: Text('Roster group and $created user configuration(s) updated successfully')),
+        SnackBar(
+          content: Text(
+            'Roster group and $created user configuration(s) updated successfully',
+          ),
+        ),
       );
       Navigator.of(context).pop(true);
     }
@@ -396,7 +404,10 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
               // Scrollable body
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 40,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -435,7 +446,8 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                             style: IconButton.styleFrom(
                               backgroundColor: const Color(0xFFF3F4F6),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ],
@@ -468,24 +480,6 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                         const SizedBox(height: 24),
                       ],
 
-                      // ASSIGN USERS (Hidden as requested)
-                      // No assign users dropdown / add button as requested.
-                      // Wait! The user says "this only update dont change anything" for the remove edit user request,
-                      // but we are moving the edit form to a new drawer modal structure.
-                      // Wait, let's keep the user config layout exactly as it was in roaster_wide.dart!
-                      // Wait! The previous task said "remove roster group edit user this only update dont change anything"
-                      // Ah, no! The first request was: "remove roster group [from] edit user [this only update dont change anything]" which we did in add_user_modal.dart (which was editing a user).
-                      // Inside Roster Group Edit, they STILL want the assigned users notification settings table,
-                      // and can they still assign users there?
-                      // Yes, in `roaster_wide.dart` (first image), we see they still have "ASSIGN USERS" dropdown and "Add User" button.
-                      // Wait, did they ask to remove user assignment from Roster Group Edit?
-                      // No! The first request was: "remove roster group edit user this only update dont change anything"
-                      // Roster Group was a field in the User Edit modal, which we removed.
-                      // But in Roster Group management (first image), they have the "ASSIGN USERS" dropdown and "Add User" button,
-                      // and they want this entire structure to be inside the right-side drawer modal, just like the create roster group form!
-                      // So in the Edit modal, they DO want the "ASSIGN USERS" selector and the users list!
-                      // Let's check the first image: it has "ASSIGN USERS" (Select a company first...) and "Add User" button!
-                      // Yes! So we need to include the "ASSIGN USERS" dropdown and the "Add User" button in this edit modal as well.
                       _buildLabel('ASSIGN USERS'),
                       const SizedBox(height: 10),
 
@@ -500,27 +494,35 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                                         : 'Loading users…',
                                   )
                                 : _isLoadingUsers
-                                    ? _buildLoadingDropdown()
-                                    : _buildUserDropdown(eligibleUsers),
+                                ? _buildLoadingDropdown()
+                                : _buildUserDropdown(eligibleUsers),
                           ),
                           const SizedBox(width: 12),
                           SizedBox(
                             height: 50,
                             child: ElevatedButton.icon(
-                              onPressed: (_selectedCompany == null ||
+                              onPressed:
+                                  (_selectedCompany == null ||
                                       _selectedUserToAdd == null ||
                                       _isLoadingUsers)
                                   ? null
                                   : () {
                                       setState(() {
-                                        _groupUsers.add(AssetGroupUser(
-                                          userId: _selectedUserToAdd!.userId,
-                                          username: _selectedUserToAdd!.username,
-                                          firstName: _selectedUserToAdd!.firstName,
-                                          lastName: _selectedUserToAdd!.lastName,
-                                          roleName: _selectedUserToAdd!.roleName,
-                                        ));
-                                        _userConfigs[_selectedUserToAdd!.userId] = _UserConfig(
+                                        _groupUsers.add(
+                                          AssetGroupUser(
+                                            userId: _selectedUserToAdd!.userId,
+                                            username:
+                                                _selectedUserToAdd!.username,
+                                            firstName:
+                                                _selectedUserToAdd!.firstName,
+                                            lastName:
+                                                _selectedUserToAdd!.lastName,
+                                            roleName:
+                                                _selectedUserToAdd!.roleName,
+                                          ),
+                                        );
+                                        _userConfigs[_selectedUserToAdd!
+                                            .userId] = _UserConfig(
                                           userId: _selectedUserToAdd!.userId,
                                         );
                                         _selectedUserToAdd = null;
@@ -529,14 +531,24 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF141E7A),
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor: const Color(0xFFE5E7EB),
-                                disabledForegroundColor: const Color(0xFF9CA3AF),
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                disabledBackgroundColor: const Color(
+                                  0xFFE5E7EB,
+                                ),
+                                disabledForegroundColor: const Color(
+                                  0xFF9CA3AF,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                ),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                                 elevation: 0,
                               ),
-                              icon: const Icon(Icons.person_add_alt_1, size: 18),
+                              icon: const Icon(
+                                Icons.person_add_alt_1,
+                                size: 18,
+                              ),
                               label: Text(
                                 'Add User',
                                 style: GoogleFonts.outfit(
@@ -556,8 +568,11 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                           padding: const EdgeInsets.only(top: 8),
                           child: Row(
                             children: [
-                              const Icon(Icons.info_outline,
-                                  size: 14, color: Color(0xFF9CA3AF)),
+                              const Icon(
+                                Icons.info_outline,
+                                size: 14,
+                                color: Color(0xFF9CA3AF),
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 'No users found for this company.',
@@ -610,10 +625,13 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                                   const Spacer(),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF141E7A)
-                                          .withValues(alpha: 0.08),
+                                      color: const Color(
+                                        0xFF141E7A,
+                                      ).withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
@@ -832,12 +850,21 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
               child: DropdownButton<int>(
                 isExpanded: true,
                 value: cfg.messageTemplateId,
-                hint: Text('Select Template', style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+                hint: Text(
+                  'Select Template',
+                  style: GoogleFonts.inter(fontSize: 12, color: Colors.grey),
+                ),
                 icon: const Icon(Icons.arrow_drop_down, size: 16),
                 items: [
                   DropdownMenuItem<int>(
                     value: null,
-                    child: Text('None', style: GoogleFonts.inter(fontSize: 12, color: Colors.grey)),
+                    child: Text(
+                      'None',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
                   ),
                   ...ref.watch(messageTemplateProvider).templates.map((t) {
                     return DropdownMenuItem<int>(
@@ -871,7 +898,11 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                     _userConfigs.remove(user.userId);
                   });
                 },
-                icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.red,
+                  size: 20,
+                ),
                 padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(),
                 style: IconButton.styleFrom(
@@ -925,17 +956,21 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          const Icon(Icons.person_search_outlined,
-              size: 18, color: Color(0xFFD1D5DB)),
+          const Icon(
+            Icons.person_search_outlined,
+            size: 18,
+            color: Color(0xFFD1D5DB),
+          ),
           const SizedBox(width: 8),
           Text(
             hint,
             style: GoogleFonts.inter(
-                fontSize: 13, color: const Color(0xFFD1D5DB)),
+              fontSize: 13,
+              color: const Color(0xFFD1D5DB),
+            ),
           ),
           const Spacer(),
-          const Icon(Icons.arrow_drop_down,
-              color: Color(0xFFD1D5DB)),
+          const Icon(Icons.arrow_drop_down, color: Color(0xFFD1D5DB)),
         ],
       ),
     );
@@ -961,7 +996,9 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
           Text(
             'Loading users…',
             style: GoogleFonts.inter(
-                fontSize: 13, color: const Color(0xFF6B7280)),
+              fontSize: 13,
+              color: const Color(0xFF6B7280),
+            ),
           ),
         ],
       ),
@@ -977,22 +1014,20 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
           : null,
       selectedItemBuilder: (BuildContext context) {
         return eligibleUsers.map<Widget>((u) {
-          final parts = [u.firstName, u.lastName]
-              .whereType<String>()
-              .where((s) => s.isNotEmpty)
-              .toList();
-          final displayName =
-              parts.isNotEmpty ? parts.join(', ') : u.username;
+          final parts = [
+            u.firstName,
+            u.lastName,
+          ].whereType<String>().where((s) => s.isNotEmpty).toList();
+          final displayName = parts.isNotEmpty ? parts.join(', ') : u.username;
           return Row(
             children: [
               CircleAvatar(
                 radius: 12,
-                backgroundColor:
-                    const Color(0xFF141E7A).withValues(alpha: 0.08),
+                backgroundColor: const Color(
+                  0xFF141E7A,
+                ).withValues(alpha: 0.08),
                 child: Text(
-                  displayName.isNotEmpty
-                      ? displayName[0].toUpperCase()
-                      : '?',
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                   style: GoogleFonts.outfit(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -1020,28 +1055,25 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
         eligibleUsers.isEmpty
             ? 'All users already assigned'
             : 'Select a user to assign…',
-        style:
-            GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
+        style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
       ),
       items: eligibleUsers.map((u) {
-        final parts = [u.firstName, u.lastName]
-            .whereType<String>()
-            .where((s) => s.isNotEmpty)
-            .toList();
-        final displayName =
-            parts.isNotEmpty ? parts.join(', ') : u.username;
+        final parts = [
+          u.firstName,
+          u.lastName,
+        ].whereType<String>().where((s) => s.isNotEmpty).toList();
+        final displayName = parts.isNotEmpty ? parts.join(', ') : u.username;
         return DropdownMenuItem(
           value: u,
           child: Row(
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor:
-                    const Color(0xFF141E7A).withValues(alpha: 0.08),
+                backgroundColor: const Color(
+                  0xFF141E7A,
+                ).withValues(alpha: 0.08),
                 child: Text(
-                  displayName.isNotEmpty
-                      ? displayName[0].toUpperCase()
-                      : '?',
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -1058,13 +1090,17 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                     Text(
                       displayName,
                       style: GoogleFonts.inter(
-                          fontSize: 13, fontWeight: FontWeight.w600),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       u.roleName ?? 'User',
                       style: GoogleFonts.inter(
-                          fontSize: 11, color: const Color(0xFF6B7280)),
+                        fontSize: 11,
+                        color: const Color(0xFF6B7280),
+                      ),
                     ),
                   ],
                 ),
@@ -1077,18 +1113,15 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
           ? null
           : (v) => setState(() => _selectedUserToAdd = v),
       decoration: InputDecoration(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        border:
-            OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide:
-              const BorderSide(color: Color(0xFF141E7A), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF141E7A), width: 1.5),
         ),
         fillColor: Colors.white,
         filled: true,
@@ -1117,7 +1150,9 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
             Text(
               'Loading companies…',
               style: GoogleFonts.inter(
-                  fontSize: 13, color: const Color(0xFF6B7280)),
+                fontSize: 13,
+                color: const Color(0xFF6B7280),
+              ),
             ),
           ],
         ),
@@ -1131,8 +1166,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
           : null,
       hint: Text(
         'Select a company…',
-        style:
-            GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
+        style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
       ),
       items: _companies.map((c) {
         return DropdownMenuItem<CompanyAutocomplete>(
@@ -1156,18 +1190,18 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
         _loadCompanyUsers(o.id);
       },
       decoration: InputDecoration(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        border:
-            OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide:
-              const BorderSide(color: Color(0xFF141E7A), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF141E7A), width: 1.5),
         ),
         fillColor: Colors.white,
         filled: true,
@@ -1207,7 +1241,9 @@ class _UserConfig {
       push: push ?? this.push,
       sms: sms ?? this.sms,
       enabled: enabled ?? this.enabled,
-      messageTemplateId: clearTemplate ? null : (messageTemplateId ?? this.messageTemplateId),
+      messageTemplateId: clearTemplate
+          ? null
+          : (messageTemplateId ?? this.messageTemplateId),
     );
   }
 }
