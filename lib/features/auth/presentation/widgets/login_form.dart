@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/app_theme/app_theme.dart';
@@ -112,7 +113,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 ],
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => context.push('/forgot-password'),
                 child: Text(
                   'Forgot Password ?',
                   style: Theme.of(context).textTheme.titleMedium,

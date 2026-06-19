@@ -17,6 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/login_layout.dart';
+import '../../features/auth/presentation/view/forgot_password_view.dart';
+import '../../features/auth/presentation/view/reset_password_verify_view.dart';
 import '../../app_startup/app_startup.dart';
 import '../../features/dashboard/dashboard_layout.dart';
 import '../../features/device/device_layout.dart';
@@ -46,6 +48,9 @@ class AppRouter {
 
         /// LOADING
         if (startup.isLoading) {
+          if (location == '/forgot-password' || location == '/reset-password-verify') {
+            return null;
+          }
           return location == '/loading' ? null : '/loading';
         }
 
@@ -53,7 +58,10 @@ class AppRouter {
 
         /// NOT AUTHENTICATED
         if (status == AppStartupState.unauthenticated) {
-          return location == '/login' ? null : '/login';
+          if (location == '/login' || location == '/forgot-password' || location == '/reset-password-verify') {
+            return null;
+          }
+          return '/login';
         }
 
         /// AUTHENTICATED
@@ -84,6 +92,23 @@ class AppRouter {
           path: '/login',
           builder: (_, __) {
             return const LoginLayout(child: SizedBox());
+          },
+        ),
+
+        /// FORGOT PASSWORD
+        GoRoute(
+          path: '/forgot-password',
+          builder: (_, __) {
+            return const ForgotPasswordView();
+          },
+        ),
+
+        /// RESET PASSWORD VERIFY
+        GoRoute(
+          path: '/reset-password-verify',
+          builder: (context, state) {
+            final token = state.uri.queryParameters['token'] ?? '';
+            return ResetPasswordVerifyView(token: token);
           },
         ),
 
