@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:debounce_throttle/debounce_throttle.dart';
+import '../provider/dashboard_provider.dart';
 import 'filter_dropdown.dart';
 
 class SearchAndFilters extends ConsumerStatefulWidget {
@@ -13,7 +14,6 @@ class SearchAndFilters extends ConsumerStatefulWidget {
     required this.onClearFilters,
     this.selectedRegion = 'All Regions',
     this.selectedStatus = 'All Status',
-    this.regions = const ['All Regions', 'Tamil Nadu', 'New Mexico', 'Texas', 'Oklahoma'],
     this.statuses = const ['All Status', 'Online', 'Offline', 'Low Level', 'Critical', 'Reorder'],
     this.searchHint = 'Search devices...',
     this.showStats = true,
@@ -25,7 +25,6 @@ class SearchAndFilters extends ConsumerStatefulWidget {
   final VoidCallback onClearFilters;
   final String selectedRegion;
   final String selectedStatus;
-  final List<String> regions;
   final List<String> statuses;
   final String searchHint;
   final bool showStats;
@@ -92,6 +91,9 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
 
   @override
   Widget build(BuildContext context) {
+
+    final regionsAsync = ref.watch(regionProvider);
+
     final hasFilters = widget.selectedRegion != 'All Regions' ||
         widget.selectedStatus != 'All Status' ||
         _searchController.text.isNotEmpty;
@@ -156,19 +158,43 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
 
             /// Region Filter
             Expanded(
-              child: FilterDropdown<String>(
-                borderColor: const Color(0xFFE2E8F0),
-                borderRadius: 12,
-                label: 'Region',
-                value: widget.selectedRegion,
-                items: widget.regions,
-                onChanged: (value) {
-                  if (value != null) {
-                    widget.onRegionChanged(value);
-                  }
+              child: regionsAsync.when(
+                data: (regions) {
+                  return FilterDropdown<String>(
+                    borderColor: const Color(0xFFE2E8F0),
+                    borderRadius: 12,
+                    label: 'Region',
+                    value: widget.selectedRegion,
+                    items: regions,
+                    onChanged: (value) {
+                      if (value != null) {
+                        widget.onRegionChanged(value);
+                      }
+                    },
+                  );
                 },
+                loading: () => const Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+                error: (e, _) => FilterDropdown<String>(
+                  borderColor: const Color(0xFFE2E8F0),
+                  borderRadius: 12,
+                  label: 'Region',
+                  value: 'All Regions',
+                  items: const ['All Regions'],
+                  onChanged: (value) {
+                    if (value != null) {
+                      widget.onRegionChanged(value);
+                    }
+                  },
+                ),
               ),
             ),
+
             const SizedBox(width: 12),
 
             /// Status Filter

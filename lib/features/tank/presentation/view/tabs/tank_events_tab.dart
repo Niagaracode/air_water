@@ -6,7 +6,7 @@ import '../../controller/tank_event_provider.dart';
 
 class TankEventsTab extends ConsumerWidget {
   final int tankId;
-  final String day;
+  final String? day;
 
   const TankEventsTab({
     super.key,
@@ -21,7 +21,7 @@ class TankEventsTab extends ConsumerWidget {
       tankEventsProvider(
         TankEventParams(
           tankId: tankId,
-          day: day,
+          day: day!,
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'background_lines_painter.dart';
@@ -24,10 +25,11 @@ class LoginHeader extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/png/app_logo.png',
-                height: isNarrow ? 120 : 180,
+              SvgPicture.asset(
+                'assets/svg/app_logo.svg',
+                width: isNarrow ? 180 : 300,
                 fit: BoxFit.contain,
+                color: Colors.white,
               ),
             ],
           ),

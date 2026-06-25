@@ -12,19 +12,30 @@ import '../threshold_side_sheet.dart';
 
 class TankDetailsTab extends ConsumerWidget {
   final int tankId;
-  final String day;
+  final String? day;
+  final DateTime? startDate;
+  final DateTime? endDate;
 
   const TankDetailsTab({
     super.key,
     required this.tankId,
     required this.day,
+    this.startDate,
+    this.endDate,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+
+
     final readingsState = ref.watch(
       tankReadingsProvider(
-        TankReadingParams(tankId: tankId, day: day),
+        TankReadingParams(
+          tankId: tankId,
+          day: day,
+          startDate: startDate,
+          endDate: endDate,
+        ),
       ),
     );
 

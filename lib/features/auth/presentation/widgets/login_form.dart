@@ -51,7 +51,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to access your Air Water dashboard',
+                  'Sign in to access your account and manage your devices.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.outfit(
                     fontSize: 14,

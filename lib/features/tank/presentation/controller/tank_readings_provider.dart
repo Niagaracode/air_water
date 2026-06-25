@@ -6,21 +6,33 @@ import '../../data/model/tank_reading_model.dart';
 
 class TankReadingParams {
   final int tankId;
-  final String day;
+  final String? day;
+  final DateTime? startDate;
+  final DateTime? endDate;
+
   const TankReadingParams({
     required this.tankId,
-    required this.day,
+    this.day,
+    this.startDate,
+    this.endDate,
   });
 
   @override
   bool operator ==(Object other) {
     return other is TankReadingParams &&
         other.tankId == tankId &&
-        other.day == day;
+        other.day == day &&
+        other.startDate == startDate &&
+        other.endDate == endDate;
   }
 
   @override
-  int get hashCode => Object.hash(tankId, day);
+  int get hashCode => Object.hash(
+    tankId,
+    day,
+    startDate,
+    endDate,
+  );
 }
 
 final tankReadingsProvider = StateNotifierProvider.family<
@@ -32,6 +44,8 @@ final tankReadingsProvider = StateNotifierProvider.family<
     ref.read(tankRepositoryProvider),
     params.tankId,
     params.day,
+    params.startDate,
+    params.endDate,
   );
 });
 
@@ -58,25 +72,49 @@ class TankReadingsState {
 }
 
 class TankReadingsNotifier extends StateNotifier<TankReadingsState> {
-
   final TankRepository repository;
   final int tankId;
-  final String day;
+  final String? day;
+  final DateTime? startDate;
+  final DateTime? endDate;
 
-  TankReadingsNotifier(this.repository, this.tankId, this.day) :
-        super(const TankReadingsState()) {
+  TankReadingsNotifier(
+      this.repository,
+      this.tankId,
+      this.day,
+      this.startDate,
+      this.endDate,
+      ) : super(const TankReadingsState()) {
     loadReadings();
   }
 
   Future<void> loadReadings() async {
     try {
-      state = state.copyWith(isLoading: true, error: null);
-      final response = await repository.getTankReadings(tankId, day);
+      state = state.copyWith(
+        isLoading: true,
+        error: null,
+      );
+
+      final response = await repository.getTankReadings(
+        tankId: tankId,
+        day: day,
+        startDate: startDate,
+        endDate: endDate,
+      );
+
       final data = response['data'] as List;
+
       final readings = data.map((e) => TankReadingModel.fromJson(e)).toList();
-      state = state.copyWith(isLoading: false, readings: readings);
+
+      state = state.copyWith(
+        isLoading: false,
+        readings: readings,
+      );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
     }
   }
 }

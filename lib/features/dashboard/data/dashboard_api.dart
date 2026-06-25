@@ -12,4 +12,10 @@ class DashboardApi {
     print("Site Data: ${jsonEncode(map)}");
     return map['data'] as List<dynamic>;
   }
+
+  Future<List<dynamic>> getRegionList() async {
+    final res = await _client.get('/dashboard/regions');
+    final map = res.data as Map<String, dynamic>;
+    return map['data'] as List<dynamic>;
+  }
 }

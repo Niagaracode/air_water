@@ -75,8 +75,17 @@ class TankRepositoryImpl implements TankRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> getTankReadings(int tankId, String day) {
-    return _api.getTankReadings(tankId, day);
+  Future<Map<String, dynamic>> getTankReadings({required int tankId,
+    String? day,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    return _api.getTankReadings(
+      tankId: tankId,
+      day: day,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 
   @override

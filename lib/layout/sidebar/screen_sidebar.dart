@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/router/sidebar_routes.dart';
@@ -77,9 +78,44 @@ class ScreenSidebar extends ConsumerWidget {
                 context: context,
                 role: userRole,
               ),
+
+              _buildFooterLogo(isExpanded),
             ],
+
           ),
         ),
+      ),
+    );
+  }
+
+
+
+  Widget _buildFooterLogo(bool isExpanded) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14.0),
+      child: Column(
+        children: [
+          Divider(
+            color: Colors.grey.shade400,
+            thickness: 1,
+            indent: 20,
+            endIndent: 20,
+          ),
+          const SizedBox(height: 8),
+          SvgPicture.asset(
+            'assets/svg/company_logo.svg',
+            height: isExpanded ? 30 : 13,
+            fit: BoxFit.contain,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Version 1.0.0',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: isExpanded ? 10 : 8,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../../../core/network/http/api_service.dart';
-import '../../../shared/utils/app_helper.dart';
 import '../data/dashboard_api.dart';
 import '../data/dashboard_repository_Impl.dart';
 import '../data/models/site_group_model.dart';
@@ -136,4 +135,16 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
       'reorder': 0,
     },
   );
+});
+
+
+final regionProvider = FutureProvider.autoDispose<List<String>>((ref) async {
+
+  final repository = ref.watch(dashboardRepoProvider);
+  final regions = await repository.getRegionList();
+
+  return [
+    'All Regions',
+    ...regions.map((e) => e.name),
+  ];
 });

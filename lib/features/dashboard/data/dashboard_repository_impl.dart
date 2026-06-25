@@ -12,4 +12,11 @@ class DashboardRepositoryImpl implements DashboardRepository {
     final list = await _api.getTankData();
     return list.map((e) => TankDataModel.fromJson(e)).toList();
   }
+
+
+  @override
+  Future<List<RegionModel>> getRegionList() async {
+    final list = await _api.getRegionList();
+    return list.map((e) => RegionModel.fromJson(e)).toList();
+  }
 }

@@ -115,10 +115,42 @@ class TankApi {
     return Tank.fromJson(Map<String, dynamic>.from(response.data['data']));
   }
 
-  Future<Map<String, dynamic>> getTankReadings(int tankId, String day) async {
-    final response = await _client.get('/devices/$tankId/graph?date=$day');
+  Future<Map<String, dynamic>> getTankReadings({
+    required int tankId,
+    String? day,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    String url = '/devices/$tankId/graph';
+
+    final queryParams = <String>[];
+
+    if (day != null) {
+      queryParams.add('date=$day');
+    }
+
+    if (startDate != null) {
+      queryParams.add(
+        'startDate=${startDate.toIso8601String()}',
+      );
+    }
+
+    if (endDate != null) {
+      queryParams.add(
+        'endDate=${endDate.toIso8601String()}',
+      );
+    }
+
+    if (queryParams.isNotEmpty) {
+      url += '?${queryParams.join('&')}';
+    }
+
+    final response = await _client.get(url);
+
     return response.data;
   }
+
+
 
   Future<List<TankEventModel>> getTankEvents(int tankId, String day) async {
     final response = await _client.get('/tank/$tankId/events?day=$day');

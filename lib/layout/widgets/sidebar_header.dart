@@ -1,6 +1,7 @@
 import 'package:air_water/core/user_config/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import '../../layout/provider/sidebar_provider.dart';
 
 
@@ -28,9 +29,10 @@ class SidebarHeader extends ConsumerWidget {
         child: isExpanded ?
         Row(
           children: [
-            Image.asset(
-              'assets/png/app_logo_white.png',
+            SvgPicture.asset(
+              'assets/svg/app_logo.svg',
               height: 32,
+              fit: BoxFit.contain,
             ),
             if(userRole != UserRole.customer)...[
               const Spacer(),

@@ -23,7 +23,15 @@ abstract class TankRepository {
   Future<List<Tank>> getTanks({int? siteId});
   Future<Tank> getTankById(int id);
 
-  Future<Map<String, dynamic>> getTankReadings(int tankId, String day);
+  Future<Map<String, dynamic>> getTankReadings({
+    required int tankId,
+    String? day,
+    DateTime? startDate,
+    DateTime? endDate,
+  });
+
+
+
   Future<List<TankEventModel>> getTankEvents(int tankId, String day);
   Future<List<TankRuleModel>> getAllTankRules();
   Future<List<TankChannelModel>> getTankChannels(int tankId);

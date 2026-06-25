@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../../../core/helpers/date_formatter.dart';
 import '../../controller/tank_readings_provider.dart';
 import 'package:data_table_2/data_table_2.dart';
 
 
 class TankReadingsTab extends ConsumerWidget {
   final int tankId;
-  final String day;
+  final String? day;
+  final DateTime? startDate;
+  final DateTime? endDate;
 
   const TankReadingsTab({
     super.key,
     required this.tankId,
     required this.day,
+    this.startDate,
+    this.endDate,
   });
 
   @override
@@ -24,6 +29,8 @@ class TankReadingsTab extends ConsumerWidget {
         TankReadingParams(
           tankId: tankId,
           day: day,
+          startDate: startDate,
+          endDate: endDate,
         ),
       ),
     );
@@ -123,11 +130,7 @@ class TankReadingsTab extends ConsumerWidget {
               cells: [
                 DataCell(
                   Text(
-                    DateFormat(
-                      'dd MMM yyyy hh:mm a',
-                    ).format(
-                      reading.createdAt,
-                    ),
+                    DateFormatter.formatDateTime(reading.createdAt),
                   ),
                 ),
 

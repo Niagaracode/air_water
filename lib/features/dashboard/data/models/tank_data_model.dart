@@ -13,6 +13,7 @@ class TankDataModel {
   final String tankName;
   final String siteName;
   final String deviceId;
+  final String gasType;
   final String city;
   final double level;
   final double pressure;
@@ -31,6 +32,7 @@ class TankDataModel {
     required this.tankName,
     required this.siteName,
     required this.deviceId,
+    required this.gasType,
     required this.city,
     required this.level,
     required this.pressure,
@@ -51,6 +53,7 @@ class TankDataModel {
       tankName: json['name'] ?? 'Unknown',
       siteName: json['siteName'] ?? 'Unknown',
       deviceId: json['device_id'] ?? '',
+      gasType: json['product_name'] ?? '',
       city: json['city'] ?? '',
       level: _toDouble(json['level']),
       pressure: _toDouble(json['ptn']),
@@ -95,6 +98,7 @@ class TankDataModel {
       tankName: tankName,
       siteName: siteName,
       deviceId: deviceId,
+      gasType: gasType,
       city: city,
       level: level ?? this.level,
       pressure: pressure ?? this.pressure,
@@ -191,6 +195,23 @@ class TankThreshold {
       pressureStatus: 'N/A',
       reorder: 0,
       reorderStatus: 'N/A',
+    );
+  }
+}
+
+class RegionModel {
+  final int id;
+  final String name;
+
+  RegionModel({
+    required this.id,
+    required this.name,
+  });
+
+  factory RegionModel.fromJson(Map<String, dynamic> json) {
+    return RegionModel(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
     );
   }
 }

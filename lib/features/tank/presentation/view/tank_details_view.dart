@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/helpers/date_formatter.dart';
 import '../../../../shared/widgets/app_details_header.dart';
 import '../../../dashboard/data/models/tank_data_model.dart';
 import '../../data/model/tank_reading_model.dart';
@@ -19,6 +20,7 @@ import 'dart:typed_data';
 import 'package:file_saver/file_saver.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xls;
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart' as pdfLib;
 
 
 class TankDetailsView extends ConsumerStatefulWidget {
@@ -41,6 +43,14 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   late TabController _tabController;
   String selectedSegment = '1D';
 
+  DateTime? customStartDate;
+  DateTime? customEndDate;
+
+  bool get isCustomSelected =>
+      customStartDate != null &&
+          customEndDate != null &&
+          selectedSegment.isEmpty;
+
 
   @override
   void initState() {
@@ -53,6 +63,9 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     _tabController.dispose();
     super.dispose();
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,18 +97,24 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                     tooltip: 'Download Report',
                     onSelected: (value) async {
                       final readings = ref.read(
-                        tankReadingsProvider(
-                          TankReadingParams(
-                            tankId: widget.tankId,
-                            day: selectedSegment,
+                          tankReadingsProvider(
+                            TankReadingParams(
+                              tankId: widget.tankId,
+                              day: isCustomSelected
+                                  ? null
+                                  : selectedSegment,
+                              startDate: customStartDate,
+                              endDate: customEndDate,
+                            ),
                           ),
-                        ),
                       ).readings;
 
                       if (readings.isEmpty) return;
 
+                      final reportTitle = _getReportTitle();
+
                       if (value == 'excel') {
-                        await exportTankReadingsExcel(readings);
+                        await exportTankReadingsExcel(readings, reportTitle);
                       }
                       if (value == 'pdf') {
                         await exportTankReadingsPdf(readings);
@@ -180,9 +199,22 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  TankDetailsTab(tankId: widget.tankId, day: selectedSegment),
-                  TankEventsTab(tankId: widget.tankId, day: selectedSegment),
-                  TankReadingsTab(tankId: widget.tankId, day: selectedSegment),
+                  TankDetailsTab(
+                    tankId: widget.tankId,
+                    day: selectedSegment.isEmpty ? null : selectedSegment,
+                    startDate: customStartDate,
+                    endDate: customEndDate,
+                  ),
+                  TankEventsTab(
+                    tankId: widget.tankId,
+                    day: selectedSegment.isEmpty ? null : selectedSegment,
+                  ),
+                  TankReadingsTab(
+                    tankId: widget.tankId,
+                    day: selectedSegment.isEmpty ? null : selectedSegment,
+                    startDate: customStartDate,
+                    endDate: customEndDate,
+                  ),
                   TankMapTab(),
                 ],
               ),
@@ -299,13 +331,69 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                 ),
               ],
 
-              selected: {selectedSegment},
+              selected: {
+                selectedSegment
+              },
 
               onSelectionChanged: (value) {
                 setState(() {
                   selectedSegment = value.first;
+
+                  customStartDate = null;
+                  customEndDate = null;
                 });
               },
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Custom Button with border
+          SizedBox(
+            height: 34,
+            child: OutlinedButton(
+              onPressed: _showCustomDateRangePopup,
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(
+                  color: isCustomSelected
+                      ? primary
+                      : Colors.grey.withValues(alpha: 0.6),
+                  width: isCustomSelected ? 2 : 1,
+                ),
+                backgroundColor: isCustomSelected
+                    ? primary.withValues(alpha: 0.7)
+                    : Colors.white,
+                foregroundColor: isCustomSelected
+                    ? Colors.white
+                    : primary,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 14,
+                    color: isCustomSelected ? Colors.white : primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isCustomSelected
+                        ? 'Custom ✓'
+                        : 'Custom',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isCustomSelected ? Colors.white : primary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -313,53 +401,811 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     );
   }
 
-  Future<void> exportTankReadingsExcel(List<TankReadingModel> readings) async {
+  /// Custom Date Range Popup Dialog
+  void _showCustomDateRangePopup() {
+    // Initialize with current date range
+    DateTime startDate = DateTime.now().subtract(const Duration(days: 7));
+    DateTime endDate = DateTime.now();
+    TimeOfDay startTime = const TimeOfDay(hour: 0, minute: 0);
+    TimeOfDay endTime = const TimeOfDay(hour: 23, minute: 59);
+
+    String errorMessage = '';
+
+    // Validation function
+    bool isValidRange() {
+      final now = DateTime.now();
+
+      final startDateTime = DateTime(
+        startDate.year,
+        startDate.month,
+        startDate.day,
+        startTime.hour,
+        startTime.minute,
+      );
+
+      final endDateTime = DateTime(
+        endDate.year,
+        endDate.month,
+        endDate.day,
+        endTime.hour,
+        endTime.minute,
+      );
+
+      if (startDateTime.isAfter(endDateTime)) {
+        errorMessage = 'Start date/time must be before end date/time';
+        return false;
+      }
+
+      if (startDateTime.isAfter(now)) {
+        errorMessage = 'Start date cannot be in the future';
+        return false;
+      }
+
+      if (endDateTime.isAfter(now)) {
+        errorMessage = 'End date cannot be in the future';
+        return false;
+      }
+
+      if (!startDateTime.isBefore(endDateTime)) {
+        errorMessage = 'End date/time must be after start date/time';
+        return false;
+      }
+
+      errorMessage = '';
+      return true;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => StatefulBuilder(
+        builder: (dialogContext, dialogSetState) {
+          return Dialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Container(
+              width: 480,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 20,
+                        color: primary,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Custom Date Range',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF141E7A),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const Divider(height: 24),
+
+                  // Date Range Selection - Row 1
+                  Row(
+                    children: [
+                      // From Date
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'From',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            InkWell(
+                              onTap: () async {
+                                final date = await showDatePicker(
+                                  context: dialogContext,
+                                  initialDate: startDate,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                );
+                                if (date != null) {
+                                  dialogSetState(() {
+                                    startDate = date;
+                                    isValidRange();
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: errorMessage.isNotEmpty
+                                        ? Colors.red
+                                        : Colors.grey.shade300,
+                                    width: errorMessage.isNotEmpty ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today,
+                                      size: 16,
+                                      color: errorMessage.isNotEmpty
+                                          ? Colors.red
+                                          : Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        DateFormat('dd-MM-yyyy').format(startDate),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: errorMessage.isNotEmpty
+                                              ? Colors.red
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_drop_down,
+                                      size: 20,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // From Time
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Time',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            InkWell(
+                              onTap: () async {
+                                final time = await showTimePicker(
+                                  context: dialogContext,
+                                  initialTime: startTime,
+                                );
+                                if (time != null) {
+                                  dialogSetState(() {
+                                    startTime = time;
+                                    isValidRange();
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: errorMessage.isNotEmpty
+                                        ? Colors.red
+                                        : Colors.grey.shade300,
+                                    width: errorMessage.isNotEmpty ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.access_time,
+                                      size: 16,
+                                      color: errorMessage.isNotEmpty
+                                          ? Colors.red
+                                          : Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        startTime.format(dialogContext),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: errorMessage.isNotEmpty
+                                              ? Colors.red
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_drop_down,
+                                      size: 20,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Date Range Selection - Row 2
+                  Row(
+                    children: [
+                      // To Date
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'To',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            InkWell(
+                              onTap: () async {
+                                final date = await showDatePicker(
+                                  context: dialogContext,
+                                  initialDate: endDate,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                );
+                                if (date != null) {
+                                  dialogSetState(() {
+                                    endDate = date;
+                                    isValidRange();
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: errorMessage.isNotEmpty
+                                        ? Colors.red
+                                        : Colors.grey.shade300,
+                                    width: errorMessage.isNotEmpty ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today,
+                                      size: 16,
+                                      color: errorMessage.isNotEmpty
+                                          ? Colors.red
+                                          : Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        DateFormat('dd-MM-yyyy').format(endDate),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: errorMessage.isNotEmpty
+                                              ? Colors.red
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_drop_down,
+                                      size: 20,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // To Time
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Time',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            InkWell(
+                              onTap: () async {
+                                final time = await showTimePicker(
+                                  context: dialogContext,
+                                  initialTime: endTime,
+                                );
+                                if (time != null) {
+                                  dialogSetState(() {
+                                    endTime = time;
+                                    isValidRange();
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: errorMessage.isNotEmpty
+                                        ? Colors.red
+                                        : Colors.grey.shade300,
+                                    width: errorMessage.isNotEmpty ? 2 : 1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.access_time,
+                                      size: 16,
+                                      color: errorMessage.isNotEmpty
+                                          ? Colors.red
+                                          : Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        endTime.format(dialogContext),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: errorMessage.isNotEmpty
+                                              ? Colors.red
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_drop_down,
+                                      size: 20,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Error Message
+                  if (errorMessage.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: Colors.red.shade200,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 16,
+                            color: Colors.red.shade700,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              errorMessage,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.red.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // Date Range Summary
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: primary.withValues(alpha: 0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Selected range: ${DateFormat('dd-MM-yyyy HH:mm').format(DateTime(
+                              startDate.year,
+                              startDate.month,
+                              startDate.day,
+                              startTime.hour,
+                              startTime.minute,
+                            ))} - ${DateFormat('dd-MM-yyyy HH:mm').format(DateTime(
+                              endDate.year,
+                              endDate.month,
+                              endDate.day,
+                              endTime.hour,
+                              endTime.minute,
+                            ))}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Action Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.grey.shade600,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: errorMessage.isEmpty && isValidRange()
+                            ? () {
+                          final selectedStartDate = DateTime(
+                            startDate.year,
+                            startDate.month,
+                            startDate.day,
+                            startTime.hour,
+                            startTime.minute,
+                          );
+
+                          final selectedEndDate = DateTime(
+                            endDate.year,
+                            endDate.month,
+                            endDate.day,
+                            endTime.hour,
+                            endTime.minute,
+                          );
+
+                          setState(() {
+                            selectedSegment = '';
+                            customStartDate = selectedStartDate;
+                            customEndDate = selectedEndDate;
+                          });
+
+                          debugPrint('STATE UPDATED');
+                          debugPrint('customStartDate=$customStartDate');
+                          debugPrint('customEndDate=$customEndDate');
+
+                          // Close the dialog
+                          Navigator.pop(dialogContext);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Date range applied: ${DateFormat('MM/dd/yyyy HH:mm').format(selectedStartDate)} - ${DateFormat('MM/dd/yyyy HH:mm').format(selectedEndDate)}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              backgroundColor: Colors.green,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: errorMessage.isEmpty && isValidRange()
+                              ? primary
+                              : Colors.grey.shade400,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        child: const Text('Apply'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  String _getReportTitle() {
+    final siteName = widget.tank.siteName;
+    final tankName = widget.tank.tankName;
+    final deviceId = widget.tank.deviceId;
+    final dateRange = _getDateRangeLabel();
+
+    return '${siteName}_${tankName}_${deviceId}_$dateRange';
+  }
+
+  String _getDateRangeLabel() {
+    switch (selectedSegment) {
+      case '1D':
+        return 'Last 24 Hours';
+      case '2D':
+        return 'Last 2 Days';
+      case '4D':
+        return 'Last 4 Days';
+      case '1W':
+        return 'Last 7 Days';
+      case '2W':
+        return 'Last 14 Days';
+      case '3W':
+        return 'Last 21 Days';
+      case '1M':
+        return 'Last 30 Days';
+      default:
+        return 'Selected Period';
+    }
+  }
+
+  Future<void> exportTankReadingsExcel(
+      List<TankReadingModel> readings,
+      String reportTitle,
+      ) async {
 
     if (!mounted) return;
 
     final workbook = xls.Workbook();
-
     final sheet = workbook.worksheets[0];
 
-    /// HEADER
-    sheet.getRangeByName('A1').setText('TNP');
-    sheet.getRangeByName('B1').setText('Time');
-    sheet.getRangeByName('C1').setText('Level');
-    sheet.getRangeByName('D1').setText('Pressure');
-    sheet.getRangeByName('E1').setText('Battery');
-    sheet.getRangeByName('F1').setText('Solar');
-    sheet.getRangeByName('G1').setText('Volume');
+    sheet.name = 'Tank Report';
 
+    // =========================
+    // TITLE
+    // =========================
 
-    /// DATA
+    final titleRange = sheet.getRangeByName('A1:G2');
+    titleRange.merge();
+
+    titleRange.setText('TANK READINGS REPORT');
+
+    titleRange.cellStyle.bold = true;
+    titleRange.cellStyle.fontSize = 20;
+    titleRange.cellStyle.fontColor = '#FFFFFF';
+    titleRange.cellStyle.backColor = '#1F4E78';
+    titleRange.cellStyle.hAlign = xls.HAlignType.center;
+    titleRange.cellStyle.vAlign = xls.VAlignType.center;
+
+    // =========================
+    // REPORT INFO
+    // =========================
+
+    String dateRangeText;
+
+    if (customStartDate != null &&
+        customEndDate != null) {
+      dateRangeText =
+      '${DateFormat('dd-MM-yyyy HH:mm').format(customStartDate!)}'
+          ' to '
+          '${DateFormat('dd-MM-yyyy HH:mm').format(customEndDate!)}';
+    } else {
+      dateRangeText = _getDateRangeLabel();
+    }
+
+    sheet.getRangeByName('A4').setText('Site Name');
+    sheet.getRangeByName('B4').setText(widget.tank.siteName);
+
+    sheet.getRangeByName('A5').setText('Tank Name');
+    sheet.getRangeByName('B5').setText('${widget.tank.tankName}(${widget.tank.gasType})');
+
+    sheet.getRangeByName('A6').setText('Device ID');
+    sheet.getRangeByName('B6').setText(widget.tank.deviceId);
+
+    sheet.getRangeByName('D4').setText('Date Range');
+    sheet.getRangeByName('E4').setText(dateRangeText);
+
+    sheet.getRangeByName('D5').setText('Generated On');
+    sheet.getRangeByName('E5').setText(
+      DateFormat('dd-MM-yyyy hh:mm a').format(
+        DateTime.now(),
+      ),
+    );
+
+    sheet.getRangeByName('D6').setText('Total Readings');
+    sheet.getRangeByName('E6').setText(
+      readings.length.toString(),
+    );
+
+    for (final cell in [
+      'A4',
+      'A5',
+      'A6',
+      'D4',
+      'D5',
+      'D6'
+    ]) {
+      sheet.getRangeByName(cell).cellStyle.bold = true;
+    }
+
+    // =========================
+    // TABLE HEADER
+    // =========================
+
+    const tableHeaderRow = 8;
+
+    sheet.getRangeByName('A$tableHeaderRow')
+        .setText('Date Time');
+
+    sheet.getRangeByName('B$tableHeaderRow')
+        .setText('Time');
+
+    sheet.getRangeByName('C$tableHeaderRow')
+        .setText('Level (%)');
+
+    sheet.getRangeByName('D$tableHeaderRow')
+        .setText('Pressure (Bar)');
+
+    sheet.getRangeByName('E$tableHeaderRow')
+        .setText('Battery (V)');
+
+    sheet.getRangeByName('F$tableHeaderRow')
+        .setText('Solar (V)');
+
+    sheet.getRangeByName('G$tableHeaderRow')
+        .setText('Volume (L)');
+
+    final headerRange = sheet.getRangeByName('A8:G8');
+
+    headerRange.cellStyle.bold = true;
+    headerRange.cellStyle.fontColor = '#FFFFFF';
+    headerRange.cellStyle.backColor = '#4472C4';
+    headerRange.cellStyle.hAlign =
+        xls.HAlignType.center;
+
+    // =========================
+    // DATA
+    // =========================
+
     for (int i = 0; i < readings.length; i++) {
 
-      final row = i + 2;
+      final row = i + 9;
 
       final item = readings[i];
 
       sheet.getRangeByName('A$row').setText(
-        DateFormat('dd-MM-yyyy HH:mm:ss').format(item.createdAt),
+        DateFormatter.formatDateTime(
+          item.createdAt,
+        ),
       );
-      sheet.getRangeByName('B$row').setText(item.time);
-      sheet.getRangeByName('C$row').setNumber(item.level);
-      sheet.getRangeByName('D$row').setNumber(item.pressure);
-      sheet.getRangeByName('E$row').setNumber(item.battery);
-      sheet.getRangeByName('F$row').setNumber(item.solar);
-      sheet.getRangeByName('G$row').setNumber(item.volume);
 
+      sheet.getRangeByName('B$row')
+          .setText(item.time);
+
+      sheet.getRangeByName('C$row')
+          .setText(item.level.toString());
+
+      sheet.getRangeByName('D$row')
+          .setText(item.pressure.toString());
+
+      sheet.getRangeByName('E$row')
+          .setText(item.battery.toString());
+
+      sheet.getRangeByName('F$row')
+          .setText(item.solar.toString());
+
+      sheet.getRangeByName('G$row')
+          .setText(item.volume.toString());
+
+      // Alternate row colors
+      if (i.isEven) {
+        sheet.getRangeByName(
+            'A$row:G$row')
+            .cellStyle
+            .backColor = '#F8F9FA';
+      }
     }
+
+    // =========================
+    // BORDERS
+    // =========================
+
+    final lastRow = readings.length + 8;
+
+    final tableRange =
+    sheet.getRangeByName('A8:G$lastRow');
+
+
+    tableRange.cellStyle.borders.all
+        .lineStyle = xls.LineStyle.thin;
+
+    // =========================
+    // FREEZE HEADER
+    // =========================
+
+    sheet.getRangeByName('A12').freezePanes();
+
+    // =========================
+    // AUTO FIT
+    // =========================
 
     for (int i = 1; i <= 7; i++) {
       sheet.autoFitColumn(i);
     }
 
-    final List<int> bytes = workbook.saveAsStream();
+    // =========================
+    // SAVE
+    // =========================
+
+    final bytes =
+    workbook.saveAsStream();
 
     workbook.dispose();
 
     await FileSaver.instance.saveFile(
-      name: 'tank_readings_report',
+      name: reportTitle,
       bytes: Uint8List.fromList(bytes),
       ext: 'xlsx',
       mimeType: MimeType.microsoftExcel,
@@ -369,57 +1215,148 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   Future<void> exportTankReadingsPdf(
       List<TankReadingModel> readings,
       ) async {
-
     final pdf = pw.Document();
 
     pdf.addPage(
       pw.MultiPage(
+        pageFormat: pdfLib.PdfPageFormat.a4,
+        margin: pw.EdgeInsets.all(40),
         build: (context) => [
+          // Header Section
+          pw.Container(
+            padding: pw.EdgeInsets.only(bottom: 16),
+            decoration: pw.BoxDecoration(
+              border: pw.Border(
+                bottom: pw.BorderSide(
+                  color: pdfLib.PdfColors.blue,
+                  width: 2,
+                ),
+              ),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Tank Readings Report',
+                  style: pw.TextStyle(
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
+                    color: pdfLib.PdfColors.blue,
+                  ),
+                ),
+                pw.SizedBox(height: 12),
 
-          pw.Text(
-            'Tank Readings Report',
-            style: pw.TextStyle(
-              fontSize: 22,
-              fontWeight: pw.FontWeight.bold,
+                // Tank Details in a grid layout
+                pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Expanded(
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          _buildDetailRow('Site Name', widget.tank.siteName),
+                          _buildDetailRow('Tank Name', '${widget.tank.tankName}(${widget.tank.gasType})'),
+                          _buildDetailRow('Device ID', widget.tank.deviceId),
+                        ],
+                      ),
+                    ),
+                    pw.Expanded(
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          _buildDetailRow('Date Range', _getDateRangeLabel()),
+                          _buildDetailRow('Generated On',
+                              DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now())
+                          ),
+                          _buildDetailRow('Total Readings', '${readings.length}'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          pw.SizedBox(height: 24),
+
+          // Data Table
+          pw.Container(
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(
+                color: pdfLib.PdfColors.grey300,
+                width: 1,
+              ),
+              borderRadius: pw.BorderRadius.circular(4),
+            ),
+            child: pw.Table.fromTextArray(
+              headers: [
+                'Date Time',
+                'Level',
+                'Pressure',
+                'Battery',
+                'Solar',
+                'Volume',
+              ],
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                color: pdfLib.PdfColors.white,
+                fontSize: 10,
+              ),
+              headerDecoration: pw.BoxDecoration(
+                color: pdfLib.PdfColors.blue,
+                borderRadius: pw.BorderRadius.only(
+                  topLeft: pw.Radius.circular(4),
+                  topRight: pw.Radius.circular(4),
+                ),
+              ),
+              cellAlignment: pw.Alignment.centerLeft,
+              cellStyle: pw.TextStyle(
+                fontSize: 9,
+                color: pdfLib.PdfColors.black,
+              ),
+              rowDecoration: pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(
+                    color: pdfLib.PdfColors.grey200,
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              data: readings.map((item) {
+                return [
+                  DateFormatter.formatDateTime(item.createdAt),
+                  '${item.level.toString()}%',
+                  '${item.pressure.toString()} Bar',
+                  '${item.battery.toString()} V',
+                  '${item.solar.toString()} V',
+                  '${item.volume.toString()} L',
+                ];
+              }).toList(),
             ),
           ),
 
           pw.SizedBox(height: 20),
 
-          pw.Table.fromTextArray(
-
-            headers: [
-              'Date Time',
-              'Time',
-              'Level',
-              'Pressure',
-              'Battery',
-              'Solar',
-              'Volume',
-            ],
-
-            data: readings.map((item) {
-
-              return [
-
-                DateFormat(
-                  'dd-MM-yyyy HH:mm:ss',
-                ).format(item.createdAt),
-
-                item.time,
-
-                item.level.toString(),
-
-                item.pressure.toString(),
-
-                item.battery.toString(),
-
-                item.solar.toString(),
-
-                item.volume.toString(),
-              ];
-
-            }).toList(),
+          // Footer (without page number)
+          pw.Container(
+            alignment: pw.Alignment.center,
+            padding: pw.EdgeInsets.only(top: 12),
+            decoration: pw.BoxDecoration(
+              border: pw.Border(
+                top: pw.BorderSide(
+                  color: pdfLib.PdfColors.grey200,
+                  width: 1,
+                ),
+              ),
+            ),
+            child: pw.Text(
+              'Generated by AirWater System',
+              style: pw.TextStyle(
+                fontSize: 9,
+                color: pdfLib.PdfColors.grey600,
+              ),
+            ),
           ),
         ],
       ),
@@ -428,10 +1365,49 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     final Uint8List bytes = await pdf.save();
 
     await FileSaver.instance.saveFile(
-      name: 'tank_readings_report',
+      name: '${widget.tank.tankName}_readings_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}',
       bytes: bytes,
       ext: 'pdf',
       mimeType: MimeType.pdf,
+    );
+  }
+
+  pw.Widget _buildDetailRow(String label, String value) {
+    return pw.Container(
+      padding: pw.EdgeInsets.symmetric(vertical: 2),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: 100,
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+                color: pdfLib.PdfColors.grey700,
+              ),
+            ),
+          ),
+          pw.Text(
+            ': ',
+            style: pw.TextStyle(
+              fontSize: 11,
+              color: pdfLib.PdfColors.grey500,
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+                color: pdfLib.PdfColors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

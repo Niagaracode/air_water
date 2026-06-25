@@ -97,6 +97,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
   // In DashboardListView's build method, simplify for customer view:
   @override
   Widget build(BuildContext context) {
+
     final filteredGroups = _getFilteredGroups();
     final totalTanks = _getTotalTanksCount();
     final isSplitView = totalTanks >= 1; // Show left panel when 1 or more tanks
@@ -348,13 +349,27 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
           child: Row(
             children: [
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 24),
-                  child: Text(
-                    tank.tankName,
-                    style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.grey.shade700),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 15,
+                      backgroundColor: getGasTypeColor(tank.gasType),
+                      child: Text(
+                        tank.gasType,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      tank.tankName,
+                      style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.grey.shade700),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
@@ -445,6 +460,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
       ),
     );
   }
+
 
   Widget _buildCustomerSiteGroupCompact(SiteGroupModel site) {
     return Column(
@@ -837,6 +853,23 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
       color: Colors.black54,
       letterSpacing: 1,
     );
+  }
+
+  Color getGasTypeColor(String gasType) {
+    switch (gasType.toUpperCase()) {
+      case 'LAR':
+        return Colors.red.shade500;
+      case 'LCO₂':
+        return Colors.deepPurple;
+      case 'LIN':
+        return Colors.blueGrey;
+      case 'LMO':
+        return Colors.blue;
+      case 'LOX':
+        return Colors.cyan;
+      default:
+        return Colors.grey;
+    }
   }
 
   Color _getBatSolColor(double level) {
