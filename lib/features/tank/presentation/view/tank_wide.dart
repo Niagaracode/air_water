@@ -444,8 +444,6 @@ class _TankWideState extends ConsumerState<TankWide> {
             Expanded(
               flex: 2,
               child: InkWell(
-                // onTap: () =>
-                //     context.go('/tank/details/${tank.tankId}', extra: tank),
                 child: Text(
                   tank.tankNumber,
                   style: GoogleFonts.outfit(

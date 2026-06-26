@@ -18,7 +18,6 @@ class AddSiteModal extends ConsumerStatefulWidget {
   final int? targetAddressId;
   const AddSiteModal({super.key, this.initialSite, this.targetAddressId});
 
-
   @override
   ConsumerState<AddSiteModal> createState() => _AddSiteModalState();
 }
@@ -44,7 +43,6 @@ class AddressControllers {
     timeZoneController.dispose();
   }
 
-
   void updateFromRegistered(CompanyAddress addr) {
     isProgrammaticUpdate = true;
     selectedRegisteredAddress = addr;
@@ -58,7 +56,6 @@ class AddressControllers {
     city = addr.city;
     isProgrammaticUpdate = false;
   }
-
 }
 
 class _AddSiteModalState extends ConsumerState<AddSiteModal> {
@@ -70,7 +67,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   int _status = 1;
   bool _isLoadingCompanies = false;
   String? _selectedSiteName;
-
 
   @override
   void initState() {
@@ -87,7 +83,8 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       _addressRows.first.country = widget.initialSite!.countryName;
       _addressRows.first.state = widget.initialSite!.stateName;
       _addressRows.first.city = widget.initialSite!.cityName;
-      _addressRows.first.timeZoneController.text = widget.initialSite!.timeZone ?? '';
+      _addressRows.first.timeZoneController.text =
+          widget.initialSite!.timeZone ?? '';
       _selectedSiteName = widget.initialSite!.name;
     }
     _nameController.addListener(_onNameChanged);
@@ -139,8 +136,10 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
           // Fetch ALL addresses for this plant
           try {
             final siteRepo = ref.read(siteRepositoryProvider);
-            final addressesData = await siteRepo.getSiteWithAddresses(widget.initialSite!.id);
-            
+            final addressesData = await siteRepo.getSiteWithAddresses(
+              widget.initialSite!.id,
+            );
+
             if (addressesData.isNotEmpty) {
               setState(() {
                 // Dispose existing rows first
@@ -148,39 +147,45 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                   row.dispose();
                 }
                 _addressRows.clear();
-                
+
                 // If targetAddressId is provided, filter to show only that address
                 var finalAddresses = addressesData;
                 if (widget.targetAddressId != null) {
                   finalAddresses = addressesData
-                      .where((a) => a['address_id'].toString() == widget.targetAddressId.toString())
+                      .where(
+                        (a) =>
+                            a['address_id'].toString() ==
+                            widget.targetAddressId.toString(),
+                      )
                       .toList();
-
-
                 }
 
                 for (var addrJson in finalAddresses) {
                   final controllers = AddressControllers();
                   controllers.id = addrJson['address_id'] as int?;
 
-                  controllers.addressController.text = addrJson['address_line_1'] ?? '';
-                  controllers.pinCodeController.text = addrJson['pincode'] ?? '';
-                  controllers.contactController.text = addrJson['contact_number'] ?? '';
-                  controllers.timeZoneController.text = addrJson['time_zone'] ?? '';
+                  controllers.addressController.text =
+                      addrJson['address_line_1'] ?? '';
+                  controllers.pinCodeController.text =
+                      addrJson['pincode'] ?? '';
+                  controllers.contactController.text =
+                      addrJson['contact_number'] ?? '';
+                  controllers.timeZoneController.text =
+                      addrJson['time_zone'] ?? '';
                   controllers.country = addrJson['country_name'];
                   controllers.state = addrJson['state_name'];
                   controllers.city = addrJson['city_name'];
-                  
+
                   // Try to find if this matches a registered address in the selected group
                   if (_selectedGroup != null) {
-                    controllers.selectedRegisteredAddress = _selectedGroup!.addresses
+                    controllers.selectedRegisteredAddress = _selectedGroup!
+                        .addresses
                         .where((a) => a.companyId == addrJson['company_id'])
                         .firstOrNull;
                   }
-                  
+
                   _addressRows.add(controllers);
                 }
-
               });
             }
           } catch (e) {
@@ -188,7 +193,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
           }
         }
       }
-
     }
   }
 
@@ -224,12 +228,12 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       final newRow = AddressControllers();
       // If we have an existing row, maybe default the timezone?
       if (_addressRows.isNotEmpty) {
-        newRow.timeZoneController.text = _addressRows.first.timeZoneController.text;
+        newRow.timeZoneController.text =
+            _addressRows.first.timeZoneController.text;
       }
       _addressRows.add(newRow);
     });
   }
-
 
   void _removeAddressRow(int index) {
     if (_addressRows.length > 1) {
@@ -294,9 +298,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         timeZone: row.timeZoneController.text.isNotEmpty
             ? row.timeZoneController.text
             : null,
-
       );
-
     }).toList();
 
     final primaryCompanyId = addresses.first.companyId;
@@ -317,7 +319,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       addresses: addresses,
       isPartialUpdate: widget.targetAddressId != null,
     );
-
 
     final bool success;
     if (widget.initialSite != null) {
@@ -425,7 +426,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                             children: [
                               Expanded(
                                 child: _buildLabelField(
-                                  'SITE NAME',
+                                  'CUSTOMER NAME',
                                   AppAutocomplete<SiteAutocompleteInfo>(
                                     controller: _nameController,
                                     hint: 'e.g. South Site Unit A',
@@ -459,26 +460,24 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                       ? const LinearProgressIndicator(
                                           minHeight: 2,
                                         )
-                                      : (ref.watch(userRoleProvider) == UserRole.superAdmin)
-                                          ? AppDropdown<CompanyGroup>(
-                                              value: _selectedGroup,
-                                              items: _companyGroups,
-                                              hint: 'Select Company',
-                                              itemLabel: (g) => g.name,
-                                              onChanged: _onCompanyChanged,
-                                            )
-                                          : AppTextField(
-                                              readOnly: true,
-                                              controller: _companyNameController,
-                                              hint: 'Company',
-                                            ),
+                                      : (ref.watch(userRoleProvider) ==
+                                            UserRole.superAdmin)
+                                      ? AppDropdown<CompanyGroup>(
+                                          value: _selectedGroup,
+                                          items: _companyGroups,
+                                          hint: 'Select Company',
+                                          itemLabel: (g) => g.name,
+                                          onChanged: _onCompanyChanged,
+                                        )
+                                      : AppTextField(
+                                          readOnly: true,
+                                          controller: _companyNameController,
+                                          hint: 'Company',
+                                        ),
                                 ),
                               ),
                             ],
                           ),
-
-
-
 
                           const SizedBox(height: 32),
 
@@ -486,29 +485,27 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [],
-                              ),
+                              Row(children: []),
                               TextButton.icon(
                                 onPressed: _addAddressRow,
 
-                                  icon: const Icon(
-                                    Icons.add_circle_outline_rounded,
-                                    size: 16,
-                                  ),
-                                  label: Text(
-                                    'ADD NEW ADDRESS',
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF141E7A),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
+                                icon: const Icon(
+                                  Icons.add_circle_outline_rounded,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  'ADD NEW ADDRESS',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF141E7A),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                           const Divider(
@@ -837,7 +834,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         ],
       ),
     );
-
   }
 
   Widget _buildTimeZoneAutocomplete(TextEditingController controller) {
@@ -862,16 +858,13 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         });
       },
     );
-
   }
-
 
   @override
   void dispose() {
     _nameController.dispose();
     _companyNameController.dispose();
     for (var controllers in _addressRows) {
-
       controllers.dispose();
     }
     super.dispose();
