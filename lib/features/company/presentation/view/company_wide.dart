@@ -19,7 +19,6 @@ class CompanyWide extends ConsumerStatefulWidget {
 }
 
 class _CompanyWideState extends ConsumerState<CompanyWide> {
-
   @override
   Widget build(BuildContext context) {
     final companyState = ref.watch(companyNotifierProvider);
@@ -27,19 +26,19 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
-      body: companyState.isLoading ? Center(
-        child: CircularProgressIndicator(),
-      ) : SizedBox(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: _buildTableBody(companyState, companyNotifier),
+      body: companyState.isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SizedBox(
+              child: Column(
+                children: [
+                  _buildHeader(context),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: _buildTableBody(companyState, companyNotifier),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -47,7 +46,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     return ViewHeader(
       title: 'COMPANY MANAGEMENT',
       subtitle:
-      'Centralize company information including identification, locations, and status management.',
+          'Centralize company information including identification, locations, and status management.',
       buttonText: 'ADD COMPANY',
       onPressed: () {
         showGeneralDialog(
@@ -59,13 +58,10 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
           pageBuilder: (context, anim1, anim2) => const AddCompanyModal(),
           transitionBuilder: (context, anim1, anim2, child) {
             return SlideTransition(
-              position:
-              Tween<Offset>(
+              position: Tween<Offset>(
                 begin: const Offset(1, 0),
                 end: Offset.zero,
-              ).animate(
-                CurvedAnimation(parent: anim1, curve: Curves.easeOut),
-              ),
+              ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
               child: child,
             );
           },
@@ -74,10 +70,12 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
     );
   }
 
-  Widget _buildTableBody(CompanyState state,  CompanyNotifier notifier) {
-
+  Widget _buildTableBody(CompanyState state, CompanyNotifier notifier) {
     if (state.groupedCompanies.isEmpty && !state.isLoading) {
-      return const AppTableEmptyState(icon: Icons.business_outlined, title: 'No companies found');
+      return const AppTableEmptyState(
+        icon: Icons.business_outlined,
+        title: 'No companies found',
+      );
     }
 
     final List<({CompanyGroup group, CompanyAddress addr})> flatItems = [];
@@ -94,10 +92,7 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.all(Radius.circular(10)),
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
       ),
       child: DataTable2(
         columnSpacing: 12,
@@ -105,7 +100,9 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
         minWidth: 1000,
         dataRowHeight: 50,
         headingRowHeight: 45,
-        headingRowColor: WidgetStateProperty.all(primary.withValues(alpha: 0.1)),
+        headingRowColor: WidgetStateProperty.all(
+          primary.withValues(alpha: 0.1),
+        ),
         dividerThickness: 0.4,
         columns: [
           DataColumn2(
@@ -128,10 +125,10 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
             label: TableHeaderCell(label: 'Country'),
             size: ColumnSize.S,
           ),
-          DataColumn2(
-            label: TableHeaderCell(label: 'Status'),
-            fixedWidth: 100,
-          ),
+          // DataColumn2(
+          //   label: TableHeaderCell(label: 'Status'),
+          //   fixedWidth: 100,
+          // ),
           DataColumn2(
             label: TableHeaderCell(label: 'Address'),
             size: ColumnSize.L,
@@ -142,45 +139,47 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
           ),
         ],
         rows: List<DataRow>.generate(flatItems.length, (index) {
-
           final item = flatItems[index];
 
           return DataRow(
             cells: [
               DataCell(Center(child: TableDataCell(label: '${index + 1}'))),
-              DataCell(TableDataCell(label: item.group.name, bold: true,)),
+              DataCell(TableDataCell(label: item.group.name, bold: true)),
               DataCell(TableDataCell(label: item.addr.city ?? '—')),
               DataCell(TableDataCell(label: item.addr.state ?? '—')),
               DataCell(TableDataCell(label: item.addr.country ?? '—')),
-              DataCell(AppStatusBadge(status: item.addr.status)),
-              DataCell(TableDataCell(label: item.addr.fullAddress, maxLines: 2)),
-              DataCell(SizedBox(
-                width: 80,
-                child: Row(
-                  children: [
-                    AppTableActionButton(
-                      icon: Icons.edit_outlined,
-                      color: const Color(0xFF2563EB),
-                      bg: const Color(0xFFEFF6FF),
-                      onTap: () => _showEditModal(item.group, item.addr),
-                    ),
-                    const SizedBox(width: 8),
-                    AppTableActionButton(
-                      icon: Icons.delete_outline_rounded,
-                      color: const Color(0xFFDC2626),
-                      bg: const Color(0xFFFEF2F2),
-                      onTap: () => _confirmDelete(item.addr),
-                    ),
-                  ],
+              //   DataCell(AppStatusBadge(status: item.addr.status)),
+              DataCell(
+                TableDataCell(label: item.addr.fullAddress, maxLines: 2),
+              ),
+              DataCell(
+                SizedBox(
+                  width: 80,
+                  child: Row(
+                    children: [
+                      AppTableActionButton(
+                        icon: Icons.edit_outlined,
+                        color: const Color(0xFF2563EB),
+                        bg: const Color(0xFFEFF6FF),
+                        onTap: () => _showEditModal(item.group, item.addr),
+                      ),
+                      const SizedBox(width: 8),
+                      AppTableActionButton(
+                        icon: Icons.delete_outline_rounded,
+                        color: const Color(0xFFDC2626),
+                        bg: const Color(0xFFFEF2F2),
+                        onTap: () => _confirmDelete(item.addr),
+                      ),
+                    ],
+                  ),
                 ),
-              )),
+              ),
             ],
           );
         }),
       ),
     );
   }
-
 
   void _showEditModal(CompanyGroup group, CompanyAddress addr) {
     showGeneralDialog(

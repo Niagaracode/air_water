@@ -482,13 +482,17 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                           const SizedBox(height: 32),
 
                           // Section: Location Details
+                          ...List.generate(
+                            _addressRows.length,
+                            (index) => _buildAddressRow(index),
+                          ),
+                          const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(children: []),
-                              TextButton.icon(
+                              OutlinedButton.icon(
                                 onPressed: _addAddressRow,
-
                                 icon: const Icon(
                                   Icons.add_circle_outline_rounded,
                                   size: 16,
@@ -497,13 +501,24 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                   'ADD NEW ADDRESS',
                                   style: GoogleFonts.outfit(
                                     fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
-                                style: TextButton.styleFrom(
+                                style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFF141E7A),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
+                                  side: const BorderSide(
+                                    color: Color(0xFF141E7A),
+                                    width: 1.5,
                                   ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  backgroundColor: const Color(0xFF141E7A).withValues(alpha: 0.05),
                                 ),
                               ),
                             ],
@@ -513,12 +528,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                             thickness: 1,
                             color: Color(0xFFF3F4F6),
                           ),
-
-                          ...List.generate(
-                            _addressRows.length,
-                            (index) => _buildAddressRow(index),
-                          ),
-                          const SizedBox(height: 40),
 
                           // Status Selector
                           Container(
@@ -768,6 +777,36 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
             ],
           ),
           const SizedBox(height: 20),
+          LocationPicker(
+            key: ValueKey(
+              'loc_${controllers.country}_${controllers.state}_${controllers.city}',
+            ),
+            currentCountry: controllers.country,
+            currentState: controllers.state,
+            currentCity: controllers.city,
+            onCountryChanged: (value) {
+              setState(() {
+                controllers.country = value;
+                controllers.state = null;
+                controllers.city = null;
+                final defaultTz = TimeZoneUtils.getDefaultTimeZoneForCountry(value);
+                if (defaultTz != null) {
+                  controllers.timeZoneController.text = defaultTz;
+                }
+              });
+            },
+            onStateChanged: (value) {
+              setState(() {
+                controllers.state = value;
+                controllers.city = null;
+              });
+            },
+
+            onCityChanged: (value) {
+              setState(() => controllers.city = value);
+            },
+          ),
+          const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
@@ -801,32 +840,32 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
             ),
           ),
           const SizedBox(height: 24),
-          LocationPicker(
-            key: ValueKey(
-              'loc_${controllers.country}_${controllers.state}_${controllers.city}',
-            ),
-            currentCountry: controllers.country,
-            currentState: controllers.state,
-            currentCity: controllers.city,
-            onCountryChanged: (value) {
-              setState(() {
-                controllers.country = value;
-                controllers.state = null;
-                controllers.city = null;
-              });
-            },
-            onStateChanged: (value) {
-              setState(() {
-                controllers.state = value;
-                controllers.city = null;
-              });
-            },
+          // LocationPicker(
+          //   key: ValueKey(
+          //     'loc_${controllers.country}_${controllers.state}_${controllers.city}',
+          //   ),
+          //   currentCountry: controllers.country,
+          //   currentState: controllers.state,
+          //   currentCity: controllers.city,
+          //   onCountryChanged: (value) {
+          //     setState(() {
+          //       controllers.country = value;
+          //       controllers.state = null;
+          //       controllers.city = null;
+          //     });
+          //   },
+          //   onStateChanged: (value) {
+          //     setState(() {
+          //       controllers.state = value;
+          //       controllers.city = null;
+          //     });
+          //   },
 
-            onCityChanged: (value) {
-              setState(() => controllers.city = value);
-            },
-          ),
-          const SizedBox(height: 24),
+          //   onCityChanged: (value) {
+          //     setState(() => controllers.city = value);
+          //   },
+          // ),
+          // const SizedBox(height: 24),
           _buildLabelField(
             'TIME ZONE REGION',
             _buildTimeZoneAutocomplete(controllers.timeZoneController),

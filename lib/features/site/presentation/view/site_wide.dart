@@ -355,7 +355,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
           AppTableHeaderCell('Country', flex: 2),
           AppTableHeaderCell('Address', flex: 3),
           AppTableHeaderCell('Company', flex: 2),
-          AppTableHeaderCell('Status', width: 80),
+          //   AppTableHeaderCell('Status', width: 80),
           AppTableHeaderCell('Action', width: 80),
         ],
       ),
@@ -400,14 +400,14 @@ class _SiteWideState extends ConsumerState<SiteWide> {
               fontSize: 13,
               color: const Color(0xFF111827),
             ),
-            AppTableCell(
-              null,
-              width: 80,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AppStatusBadge(status: site.status ?? 1),
-              ),
-            ),
+            // AppTableCell(
+            //   null,
+            //   width: 80,
+            //   child: Align(
+            //     alignment: Alignment.centerLeft,
+            //     child: AppStatusBadge(status: site.status ?? 1),
+            //   ),
+            // ),
             AppTableCell(
               null,
               width: 80,

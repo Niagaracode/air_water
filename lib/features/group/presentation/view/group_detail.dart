@@ -216,7 +216,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
                           fontSize: 16,
                         ),
                       ),
-                      if (pg.addressLine1 != null)
+                      if (pg.addressLine1 != null && pg.addressLine1!.isNotEmpty)
                         Text(
                           '${pg.addressLine1}, ${pg.city ?? ''}, ${pg.state ?? ''} - ${pg.pincode ?? ''}',
                           style: TextStyle(

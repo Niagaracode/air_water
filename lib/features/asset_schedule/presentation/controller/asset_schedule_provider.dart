@@ -191,7 +191,7 @@ class AssetScheduleNotifier extends Notifier<AssetScheduleState> {
               tankNumber: tank.tankNumber,
               deviceId: deviceId,
               siteLocation:
-                  '${tankGroup.city ?? "Unknown"}, ${tankGroup.state ?? ""}',
+                  '${tank.city ?? "Unknown"}, ${tank.state ?? ""}',
               runoutDate: runoutDate,
               nextScheduledRefill: nextRefill,
               unit: '% Full',

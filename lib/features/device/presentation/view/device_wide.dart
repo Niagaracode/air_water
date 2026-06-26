@@ -241,7 +241,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
           AppTableHeaderCell('Company', flex: 2),
           AppTableHeaderCell('Sim Number', flex: 2),
           AppTableHeaderCell('Tank', flex: 2),
-          AppTableHeaderCell('Status', flex: 2),
+          // AppTableHeaderCell('Status', flex: 2),
           AppTableHeaderCell('Site Information', flex: 3),
           AppTableHeaderCell('Action', width: 100),
         ],
@@ -336,15 +336,15 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             AppTableCell(device.companyName ?? '—', flex: 2),
             AppTableCell(device.simNumber ?? '—', flex: 2),
             AppTableCell(device.tankName ?? '—', flex: 2),
-            AppTableCell(
-              null,
-              flex: 2,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AppStatusBadge(status: device.status),
-              ),
-            ),
-            const AppTableCell('', flex: 3),
+            // AppTableCell(
+            //   null,
+            //   flex: 2,
+            //   child: Align(
+            //     alignment: Alignment.centerLeft,
+            //     child: AppStatusBadge(status: device.status),
+            //   ),
+            // ),
+            AppTableCell(device.siteInformation?.fullAddress ?? '—', flex: 3),
             AppTableCell(
               null,
               width: 100,

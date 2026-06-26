@@ -1,4 +1,3 @@
-import 'dart:convert';
 import '../../../site/presentation/model/site_model.dart';
 
 class Tank {
@@ -28,6 +27,11 @@ class Tank {
   final bool? useStrappingChart;
   final List<ChannelData>? channelData;
   final int ruleId;
+  final String? addressLine1;
+  final String? city;
+  final String? state;
+  final String? country;
+  final String? pincode;
 
   Tank({
     required this.tankId,
@@ -56,6 +60,11 @@ class Tank {
     this.deviceName,
     this.channelData,
     required this.ruleId,
+    this.addressLine1,
+    this.city,
+    this.state,
+    this.country,
+    this.pincode,
   });
 
   factory Tank.fromJson(Map<String, dynamic> json) {
@@ -99,10 +108,27 @@ class Tank {
           .toList()
           : null,
       ruleId: json['rule_id'] ?? 0,
+      addressLine1: json['address_line_1'] as String?,
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      country: json['country'] as String?,
+      pincode: json['pincode'] as String?,
     );
   }
 
   String get statusText => status == 1 ? 'Active' : 'Inactive';
+
+  String get fullAddress {
+    final parts = [
+      addressLine1,
+      city,
+      state,
+      country,
+    ].where((p) => p != null && p.isNotEmpty).toList();
+    if (parts.isEmpty) return '';
+    return parts.join(', ') + (pincode != null ? ' - $pincode' : '');
+  }
+
 
 
   static double? _toDouble(dynamic value) {

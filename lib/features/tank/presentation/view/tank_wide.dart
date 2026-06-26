@@ -11,7 +11,6 @@ import '../../data/model/tank_model.dart';
 import '../controller/tank_provider.dart';
 import '../widgets/add_tank_modal.dart';
 import '../../../site/presentation/model/site_model.dart';
-import 'package:go_router/go_router.dart';
 import 'dart:async';
 
 class TankWide extends ConsumerStatefulWidget {
@@ -319,10 +318,10 @@ class _TankWideState extends ConsumerState<TankWide> {
       child: Row(
         children: [
           AppTableHeaderCell('SI.NO', width: 60),
-          AppTableHeaderCell('Site/ Tank Id', flex: 2),
+          AppTableHeaderCell('Customer/ Tank Id', flex: 2),
           AppTableHeaderCell('Device id', flex: 2),
           AppTableHeaderCell('Product', flex: 1, textAlign: TextAlign.center),
-          AppTableHeaderCell('Status', flex: 1),
+          //    AppTableHeaderCell('Status', flex: 1),
           AppTableHeaderCell('Site Information', flex: 3),
           AppTableHeaderCell('Actions', width: 80),
         ],
@@ -463,16 +462,14 @@ class _TankWideState extends ConsumerState<TankWide> {
               textAlign: TextAlign.center,
             ),
 
-            Expanded(
-              flex: 1,
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: AppStatusBadge(status: tank.status),
-              ),
-            ),
-
-            AppTableCell('', flex: 3),
-
+            // Expanded(
+            //   flex: 1,
+            //   child: Align(
+            //     alignment: Alignment.centerLeft,
+            //     child: AppStatusBadge(status: tank.status),
+            //   ),
+            // ),
+            AppTableCell(tank.fullAddress, flex: 3),
             SizedBox(
               width: 80,
               child: Row(
