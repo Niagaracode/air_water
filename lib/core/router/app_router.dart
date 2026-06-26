@@ -3,6 +3,7 @@ import 'package:air_water/features/dashboard/data/models/tank_data_model.dart';
 import 'package:air_water/features/group/user_group_layout.dart';
 import 'package:air_water/features/message_template/message_template_layout.dart';
 import 'package:air_water/features/product/product_layout.dart';
+import 'package:air_water/features/tank_dimension/tank_dimension_layout.dart';
 import 'package:air_water/features/roaster/roaster_layout.dart';
 import 'package:air_water/features/rule_group/rule_group_layout.dart';
 import 'package:air_water/features/user/user_layout.dart';
@@ -140,6 +141,7 @@ class AppRouter {
             ),
             GoRoute(path: '/device', builder: (_, __) => const DeviceLayout()),
             GoRoute(path: '/product', builder: (_, __) => const ProductLayout()),
+            GoRoute(path: '/tank-dimension', builder: (_, __) => const TankDimensionLayout()),
             GoRoute(path: '/user', builder: (_, __) => const UserLayout()),
             GoRoute(path: '/group', builder: (_, __) => const UserGroupLayout()),
             GoRoute(

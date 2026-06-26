@@ -53,6 +53,12 @@ const configurationMenu = [
     icon: Icons.category_rounded,
     allowedRoles: [UserRole.superAdmin],
   ),
+  SidebarMenuItem(
+    key: 'Tank Dimension',
+    label: 'Tank Dimension',
+    icon: Icons.straighten_rounded,
+    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+  ),
 ];
 
 const userMenu = [

@@ -32,6 +32,7 @@ class Tank {
   final String? state;
   final String? country;
   final String? pincode;
+  final int? tankDimension;
 
   Tank({
     required this.tankId,
@@ -65,6 +66,7 @@ class Tank {
     this.state,
     this.country,
     this.pincode,
+    this.tankDimension,
   });
 
   factory Tank.fromJson(Map<String, dynamic> json) {
@@ -113,6 +115,7 @@ class Tank {
       state: json['state'] as String?,
       country: json['country'] as String?,
       pincode: json['pincode'] as String?,
+      tankDimension: _toInt(json['tank_dimension']),
     );
   }
 
@@ -332,6 +335,7 @@ class TankCreateRequest {
   final List<dynamic>? channelData;
   final int? companyId;
   final int? ruleId;
+  final int? tankDimension;
 
   TankCreateRequest({
     required this.tankNumber,
@@ -344,6 +348,7 @@ class TankCreateRequest {
     this.channelData,
     this.companyId,
     this.ruleId,
+    this.tankDimension,
   });
 
   Map<String, dynamic> toJson() {
@@ -358,6 +363,7 @@ class TankCreateRequest {
       'channel_data': channelData,
       'company_id': companyId,
       'rule_id': ruleId,
+      'tank_dimension': tankDimension,
     };
   }
 }

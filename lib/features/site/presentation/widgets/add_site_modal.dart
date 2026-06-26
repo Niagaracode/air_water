@@ -25,6 +25,8 @@ class AddSiteModal extends ConsumerStatefulWidget {
 class AddressControllers {
   int? id;
   final addressController = TextEditingController();
+  final address2Controller = TextEditingController();
+  final address3Controller = TextEditingController();
 
   final pinCodeController = TextEditingController();
   final contactController = TextEditingController();
@@ -38,6 +40,8 @@ class AddressControllers {
 
   void dispose() {
     addressController.dispose();
+    address2Controller.dispose();
+    address3Controller.dispose();
     pinCodeController.dispose();
     contactController.dispose();
     timeZoneController.dispose();
@@ -47,6 +51,8 @@ class AddressControllers {
     isProgrammaticUpdate = true;
     selectedRegisteredAddress = addr;
     addressController.text = addr.addressLine1 ?? '';
+    address2Controller.text = addr.addressLine2 ?? '';
+    address3Controller.text = addr.addressLine3 ?? '';
     pinCodeController.text = addr.pincode ?? '';
 
     contactController.text = addr.contactNumber ?? '';
@@ -76,6 +82,10 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       _status = widget.initialSite!.status;
       _addressRows.first.addressController.text =
           widget.initialSite!.addressLine1 ?? '';
+      _addressRows.first.address2Controller.text =
+          widget.initialSite!.addressLine2 ?? '';
+      _addressRows.first.address3Controller.text =
+          widget.initialSite!.addressLine3 ?? '';
       _addressRows.first.pinCodeController.text =
           widget.initialSite!.pincode ?? '';
       _addressRows.first.contactController.text =
@@ -166,6 +176,10 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
 
                   controllers.addressController.text =
                       addrJson['address_line_1'] ?? '';
+                  controllers.address2Controller.text =
+                      addrJson['address_line_2'] ?? '';
+                  controllers.address3Controller.text =
+                      addrJson['address_line_3'] ?? '';
                   controllers.pinCodeController.text =
                       addrJson['pincode'] ?? '';
                   controllers.contactController.text =
@@ -211,6 +225,8 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
         // If we are EDITING, we want to keep the physical location text.
         if (widget.initialSite == null) {
           row.addressController.clear();
+          row.address2Controller.clear();
+          row.address3Controller.clear();
           row.pinCodeController.clear();
           row.contactController.clear();
           row.country = null;
@@ -288,6 +304,8 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       return CompanyAddress(
         id: row.id,
         addressLine1: row.addressController.text,
+        addressLine2: row.address2Controller.text,
+        addressLine3: row.address3Controller.text,
         pincode: row.pinCodeController.text,
         country: row.country ?? '',
         state: row.state ?? '',
@@ -807,29 +825,36 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
             },
           ),
           const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _buildLabelField(
-                  'ADDRESS',
-                  AppTextField(
-                    controller: controllers.addressController,
-                    hint: 'Enter Address',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildLabelField(
-                  'POSTAL CODE',
-                  AppTextField(
-                    controller: controllers.pinCodeController,
-                    hint: 'PIN Code',
-                  ),
-                ),
-              ),
-            ],
+          _buildLabelField(
+            'ADDRESS LINE 1',
+            AppTextField(
+              controller: controllers.addressController,
+              hint: 'Address Line 1',
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildLabelField(
+            'ADDRESS LINE 2',
+            AppTextField(
+              controller: controllers.address2Controller,
+              hint: 'Address Line 2',
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildLabelField(
+            'ADDRESS LINE 3',
+            AppTextField(
+              controller: controllers.address3Controller,
+              hint: 'Address Line 3',
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildLabelField(
+            'POSTAL CODE',
+            AppTextField(
+              controller: controllers.pinCodeController,
+              hint: 'PIN Code',
+            ),
           ),
           const SizedBox(height: 24),
           _buildLabelField(

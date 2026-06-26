@@ -454,6 +454,8 @@ class SiteAutocompleteInfo {
   final String? companyName;
   final String? displayName;
   final String? addressLine1;
+  final String? addressLine2;
+  final String? addressLine3;
   final String? city;
   final String? state;
   final String? country;
@@ -469,6 +471,8 @@ class SiteAutocompleteInfo {
     this.companyName,
     this.displayName,
     this.addressLine1,
+    this.addressLine2,
+    this.addressLine3,
     this.city,
     this.state,
     this.country,
@@ -486,6 +490,8 @@ class SiteAutocompleteInfo {
       companyName: json['company_name'] as String?,
       displayName: json['display_name'] as String?,
       addressLine1: json['address_line_1'] as String?,
+      addressLine2: json['address_line_2'] as String?,
+      addressLine3: json['address_line_3'] as String?,
       city: json['city'] as String?,
       state: json['state'] as String?,
       country: json['country'] as String?,

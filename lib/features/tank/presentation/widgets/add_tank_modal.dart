@@ -10,6 +10,8 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
+import '../../../tank_dimension/data/tank_dimension_model.dart';
+import '../../../tank_dimension/provider/tank_dimension_provider.dart';
 
 class AddTankModal extends ConsumerStatefulWidget {
   final Tank? tank;
@@ -35,10 +37,11 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
 
   List<TankRuleModel> _tankRules = [];
   TankRuleModel? _selectedRule;
+  TankDimension? _selectedDimension;
 
   dynamic _selectedUnit;
   dynamic _selectedTankType;
-  dynamic _selectedProduct;
+  TankProduct? _selectedProduct;
   int _status = 1;
 
   late List<Map<String, dynamic>> _channels;
@@ -70,60 +73,90 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   Future<void> _loadDropdownData() async {
     setState(() => _isLoadingDropdowns = true);
 
+    Map<String, dynamic> data = {};
+    List<TankProduct> products = [];
+    List<TankRuleModel> rules = [];
+
     try {
-      final results = await Future.wait([
-        ref.read(tankNotifierProvider.notifier).getDropdowns(),
-        ref.read(tankNotifierProvider.notifier).getProducts(),
-        ref.read(tankRepositoryProvider).getAllTankRules(),
+      final results = await Future.wait<dynamic>([
+        ref.read(tankNotifierProvider.notifier).getDropdowns().catchError((e) {
+          debugPrint('Error loading dropdowns metadata: $e');
+          return <String, dynamic>{};
+        }),
+        ref.read(tankNotifierProvider.notifier).getProducts().catchError((e) {
+          debugPrint('Error loading products list: $e');
+          return <TankProduct>[];
+        }),
+        ref.read(tankRepositoryProvider).getAllTankRules().catchError((e) {
+          debugPrint('Error loading all tank rules: $e');
+          return <TankRuleModel>[];
+        }),
+        ref.read(tankDimensionNotifierProvider.notifier).loadTankDimensions().catchError((e) {
+          debugPrint('Error loading tank dimensions in modal: $e');
+          return null;
+        }),
       ]);
 
-      final data = results[0] as Map<String, dynamic>;
-      final products = results[1] as List<TankProduct>;
-      final rules = results[2] as List<TankRuleModel>;
+      if (results[0] is Map<String, dynamic>) {
+        data = results[0] as Map<String, dynamic>;
+      }
 
-      setState(() {
-        _products = products;
-        _tankRules = rules;
+      if (results[1] is List) {
+        products = List<TankProduct>.from(results[1] as Iterable);
+      }
 
-        if (widget.tank != null) {
-
-          // UNIT
-          final units = (data['units'] as List?) ?? [];
-          final unitMatches =
-          units.where((u) => u['id'] == widget.tank!.unitId);
-
-          _selectedUnit =
-          unitMatches.isNotEmpty ? unitMatches.first : null;
-
-          // TANK TYPE
-          final tankTypes = (data['tank_types'] as List?) ?? [];
-          final tankTypeMatches =
-          tankTypes.where((tt) => tt['id'] == widget.tank!.tankTypeId);
-
-          _selectedTankType =
-          tankTypeMatches.isNotEmpty ? tankTypeMatches.first : null;
-
-          // PRODUCT
-          final foundProducts =
-          products.where((p) => p.productId == widget.tank!.productId);
-
-          _selectedProduct =
-          foundProducts.isNotEmpty ? foundProducts.first : null;
-
-          // RULE
-          final foundRule =
-          rules.where((tr) => tr.id == widget.tank!.ruleId);
-
-          _selectedRule =
-          foundRule.isNotEmpty ? foundRule.first : null;
-        }
-      });
+      if (results[2] is List) {
+        rules = List<TankRuleModel>.from(results[2] as Iterable);
+      }
     } catch (e, stackTrace) {
-      debugPrint('Error loading dropdowns: $e');
+      debugPrint('Error loading dropdowns in Future.wait: $e');
       debugPrintStack(stackTrace: stackTrace);
-    } finally {
-      setState(() => _isLoadingDropdowns = false);
     }
+
+    if (!mounted) return;
+
+    setState(() {
+      _products = products;
+      _tankRules = rules;
+
+      if (widget.tank != null) {
+        // UNIT
+        final units = (data['units'] as List?) ?? [];
+        final unitMatches =
+        units.where((u) => u['id'] == widget.tank!.unitId);
+
+        _selectedUnit =
+        unitMatches.isNotEmpty ? unitMatches.first : null;
+
+        // TANK TYPE
+        final tankTypes = (data['tank_types'] as List?) ?? [];
+        final tankTypeMatches =
+        tankTypes.where((tt) => tt['id'] == widget.tank!.tankTypeId);
+
+        _selectedTankType =
+        tankTypeMatches.isNotEmpty ? tankTypeMatches.first : null;
+
+        // PRODUCT
+        final foundProducts =
+        products.where((p) => p.productId == widget.tank!.productId);
+
+        _selectedProduct =
+        foundProducts.isNotEmpty ? foundProducts.first : null;
+
+        // RULE
+        final foundRule =
+        rules.where((tr) => tr.id == widget.tank!.ruleId);
+
+        _selectedRule =
+        foundRule.isNotEmpty ? foundRule.first : null;
+
+        // TANK DIMENSION
+        final dims = ref.read(tankDimensionNotifierProvider).tankDimensions;
+        final dimMatches = dims.where((d) => d.id == widget.tank!.tankDimension);
+        _selectedDimension = dimMatches.isNotEmpty ? dimMatches.first : null;
+      }
+      _isLoadingDropdowns = false;
+    });
   }
 
 
@@ -219,12 +252,11 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       siteId: _selectedSite?.siteId ?? widget.tank?.siteId,
       addressId: _selectedSite?.addressId ?? widget.tank?.addressId,
       unitId: _selectedUnit?['id'],
-      productId: _selectedProduct is TankProduct
-          ? _selectedProduct.productId
-          : _selectedProduct?['id'],
+      productId: _selectedProduct?.productId,
       channelData: channelData['channels'],
       companyId: _selectedCompany?.id ?? widget.tank?.companyId,
       ruleId: _selectedRule?.id,
+      tankDimension: _selectedDimension?.id,
     );
 
     final success = widget.tank != null
@@ -258,6 +290,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   @override
   Widget build(BuildContext context) {
     final tankState = ref.watch(tankNotifierProvider);
+    final tankDimState = ref.watch(tankDimensionNotifierProvider);
+    final List<TankDimension> dimensions = tankDimState.tankDimensions;
 
     return Align(
       alignment: Alignment.centerRight,
@@ -340,15 +374,30 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       'ASSIGNED PRODUCT',
                       _isLoadingDropdowns
                           ? const LinearProgressIndicator(minHeight: 2)
-                          : AppDropdown<dynamic>(
+                          : AppDropdown<TankProduct>(
                               value: _selectedProduct,
                               items: _products,
-                              itemLabel: (p) => p is TankProduct
-                                  ? p.productName
-                                  : p['product_name'],
+                              itemLabel: (p) => p.productName,
                               hint: 'Select Product',
                               onChanged: (v) =>
                                   setState(() => _selectedProduct = v),
+                            ),
+                    ),
+                    const SizedBox(height: 25),
+                    _buildLabelField(
+                      'TANK DIMENSION',
+                      _isLoadingDropdowns
+                          ? const LinearProgressIndicator(minHeight: 2)
+                          : AppDropdown<TankDimension?>(
+                              value: _selectedDimension,
+                              items: [null, ...dimensions],
+                              itemLabel: (dim) => dim == null ? 'Select Dimension' : dim.type,
+                              hint: 'Select Dimension',
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedDimension = value;
+                                });
+                              },
                             ),
                     ),
                     const SizedBox(height: 25),
