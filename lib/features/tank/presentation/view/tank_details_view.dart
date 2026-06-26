@@ -5,6 +5,7 @@ import 'package:air_water/features/tank/presentation/view/tabs/tank_map_tab.dart
 import 'package:air_water/features/tank/presentation/view/tabs/tank_readings_tab.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -85,8 +86,8 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   Expanded(
                     child: AppDetailsHeader(
                       title:
-                      '${widget.tank.tankName} - Tank Nr: ${widget.tank.deviceId}',
-                      subtitle: '${widget.tank.siteName} - City : ${widget.tank.city} - State : ${widget.tank.region}',
+                      'Tank Nr: ${widget.tank.tankName} - SNo: ${widget.tank.deviceId}',
+                      subtitle: '${widget.tank.siteName}, City : ${widget.tank.city}, State : ${widget.tank.region}',
                       breadcrumbs: [],
                       onBack: () => context.pop(),
                     ),
@@ -1058,7 +1059,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     sheet.getRangeByName('A4').setText('Site Name');
     sheet.getRangeByName('B4').setText(widget.tank.siteName);
 
-    sheet.getRangeByName('A5').setText('Tank Name');
+    sheet.getRangeByName('A5').setText('Product Name');
     sheet.getRangeByName('B5').setText('${widget.tank.tankName}(${widget.tank.gasType})');
 
     sheet.getRangeByName('A6').setText('Device ID');
@@ -1215,7 +1216,12 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   Future<void> exportTankReadingsPdf(
       List<TankReadingModel> readings,
       ) async {
+
     final pdf = pw.Document();
+
+    final svgLogo = await rootBundle.loadString(
+      'assets/svg/company_logo.svg',
+    );
 
     pdf.addPage(
       pw.MultiPage(
@@ -1236,15 +1242,27 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text(
-                  'Tank Readings Report',
-                  style: pw.TextStyle(
-                    fontSize: 24,
-                    fontWeight: pw.FontWeight.bold,
-                    color: pdfLib.PdfColors.blue,
+                pw.Header(
+                  level: 0,
+                  decoration: const pw.BoxDecoration(), // Removes default line
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'Tank Readings Report',
+                        style: pw.TextStyle(
+                          fontSize: 20,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SvgImage(
+                        svg: svgLogo,
+                        fit: pw.BoxFit.contain,
+                        height: 25,
+                      ),
+                    ],
                   ),
                 ),
-                pw.SizedBox(height: 12),
 
                 // Tank Details in a grid layout
                 pw.Row(
@@ -1255,8 +1273,8 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           _buildDetailRow('Site Name', widget.tank.siteName),
-                          _buildDetailRow('Tank Name', '${widget.tank.tankName}(${widget.tank.gasType})'),
-                          _buildDetailRow('Device ID', widget.tank.deviceId),
+                          _buildDetailRow('Tank Id & Gas', '${widget.tank.tankName}(${widget.tank.gasType})'),
+                          _buildDetailRow('Device SNo', widget.tank.deviceId),
                         ],
                       ),
                     ),
@@ -1264,11 +1282,11 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
+                          _buildDetailRow('City', widget.tank.city),
                           _buildDetailRow('Date Range', _getDateRangeLabel()),
                           _buildDetailRow('Generated On',
                               DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now())
                           ),
-                          _buildDetailRow('Total Readings', '${readings.length}'),
                         ],
                       ),
                     ),

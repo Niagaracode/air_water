@@ -88,6 +88,7 @@ extension TankFilterExtension on List<SiteGroupModel> {
     final searchLower = searchQuery.toLowerCase();
     return tank.tankName.toLowerCase().contains(searchLower) ||
         tank.siteName.toLowerCase().contains(searchLower) ||
-        tank.deviceId.toLowerCase().contains(searchLower);
+        tank.deviceId.toLowerCase().contains(searchLower) ||
+        tank.gasType.toLowerCase().contains(searchLower);
   }
 }

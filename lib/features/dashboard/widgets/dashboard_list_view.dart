@@ -272,7 +272,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
       ),
       child: Row(
         children: [
-          Expanded(child: Text('SITE / TANK', style: _adminHeaderStyle())),
+          Expanded(child: Text('SITE / TANK ID', style: _adminHeaderStyle())),
           SizedBox(width: 200, child: Text('DEVICE ID', style: _adminHeaderStyle())),
           Expanded(child: Text('LEVEL', style: _adminHeaderStyle(), textAlign: TextAlign.center)),
           SizedBox(width: 100, child: Text('PRESSURE', style: _adminHeaderStyle(), textAlign: TextAlign.center)),
@@ -858,15 +858,15 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
   Color getGasTypeColor(String gasType) {
     switch (gasType.toUpperCase()) {
       case 'LAR':
-        return Colors.red.shade500;
+        return Colors.teal;
       case 'LCO₂':
-        return Colors.deepPurple;
+        return Colors.grey;
       case 'LIN':
         return Colors.blueGrey;
       case 'LMO':
-        return Colors.blue;
+        return Colors.brown;
       case 'LOX':
-        return Colors.cyan;
+        return Colors.black54;
       default:
         return Colors.grey;
     }

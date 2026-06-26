@@ -328,7 +328,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       ],
                     ),
                     const SizedBox(height: 48),
-                    _buildLabelField('TANK NAME', _buildTankAutocomplete()),
+                    _buildLabelField('TANK ID', _buildTankAutocomplete()),
                     const SizedBox(height: 25),
                     if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
                       _buildLabelField('PRIMARY COMPANY', _buildCompanyAutocomplete()),
