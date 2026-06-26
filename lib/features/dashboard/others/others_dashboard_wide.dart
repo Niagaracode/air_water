@@ -1,6 +1,9 @@
 import 'package:air_water/core/user_config/user_role.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart' as pdfLib;
 
 import '../../../core/app_theme/app_theme.dart';
 import '../../tank/presentation/view/tank_details_view.dart';
@@ -8,7 +11,6 @@ import '../data/models/tank_data_model.dart';
 import '../provider/dashboard_controller.dart';
 import '../provider/dashboard_provider.dart';
 
-import 'dart:typed_data';
 import 'package:file_saver/file_saver.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xls;
 import 'package:pdf/widgets.dart' as pw;
@@ -242,29 +244,90 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
     );
   }
 
-  Future<void> exportToPdf(
-      List<TankDataModel> tanks,
-      ) async {
+  Future<void> exportToPdf(List<TankDataModel> tanks) async {
 
     final pdf = pw.Document();
 
+    final svgLogo = await rootBundle.loadString(
+      'assets/svg/company_logo.svg',
+    );
+
     pdf.addPage(
       pw.MultiPage(
+        pageFormat: pdfLib.PdfPageFormat.a4,
+        margin: pw.EdgeInsets.all(40),
         build: (context) => [
 
-          pw.Text(
-            'Tank Report',
-            style: pw.TextStyle(
-              fontSize: 22,
-              fontWeight: pw.FontWeight.bold,
+          // Header Section
+          pw.Container(
+            padding: pw.EdgeInsets.only(bottom: 16),
+            decoration: pw.BoxDecoration(
+              border: pw.Border(
+                bottom: pw.BorderSide(
+                  color: pdfLib.PdfColors.blue,
+                  width: 2,
+                ),
+              ),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Header(
+                  level: 0,
+                  decoration: const pw.BoxDecoration(), // Removes default line
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'Overall Tank Reports',
+                        style: pw.TextStyle(
+                          fontSize: 20,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SvgImage(
+                        svg: svgLogo,
+                        fit: pw.BoxFit.contain,
+                        height: 25,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Tank Details in a grid layout
+                pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Expanded(
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          _buildDetailRow('Region', _selectedRegion),
+                        ],
+                      ),
+                    ),
+                    pw.Expanded(
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          _buildDetailRow('Generated On',
+                              DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now())
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
 
-          pw.SizedBox(height: 20),
+          pw.SizedBox(height: 24),
 
           pw.Table.fromTextArray(
             headers: [
-              'Tank',
+              'Site',
+              'Tank Id',
               'Level',
               'Pressure',
               'Battery',
@@ -273,11 +336,12 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
             ],
             data: tanks.map((tank) {
               return [
+                tank.siteName,
                 tank.tankName,
-                tank.level.toString(),
-                tank.pressure.toString(),
-                tank.batteryV.toString(),
-                tank.solarV.toString(),
+                '${tank.level.toString()}%',
+                '${tank.pressure.toString()} Bar',
+                '${tank.batteryV.toString()} V',
+                '${tank.solarV.toString()} V',
                 tank.status,
               ];
             }).toList(),
@@ -293,6 +357,45 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
       bytes: bytes,
       ext: 'pdf',
       mimeType: MimeType.pdf,
+    );
+  }
+
+  pw.Widget _buildDetailRow(String label, String value) {
+    return pw.Container(
+      padding: pw.EdgeInsets.symmetric(vertical: 2),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Container(
+            width: 100,
+            child: pw.Text(
+              label,
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+                color: pdfLib.PdfColors.grey700,
+              ),
+            ),
+          ),
+          pw.Text(
+            ': ',
+            style: pw.TextStyle(
+              fontSize: 11,
+              color: pdfLib.PdfColors.grey500,
+            ),
+          ),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: pw.TextStyle(
+                fontSize: 11,
+                fontWeight: pw.FontWeight.bold,
+                color: pdfLib.PdfColors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

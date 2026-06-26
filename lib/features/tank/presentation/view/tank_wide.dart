@@ -319,7 +319,7 @@ class _TankWideState extends ConsumerState<TankWide> {
       child: Row(
         children: [
           AppTableHeaderCell('SI.NO', width: 60),
-          AppTableHeaderCell('Site/ Tank', flex: 2),
+          AppTableHeaderCell('Site/ Tank Id', flex: 2),
           AppTableHeaderCell('Device id', flex: 2),
           AppTableHeaderCell('Product', flex: 1, textAlign: TextAlign.center),
           AppTableHeaderCell('Status', flex: 1),
