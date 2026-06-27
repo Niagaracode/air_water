@@ -3,21 +3,28 @@ import 'package:air_water/features/tank/presentation/view/tabs/tank_details_tab.
 import 'package:air_water/features/tank/presentation/view/tabs/tank_events_tab.dart';
 import 'package:air_water/features/tank/presentation/view/tabs/tank_map_tab.dart';
 import 'package:air_water/features/tank/presentation/view/tabs/tank_readings_tab.dart';
+import 'package:air_water/features/tank/presentation/view/threshold_side_sheet.dart';
+import 'package:data_table_2/data_table_2.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/helpers/date_formatter.dart';
+import '../../../../shared/utils/app_text_styles.dart';
 import '../../../../shared/widgets/app_details_header.dart';
 import '../../../dashboard/data/models/tank_data_model.dart';
+import '../../../dashboard/widgets/tank_level_widget.dart';
+import '../../data/model/tank_channel_model.dart';
 import '../../data/model/tank_reading_model.dart';
+import '../controller/tank_channel_provider.dart';
+import '../controller/tank_provider.dart';
 import '../controller/tank_readings_provider.dart';
 
 
-import 'dart:typed_data';
 import 'package:file_saver/file_saver.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xls;
 import 'package:pdf/widgets.dart' as pw;
@@ -65,11 +72,10 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     super.dispose();
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
+
+    final channelState = ref.watch(tankChannelProvider(widget.tankId));
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -78,124 +84,284 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
         child: Column(
           children: [
 
-            Padding(
-              padding: const EdgeInsets.only(left: 24, right: 24),
-              child: Row(
-                children: [
-                  /// HEADER
-                  Expanded(
-                    child: AppDetailsHeader(
-                      title:
-                      'Tank Nr: ${widget.tank.tankName} - SNo: ${widget.tank.deviceId}',
-                      subtitle: '${widget.tank.siteName}, City : ${widget.tank.city}, State : ${widget.tank.region}',
-                      breadcrumbs: [],
-                      onBack: () => context.pop(),
+            Column(
+              children: [
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: 420,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(width: 20),
+                              SizedBox(
+                                width: 35,
+                                child: Tooltip(
+                                  message: 'Back',
+                                  child: InkWell(
+                                    onTap: () => context.pop(),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: primary,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  widget.tank.siteName,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF111827),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 12),
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 260,
+                              height: 200,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+
+                                    Text(widget.tank.addressLine_1, style: AppTextStyles.body()),
+                                    Text(widget.tank.addressLine_2, style: AppTextStyles.body()),
+                                    Text(widget.tank.addressLine_3, style: AppTextStyles.body()),
+                                    Text(widget.tank.city, style: AppTextStyles.body()),
+
+                                    Text('---------------', style: TextStyle(color: Colors.grey),),
+
+                                    Text("Tank Nr : ${widget.tank.tankName}", style: AppTextStyles.caption()),
+                                    Text("Tank Cap : ${widget.tank.level}", style: AppTextStyles.caption()),
+                                    Text("RTU SNo : ${widget.tank.deviceId}", style: AppTextStyles.caption()),
+                                    Text("Product : ${widget.tank.gasType}", style: AppTextStyles.caption()),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            TankLevelWidget(
+                              level: widget.tank.level.toDouble(),
+                              svgAsset: "assets/svg/tank.svg",
+                            ),
+                          ],
+                        )
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  /// DOWNLOAD BUTTON
-                  PopupMenuButton<String>(
-                    tooltip: 'Download Report',
-                    onSelected: (value) async {
-                      final readings = ref.read(
-                          tankReadingsProvider(
-                            TankReadingParams(
-                              tankId: widget.tankId,
-                              day: isCustomSelected
-                                  ? null
-                                  : selectedSegment,
-                              startDate: customStartDate,
-                              endDate: customEndDate,
-                            ),
-                          ),
-                      ).readings;
 
-                      if (readings.isEmpty) return;
-
-                      final reportTitle = _getReportTitle();
-
-                      if (value == 'excel') {
-                        await exportTankReadingsExcel(readings, reportTitle);
-                      }
-                      if (value == 'pdf') {
-                        await exportTankReadingsPdf(readings);
-                      }
-                    },
-
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'excel',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.table_chart_outlined,
-                              color: primary,
-                            ),
-
-                            const SizedBox(width: 10),
-
-                            const Text('Download Excel'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'pdf',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.picture_as_pdf_outlined,
-                              color: primary,
-                            ),
-
-                            const SizedBox(width: 10),
-
-                            const Text('Download PDF'),
-                          ],
-                        ),
-                      ),
-                    ],
-
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: primary.withValues(alpha: 0.1),
-                        ),
-                      ),
-
-                      child: Row(
+                    Expanded(
+                      child: Column(
                         children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16, top: 10),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'DATA CHANNELS',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Spacer(),
+                                TextButton.icon(
+                                  onPressed: () {
 
-                          Icon(
-                            Icons.download,
-                            size: 18,
-                            color: primary,
-                          ),
+                                    showGeneralDialog(
+                                      context: context,
+                                      barrierDismissible: true,
+                                      barrierLabel: 'Threshold',
+                                      barrierColor: Colors.black54,
+                                      transitionDuration: const Duration(milliseconds: 300),
 
-                          const SizedBox(width: 8),
+                                      pageBuilder: (_, __, ___) {
+                                        return Align(
+                                          alignment: Alignment.centerRight,
+                                          child: ThresholdSideSheet(
+                                            channels: channelState.channels,
+                                            onSave: (Map<String, dynamic> payload) async {
+                                              // payload contains the complete JSON structure with tankId
+                                              print('Complete payload to save: $payload');
 
-                          Text(
-                            'Download',
-                            style: TextStyle(
-                              color: primary,
-                              fontWeight: FontWeight.w600,
+                                              try {
+                                                // Call the repository to update
+                                                final tankRepository = ref.read(tankRepositoryProvider);
+                                                await tankRepository.updateTankChannelEvent(widget.tankId, payload);
+
+                                                // Show success message
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('Thresholds updated successfully'),
+                                                    backgroundColor: Colors.green,
+                                                  ),
+                                                );
+
+                                              } catch (e) {
+                                                // Show error message
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Error updating thresholds: $e'),
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                );
+                                              }
+
+                                            },
+                                          ),
+                                        );
+                                      },
+
+                                      transitionBuilder: (context, animation, secondaryAnimation, child) {
+
+                                        final tween = Tween(
+                                          begin: const Offset(1, 0),
+                                          end: Offset.zero,
+                                        );
+
+                                        return SlideTransition(
+                                          position: animation.drive(tween),
+                                          child: child,
+                                        );
+                                      },
+                                    );
+                                  },
+
+                                  icon: Icon(
+                                    Icons.view_headline_sharp,
+                                    color: primary,
+                                    size: 18,
+                                  ),
+
+                                  label: Text(
+                                    'View Event Details',
+                                    style: TextStyle(
+                                      color: primary,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                              ],
                             ),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16, top: 5),
+                            child: Container(
+                              height: _calculateTableHeight(channelState.channels),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFE5E7EB),
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x05000000),
+                                    blurRadius: 10,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: channelState.isLoading ? Center(
+                                child: CircularProgressIndicator(),
+                              ) : DataTable2(
+                                columnSpacing: 16,
+                                horizontalMargin: 12,
+                                minWidth: 700,
+                                headingRowHeight: 35,
+                                dataRowHeight: 35,
+                                headingRowDecoration: BoxDecoration(
+                                  color: primary.withValues(alpha: 0.1),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(8),
+                                    topRight: Radius.circular(8),
+                                  ),
+                                ),
+                                columns: const [
+
+                                  DataColumn2(
+                                    label: Text('CHANNEL'),
+                                    fixedWidth: 150,
+                                  ),
+
+                                  DataColumn2(
+                                    label: Text('LAST READING'),
+                                    fixedWidth: 140,
+                                  ),
+                                  DataColumn2(
+                                    label: Text('READING TIME'),
+                                    fixedWidth: 170,
+                                  ),
+                                  DataColumn2(
+                                    label: Text('THRESHOLDS'),
+                                    size: ColumnSize.M,
+                                  ),
+                                ],
+                                rows: channelState.channels
+                                    .where((item) => item.channelEnable).map((item) {
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            getChannelIcon(item.name),
+                                            color: Colors.black87,
+                                            size: 20,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(item.name),
+                                        ],
+                                      )),
+                                      DataCell(
+                                        Text('${item.value.toString()} ${getChannelUnit(item.name)}'),
+                                      ),
+                                      DataCell(
+                                        Text(
+                                          formatDateTime(item.readingTime),
+                                        ),
+                                      ),
+                                      DataCell(
+                                        Text(
+                                          buildThresholdText(item.threshold),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          )
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
+                    SizedBox(width: 16),
+                  ],
+                )
+              ],
             ),
 
             _buildTabBar(),
-
             Expanded(
               child: TabBarView(
                 controller: _tabController,
@@ -261,7 +427,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
               ),
 
               tabs: const [
-                Tab(text: 'Details'),
+                Tab(text: 'Graph'),
                 Tab(text: 'Events'),
                 Tab(text: 'Readings'),
                 Tab(text: 'Map'),
@@ -346,9 +512,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
               },
             ),
           ),
-
           const SizedBox(width: 8),
-
           // Custom Button with border
           SizedBox(
             height: 34,
@@ -391,6 +555,103 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: isCustomSelected ? Colors.white : primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          PopupMenuButton<String>(
+            tooltip: 'Download Report',
+            onSelected: (value) async {
+              final readings = ref.read(
+                tankReadingsProvider(
+                  TankReadingParams(
+                    tankId: widget.tankId,
+                    day: isCustomSelected
+                        ? null
+                        : selectedSegment,
+                    startDate: customStartDate,
+                    endDate: customEndDate,
+                  ),
+                ),
+              ).readings;
+
+              if (readings.isEmpty) return;
+
+              final reportTitle = _getReportTitle();
+
+              if (value == 'excel') {
+                await exportTankReadingsExcel(readings, reportTitle);
+              }
+              if (value == 'pdf') {
+                await exportTankReadingsPdf(readings);
+              }
+            },
+
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'excel',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.table_chart_outlined,
+                      color: primary,
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    const Text('Download Excel'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'pdf',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.picture_as_pdf_outlined,
+                      color: primary,
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    const Text('Download PDF'),
+                  ],
+                ),
+              ),
+            ],
+
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: primary.withValues(alpha: 0.1),
+                ),
+              ),
+
+              child: Row(
+                children: [
+
+                  Icon(
+                    Icons.download,
+                    size: 18,
+                    color: primary,
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  Text(
+                    'Download',
+                    style: TextStyle(
+                      color: primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -1009,6 +1270,102 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
         return 'Last 30 Days';
       default:
         return 'Selected Period';
+    }
+  }
+
+  double _calculateTableHeight(List<dynamic> channels) {
+    final enabledChannelsCount = channels.where((item) => item.channelEnable).length;
+    if (enabledChannelsCount == 0) {
+      return 100;
+    }
+
+    final headingRowHeight = 35.0;
+    final dataRowHeight = 35.0;
+    final bottomPadding = 8.0;
+
+    return headingRowHeight + (enabledChannelsCount * dataRowHeight) + bottomPadding;
+  }
+
+  IconData getChannelIcon(String name) {
+    switch (name.toLowerCase()) {
+      case 'level':
+        return Icons.gas_meter_outlined;
+
+      case 'pressure':
+        return Icons.speed;
+
+      case 'battery voltage':
+        return Icons.battery_0_bar_rounded;
+
+      case 'solar voltage':
+        return Icons.solar_power;
+
+      default:
+        return Icons.sensors;
+    }
+  }
+
+  String getChannelUnit(String name) {
+    switch (name.toLowerCase()) {
+      case 'level':
+        return '%';
+
+      case 'pressure':
+        return 'Bar';
+
+      case 'battery voltage':
+        return 'Volts';
+
+      case 'solar voltage':
+        return 'Volts';
+
+      default:
+        return '';
+    }
+  }
+
+  String buildThresholdText(ThresholdModel threshold) {
+    List<String> items = [];
+
+    if (threshold.full != null) {
+      items.add(
+        'F: ${threshold.full!.comparator} ${threshold.full!.value}',
+      );
+    }
+
+    if (threshold.reorder != null) {
+      items.add(
+        'R: ${threshold.reorder!.comparator} ${threshold.reorder!.value}',
+      );
+    }
+
+    if (threshold.critical != null) {
+      items.add(
+        'C: ${threshold.critical!.comparator} ${threshold.critical!.value}',
+      );
+    }
+
+    if (threshold.low != null) {
+      items.add(
+        'L: ${threshold.low!.comparator} ${threshold.low!.value}',
+      );
+    }
+
+    return items.join('    ');
+  }
+
+  String formatDateTime(String dateTime) {
+    try {
+      final parsedDate =
+      DateFormat('dd/MM/yyyy HH:mm:ss')
+          .parse(dateTime);
+
+      return DateFormat(
+        'dd/MM/yyyy hh:mm a',
+      ).format(parsedDate);
+
+    } catch (e) {
+      return dateTime;
     }
   }
 

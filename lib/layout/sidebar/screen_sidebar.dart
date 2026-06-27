@@ -107,14 +107,6 @@ class ScreenSidebar extends ConsumerWidget {
             height: isExpanded ? 30 : 13,
             fit: BoxFit.contain,
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Version 1.0.0',
-            style: TextStyle(
-              color: Colors.grey[500],
-              fontSize: isExpanded ? 10 : 8,
-            ),
-          ),
         ],
       ),
     );

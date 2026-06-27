@@ -100,11 +100,6 @@ class TankReadingsTab extends ConsumerWidget {
             ),
 
             DataColumn2(
-              label: Text('Time'),
-              size: ColumnSize.S,
-            ),
-
-            DataColumn2(
               label: Text('Level'),
               size: ColumnSize.S,
             ),
@@ -132,10 +127,6 @@ class TankReadingsTab extends ConsumerWidget {
                   Text(
                     DateFormatter.formatDateTime(reading.createdAt),
                   ),
-                ),
-
-                DataCell(
-                  Text(reading.time),
                 ),
 
                 DataCell(
