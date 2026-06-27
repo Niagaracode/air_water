@@ -1,4 +1,5 @@
 class AppConstants {
+  // static const String apiUrl = 'http://localhost:4000/api';
   //static const String apiUrl = 'https://colony-substantial-ambassador-ecology.trycloudflare.com/api';
   static const String apiUrl =
       'https://irrigationcare.niagaraautomation.com:4000/api';

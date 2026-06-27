@@ -86,6 +86,22 @@ class ApiService {
     return response;
   }
 
+  Future<Response> download(String endpoint, {Map<String, dynamic>? query}) async {
+    final encryptedPath = _encryptPathSegments(endpoint);
+    debugPrint("Full URL: ${_dio.options.baseUrl}$encryptedPath");
+    debugPrint("Query: $query");
+    final response = await _dio.get(
+      encryptedPath,
+      queryParameters: query,
+      options: Options(
+        responseType: ResponseType.bytes,
+        sendTimeout: const Duration(minutes: 5),
+        receiveTimeout: const Duration(minutes: 5),
+      ),
+    );
+    return response;
+  }
+
   Future<Response> post(String endpoint, {dynamic data}) async {
     final encryptedPath = _encryptPathSegments(endpoint);
     debugPrint("Full URL: ${_dio.options.baseUrl}$encryptedPath");

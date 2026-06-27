@@ -12,8 +12,8 @@ class DioClient {
   DioClient(SecureStorage storage, {required VoidCallback onLogout}) : _dio = Dio(
     BaseOptions(
       baseUrl: Env.apiUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
     ),
   ) {
     _dio.interceptors.add(AuthInterceptor(storage, onLogout: onLogout));
