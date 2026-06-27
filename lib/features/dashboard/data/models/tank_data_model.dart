@@ -15,6 +15,9 @@ class TankDataModel {
   final String deviceId;
   final String gasType;
   final String city;
+  final String addressLine_1;
+  final String addressLine_2;
+  final String addressLine_3;
   final double level;
   final double pressure;
   final double batteryV;
@@ -34,6 +37,9 @@ class TankDataModel {
     required this.deviceId,
     required this.gasType,
     required this.city,
+    required this.addressLine_1,
+    required this.addressLine_2,
+    required this.addressLine_3,
     required this.level,
     required this.pressure,
     required this.batteryV,
@@ -55,6 +61,9 @@ class TankDataModel {
       deviceId: json['device_id'] ?? '',
       gasType: json['product_name'] ?? '',
       city: json['city'] ?? '',
+      addressLine_1: json['address_line_1'] ?? '',
+      addressLine_2: json['address_line_2'] ?? '',
+      addressLine_3: json['address_line_3'] ?? '',
       level: _toDouble(json['level']),
       pressure: _toDouble(json['ptn']),
       batteryV: _toDouble(json['bat']),
@@ -100,6 +109,9 @@ class TankDataModel {
       deviceId: deviceId,
       gasType: gasType,
       city: city,
+      addressLine_1: addressLine_1,
+      addressLine_2: addressLine_2,
+      addressLine_3: addressLine_3,
       level: level ?? this.level,
       pressure: pressure ?? this.pressure,
       batteryV: batteryV ?? this.batteryV,

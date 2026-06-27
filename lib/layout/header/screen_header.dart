@@ -48,7 +48,7 @@ class ScreenHeader extends ConsumerWidget {
             SidebarHeader(isExpanded: isExpanded, userRole: userRole),
             const SizedBox(width: 16),
             Text(
-              'AIR WATER $finalDisplayName!',
+              'AIR WATER welcomes you, $finalDisplayName!',
               style: GoogleFonts.outfit(
                 fontSize: 20,
                 color: Colors.black54,
