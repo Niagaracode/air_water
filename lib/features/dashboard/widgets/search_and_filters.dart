@@ -11,10 +11,13 @@ class SearchAndFilters extends ConsumerStatefulWidget {
     required this.onSearchChanged,
     required this.onRegionChanged,
     required this.onStatusChanged,
+    required this.onProductChanged,
     required this.onClearFilters,
     this.selectedRegion = 'All Regions',
     this.selectedStatus = 'All Status',
+    this.selectedProduct = 'All Product',
     this.statuses = const ['All Status', 'Online', 'Offline', 'Low Level', 'Critical', 'Reorder'],
+    this.products = const ['All Product', 'LOX', 'LIN', 'LAR', 'LMO', 'LCO2'],
     this.searchHint = 'Search devices...',
     this.showStats = true,
   });
@@ -22,10 +25,13 @@ class SearchAndFilters extends ConsumerStatefulWidget {
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<String> onRegionChanged;
   final ValueChanged<String> onStatusChanged;
+  final ValueChanged<String> onProductChanged;
   final VoidCallback onClearFilters;
   final String selectedRegion;
   final String selectedStatus;
   final List<String> statuses;
+  final String selectedProduct;
+  final List<String> products;
   final String searchHint;
   final bool showStats;
 
@@ -96,6 +102,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
 
     final hasFilters = widget.selectedRegion != 'All Regions' ||
         widget.selectedStatus != 'All Status' ||
+        widget.selectedProduct != 'All Product' ||
         _searchController.text.isNotEmpty;
 
     return Column(
@@ -154,6 +161,24 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                 ),
               ),
             ),
+            const SizedBox(width: 12),
+
+            /// Product Filter (NEW)
+            Expanded(
+              child: FilterDropdown<String>(
+                borderColor: const Color(0xFFE2E8F0),
+                borderRadius: 12,
+                label: 'Product',
+                value: widget.selectedProduct,
+                items: widget.products,
+                onChanged: (value) {
+                  if (value != null) {
+                    widget.onProductChanged(value);
+                  }
+                },
+              ),
+            ),
+
             const SizedBox(width: 12),
 
             /// Region Filter
@@ -257,7 +282,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      '${_resultCount} result${_resultCount != 1 ? 's' : ''}',
+                      '$_resultCount result${_resultCount != 1 ? 's' : ''}',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,

@@ -36,6 +36,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
 
   String _selectedStatus = 'All Status';
   String _selectedRegion = 'All Regions';
+  String _selectedProduct = 'All Product'; // ADDED this
   String _searchQuery = '';
   bool _isListView = true;
 
@@ -64,7 +65,8 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
               children: [
                 StatisticsCards(statistics: statistics),
                 const SizedBox(height: 30),
-                SearchAndFilters(onSearchChanged: (val) {
+                SearchAndFilters(
+                  onSearchChanged: (val) {
                     setState(() {
                       _searchQuery = val;
                     });
@@ -82,18 +84,25 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                     });
                   },
 
+                  onProductChanged: (val) { // ADDED this
+                    setState(() {
+                      _selectedProduct = val;
+                    });
+                  },
+
                   onClearFilters: () {
                     setState(() {
                       _selectedRegion = 'All Regions';
                       _selectedStatus = 'All Status';
+                      _selectedProduct = 'All Product'; // ADDED this
                       _searchQuery = '';
                     });
                     _searchController.clear();
                   },
 
                   selectedRegion: _selectedRegion,
-
                   selectedStatus: _selectedStatus,
+                  selectedProduct: _selectedProduct, // ADDED this
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -107,7 +116,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                         });
                       },
                     ),
-                    Spacer(),
+                    const Spacer(),
                     PopupMenuButton<String>(
                       tooltip: 'Download Report',
                       onSelected: (value) async {
@@ -127,8 +136,8 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                           child: Row(
                             children: [
                               Icon(Icons.table_chart_outlined, color: primary),
-                              SizedBox(width: 10),
-                              Text('Download Excel'),
+                              const SizedBox(width: 10),
+                              const Text('Download Excel'),
                             ],
                           ),
                         ),
@@ -137,8 +146,8 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                           child: Row(
                             children: [
                               Icon(Icons.picture_as_pdf_outlined, color: primary),
-                              SizedBox(width: 10),
-                              Text('Download PDF'),
+                              const SizedBox(width: 10),
+                              const Text('Download PDF'),
                             ],
                           ),
                         ),
@@ -158,7 +167,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                         child: Row(
                           children: [
                             Icon(Icons.download, size: 18, color: primary),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text('Download', style: TextStyle(color: primary)),
                           ],
                         ),
@@ -172,6 +181,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                   filteredTanks: tanks,
                   selectedRegion: _selectedRegion,
                   selectedStatus: _selectedStatus,
+                  selectedProduct: _selectedProduct, // ADDED this
                   searchQuery: _searchQuery,
                   userRole: UserRole.superAdmin,
                   onTankTap: _callDetailsPage,
@@ -201,14 +211,15 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
 
     final sheet = workbook.worksheets[0];
 
-    /// Header
+    /// Header - ADDED Product column
     sheet.getRangeByName('A1').setText('Tank Name');
     sheet.getRangeByName('B1').setText('Site');
-    sheet.getRangeByName('C1').setText('Level');
-    sheet.getRangeByName('D1').setText('Pressure');
-    sheet.getRangeByName('E1').setText('Battery');
-    sheet.getRangeByName('F1').setText('Solar');
-    sheet.getRangeByName('G1').setText('Status');
+    sheet.getRangeByName('C1').setText('Product'); // ADDED this
+    sheet.getRangeByName('D1').setText('Level');
+    sheet.getRangeByName('E1').setText('Pressure');
+    sheet.getRangeByName('F1').setText('Battery');
+    sheet.getRangeByName('G1').setText('Solar');
+    sheet.getRangeByName('H1').setText('Status');
 
     /// Data
     for (int i = 0; i < tanks.length; i++) {
@@ -217,11 +228,12 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
 
       sheet.getRangeByName('A$row').setText(tank.tankName);
       sheet.getRangeByName('B$row').setText(tank.siteName);
-      sheet.getRangeByName('C$row').setNumber(tank.level);
-      sheet.getRangeByName('D$row').setNumber(tank.pressure);
-      sheet.getRangeByName('E$row').setNumber(tank.batteryV);
-      sheet.getRangeByName('F$row').setNumber(tank.solarV);
-      sheet.getRangeByName('G$row').setText(tank.status);
+      sheet.getRangeByName('C$row').setText(tank.gasType); // ADDED this
+      sheet.getRangeByName('D$row').setNumber(tank.level);
+      sheet.getRangeByName('E$row').setNumber(tank.pressure);
+      sheet.getRangeByName('F$row').setNumber(tank.batteryV);
+      sheet.getRangeByName('G$row').setNumber(tank.solarV);
+      sheet.getRangeByName('H$row').setText(tank.status);
     }
 
     sheet.autoFitColumn(1);
@@ -231,6 +243,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
     sheet.autoFitColumn(5);
     sheet.autoFitColumn(6);
     sheet.autoFitColumn(7);
+    sheet.autoFitColumn(8); // ADDED this
 
     final List<int> bytes = workbook.saveAsStream();
 
@@ -294,7 +307,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                   ),
                 ),
 
-                // Tank Details in a grid layout
+                // Tank Details in a grid layout - ADDED Product filter
                 pw.Row(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
@@ -303,6 +316,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           _buildDetailRow('Region', _selectedRegion),
+                          _buildDetailRow('Product', _selectedProduct), // ADDED this
                         ],
                       ),
                     ),
@@ -328,6 +342,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
             headers: [
               'Site',
               'Tank Id',
+              'Product', // ADDED this
               'Level',
               'Pressure',
               'Battery',
@@ -338,6 +353,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
               return [
                 tank.siteName,
                 tank.tankName,
+                tank.gasType, // ADDED this
                 '${tank.level.toString()}%',
                 '${tank.pressure.toString()} Bar',
                 '${tank.batteryV.toString()} V',
@@ -398,5 +414,4 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
       ),
     );
   }
-
 }
