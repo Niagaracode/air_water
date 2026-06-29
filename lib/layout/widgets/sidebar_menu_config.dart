@@ -27,7 +27,7 @@ const configurationMenu = [
     key: 'Company',
     label: 'Company',
     icon: Icons.business_rounded,
-    allowedRoles: [UserRole.superAdmin],
+    allowedRoles: [],
   ),
   SidebarMenuItem(
     key: 'Site',

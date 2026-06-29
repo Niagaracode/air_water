@@ -118,12 +118,12 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       final response = await repository.getGroupedCompanies(limit: 1000);
       _companyGroups = response.data;
 
-      // Explicitly wait for role if it's still loading
-      final roleAsync = ref.read(userRoleProvider);
-      final isSuperAdmin = roleAsync == UserRole.superAdmin;
-
-      if (_companyGroups.isNotEmpty && !isSuperAdmin) {
-        _onCompanyChanged(_companyGroups.first);
+      if (_companyGroups.isNotEmpty) {
+        final targetGroup = _companyGroups.firstWhere(
+          (g) => g.addresses.any((a) => a.companyId == 216),
+          orElse: () => _companyGroups.first,
+        );
+        _onCompanyChanged(targetGroup);
       }
     } catch (e) {
       debugPrint('Error loading companies: $e');
@@ -477,15 +477,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                   _isLoadingCompanies
                                       ? const LinearProgressIndicator(
                                           minHeight: 2,
-                                        )
-                                      : (ref.watch(userRoleProvider) ==
-                                            UserRole.superAdmin)
-                                      ? AppDropdown<CompanyGroup>(
-                                          value: _selectedGroup,
-                                          items: _companyGroups,
-                                          hint: 'Select Company',
-                                          itemLabel: (g) => g.name,
-                                          onChanged: _onCompanyChanged,
                                         )
                                       : AppTextField(
                                           readOnly: true,
