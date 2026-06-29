@@ -12,6 +12,7 @@ import '../../../company/presentation/model/company_model.dart';
 import '../../../site/presentation/controller/site_provider.dart';
 import '../../../device/presentation/controller/device_provider.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
+import '../../../../shared/widgets/app_text_field.dart';
 
 class AssetGroupEditPage extends ConsumerStatefulWidget {
   final AssetGroupModel? group;
