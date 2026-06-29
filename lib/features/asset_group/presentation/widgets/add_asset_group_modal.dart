@@ -92,6 +92,9 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
           setState(() {
             _companies = results;
             _isLoadingCompanies = false;
+            if (widget.initialGroup == null) {
+              _selectedCompanyId = 216;
+            }
           });
         }
       } else {
@@ -368,35 +371,18 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                           const SizedBox(height: 32),
                         ],
 
-                        if (ref.watch(userProvider).currentUser?.roleId ==
-                            1) ...[
+                        if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
                           _buildLabelField(
                             'COMPANY',
-                            DropdownButtonFormField<int>(
-                              isExpanded: true,
-                              value: _selectedCompanyId,
-                              hint: const Text('Select Company'),
-                              items: _companies.map<DropdownMenuItem<int>>((c) {
-                                return DropdownMenuItem<int>(
-                                  value: c.id,
-                                  child: Text(
-                                    c.name,
-                                    style: GoogleFonts.inter(fontSize: 14),
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (v) {
-                                setState(() {
-                                  _selectedCompanyId = v;
-                                  _assignedUsers.clear();
-                                  _selectedUserForAssignment = null;
-                                });
-                              },
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText:
-                                    'Which company does this group belong to?',
+                            AppTextField(
+                              readOnly: true,
+                              controller: TextEditingController(
+                                text: _companies
+                                    .where((c) => c.id == _selectedCompanyId)
+                                    .firstOrNull
+                                    ?.name ?? (_selectedCompanyId == 216 ? 'Air Water' : ''),
                               ),
+                              hint: 'Company',
                             ),
                           ),
                           const SizedBox(height: 32),

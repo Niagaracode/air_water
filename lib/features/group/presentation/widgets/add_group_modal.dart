@@ -54,6 +54,9 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
         _companies = companies;
         _isLoadingRoles = false;
         _isLoadingCompanies = false;
+        if (widget.group == null && _companies.isNotEmpty) {
+          _selectedCompanies = _companies.where((c) => c.id == 216).toList();
+        }
       });
 
       if (widget.group != null) {
@@ -377,16 +380,12 @@ class _AddGroupModalState extends ConsumerState<AddGroupModal> {
                     const SizedBox(height: 8),
                     _isLoadingCompanies
                         ? const Center(child: CircularProgressIndicator())
-                        : AppMultiSelectDropdown<CompanyAutocomplete>(
-                            selectedItems: _selectedCompanies,
-                            items: _companies,
-                            hint: 'Select companies',
-                            itemLabel: (c) => c.name,
-                            onChanged: (values) {
-                              setState(() {
-                                _selectedCompanies = values;
-                              });
-                            },
+                        : AppTextField(
+                            readOnly: true,
+                            controller: TextEditingController(
+                              text: _selectedCompanies.map((c) => c.name).join(', '),
+                            ),
+                            hint: 'Companies',
                           ),
                     const SizedBox(height: 24),
 

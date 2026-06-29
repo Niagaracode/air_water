@@ -62,6 +62,19 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
 
       if (isSuperAdmin) {
         await _loadCompanies();
+        if (_selectedCompany == null) {
+          final company = CompanyAutocomplete(
+            id: 216,
+            name: 'Air Water',
+          );
+          if (mounted) {
+            setState(() {
+              _selectedCompany = company;
+              _companyAutocompleteController.text = company.name;
+            });
+            await _loadCompanyUsers(company.id);
+          }
+        }
       }
 
       // For non-super-admin: auto-set their company
@@ -936,86 +949,14 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
     );
   }
 
-  // ─── Company dropdown (super admin only) ───────────────────────────────────
   Widget _buildCompanyDropdown() {
-    if (_isLoadingCompanies) {
-      return Container(
-        height: 50,
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFD1D5DB)),
-          borderRadius: BorderRadius.circular(10),
-          color: const Color(0xFFF9FAFB),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Loading companies…',
-              style: GoogleFonts.inter(
-                  fontSize: 13, color: const Color(0xFF6B7280)),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return DropdownButtonFormField<CompanyAutocomplete>(
-      isExpanded: true,
-      value: _companies.any((c) => c.id == _selectedCompany?.id)
-          ? _companies.firstWhere((c) => c.id == _selectedCompany?.id)
-          : null,
-      hint: Text(
-        'Select a company…',
-        style:
-            GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
-      ),
-      items: _companies.map((c) {
-        return DropdownMenuItem<CompanyAutocomplete>(
-          value: c,
-          child: Text(
-            c.name,
-            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
-            overflow: TextOverflow.ellipsis,
-          ),
-        );
-      }).toList(),
-      onChanged: (o) {
-        if (o == null) return;
-        setState(() {
-          _selectedCompany = o;
-          _companyAutocompleteController.text = o.name;
-          _assignedUsers.clear();
-          _userConfigs.clear();
-          _selectedUserToAdd = null;
-          _companyUsers = [];
-        });
-        _loadCompanyUsers(o.id);
-      },
-      decoration: InputDecoration(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        border:
-            OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide:
-              const BorderSide(color: Color(0xFF141E7A), width: 1.5),
-        ),
-        fillColor: Colors.white,
-        filled: true,
-      ),
+    return AppTextField(
+      readOnly: true,
+      controller: _companyAutocompleteController,
+      hint: 'Company',
     );
   }
+
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
   Widget _buildLabel(String text) {

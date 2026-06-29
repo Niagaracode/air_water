@@ -76,15 +76,25 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final currentUser = ref.read(userProvider).currentUser;
-      if (currentUser != null && currentUser.roleId != 1) {
+      if (currentUser != null) {
         if (widget.user == null) {
-          setState(() {
-            _selectedCompany = CompanyAutocomplete(
-              id: currentUser.companyId!,
-              name: currentUser.companyName!,
-            );
-            _companyAutocompleteController.text = currentUser.companyName!;
-          });
+          if (currentUser.roleId != 1) {
+            setState(() {
+              _selectedCompany = CompanyAutocomplete(
+                id: currentUser.companyId!,
+                name: currentUser.companyName!,
+              );
+              _companyAutocompleteController.text = currentUser.companyName!;
+            });
+          } else {
+            setState(() {
+              _selectedCompany = CompanyAutocomplete(
+                id: 216,
+                name: 'Air Water',
+              );
+              _companyAutocompleteController.text = 'Air Water';
+            });
+          }
         }
       }
     });
@@ -780,73 +790,12 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
     );
   }
 
-  Widget _buildCompanyAutocomplete() {
-    final currentUser = ref.read(userProvider).currentUser;
-    // Allow both Super Admin (1) and Company Admin (2) to edit the company
-    if (currentUser?.roleId != 1 && currentUser?.roleId != 2) {
-      return AppTextField(
-        controller: _companyAutocompleteController,
-        readOnly: true,
-        hint: 'Company',
-      );
-    }
 
-    return LayoutBuilder(
-      builder: (context, constraints) => RawAutocomplete<CompanyAutocomplete>(
-        focusNode: _companyFocusNode,
-        textEditingController: _companyAutocompleteController,
-        optionsBuilder: (TextEditingValue v) => v.text.isEmpty
-            ? <CompanyAutocomplete>[]
-            : ref.read(userProvider.notifier).searchCompanies(v.text),
-        displayStringForOption: (o) => o.name,
-        fieldViewBuilder: (context, controller, focus, onSubmitted) =>
-            AppTextField(
-              controller: controller,
-              focusNode: focus,
-              hint: 'Search Company...',
-            ),
-        onSelected: (o) {
-          setState(() {
-            _selectedCompany = o;
-          });
-        },
-        optionsViewBuilder: (context, onSelected, options) => Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: constraints.maxWidth,
-              constraints: const BoxConstraints(maxHeight: 300),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: options.length,
-                itemBuilder: (context, i) {
-                  final option = options.elementAt(i);
-                  return ListTile(
-                    hoverColor: const Color(0xFFF3F4F6),
-                    title: Text(
-                      option.name,
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                    onTap: () => onSelected(option),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
+  Widget _buildCompanyAutocomplete() {
+    return AppTextField(
+      controller: _companyAutocompleteController,
+      readOnly: true,
+      hint: 'Company',
     );
   }
 }

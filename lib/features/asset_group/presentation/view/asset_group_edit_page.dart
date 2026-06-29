@@ -85,6 +85,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           setState(() {
             _companies = results;
             _isLoadingCompanies = false;
+            if (widget.group == null) {
+              _selectedCompanyId = 216;
+            }
           });
         }
       } else {
@@ -790,28 +793,15 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
             _buildLabelField(
               'COMPANY',
-              DropdownButtonFormField<int>(
-                value: _selectedCompanyId,
-                hint: const Text('Select Company'),
-                items: _companies.map<DropdownMenuItem<int>>((c) {
-                  return DropdownMenuItem<int>(
-                    value: c.id,
-                    child: Text(c.name, style: GoogleFonts.inter(fontSize: 14)),
-                  );
-                }).toList(),
-                onChanged: widget.group != null
-                    ? null
-                    : (v) {
-                        setState(() {
-                          _selectedCompanyId = v;
-                          _assignedUsers.clear();
-                          _selectedUserForAssignment = null;
-                        });
-                      },
-                validator: (v) => v == null ? 'Please select a company' : null,
-                decoration: _inputDecoration(
-                  'Which company does this group belong to?',
+              AppTextField(
+                readOnly: true,
+                controller: TextEditingController(
+                  text: _companies
+                      .where((c) => c.id == _selectedCompanyId)
+                      .firstOrNull
+                      ?.name ?? (_selectedCompanyId == 216 ? 'Air Water' : ''),
                 ),
+                hint: 'Company',
               ),
             ),
             const SizedBox(height: 24),

@@ -64,6 +64,12 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
         );
         _companyAutocompleteController.text = tank.companyName!;
       }
+    } else {
+      _selectedCompany = CompanyAutocomplete(
+        id: 216,
+        name: 'Air Water',
+      );
+      _companyAutocompleteController.text = 'Air Water';
     }
 
     _loadDropdownData();
@@ -365,7 +371,14 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                     _buildLabelField('TANK ID', _buildTankAutocomplete()),
                     const SizedBox(height: 25),
                     if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                      _buildLabelField('PRIMARY COMPANY', _buildCompanyAutocomplete()),
+                      _buildLabelField(
+                        'PRIMARY COMPANY',
+                        AppTextField(
+                          readOnly: true,
+                          controller: _companyAutocompleteController,
+                          hint: 'Company',
+                        ),
+                      ),
                       const SizedBox(height: 25),
                     ],
                     _buildLabelField('SITE', _buildSiteAutocomplete()),
