@@ -1404,17 +1404,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     // REPORT INFO
     // =========================
 
-    String dateRangeText;
-
-    if (customStartDate != null &&
-        customEndDate != null) {
-      dateRangeText =
-      '${DateFormat('dd-MM-yyyy HH:mm').format(customStartDate!)}'
-          ' to '
-          '${DateFormat('dd-MM-yyyy HH:mm').format(customEndDate!)}';
-    } else {
-      dateRangeText = _getDateRangeLabel();
-    }
 
     sheet.getRangeByName('A4').setText('Site Name');
     sheet.getRangeByName('B4').setText(widget.tank.siteName);
@@ -1425,8 +1414,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     sheet.getRangeByName('A6').setText('Device ID');
     sheet.getRangeByName('B6').setText(widget.tank.deviceId);
 
-    sheet.getRangeByName('D4').setText('Date Range');
-    sheet.getRangeByName('E4').setText(dateRangeText);
+
 
     sheet.getRangeByName('D5').setText('Generated On');
     sheet.getRangeByName('E5').setText(
@@ -1643,7 +1631,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           _buildDetailRow('City', widget.tank.city),
-                          _buildDetailRow('Date Range', _getDateRangeLabel()),
                           _buildDetailRow('Generated On',
                               DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now())
                           ),
