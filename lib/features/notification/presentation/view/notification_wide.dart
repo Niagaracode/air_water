@@ -445,6 +445,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
 
     bool isValidRange() {
       final now = DateTime.now();
+      final todayDate = DateTime(now.year, now.month, now.day);
 
       final startDateTime = DateTime(
         startDate.year,
@@ -467,12 +468,14 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
         return false;
       }
 
-      if (startDateTime.isAfter(now)) {
+      final startDateOnly = DateTime(startDate.year, startDate.month, startDate.day);
+      if (startDateOnly.isAfter(todayDate)) {
         errorMessage = 'Start date cannot be in the future';
         return false;
       }
 
-      if (endDateTime.isAfter(now)) {
+      final endDateOnly = DateTime(endDate.year, endDate.month, endDate.day);
+      if (endDateOnly.isAfter(todayDate)) {
         errorMessage = 'End date cannot be in the future';
         return false;
       }
