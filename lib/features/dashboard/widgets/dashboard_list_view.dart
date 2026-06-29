@@ -18,6 +18,7 @@ class DashboardListView extends ConsumerStatefulWidget {
     required this.filteredTanks,
     this.selectedRegion = 'All Regions',
     this.selectedStatus = 'All Status',
+    this.selectedProduct = 'All Product',
     this.searchQuery = '',
     this.onTankTap,
     this.onSiteTap,
@@ -31,6 +32,7 @@ class DashboardListView extends ConsumerStatefulWidget {
   final List<TankDataModel> filteredTanks;
   final String selectedRegion;
   final String selectedStatus;
+  final String selectedProduct;
   final String searchQuery;
   final Function(TankDataModel)? onTankTap;
   final Function(SiteGroupModel)? onSiteTap;
@@ -79,6 +81,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
     return widget.groupedTanks.applyFilters(
       selectedRegion: widget.selectedRegion,
       selectedStatus: widget.selectedStatus,
+      selectedProduct: widget.selectedProduct, // Add this
       searchQuery: searchTerm,
     );
   }
@@ -90,6 +93,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
     return widget.groupedTanks.getTotalTanksCount(
       selectedRegion: widget.selectedRegion,
       selectedStatus: widget.selectedStatus,
+      selectedProduct: widget.selectedProduct, // Add this
       searchQuery: searchTerm,
     );
   }

@@ -2,16 +2,22 @@ import '../data/models/site_group_model.dart';
 import '../data/models/tank_data_model.dart';
 
 extension TankFilterExtension on List<SiteGroupModel> {
-  /// Filters tanks based on region, status, and search query
+  /// Filters tanks based on region, status, search query, and product type
   List<SiteGroupModel> applyFilters({
     required String selectedRegion,
     required String selectedStatus,
     required String searchQuery,
+    required String selectedProduct,
   }) {
     return map((group) {
       final filteredTanks = group.tanks.where((tank) {
-        // Region filter
-        if (selectedRegion != 'All Regions' && tank.region != selectedRegion) {
+        // Product filter - FIXED: use the current tank, not the group's tanks
+        if (selectedProduct != 'All Product' && tank.gasType != selectedProduct) {
+          return false;
+        }
+
+        // Region filter - using city (adjust if your model uses region)
+        if (selectedRegion != 'All Regions' && tank.city != selectedRegion) {
           return false;
         }
 
@@ -45,11 +51,13 @@ extension TankFilterExtension on List<SiteGroupModel> {
     required String selectedRegion,
     required String selectedStatus,
     required String searchQuery,
+    required String selectedProduct, // ADDED this parameter
   }) {
     final filtered = applyFilters(
       selectedRegion: selectedRegion,
       selectedStatus: selectedStatus,
       searchQuery: searchQuery,
+      selectedProduct: selectedProduct,
     );
     return filtered.fold(0, (sum, group) => sum + group.tanks.length);
   }
