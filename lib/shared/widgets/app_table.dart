@@ -6,17 +6,17 @@ import 'package:google_fonts/google_fonts.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 class AppTableHeaderCell extends StatelessWidget {
   final String label;
-  final int? flex;  // You can remove this if not needed elsewhere
+  final int? flex; // You can remove this if not needed elsewhere
   final double? width;
   final TextAlign? textAlign;
 
   const AppTableHeaderCell(
-      this.label, {
-        super.key,
-        this.flex,
-        this.width,
-        this.textAlign,
-      });
+    this.label, {
+    super.key,
+    this.flex,
+    this.width,
+    this.textAlign,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -52,26 +52,29 @@ class AppDataTableCell extends StatelessWidget {
   final TextAlign? textAlign;
 
   const AppDataTableCell(
-      this.text, {
-        super.key,
-        this.child,
-        this.flex,
-        this.width,
-        this.bold = false,
-        this.color,
-        this.fontSize,
-        this.textAlign,
-      });
+    this.text, {
+    super.key,
+    this.child,
+    this.flex,
+    this.width,
+    this.bold = false,
+    this.color,
+    this.fontSize,
+    this.textAlign,
+  });
 
   @override
   Widget build(BuildContext context) {
-    Widget content = child ??
+    Widget content =
+        child ??
         Text(
           text ?? '',
           style: GoogleFonts.inter(
             fontSize: fontSize ?? 14,
             fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
-            color: color ?? (bold ? const Color(0xFF111827) : const Color(0xFF374151)),
+            color:
+                color ??
+                (bold ? const Color(0xFF111827) : const Color(0xFF374151)),
           ),
           textAlign: textAlign,
           overflow: TextOverflow.ellipsis,
@@ -97,31 +100,35 @@ class AppTableCell extends StatelessWidget {
   final int? maxLines; // Add maxLines control
 
   const AppTableCell(
-      this.text, {
-        super.key,
-        this.child,
-        this.flex,
-        this.width,
-        this.bold = false,
-        this.color,
-        this.fontSize,
-        this.textAlign,
-        this.maxLines = 2, // Default to 2 lines
-      });
+    this.text, {
+    super.key,
+    this.child,
+    this.flex,
+    this.width,
+    this.bold = false,
+    this.color,
+    this.fontSize,
+    this.textAlign,
+    this.maxLines = 2, // Default to 2 lines
+  });
 
   @override
   Widget build(BuildContext context) {
-    Widget content = child ?? Text(
-      text ?? '',
-      style: GoogleFonts.inter(
-        fontSize: fontSize ?? 14,
-        fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
-        color: color ?? (bold ? const Color(0xFF111827) : const Color(0xFF374151)),
-      ),
-      textAlign: textAlign,
-      overflow: TextOverflow.ellipsis,
-      maxLines: maxLines,
-    );
+    Widget content =
+        child ??
+        Text(
+          text ?? '',
+          style: GoogleFonts.inter(
+            fontSize: fontSize ?? 14,
+            fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
+            color:
+                color ??
+                (bold ? const Color(0xFF111827) : const Color(0xFF374151)),
+          ),
+          textAlign: textAlign,
+          overflow: TextOverflow.ellipsis,
+          maxLines: maxLines,
+        );
 
     if (width != null) {
       return SizedBox(width: width, child: content);
@@ -222,7 +229,7 @@ class AppRoleBadge extends StatelessWidget {
       bg = const Color(0xFFF5F3FF);
       border = const Color(0xFFDDD6FE);
       text = const Color(0xFF7C3AED);
-    } else if (upperName.contains('COMPANY ADMIN')) {
+    } else if (upperName.contains('ADMIN')) {
       bg = const Color(0xFFEFF6FF);
       border = const Color(0xFFDBEAFE);
       text = const Color(0xFF2563EB);
@@ -230,16 +237,7 @@ class AppRoleBadge extends StatelessWidget {
       bg = const Color(0xFFFFF1F2);
       border = const Color(0xFFFFE4E6);
       text = const Color(0xFFE11D48);
-    } else if (upperName.contains('SUPERVISOR')) {
-      bg = const Color(0xFFEEF2FF);
-      border = const Color(0xFFE0E7FF);
-      text = const Color(0xFF4F46E5);
-    } else if (upperName.contains('TECHNICIAN') ||
-        upperName.contains('TECHNICAL')) {
-      bg = const Color(0xFFFFFBEB);
-      border = const Color(0xFFFEF3C7);
-      text = const Color(0xFFD97706);
-    } else if (upperName.contains('CUSTOMER')) {
+    } else if (upperName.contains('END CUSTOMER')) {
       bg = const Color(0xFFF0F9FF);
       border = const Color(0xFFE0F2FE);
       text = const Color(0xFF0369A1);
@@ -286,7 +284,7 @@ class AppImportanceBadge extends StatelessWidget {
     }
 
     final val = importance!.trim().toLowerCase();
-    
+
     Color bg;
     Color border;
     Color text;

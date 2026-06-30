@@ -16,8 +16,16 @@ class SearchAndFilters extends ConsumerStatefulWidget {
     this.selectedRegion = 'All Regions',
     this.selectedStatus = 'All Status',
     this.selectedProduct = 'All Product',
-    this.statuses = const ['All Status', 'Online', 'Offline', 'Low Level', 'Critical', 'Reorder'],
-    this.products = const ['All Product', 'LOX', 'LIN', 'LAR', 'LMO', 'LCO2'],
+    this.statuses = const [
+      'All Status',
+      'Online',
+      'Offline',
+      'Low Level',
+      'Critical',
+      'Reorder',
+    ],
+
+    this.products = const ['All Product', 'LOX', 'LIN', 'LAR', 'LMO', 'LCO₂'],
     this.searchHint = 'Search devices...',
     this.showStats = true,
   });
@@ -97,10 +105,10 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
 
   @override
   Widget build(BuildContext context) {
-
     final regionsAsync = ref.watch(regionProvider);
 
-    final hasFilters = widget.selectedRegion != 'All Regions' ||
+    final hasFilters =
+        widget.selectedRegion != 'All Regions' ||
         widget.selectedStatus != 'All Status' ||
         widget.selectedProduct != 'All Product' ||
         _searchController.text.isNotEmpty;
@@ -144,13 +152,13 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                     ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        color: Color(0xFF94A3B8),
-                        size: 18,
-                      ),
-                      onPressed: _clearFilters,
-                    )
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Color(0xFF94A3B8),
+                              size: 18,
+                            ),
+                            onPressed: _clearFilters,
+                          )
                         : null,
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -276,7 +284,10 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                 /// Search results count
                 if (_searchController.text.isNotEmpty && _resultCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(6),
@@ -339,11 +350,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
           InkWell(
             onTap: onRemove,
             borderRadius: BorderRadius.circular(4),
-            child: const Icon(
-              Icons.close,
-              size: 14,
-              color: Color(0xFF64748B),
-            ),
+            child: const Icon(Icons.close, size: 14, color: Color(0xFF64748B)),
           ),
         ],
       ),

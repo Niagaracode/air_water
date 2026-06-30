@@ -29,27 +29,20 @@ import '../../features/tank/presentation/view/tank_details_view.dart';
 import '../../layout/screen_controller.dart';
 import 'router_refresh_notifier.dart';
 
-
-
 class AppRouter {
-
-  static GoRouter createRouter(
-      WidgetRef ref,
-      ) {
-
+  static GoRouter createRouter(WidgetRef ref) {
     return GoRouter(
-
       initialLocation: '/loading',
       refreshListenable: ref.read(routerRefreshProvider),
 
       redirect: (context, state) {
-
         final startup = ref.read(appStartupProvider);
         final location = state.matchedLocation;
 
         /// LOADING
         if (startup.isLoading) {
-          if (location == '/forgot-password' || location == '/reset-password-verify') {
+          if (location == '/forgot-password' ||
+              location == '/reset-password-verify') {
             return null;
           }
           return location == '/loading' ? null : '/loading';
@@ -59,7 +52,9 @@ class AppRouter {
 
         /// NOT AUTHENTICATED
         if (status == AppStartupState.unauthenticated) {
-          if (location == '/login' || location == '/forgot-password' || location == '/reset-password-verify') {
+          if (location == '/login' ||
+              location == '/forgot-password' ||
+              location == '/reset-password-verify') {
             return null;
           }
           return '/login';
@@ -76,14 +71,12 @@ class AppRouter {
       },
 
       routes: [
-
         /// LOADING
         GoRoute(
           path: '/loading',
           builder: (_, __) {
-            return const Scaffold(body: Center(child:
-                CircularProgressIndicator(),
-              ),
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
             );
           },
         ),
@@ -123,7 +116,10 @@ class AppRouter {
               path: '/dashboard',
               builder: (_, _) => const DashboardLayout(),
             ),
-            GoRoute(path: '/company', builder: (_, __) => const CompanyLayout()),
+            GoRoute(
+              path: '/company',
+              builder: (_, __) => const CompanyLayout(),
+            ),
             GoRoute(path: '/site', builder: (_, __) => const SiteLayout()),
             GoRoute(
               path: '/tank',
@@ -140,10 +136,16 @@ class AppRouter {
               ],
             ),
             GoRoute(path: '/device', builder: (_, __) => const DeviceLayout()),
-            GoRoute(path: '/product', builder: (_, __) => const ProductLayout()),
-            GoRoute(path: '/tank-dimension', builder: (_, __) => const TankDimensionLayout()),
+            GoRoute(
+              path: '/product',
+              builder: (_, __) => const ProductLayout(),
+            ),
+            // GoRoute(path: '/tank-dimension', builder: (_, __) => const TankDimensionLayout()),
             GoRoute(path: '/user', builder: (_, __) => const UserLayout()),
-            GoRoute(path: '/group', builder: (_, __) => const UserGroupLayout()),
+            GoRoute(
+              path: '/group',
+              builder: (_, __) => const UserGroupLayout(),
+            ),
             GoRoute(
               path: '/message-template',
               builder: (_, __) => const MessageTemplateLayout(),
@@ -153,12 +155,24 @@ class AppRouter {
               path: '/asset-schedule',
               builder: (_, __) => const AssetScheduleLayout(),
             ),
-            GoRoute(path: '/profile', builder: (_, __) => const ProfileLayout()),
+            GoRoute(
+              path: '/profile',
+              builder: (_, __) => const ProfileLayout(),
+            ),
             GoRoute(path: '/alarm', builder: (_, __) => const AlarmLayout()),
             GoRoute(path: '/event', builder: (_, __) => const EventLayout()),
-            GoRoute(path: '/rule-group', builder: (_, __) => const RuleGroupLayout()),
-            GoRoute(path: '/asset-group', builder: (_, __) => const AssetGroupLayout()),
-            GoRoute(path: '/notification', builder: (_, __) => const NotificationLayout()),
+            GoRoute(
+              path: '/rule-group',
+              builder: (_, __) => const RuleGroupLayout(),
+            ),
+            GoRoute(
+              path: '/asset-group',
+              builder: (_, __) => const AssetGroupLayout(),
+            ),
+            GoRoute(
+              path: '/notification',
+              builder: (_, __) => const NotificationLayout(),
+            ),
           ],
         ),
       ],

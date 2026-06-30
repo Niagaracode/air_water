@@ -15,7 +15,6 @@ import '../../../roaster/presentation/controller/roaster_provider.dart';
 import '../../../dashboard/provider/dashboard_provider.dart';
 import 'auth_providers.dart';
 
-
 class AuthController extends AsyncNotifier<void> {
   late final AuthRepository _repo;
 
@@ -28,24 +27,20 @@ class AuthController extends AsyncNotifier<void> {
     state = const AsyncLoading();
 
     state = await AsyncValue.guard(() async {
-
       await _repo.login(username, password);
 
       final role = await _repo.getUserRole();
 
       if (role != null) {
-        ref.read(userRoleProvider.notifier).state =
-            mapUserRole(role);
+        ref.read(userRoleProvider.notifier).state = mapUserRole(role);
       }
 
-      ref.read(appStartupProvider.notifier)
-          .setAuthenticated();
+      ref.read(appStartupProvider.notifier).setAuthenticated();
 
       ref.invalidate(userNameProvider);
       ref.invalidate(userProvider);
     });
   }
-
 
   Future<void> logout() async {
     await _repo.logout();

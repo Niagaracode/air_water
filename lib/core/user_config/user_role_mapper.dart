@@ -5,10 +5,10 @@ UserRole mapUserRole(String role) {
     case 'SUPER_ADMIN':
       return UserRole.superAdmin;
 
-    case 'COMPANY_ADMIN':
+    case 'ADMIN':
       return UserRole.companyAdmin;
 
-    case 'CUSTOMER':
+    case 'END CUSTOMER':
       return UserRole.customer;
 
     default:

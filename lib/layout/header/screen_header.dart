@@ -48,21 +48,15 @@ class ScreenHeader extends ConsumerWidget {
             SidebarHeader(isExpanded: isExpanded, userRole: userRole),
             const SizedBox(width: 16),
             Text(
-              'AIR WATER welcomes you, $finalDisplayName!',
-              style: GoogleFonts.outfit(
-                fontSize: 20,
-                color: Colors.black54,
-              ),
+              'AIR WATER welcomes, $finalDisplayName!',
+              style: GoogleFonts.outfit(fontSize: 20, color: Colors.black54),
             ),
             const Spacer(),
             const MqttConnectionStatus(),
             const SizedBox(width: 16),
             SyncButton(
               onSync: () async {
-                await RouteRefreshHelper.refreshCurrentPage(
-                  ref,
-                  context,
-                );
+                await RouteRefreshHelper.refreshCurrentPage(ref, context);
               },
             ),
             const SizedBox(width: 16),
@@ -89,7 +83,10 @@ class ScreenHeader extends ConsumerWidget {
                     alignment: const AlignmentDirectional(0.8, -0.8),
                     smallSize: 8,
                     backgroundColor: Colors.red.shade500,
-                    isLabelVisible: ref.watch(notificationNotifierProvider).notifications.isNotEmpty,
+                    isLabelVisible: ref
+                        .watch(notificationNotifierProvider)
+                        .notifications
+                        .isNotEmpty,
                     child: const Icon(
                       Icons.notifications_none_rounded,
                       size: 20,
@@ -117,9 +114,7 @@ class ScreenHeader extends ConsumerWidget {
               ),
               onSelected: (value) async {
                 if (value == 'logout') {
-                  await ref
-                      .read(authControllerProvider.notifier)
-                      .logout();
+                  await ref.read(authControllerProvider.notifier).logout();
                 } else if (value == 'profile') {
                   context.go('/profile');
                 }
@@ -129,7 +124,9 @@ class ScreenHeader extends ConsumerWidget {
                   radius: 16,
                   backgroundColor: primary,
                   child: Text(
-                    (name ?? 'U').isNotEmpty ? (name ?? 'U')[0].toUpperCase() : 'U',
+                    (name ?? 'U').isNotEmpty
+                        ? (name ?? 'U')[0].toUpperCase()
+                        : 'U',
                     style: GoogleFonts.inter(
                       color: Colors.white,
                       fontSize: 13,
@@ -144,7 +141,8 @@ class ScreenHeader extends ConsumerWidget {
                 error: (_, __) => CircleAvatar(
                   radius: 16,
                   backgroundColor: primary,
-                  child: Text('U',
+                  child: Text(
+                    'U',
                     style: GoogleFonts.inter(
                       color: Colors.white,
                       fontSize: 13,
