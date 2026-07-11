@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../config/app_config.dart';
 import '../../config/env.dart';
-import '../../constants/app_constants.dart';
 import 'mqtt_client_setup.dart';
 
 
@@ -63,7 +63,7 @@ class MqttService {
       clientId,
     );
 
-    _client!.port = AppConstants.mqttWebPort;
+    _client!.port = AppConfig.current.mqttWebPort;
     _client!.keepAlivePeriod = 30;
     // Manual reconnect handling
     _client!.autoReconnect = false;
@@ -75,8 +75,8 @@ class MqttService {
     final connMessage = MqttConnectMessage()
         .withClientIdentifier(clientId)
         .authenticateAs(
-      AppConstants.mqttUserName,
-      AppConstants.mqttPassword,
+      AppConfig.current.mqttUserName,
+      AppConfig.current.mqttPassword,
     ).startClean().keepAliveFor(30);
 
     _client!.connectionMessage = connMessage;

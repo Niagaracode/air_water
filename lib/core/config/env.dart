@@ -1,6 +1,7 @@
-import '../constants/app_constants.dart';
+
+import '../../config/app_config.dart';
 
 class Env {
-  static final String apiUrl = AppConstants.apiUrl;
-  static final String mqttWebUrl = AppConstants.mqttWebHost;
+  static String get apiUrl => AppConfig.current.apiUrl;
+  static String get mqttWebUrl => AppConfig.current.mqttWebHost;
 }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-Color primaryDark = const Color(0xFF141E7A);
-Color primary = const Color(0xFF141E7A);
-Color primaryLight = const Color(0xFF98A0E6);
-Color primaryBackground = const Color(0xFFFFFFFF);
+import '../../config/app_config.dart';
+
+Color get primary => AppConfig.current.primaryColor;
+Color get primaryDark => AppConfig.current.primaryDarkColor;
+Color get primaryLight => AppConfig.current.primaryLightColor;
+Color get primaryBackground => AppConfig.current.backgroundColor;
+
 Color primaryTextColor = const Color(0xFF333333);
 Color secondaryTextColor = const Color(0xFF666666);
 Color borderColor = const Color(0xFFE0E0E0);

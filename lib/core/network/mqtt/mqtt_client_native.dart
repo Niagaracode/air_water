@@ -1,5 +1,6 @@
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
+import '../../../config/app_config.dart';
 import '../../constants/app_constants.dart';
 
 MqttClient setupMqttClient(String host, String clientId) {
@@ -23,7 +24,7 @@ MqttClient setupMqttClient(String host, String clientId) {
     }
   }
 
-  final client = MqttServerClient.withPort(cleanHost, clientId, AppConstants.mqttWebPort);
+  final client = MqttServerClient.withPort(cleanHost, clientId, AppConfig.current.mqttWebPort);
   client.useWebSocket = true;
   client.secure = secure;
   return client;

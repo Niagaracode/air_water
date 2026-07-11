@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/app_theme/app_theme.dart';
 
 class SyncButton extends StatefulWidget {
   const SyncButton({
@@ -8,7 +9,6 @@ class SyncButton extends StatefulWidget {
     this.label = 'Sync Now',
     this.syncingLabel = 'Syncing...',
     this.icon = Icons.sync,
-    this.backgroundColor = const Color(0xFF141E7A),
     this.foregroundColor = Colors.white,
     this.borderRadius = 20,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -18,7 +18,6 @@ class SyncButton extends StatefulWidget {
   final String label;
   final String syncingLabel;
   final IconData icon;
-  final Color backgroundColor;
   final Color foregroundColor;
   final double borderRadius;
   final EdgeInsetsGeometry padding;
@@ -55,15 +54,15 @@ class _SyncButtonState extends State<SyncButton> {
     return ElevatedButton(
       onPressed: _isSyncing ? null : _handleSync,
       style: ElevatedButton.styleFrom(
-        backgroundColor: widget.backgroundColor,
+        backgroundColor: primary,
         foregroundColor: widget.foregroundColor,
         elevation: 2,
-        shadowColor: widget.backgroundColor.withValues(alpha: 0.3),
+        shadowColor: primary.withValues(alpha: 0.3),
         padding: widget.padding,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(widget.borderRadius),
         ),
-        disabledBackgroundColor: widget.backgroundColor.withValues(alpha: 0.5),
+        disabledBackgroundColor: primary.withValues(alpha: 0.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

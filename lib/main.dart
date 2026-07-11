@@ -5,8 +5,8 @@ import 'core/app_theme/app_theme.dart';
 import 'core/network/mqtt/providers/mqtt_providers.dart';
 import 'core/router/app_router.dart';
 
-void main() {
 
+Future<void> main() async {
   usePathUrlStrategy();
 
   runApp(
@@ -15,6 +15,7 @@ void main() {
     ),
   );
 }
+
 
 class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});

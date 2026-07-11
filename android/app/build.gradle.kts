@@ -10,6 +10,58 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    flavorDimensions += "company"
+
+    defaultConfig {
+        applicationId = "com.example.air_water"
+
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    productFlavors {
+
+        create("airwater") {
+            dimension = "company"
+
+            applicationId = "com.airwater.monitor"
+
+            resValue(
+                "string",
+                "app_name",
+                "Air Water"
+            )
+        }
+
+        create("ilevel") {
+            dimension = "company"
+
+            applicationId = "com.ilevel.monitor"
+
+            resValue(
+                "string",
+                "app_name",
+                "iLevel"
+            )
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig =
+                signingConfigs.getByName("debug")
+        }
+    }
+}
+
+/*android {
+    namespace = "com.example.air_water"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -37,7 +89,7 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-}
+}*/
 
 flutter {
     source = "../.."

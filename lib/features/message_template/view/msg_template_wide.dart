@@ -105,7 +105,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
                   style: GoogleFonts.inter(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.5),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF141E7A),
+                  backgroundColor: primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -287,7 +287,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
                 children: [
                   AppTableActionButton(
                     icon: Icons.edit_outlined,
-                    color: const Color(0xFF2563EB),
+                    color: primary,
                     bg: const Color(0xFFEFF6FF),
                     onTap: () => _showAddModal(template),
                   ),

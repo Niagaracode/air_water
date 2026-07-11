@@ -3,8 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:encrypt/encrypt.dart' as enc;
+import '../../../config/app_config.dart';
 import 'dio_client.dart';
-import '../../constants/app_constants.dart';
 
 
 class ApiService {
@@ -14,7 +14,7 @@ class ApiService {
 
   String encryptPayload(String plainText) {
     try {
-      final key = enc.Key.fromUtf8(AppConstants.encryptionKey);
+      final key = enc.Key.fromUtf8(AppConfig.current.encryptionKey);
       final iv = enc.IV.fromSecureRandom(16);
       final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
       final encrypted = encrypter.encrypt(plainText, iv: iv);
@@ -27,7 +27,7 @@ class ApiService {
 
   String decryptPayload(String encryptedText) {
     try {
-      final key = enc.Key.fromUtf8(AppConstants.encryptionKey);
+      final key = enc.Key.fromUtf8(AppConfig.current.encryptionKey);
       final parts = encryptedText.split(':');
       if (parts.length != 2) {
         throw Exception("Invalid encrypted text format");

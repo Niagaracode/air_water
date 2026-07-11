@@ -1,3 +1,4 @@
+import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -7,7 +8,6 @@ class ViewHeader extends StatelessWidget {
   final String? buttonText;
   final VoidCallback? onPressed;
   final IconData buttonIcon;
-  final Color buttonColor;
   final bool showButton;
   final bool showBackButton;
   final VoidCallback? onBack;
@@ -19,7 +19,6 @@ class ViewHeader extends StatelessWidget {
     this.buttonText,
     this.onPressed,
     this.buttonIcon = Icons.add,
-    this.buttonColor = const Color(0xFF141E7A),
     this.showButton = true,
     this.showBackButton = false,
     this.onBack,
@@ -62,10 +61,10 @@ class ViewHeader extends StatelessWidget {
               ),
               child: IconButton(
                 onPressed: onBack ?? () => Navigator.pop(context),
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 18,
-                  color: Color(0xFF141E7A),
+                  color: primary,
                 ),
                 padding: const EdgeInsets.all(12),
                 constraints: const BoxConstraints(),
@@ -126,7 +125,7 @@ class ViewHeader extends StatelessWidget {
               ),
 
               style: ElevatedButton.styleFrom(
-                backgroundColor: buttonColor,
+                backgroundColor: primary,
                 foregroundColor: Colors.white,
 
                 padding: const EdgeInsets.symmetric(

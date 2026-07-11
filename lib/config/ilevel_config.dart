@@ -1,0 +1,18 @@
+import 'dart:ui';
+import 'app_config.dart';
+
+const iLevelConfig = AppConfig(
+  appName: 'iLevel',
+  apiUrl: 'https://irrigationcare.niagaraautomation.com:4000/api',
+  mqttWebHost: 'wss://irrigationcare.niagaraautomation.com:9443/mqtt',
+  mqttWebPort: 9443,
+  mqttUserName: 'mqttuser',
+  mqttPassword: 'Mqtt@456',
+  encryptionKey: '0febba516bd1c549147a823b127c96e0',
+  packageName: 'com.ilevel.monitor',
+
+  primaryColor: Color(0xFF009688),
+  primaryLightColor: Color(0xFF80CBC4),
+  primaryDarkColor: Color(0xFF00695C),
+  backgroundColor: Color(0xFFFFFFFF),
+);
