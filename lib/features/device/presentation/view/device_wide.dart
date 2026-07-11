@@ -238,7 +238,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
           AppTableHeaderCell('SI.NO', width: 70),
           AppTableHeaderCell('Date', flex: 2),
           AppTableHeaderCell('Device ID', flex: 3),
-          AppTableHeaderCell('Company', flex: 2),
+
           AppTableHeaderCell('Sim Number', flex: 2),
           AppTableHeaderCell('Tank', flex: 2),
           // AppTableHeaderCell('Status', flex: 2),
@@ -333,17 +333,10 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             const AppTableCell(null, width: 70),
             AppTableCell(device.createdAt?.split('T')[0] ?? '—', flex: 2),
             AppTableCell(device.deviceId, flex: 3, bold: true),
-            AppTableCell(device.companyName ?? '—', flex: 2),
+
             AppTableCell(device.simNumber ?? '—', flex: 2),
             AppTableCell(device.tankName ?? '—', flex: 2),
-            // AppTableCell(
-            //   null,
-            //   flex: 2,
-            //   child: Align(
-            //     alignment: Alignment.centerLeft,
-            //     child: AppStatusBadge(status: device.status),
-            //   ),
-            // ),
+
             AppTableCell(device.siteInformation?.fullAddress ?? '—', flex: 3),
             AppTableCell(
               null,

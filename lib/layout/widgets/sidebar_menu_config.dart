@@ -13,22 +13,9 @@ const mainMenu = [
       UserRole.customer,
     ],
   ),
-
-  SidebarMenuItem(
-    key: 'Schedule',
-    label: 'Schedule',
-    icon: Icons.calendar_month_outlined,
-    allowedRoles: [UserRole.customer],
-  ),
 ];
 
 const configurationMenu = [
-  SidebarMenuItem(
-    key: 'Company',
-    label: 'Company',
-    icon: Icons.business_rounded,
-    allowedRoles: [],
-  ),
   SidebarMenuItem(
     key: 'Site',
     label: 'Site',
@@ -93,22 +80,10 @@ const eventsMenu = [
 
 const reportMenu = [
   SidebarMenuItem(
-    key: 'Alarm',
-    label: 'Alarm',
-    icon: Icons.notifications_active_outlined,
-    allowedRoles: [UserRole.customer],
-  ),
-  SidebarMenuItem(
     key: 'Event',
     label: 'Event',
     icon: Icons.event_note_rounded,
     allowedRoles: [UserRole.customer],
-  ),
-  SidebarMenuItem(
-    key: 'Setting',
-    label: 'Setting',
-    icon: Icons.settings_rounded,
-    allowedRoles: [], // Restricted
   ),
 
   SidebarMenuItem(

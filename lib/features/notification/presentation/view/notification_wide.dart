@@ -61,76 +61,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
               children: [
                 _buildHeader(),
                 _buildSummaryCards(state.summary),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      PopupMenuButton<String>(
-                        tooltip: 'Download Report',
-                        onSelected: (value) {
-                          _showDateRangeDownloadDialog(value);
-                        },
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            value: 'excel',
-                            child: Row(
-                              children: [
-                                Icon(Icons.table_chart_outlined, color: primary),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'Download Excel',
-                                  style: GoogleFonts.inter(fontSize: 13),
-                                ),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'pdf',
-                            child: Row(
-                              children: [
-                                Icon(Icons.picture_as_pdf_outlined, color: primary),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'Download PDF',
-                                  style: GoogleFonts.inter(fontSize: 13),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: primary.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: primary.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.download, size: 18, color: primary),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Download',
-                                style: GoogleFonts.inter(
-                                  color: primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
@@ -147,13 +78,88 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
 
   Widget _buildHeader() {
     final userRole = ref.watch(userRoleProvider);
-    return ViewHeader(
-      title: 'EVENTS',
-      subtitle:
-          'Real-time alerts and system notifications for levels, battery, and critical events.',
-      showButton: false,
-      showBackButton: userRole == UserRole.customer,
-      onBack: () => context.go('/dashboard'),
+    return Row(
+      children: [
+        Expanded(
+          child: ViewHeader(
+            title: 'EVENTS',
+            subtitle:
+                'Real-time alerts and system notifications for levels, battery, and critical events.',
+            showButton: false,
+            showBackButton: userRole == UserRole.customer,
+            onBack: () => context.go('/dashboard'),
+          ),
+        ),
+
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              PopupMenuButton<String>(
+                tooltip: 'Download Report',
+                onSelected: (value) {
+                  _showDateRangeDownloadDialog(value);
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'excel',
+                    child: Row(
+                      children: [
+                        Icon(Icons.table_chart_outlined, color: primary),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Download Excel',
+                          style: GoogleFonts.inter(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'pdf',
+                    child: Row(
+                      children: [
+                        Icon(Icons.picture_as_pdf_outlined, color: primary),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Download PDF',
+                          style: GoogleFonts.inter(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: primary.withValues(alpha: 0.1)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.download, size: 18, color: primary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Download',
+                        style: GoogleFonts.inter(
+                          color: primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -270,11 +276,6 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
             label: TableHeaderCell(label: 'Importance'),
             fixedWidth: 100,
           ),
-          if (userRole == UserRole.superAdmin)
-            const DataColumn2(
-              label: TableHeaderCell(label: 'Company'),
-              size: ColumnSize.M,
-            ),
           const DataColumn2(
             label: TableHeaderCell(label: 'Subject'),
             size: ColumnSize.L,
@@ -337,8 +338,6 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                     ),
                   ),
                 ),
-                if (userRole == UserRole.superAdmin)
-                  DataCell(TableDataCell(label: n.companyName ?? '—')),
                 DataCell(
                   Text(
                     n.subject ?? '—',
@@ -385,8 +384,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                 const DataCell(SizedBox.shrink()),
                 const DataCell(SizedBox.shrink()),
                 const DataCell(SizedBox.shrink()),
-                if (userRole == UserRole.superAdmin)
-                  const DataCell(SizedBox.shrink()),
+
                 const DataCell(SizedBox.shrink()),
                 const DataCell(SizedBox.shrink()),
               ],
@@ -468,7 +466,11 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
         return false;
       }
 
-      final startDateOnly = DateTime(startDate.year, startDate.month, startDate.day);
+      final startDateOnly = DateTime(
+        startDate.year,
+        startDate.month,
+        startDate.day,
+      );
       if (startDateOnly.isAfter(todayDate)) {
         errorMessage = 'Start date cannot be in the future';
         return false;
@@ -496,10 +498,9 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
               selectedTank = null;
             });
             try {
-              final tanks = await ref.read(deviceApiProvider).searchTanks(
-                '',
-                siteId: siteId,
-              );
+              final tanks = await ref
+                  .read(deviceApiProvider)
+                  .searchTanks('', siteId: siteId);
               dialogSetState(() {
                 tankList = tanks;
                 isLoadingTanks = false;
@@ -514,7 +515,9 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
           if (isLoadingSites && siteList.isEmpty) {
             Future.microtask(() async {
               try {
-                final sites = await ref.read(userRepositoryProvider).searchSites('');
+                final sites = await ref
+                    .read(userRepositoryProvider)
+                    .searchSites('');
                 dialogSetState(() {
                   siteList = sites;
                   isLoadingSites = false;
@@ -528,7 +531,10 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
           }
 
           return Dialog(
-            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 24,
+            ),
             child: Container(
               width: 480,
               padding: const EdgeInsets.all(24),
@@ -538,11 +544,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 20,
-                        color: primary,
-                      ),
+                      Icon(Icons.calendar_today, size: 20, color: primary),
                       const SizedBox(width: 8),
                       Text(
                         'Download ${type == 'excel' ? 'Excel' : 'PDF'} Report',
@@ -574,20 +576,22 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                             ),
                             const SizedBox(height: 4),
                             InkWell(
-                              onTap: isDownloading ? null : () async {
-                                final date = await showDatePicker(
-                                  context: dialogContext,
-                                  initialDate: startDate,
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime.now(),
-                                );
-                                if (date != null) {
-                                  dialogSetState(() {
-                                    startDate = date;
-                                    isValidRange();
-                                  });
-                                }
-                              },
+                              onTap: isDownloading
+                                  ? null
+                                  : () async {
+                                      final date = await showDatePicker(
+                                        context: dialogContext,
+                                        initialDate: startDate,
+                                        firstDate: DateTime(2020),
+                                        lastDate: DateTime.now(),
+                                      );
+                                      if (date != null) {
+                                        dialogSetState(() {
+                                          startDate = date;
+                                          isValidRange();
+                                        });
+                                      }
+                                    },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -652,18 +656,20 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                             ),
                             const SizedBox(height: 4),
                             InkWell(
-                              onTap: isDownloading ? null : () async {
-                                final time = await showTimePicker(
-                                  context: dialogContext,
-                                  initialTime: startTime,
-                                );
-                                if (time != null) {
-                                  dialogSetState(() {
-                                    startTime = time;
-                                    isValidRange();
-                                  });
-                                }
-                              },
+                              onTap: isDownloading
+                                  ? null
+                                  : () async {
+                                      final time = await showTimePicker(
+                                        context: dialogContext,
+                                        initialTime: startTime,
+                                      );
+                                      if (time != null) {
+                                        dialogSetState(() {
+                                          startTime = time;
+                                          isValidRange();
+                                        });
+                                      }
+                                    },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -734,20 +740,22 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                             ),
                             const SizedBox(height: 4),
                             InkWell(
-                              onTap: isDownloading ? null : () async {
-                                final date = await showDatePicker(
-                                  context: dialogContext,
-                                  initialDate: endDate,
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime.now(),
-                                );
-                                if (date != null) {
-                                  dialogSetState(() {
-                                    endDate = date;
-                                    isValidRange();
-                                  });
-                                }
-                              },
+                              onTap: isDownloading
+                                  ? null
+                                  : () async {
+                                      final date = await showDatePicker(
+                                        context: dialogContext,
+                                        initialDate: endDate,
+                                        firstDate: DateTime(2020),
+                                        lastDate: DateTime.now(),
+                                      );
+                                      if (date != null) {
+                                        dialogSetState(() {
+                                          endDate = date;
+                                          isValidRange();
+                                        });
+                                      }
+                                    },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -812,18 +820,20 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                             ),
                             const SizedBox(height: 4),
                             InkWell(
-                              onTap: isDownloading ? null : () async {
-                                final time = await showTimePicker(
-                                  context: dialogContext,
-                                  initialTime: endTime,
-                                );
-                                if (time != null) {
-                                  dialogSetState(() {
-                                    endTime = time;
-                                    isValidRange();
-                                  });
-                                }
-                              },
+                              onTap: isDownloading
+                                  ? null
+                                  : () async {
+                                      final time = await showTimePicker(
+                                        context: dialogContext,
+                                        initialTime: endTime,
+                                      );
+                                      if (time != null) {
+                                        dialogSetState(() {
+                                          endTime = time;
+                                          isValidRange();
+                                        });
+                                      }
+                                    },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -899,57 +909,95 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                                       child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
                                       ),
                                     ),
                                   )
                                 : Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                     height: 38,
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey.shade300),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                      ),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<SiteAutocompleteInfo?>(
-                                        value: selectedSite,
-                                        isExpanded: true,
-                                        hint: const Text('All', style: TextStyle(fontSize: 13)),
-                                        icon: const Icon(Icons.arrow_drop_down),
-                                        items: [
-                                          const DropdownMenuItem<SiteAutocompleteInfo?>(
-                                            value: null,
-                                            child: Text('All', style: TextStyle(fontSize: 13)),
-                                          ),
-                                          ...siteList.map((site) {
-                                            final addressParts = [
-                                              site.addressLine1,
-                                              site.addressLine2,
-                                              site.city,
-                                              site.state,
-                                              site.pincode,
-                                            ].where((p) => p != null && p.toString().trim().isNotEmpty).join(', ');
-                                            final displayLabel = site.siteName + (addressParts.isNotEmpty ? ' - $addressParts' : '');
-                                            return DropdownMenuItem<SiteAutocompleteInfo?>(
-                                              value: site,
-                                              child: Text(
-                                                displayLabel,
-                                                style: const TextStyle(fontSize: 13),
-                                                overflow: TextOverflow.ellipsis,
+                                      child:
+                                          DropdownButton<SiteAutocompleteInfo?>(
+                                            value: selectedSite,
+                                            isExpanded: true,
+                                            hint: const Text(
+                                              'All',
+                                              style: TextStyle(fontSize: 13),
+                                            ),
+                                            icon: const Icon(
+                                              Icons.arrow_drop_down,
+                                            ),
+                                            items: [
+                                              const DropdownMenuItem<
+                                                SiteAutocompleteInfo?
+                                              >(
+                                                value: null,
+                                                child: Text(
+                                                  'All',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
                                               ),
-                                            );
-                                          }),
-                                        ],
-                                        onChanged: isDownloading
-                                            ? null
-                                            : (value) {
-                                                dialogSetState(() {
-                                                  selectedSite = value;
-                                                  selectedTank = null;
-                                                });
-                                                fetchTanks(value?.siteId);
-                                              },
-                                      ),
+                                              ...siteList.map((site) {
+                                                final addressParts =
+                                                    [
+                                                          site.addressLine1,
+                                                          site.addressLine2,
+                                                          site.city,
+                                                          site.state,
+                                                          site.pincode,
+                                                        ]
+                                                        .where(
+                                                          (p) =>
+                                                              p != null &&
+                                                              p
+                                                                  .toString()
+                                                                  .trim()
+                                                                  .isNotEmpty,
+                                                        )
+                                                        .join(', ');
+                                                final displayLabel =
+                                                    site.siteName +
+                                                    (addressParts.isNotEmpty
+                                                        ? ' - $addressParts'
+                                                        : '');
+                                                return DropdownMenuItem<
+                                                  SiteAutocompleteInfo?
+                                                >(
+                                                  value: site,
+                                                  child: Text(
+                                                    displayLabel,
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                );
+                                              }),
+                                            ],
+                                            onChanged: isDownloading
+                                                ? null
+                                                : (value) {
+                                                    dialogSetState(() {
+                                                      selectedSite = value;
+                                                      selectedTank = null;
+                                                    });
+                                                    fetchTanks(value?.siteId);
+                                                  },
+                                          ),
                                     ),
                                   ),
                           ],
@@ -977,44 +1025,73 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                                       child: SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
                                       ),
                                     ),
                                   )
                                 : Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                     height: 38,
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey.shade300),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                      ),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<Map<String, dynamic>?>(
-                                        value: selectedTank,
-                                        isExpanded: true,
-                                        hint: const Text('All', style: TextStyle(fontSize: 13)),
-                                        icon: const Icon(Icons.arrow_drop_down),
-                                        items: [
-                                          const DropdownMenuItem<Map<String, dynamic>?>(
-                                            value: null,
-                                            child: Text('All', style: TextStyle(fontSize: 13)),
+                                      child:
+                                          DropdownButton<Map<String, dynamic>?>(
+                                            value: selectedTank,
+                                            isExpanded: true,
+                                            hint: const Text(
+                                              'All',
+                                              style: TextStyle(fontSize: 13),
+                                            ),
+                                            icon: const Icon(
+                                              Icons.arrow_drop_down,
+                                            ),
+                                            items: [
+                                              const DropdownMenuItem<
+                                                Map<String, dynamic>?
+                                              >(
+                                                value: null,
+                                                child: Text(
+                                                  'All',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ),
+                                              ...tankList.map((tank) {
+                                                final name =
+                                                    tank['tank_number']
+                                                        ?.toString() ??
+                                                    'N/A';
+                                                return DropdownMenuItem<
+                                                  Map<String, dynamic>?
+                                                >(
+                                                  value: tank,
+                                                  child: Text(
+                                                    name,
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                    ),
+                                                  ),
+                                                );
+                                              }),
+                                            ],
+                                            onChanged: isDownloading
+                                                ? null
+                                                : (value) {
+                                                    dialogSetState(() {
+                                                      selectedTank = value;
+                                                    });
+                                                  },
                                           ),
-                                          ...tankList.map((tank) {
-                                            final name = tank['tank_number']?.toString() ?? 'N/A';
-                                            return DropdownMenuItem<Map<String, dynamic>?>(
-                                              value: tank,
-                                              child: Text(name, style: const TextStyle(fontSize: 13)),
-                                            );
-                                          }),
-                                        ],
-                                        onChanged: isDownloading
-                                            ? null
-                                            : (value) {
-                                                dialogSetState(() {
-                                                  selectedTank = value;
-                                                });
-                                              },
-                                      ),
                                     ),
                                   ),
                           ],
@@ -1064,7 +1141,9 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
-                        onPressed: isDownloading ? null : () => Navigator.pop(dialogContext),
+                        onPressed: isDownloading
+                            ? null
+                            : () => Navigator.pop(dialogContext),
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.grey.shade600,
                           padding: const EdgeInsets.symmetric(
@@ -1096,7 +1175,8 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
 
                                 if (startDateTime.isAfter(endDateTime)) {
                                   dialogSetState(() {
-                                    errorMessage = 'Start date must be before end date';
+                                    errorMessage =
+                                        'Start date must be before end date';
                                   });
                                   return;
                                 }
@@ -1106,35 +1186,59 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                                   errorMessage = '';
                                 });
                                 try {
-                                  final repository = ref.read(notificationRepositoryProvider);
-                                  final startStr = _formatDateTimeForBackend(startDateTime);
-                                  final endStr = _formatDateTimeForBackend(endDateTime);
-                                  
+                                  final repository = ref.read(
+                                    notificationRepositoryProvider,
+                                  );
+                                  final startStr = _formatDateTimeForBackend(
+                                    startDateTime,
+                                  );
+                                  final endStr = _formatDateTimeForBackend(
+                                    endDateTime,
+                                  );
+
                                   final addressParts = selectedSite == null
                                       ? null
                                       : [
-                                          selectedSite!.addressLine1,
-                                          selectedSite!.addressLine2,
-                                          selectedSite!.city,
-                                          selectedSite!.state,
-                                          selectedSite!.pincode,
-                                        ].where((p) => p != null && p.toString().trim().isNotEmpty).join(', ');
+                                              selectedSite!.addressLine1,
+                                              selectedSite!.addressLine2,
+                                              selectedSite!.city,
+                                              selectedSite!.state,
+                                              selectedSite!.pincode,
+                                            ]
+                                            .where(
+                                              (p) =>
+                                                  p != null &&
+                                                  p
+                                                      .toString()
+                                                      .trim()
+                                                      .isNotEmpty,
+                                            )
+                                            .join(', ');
 
-                                  final fileBytes = await repository.downloadNotificationsExport(
-                                    format: type,
-                                    startDate: startStr,
-                                    endDate: endStr,
-                                    plantId: selectedSite?.siteId,
-                                    tankId: selectedTank != null ? (selectedTank!['tank_id'] as int?) : null,
-                                    plantName: selectedSite?.siteName ?? 'All',
-                                    tankName: selectedTank != null ? selectedTank!['tank_number']?.toString() ?? 'All' : 'All',
-                                    plantAddress: addressParts,
-                                  );
+                                  final fileBytes = await repository
+                                      .downloadNotificationsExport(
+                                        format: type,
+                                        startDate: startStr,
+                                        endDate: endStr,
+                                        plantId: selectedSite?.siteId,
+                                        tankId: selectedTank != null
+                                            ? (selectedTank!['tank_id'] as int?)
+                                            : null,
+                                        plantName:
+                                            selectedSite?.siteName ?? 'All',
+                                        tankName: selectedTank != null
+                                            ? selectedTank!['tank_number']
+                                                      ?.toString() ??
+                                                  'All'
+                                            : 'All',
+                                        plantAddress: addressParts,
+                                      );
 
                                   if (fileBytes.isEmpty) {
                                     dialogSetState(() {
                                       isDownloading = false;
-                                      errorMessage = 'No records found for the selected date range.';
+                                      errorMessage =
+                                          'No records found for the selected date range.';
                                     });
                                     return;
                                   }
@@ -1143,7 +1247,9 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                                     name: 'events_report',
                                     bytes: Uint8List.fromList(fileBytes),
                                     ext: type == 'excel' ? 'xlsx' : 'pdf',
-                                    mimeType: type == 'excel' ? MimeType.microsoftExcel : MimeType.pdf,
+                                    mimeType: type == 'excel'
+                                        ? MimeType.microsoftExcel
+                                        : MimeType.pdf,
                                   );
 
                                   if (dialogContext.mounted) {
@@ -1176,7 +1282,9 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                                   color: Colors.white,
                                 ),
                               )
-                            : Text('Download ${type == 'excel' ? 'Excel' : 'PDF'}'),
+                            : Text(
+                                'Download ${type == 'excel' ? 'Excel' : 'PDF'}',
+                              ),
                       ),
                     ],
                   ),
