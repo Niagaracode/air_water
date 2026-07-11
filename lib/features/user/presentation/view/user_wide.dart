@@ -116,9 +116,7 @@ class _UserWideState extends ConsumerState<UserWide> {
               ),
               ElevatedButton.icon(
                 onPressed: () => _showAddModal(),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                ),
+                style: ElevatedButton.styleFrom(foregroundColor: Colors.white),
                 icon: const Icon(Icons.add, size: 18),
                 label: Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -174,10 +172,7 @@ class _UserWideState extends ConsumerState<UserWide> {
             label: TableHeaderCell(label: 'User Name'),
             size: ColumnSize.M,
           ),
-          const DataColumn2(
-            label: TableHeaderCell(label: 'Company'),
-            size: ColumnSize.M,
-          ),
+
           const DataColumn2(
             label: TableHeaderCell(label: 'Phone Number'),
             size: ColumnSize.S,
@@ -206,7 +201,7 @@ class _UserWideState extends ConsumerState<UserWide> {
             cells: [
               DataCell(TableDataCell(label: '${index + 1}')),
               DataCell(TableDataCell(label: user.fullName, bold: true)),
-              DataCell(TableDataCell(label: user.companyName ?? '—')),
+
               DataCell(TableDataCell(label: user.mobileNumber ?? '—')),
               DataCell(TableDataCell(label: user.email ?? '—')),
               DataCell(

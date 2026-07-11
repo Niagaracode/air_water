@@ -209,7 +209,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                 AppTableHeaderCell('Group Name', flex: 3),
                 AppTableHeaderCell('Criteria & Description', flex: 4),
                 AppTableHeaderCell('Users', width: 100),
-                AppTableHeaderCell('Company', width: 150),
+
                 // AppTableHeaderCell('Display', width: 100),
                 AppTableHeaderCell('Action', width: 100),
               ],
@@ -412,7 +412,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                     width: 100,
                     textAlign: TextAlign.center,
                   ),
-                  AppTableCell(group.companyName ?? '-', width: 150),
+
                   // SizedBox(
                   //   width: 100,
                   //   child: Switch(

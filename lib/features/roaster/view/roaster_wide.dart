@@ -265,7 +265,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
               children: [
                 AppTableHeaderCell('SI.NO', width: 60),
                 AppTableHeaderCell('GROUP NAME', flex: 2),
-                if (isSuperAdmin) AppTableHeaderCell('COMPANY', flex: 2),
+
                 AppTableHeaderCell('ROSTER COUNT', width: 120),
                 AppTableHeaderCell('DESCRIPTION', flex: 3),
                 AppTableHeaderCell('ACTION', width: 120),
@@ -345,13 +345,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                 ],
               ),
             ),
-            if (isSuperAdmin)
-              AppTableCell(
-                group.companyName ?? '-',
-                flex: 2,
-                color: const Color(0xFF141E7A),
-                bold: true,
-              ),
+
             AppTableCell((group.rosterCount ?? 0).toString(), width: 120),
             Expanded(
               flex: 3,
