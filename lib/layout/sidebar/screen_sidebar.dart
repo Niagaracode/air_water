@@ -103,8 +103,8 @@ class ScreenSidebar extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           SvgPicture.asset(
-            'assets/svg/company_logo.svg',
-            height: isExpanded ? 30 : 13,
+            isExpanded ? 'assets/svg/company_logo.svg' : 'assets/svg/aw_logo.svg',
+            height: 30,
             fit: BoxFit.contain,
           ),
         ],
