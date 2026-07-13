@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../controller/event_provider.dart';
 import '../model/event_model.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 class EventNarrow extends ConsumerStatefulWidget {
   const EventNarrow({super.key});
@@ -37,7 +38,7 @@ class _EventNarrowState extends ConsumerState<EventNarrow> {
       appBar: AppBar(
         title: Text('Event Logs', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF141E7A),
+        foregroundColor: primary,
         actions: [
           IconButton(
             onPressed: () => ref.read(eventProvider.notifier).loadLogs(refresh: true),
@@ -79,7 +80,7 @@ class _EventNarrowState extends ConsumerState<EventNarrow> {
               children: [
                 Text(
                   log.action,
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: const Color(0xFF141E7A)),
+                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, color: primary),
                 ),
                 Text(
                   DateFormat('HH:mm').format(log.createdAt),

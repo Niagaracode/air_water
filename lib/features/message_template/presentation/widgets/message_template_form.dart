@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../model/message_template_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/message_template_provider.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 
 class MessageTemplateForm extends ConsumerStatefulWidget {
@@ -188,7 +189,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red.shade700 : const Color(0xFF141E7A),
+        backgroundColor: isError ? Colors.red.shade700 : primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
@@ -344,7 +345,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                         child: ElevatedButton(
                           onPressed: _save,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF141E7A),
+                            backgroundColor: primary,
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
@@ -398,7 +399,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF141E7A).withOpacity(0.1),
+                color: primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -406,7 +407,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                 style: GoogleFonts.outfit(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF141E7A),
+                  color: primary,
                 ),
               ),
             ),
@@ -436,13 +437,13 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF141E7A).withOpacity(0.1),
+                          color: primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.attach_file,
                           size: 18,
-                          color: Color(0xFF141E7A),
+                          color: primary,
                         ),
                       ),
                     );
@@ -468,7 +469,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [const Color(0xFF141E7A).withOpacity(0.08), const Color(0xFF141E7A).withOpacity(0.02)],
+              colors: [primary.withOpacity(0.08), primary.withOpacity(0.02)],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -476,14 +477,14 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
           ),
           child: Row(
             children: [
-              Icon(Icons.tune, size: 20, color: const Color(0xFF141E7A)),
+              Icon(Icons.tune, size: 20, color: primary),
               const SizedBox(width: 8),
               Text(
                 'ADVANCED CONFIGURATION',
                 style: GoogleFonts.outfit(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF141E7A),
+                  color: primary,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -574,7 +575,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [const Color(0xFF141E7A).withOpacity(0.08), const Color(0xFF141E7A).withOpacity(0.02)],
+              colors: [primary.withOpacity(0.08), primary.withOpacity(0.02)],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -582,14 +583,14 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
           ),
           child: Row(
             children: [
-              Icon(Icons.toggle_on, size: 20, color: const Color(0xFF141E7A)),
+              Icon(Icons.toggle_on, size: 20, color: primary),
               const SizedBox(width: 8),
               Text(
                 'STATUS CONFIGURATION',
                 style: GoogleFonts.outfit(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF141E7A),
+                  color: primary,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -631,16 +632,16 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: _isActive == 1 ? const Color(0xFF141E7A).withOpacity(0.1) : const Color(0xFFFEE2E2),
+                  color: _isActive == 1 ? primary.withOpacity(0.1) : const Color(0xFFFEE2E2),
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: Switch(
                   value: _isActive == 1,
                   onChanged: (val) => setState(() => _isActive = val ? 1 : 0),
-                  activeColor: const Color(0xFF141E7A),
+                  activeColor: primary,
                   inactiveThumbColor: Colors.red.shade300,
                   inactiveTrackColor: Colors.red.shade100,
-                  activeTrackColor: const Color(0xFF141E7A).withOpacity(0.5),
+                  activeTrackColor: primary.withOpacity(0.5),
                 ),
               ),
             ],

@@ -12,6 +12,7 @@ import '../../../message_template/presentation/controller/message_template_provi
 
 // Shared
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 class AddRosterGroupModal extends ConsumerStatefulWidget {
   final CompanyAutocomplete? initialCompany;
@@ -297,10 +298,10 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
               // Top accent bar
               Container(
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF141E7A),
+                decoration: BoxDecoration(
+                  color: primary,
                   borderRadius:
-                      BorderRadius.only(topLeft: Radius.circular(16)),
+                      const BorderRadius.only(topLeft: Radius.circular(16)),
                 ),
               ),
 
@@ -410,7 +411,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                       ? null
                                       : _addSelectedUser,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF141E7A),
+                                backgroundColor: primary,
                                 foregroundColor: Colors.white,
                                 disabledBackgroundColor:
                                     const Color(0xFFE5E7EB),
@@ -477,10 +478,10 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                               // Sub-header
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.notifications_active_outlined,
                                     size: 15,
-                                    color: Color(0xFF141E7A),
+                                    color: primary,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -488,7 +489,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                     style: GoogleFonts.outfit(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF141E7A),
+                                      color: primary,
                                       letterSpacing: 0.5,
                                     ),
                                   ),
@@ -497,7 +498,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF141E7A)
+                                      color: primary
                                           .withValues(alpha: 0.08),
                                       borderRadius:
                                           BorderRadius.circular(20),
@@ -507,7 +508,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                       style: GoogleFonts.inter(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF141E7A),
+                                        color: primary,
                                       ),
                                     ),
                                   ),
@@ -566,7 +567,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                         child: ElevatedButton(
                           onPressed: state.isProcessing ? null : _save,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF141E7A),
+                            backgroundColor: primary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16)),
@@ -676,7 +677,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
               CircleAvatar(
                 radius: 12,
                 backgroundColor:
-                    const Color(0xFF141E7A).withValues(alpha: 0.08),
+                    primary.withValues(alpha: 0.08),
                 child: Text(
                   displayName.isNotEmpty
                       ? displayName[0].toUpperCase()
@@ -684,7 +685,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                   style: GoogleFonts.outfit(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF141E7A),
+                    color: primary,
                   ),
                 ),
               ),
@@ -725,7 +726,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
               CircleAvatar(
                 radius: 14,
                 backgroundColor:
-                    const Color(0xFF141E7A).withValues(alpha: 0.08),
+                    primary.withValues(alpha: 0.08),
                 child: Text(
                   displayName.isNotEmpty
                       ? displayName[0].toUpperCase()
@@ -733,7 +734,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF141E7A),
+                    color: primary,
                   ),
                 ),
               ),
@@ -776,7 +777,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide:
-              const BorderSide(color: Color(0xFF141E7A), width: 1.5),
+              BorderSide(color: primary, width: 1.5),
         ),
         fillColor: Colors.white,
         filled: true,
@@ -806,7 +807,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                 CircleAvatar(
                   radius: 15,
                   backgroundColor:
-                      const Color(0xFF141E7A).withValues(alpha: 0.08),
+                      primary.withValues(alpha: 0.08),
                   child: Text(
                     displayName.isNotEmpty
                         ? displayName[0].toUpperCase()
@@ -814,7 +815,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                     style: GoogleFonts.outfit(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF141E7A),
+                      color: primary,
                     ),
                   ),
                 ),
@@ -1012,7 +1013,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
         child: Switch(
           value: value,
           onChanged: onChanged,
-          activeTrackColor: const Color(0xFF141E7A),
+          activeTrackColor: primary,
           activeThumbColor: Colors.white,
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: const Color(0xFFE5E7EB),

@@ -13,6 +13,7 @@ import '../../../site/presentation/controller/site_provider.dart';
 import '../../../device/presentation/controller/device_provider.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 class AssetGroupEditPage extends ConsumerStatefulWidget {
   final AssetGroupModel? group;
@@ -220,7 +221,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             child: ElevatedButton(
               onPressed: state.isProcessing ? null : _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF141E7A),
+                backgroundColor: primary,
               ),
               child: state.isProcessing
                   ? const SizedBox(
@@ -368,7 +369,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                   icon: const Icon(Icons.group_add_outlined, size: 18),
                   label: const Text('ASSIGN ALL USERS'),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF141E7A),
+                    foregroundColor: primary,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
                 ),
@@ -387,7 +388,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF141E7A),
+                    color: primary,
                   ),
                 ),
               ),
@@ -428,10 +429,10 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
           // User Rows
           if (_isLoadingDetails)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+                padding: const EdgeInsets.all(32),
+                child: CircularProgressIndicator(color: primary),
               ),
             )
           else if (_assignedUsers.isEmpty)
@@ -685,7 +686,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: value ? const Color(0xFF141E7A) : Colors.grey.shade100,
+          color: value ? primary : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(
@@ -771,9 +772,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                   color: const Color(0xFFF3F4FF),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.layers,
-                  color: Color(0xFF141E7A),
+                  color: primary,
                   size: 20,
                 ),
               ),
@@ -1584,7 +1585,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF141E7A),
+                          color: primary,
                         ),
                       ),
                     ),
@@ -1632,7 +1633,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w700,
             fontSize: 12,
-            color: const Color(0xFF141E7A),
+            color: primary,
             letterSpacing: 1.1,
           ),
         ),
@@ -1659,9 +1660,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
       ),
-      focusedBorder: OutlineInputBorder(
+        focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF141E7A), width: 2),
+        borderSide: BorderSide(color: primary, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );

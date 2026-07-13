@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 // Features
 import 'package:air_water/features/user/presentation/model/user_model.dart';
 import 'package:air_water/features/user/presentation/controller/user_provider.dart';
@@ -11,6 +10,7 @@ import 'package:air_water/features/user/presentation/controller/user_provider.da
 // Shared
 import 'package:air_water/shared/widgets/app_text_field.dart';
 import 'package:air_water/shared/widgets/app_dropdown.dart';
+import 'package:air_water/core/app_theme/app_theme.dart';
 
 class AddUserModal extends ConsumerStatefulWidget {
   final User? user;
@@ -350,9 +350,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
               // Top accent bar
               Container(
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF141E7A),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20)),
+                decoration: BoxDecoration(
+                  color: primary,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
                 ),
               ),
               Expanded(
@@ -448,7 +448,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                       style: GoogleFonts.outfit(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF141E7A),
+                                        color: primary,
                                       ),
                                     ),
                                   ),
@@ -614,7 +614,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                         style: GoogleFonts.outfit(
                                           fontWeight: FontWeight.w700,
                                           fontSize: 12,
-                                          color: const Color(0xFF141E7A),
+                                          color: primary,
                                           letterSpacing: 1.1,
                                         ),
                                       ),
@@ -652,7 +652,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                             child: ElevatedButton(
                               onPressed: userState.isProcessing ? null : _save,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF141E7A),
+                                backgroundColor: primary,
                                 foregroundColor: Colors.white,
                                 elevation: 4,
                                 shape: RoundedRectangleBorder(
@@ -769,10 +769,10 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline_rounded,
             size: 18,
-            color: Color(0xFF141E7A),
+            color: primary,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -780,7 +780,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
               'Configure user credentials, profile information, and access control.',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: const Color(0xFF141E7A),
+                color: primary,
                 fontWeight: FontWeight.w500,
               ),
             ),

@@ -10,6 +10,7 @@ import '../widgets/map_picker_dialog.dart';
 import '../../../../shared/widgets/app_autocomplete.dart';
 
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 class AddDeviceModal extends ConsumerStatefulWidget {
   final Device? device;
@@ -147,9 +148,9 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
               // Top accent bar
               Container(
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF141E7A),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20)),
+                decoration: BoxDecoration(
+                  color: primary,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
                 ),
               ),
               Expanded(
@@ -239,10 +240,10 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                           // Section: Network & Location
                           Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.hub_rounded,
                                 size: 18,
-                                color: Color(0xFF141E7A),
+                                color: primary,
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -250,7 +251,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                                 style: GoogleFonts.outfit(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF141E7A),
+                                  color: primary,
                                   letterSpacing: 1.2,
                                 ),
                               ),
@@ -307,7 +308,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                                     ),
                                     side: BorderSide(
                                       color: _latitude != null
-                                          ? const Color(0xFF141E7A)
+                                          ? primary
                                           : const Color(0xFFD1D5DB),
                                     ),
                                     shape: RoundedRectangleBorder(
@@ -357,7 +358,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                                       style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12,
-                                        color: const Color(0xFF141E7A),
+                                        color: primary,
                                         letterSpacing: 1.1,
                                       ),
                                     ),
@@ -395,7 +396,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                                   ? null
                                   : _save,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF141E7A),
+                                backgroundColor: primary,
                                 foregroundColor: Colors.white,
                                 elevation: 4,
                                 shape: RoundedRectangleBorder(

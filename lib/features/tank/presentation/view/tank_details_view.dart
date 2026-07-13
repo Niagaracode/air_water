@@ -414,10 +414,10 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
 
               indicatorSize: TabBarIndicatorSize.label,
 
-              labelColor: const Color(0xFF141E7A),
+              labelColor: primary,
               unselectedLabelColor: Colors.grey,
 
-              indicatorColor: const Color(0xFF141E7A),
+              indicatorColor: primary,
               indicatorWeight: 2,
 
               dividerColor: Colors.transparent,
@@ -743,12 +743,12 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                         color: primary,
                       ),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         'Custom Date Range',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF141E7A),
+                          color: primary,
                         ),
                       ),
                     ],

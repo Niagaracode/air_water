@@ -7,6 +7,7 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../user/presentation/model/user_model.dart';
 import '../../user/presentation/controller/user_provider.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 class RosterEditView extends ConsumerStatefulWidget {
   final int rosterId;
@@ -157,7 +158,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
               style: GoogleFonts.outfit(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF141E7A),
+                color: primary,
               ),
             ),
           ),
@@ -172,7 +173,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
               style: GoogleFonts.outfit(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF141E7A),
+                color: primary,
               ),
             ),
           ),
@@ -276,9 +277,9 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
   Widget _buildTableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: primary,
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
         ),
@@ -502,7 +503,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
         style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF141E7A),
+        backgroundColor: primary,
         foregroundColor: Colors.white,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -783,7 +784,7 @@ class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
                               child: ElevatedButton(
                                 onPressed: _save,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF141E7A),
+                                  backgroundColor: primary,
                                   foregroundColor: Colors.white,
                                   elevation: 4,
                                   shape: RoundedRectangleBorder(
@@ -929,14 +930,14 @@ class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
   Widget _buildSectionHeader(IconData icon, String title) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: const Color(0xFF141E7A)),
+        Icon(icon, size: 18, color: primary),
         const SizedBox(width: 8),
         Text(
           title,
           style: GoogleFonts.outfit(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF141E7A),
+            color: primary,
             letterSpacing: 1.2,
           ),
         ),
@@ -973,12 +974,12 @@ class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline_rounded, size: 18, color: Color(0xFF141E7A)),
+          Icon(Icons.info_outline_rounded, size: 18, color: primary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'Members with enabled notifications will receive alerts based on their assigned role and message template.',
-              style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF141E7A), fontWeight: FontWeight.w500),
+              style: GoogleFonts.inter(fontSize: 13, color: primary, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -1002,7 +1003,7 @@ class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 12, color: const Color(0xFF141E7A), letterSpacing: 1.1),
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 12, color: primary, letterSpacing: 1.1),
                 ),
                 const SizedBox(height: 4),
                 Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280))),
@@ -1013,7 +1014,7 @@ class _RosterUserEditorState extends ConsumerState<_RosterUserEditor> {
             value: value,
             onChanged: onChanged,
             activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF141E7A),
+            activeTrackColor: primary,
           ),
         ],
       ),

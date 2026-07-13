@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../controller/event_provider.dart';
 import '../model/event_model.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 class EventWide extends ConsumerStatefulWidget {
   const EventWide({super.key});
@@ -131,7 +132,7 @@ class _EventWideState extends ConsumerState<EventWide> {
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF141E7A),
+              backgroundColor: primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -145,9 +146,9 @@ class _EventWideState extends ConsumerState<EventWide> {
   Widget _buildTableHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Color(0xFF141E7A),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      decoration: BoxDecoration(
+        color: primary,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Row(
         children: [

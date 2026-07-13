@@ -11,6 +11,7 @@ import '../controller/roaster_provider.dart';
 import '../../../message_template/presentation/controller/message_template_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../core/network/http/api_service.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 class EditRosterGroupModal extends ConsumerStatefulWidget {
   final AssetGroupModel group;
@@ -395,9 +396,9 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
               // Top accent bar
               Container(
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF141E7A),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(16)),
+                decoration: BoxDecoration(
+                  color: primary,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(16)),
                 ),
               ),
 
@@ -529,7 +530,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                                       });
                                     },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF141E7A),
+                                backgroundColor: primary,
                                 foregroundColor: Colors.white,
                                 disabledBackgroundColor: const Color(
                                   0xFFE5E7EB,
@@ -607,10 +608,10 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.notifications_active_outlined,
                                     size: 15,
-                                    color: Color(0xFF141E7A),
+                                    color: primary,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -618,7 +619,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                                     style: GoogleFonts.outfit(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF141E7A),
+                                      color: primary,
                                       letterSpacing: 0.5,
                                     ),
                                   ),
@@ -629,9 +630,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                                       vertical: 3,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFF141E7A,
-                                      ).withValues(alpha: 0.08),
+                                      color: primary.withValues(alpha: 0.08),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
@@ -639,7 +638,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                                       style: GoogleFonts.inter(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF141E7A),
+                                        color: primary,
                                       ),
                                     ),
                                   ),
@@ -693,7 +692,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                         child: ElevatedButton(
                           onPressed: _savingRoster ? null : _saveRosters,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF141E7A),
+                            backgroundColor: primary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -784,7 +783,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF141E7A).withValues(alpha: 0.08),
+                    color: primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -795,7 +794,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                       style: GoogleFonts.outfit(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF141E7A),
+                        color: primary,
                       ),
                     ),
                   ),
@@ -923,7 +922,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
         child: Switch(
           value: value,
           onChanged: onChanged,
-          activeTrackColor: const Color(0xFF141E7A),
+          activeTrackColor: primary,
           activeThumbColor: Colors.white,
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: const Color(0xFFE5E7EB),
@@ -1023,15 +1022,13 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
             children: [
               CircleAvatar(
                 radius: 12,
-                backgroundColor: const Color(
-                  0xFF141E7A,
-                ).withValues(alpha: 0.08),
+                backgroundColor: primary.withValues(alpha: 0.08),
                 child: Text(
                   displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                   style: GoogleFonts.outfit(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF141E7A),
+                    color: primary,
                   ),
                 ),
               ),
@@ -1069,15 +1066,13 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor: const Color(
-                  0xFF141E7A,
-                ).withValues(alpha: 0.08),
+                backgroundColor: primary.withValues(alpha: 0.08),
                 child: Text(
                   displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF141E7A),
+                    color: primary,
                   ),
                 ),
               ),
@@ -1121,7 +1116,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF141E7A), width: 1.5),
+          borderSide: BorderSide(color: primary, width: 1.5),
         ),
         fillColor: Colors.white,
         filled: true,

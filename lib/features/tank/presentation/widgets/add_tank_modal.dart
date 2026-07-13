@@ -450,7 +450,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                 style: GoogleFonts.outfit(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
-                                  color: const Color(0xFF141E7A),
+                                  color: primary,
                                   letterSpacing: 1.1,
                                 ),
                               ),
@@ -487,12 +487,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       child: ElevatedButton(
                         onPressed: _save,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF141E7A),
+                          backgroundColor: primary,
                           foregroundColor: Colors.white,
                           elevation: 4,
-                          shadowColor: const Color(
-                            0xFF141E7A,
-                          ).withValues(alpha: 0.4),
+                          shadowColor: primary.withValues(alpha: 0.4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -841,7 +839,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                             _channels[index]['enabled'] = value ?? false;
                           });
                         },
-                        activeColor: const Color(0xFF141E7A),
+                        activeColor: primary,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                     ),
@@ -889,8 +887,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF141E7A),
+                            borderSide: BorderSide(
+                              color: primary,
                               width: 1.5,
                             ),
                           ),
@@ -944,8 +942,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF141E7A),
+                            borderSide: BorderSide(
+                              color: primary,
                               width: 1.5,
                             ),
                           ),

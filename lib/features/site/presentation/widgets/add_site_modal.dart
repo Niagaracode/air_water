@@ -12,6 +12,7 @@ import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../company/presentation/model/company_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/utils/time_zones.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 class AddSiteModal extends ConsumerStatefulWidget {
   final Site? initialSite;
@@ -375,9 +376,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
               // Top accent bar
               Container(
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF141E7A),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(20)),
+                decoration: BoxDecoration(
+                  color: primary,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
                 ),
               ),
               Expanded(
@@ -515,9 +516,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                   ),
                                 ),
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF141E7A),
-                                  side: const BorderSide(
-                                    color: Color(0xFF141E7A),
+                                  foregroundColor: primary,
+                                  side: BorderSide(
+                                    color: primary,
                                     width: 1.5,
                                   ),
                                   padding: const EdgeInsets.symmetric(
@@ -527,7 +528,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  backgroundColor: const Color(0xFF141E7A).withValues(alpha: 0.05),
+                                  backgroundColor: primary.withValues(alpha: 0.05),
                                 ),
                               ),
                             ],
@@ -558,7 +559,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                       style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12,
-                                        color: const Color(0xFF141E7A),
+                                        color: primary,
                                         letterSpacing: 1.1,
                                       ),
                                     ),
@@ -595,7 +596,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                             child: ElevatedButton(
                               onPressed: siteState.isProcessing ? null : _save,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF141E7A),
+                                backgroundColor: primary,
                                 foregroundColor: Colors.white,
                                 elevation: 4,
                                 shape: RoundedRectangleBorder(
@@ -713,10 +714,10 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline_rounded,
             size: 18,
-            color: Color(0xFF141E7A),
+            color: primary,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -726,7 +727,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                   : 'Register a new manufacturing site or operational plant.',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: const Color(0xFF141E7A),
+                color: primary,
                 fontWeight: FontWeight.w500,
               ),
             ),

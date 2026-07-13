@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/asset_group_model.dart';
 import '../controller/asset_group_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../core/app_theme/app_theme.dart';
 
 import '../../../product/provider/product_provider.dart';
 import '../../../user/presentation/controller/user_provider.dart';
@@ -290,9 +291,9 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
               // Top accent bar
               Container(
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF141E7A),
-                  borderRadius: BorderRadius.only(topLeft: Radius.circular(16)),
+                decoration: BoxDecoration(
+                  color: primary,
+                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(16)),
                 ),
               ),
               Expanded(
@@ -446,7 +447,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                           child: ElevatedButton(
                             onPressed: state.isProcessing ? null : _save,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF141E7A),
+                              backgroundColor: primary,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
@@ -488,7 +489,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w700,
             fontSize: 12,
-            color: const Color(0xFF141E7A),
+            color: primary,
             letterSpacing: 1.1,
           ),
         ),
@@ -517,7 +518,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                   style: GoogleFonts.outfit(
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    color: const Color(0xFF141E7A),
+                    color: primary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -534,7 +535,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
           Switch(
             value: _displayInTree,
             onChanged: (v) => setState(() => _displayInTree = v),
-            activeColor: const Color(0xFF141E7A),
+            activeColor: primary,
           ),
         ],
       ),
@@ -551,19 +552,19 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF141E7A).withValues(alpha: 0.05)
+              ? primary.withValues(alpha: 0.05)
               : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFF141E7A)
+                ? primary
                 : const Color(0xFFE5E7EB),
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: const Color(0xFF141E7A).withValues(alpha: 0.1),
+                    color: primary.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -582,14 +583,14 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: isSelected
-                        ? const Color(0xFF141E7A)
+                        ? primary
                         : const Color(0xFF374151),
                   ),
                 ),
                 if (isSelected)
-                  const Icon(
+                  Icon(
                     Icons.check_circle,
-                    color: Color(0xFF141E7A),
+                    color: primary,
                     size: 20,
                   ),
               ],
@@ -600,7 +601,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
               style: GoogleFonts.inter(
                 fontSize: 12,
                 color: isSelected
-                    ? const Color(0xFF141E7A).withValues(alpha: 0.7)
+                    ? primary.withValues(alpha: 0.7)
                     : const Color(0xFF6B7280),
               ),
             ),
@@ -1203,7 +1204,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF141E7A),
+                          color: primary,
                         ),
                       ),
                     ),
@@ -1457,7 +1458,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                   icon: const Icon(Icons.group_add_outlined, size: 18),
                   label: const Text('ASSIGN ALL USERS'),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF141E7A),
+                    foregroundColor: primary,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
                 ),
@@ -1476,7 +1477,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF141E7A),
+                    color: primary,
                   ),
                 ),
               ),
@@ -1510,10 +1511,10 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
           ),
 
           if (_isLoadingDetails)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(color: Color(0xFF141E7A)),
+                padding: const EdgeInsets.all(32),
+                child: CircularProgressIndicator(color: primary),
               ),
             )
           else if (_assignedUsers.isEmpty)
