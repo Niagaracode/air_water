@@ -159,8 +159,8 @@ class _CompanyWideState extends ConsumerState<CompanyWide> {
                     children: [
                       AppTableActionButton(
                         icon: Icons.edit_outlined,
-                        color: const Color(0xFF2563EB),
-                        bg: const Color(0xFFEFF6FF),
+                        color: primary,
+                        bg: primary.withValues(alpha: 0.1),
                         onTap: () => _showEditModal(item.group, item.addr),
                       ),
                       const SizedBox(width: 8),

@@ -409,8 +409,8 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                 children: [
                   AppTableActionButton(
                     icon: Icons.edit_outlined,
-                    color: const Color(0xFF2563EB),
-                    bg: const Color(0xFFEFF6FF),
+                    color: primary,
+                    bg: primary.withValues(alpha: 0.1),
                     onTap: () =>
                         _showEditModal(site.toSite(), targetAddressId: site.id),
                   ),

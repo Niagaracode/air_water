@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:air_water/shared/widgets/app_text_field.dart';
+import '../../../../core/app_theme/app_theme.dart';
 import 'package:air_water/shared/widgets/app_dropdown.dart';
 import 'package:air_water/shared/widgets/app_date_picker.dart';
 import '../controller/site_provider.dart';
@@ -404,9 +405,9 @@ class _SiteMiddleState extends ConsumerState<SiteMiddle> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.edit_outlined,
-                      color: Color(0xFF2563EB),
+                      color: primary,
                       size: 16,
                     ),
                     onPressed: () => _showEditModal(site.toSite()),

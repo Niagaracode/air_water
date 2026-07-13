@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/profile_provider.dart';
 import '../model/profile_model.dart';
@@ -154,13 +155,13 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: Color(0xFF141E7A), size: 24),
+            icon: Icon(Icons.arrow_back, color: primary, size: 24),
             onPressed: () => context.go('/dashboard'),
           ),
           const SizedBox(width: 16),
           CircleAvatar(
             radius: 40,
-            backgroundColor: const Color(0xFF141E7A),
+            backgroundColor: primary,
             child: Text(
               initial,
               style: GoogleFonts.outfit(
@@ -192,16 +193,16 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                        color: primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                        border: Border.all(color: primary.withValues(alpha: 0.2)),
                       ),
                       child: Text(
                         profile?.roleName?.toUpperCase() ?? 'USER',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1E40AF),
+                          color: primary,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -340,7 +341,7 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
   Widget _buildSectionTitle(IconData icon, String title) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF141E7A)),
+        Icon(icon, size: 20, color: primary),
         const SizedBox(width: 8),
         Text(
           title,
@@ -378,7 +379,7 @@ class _ProfileWideState extends ConsumerState<ProfileWide> {
           ElevatedButton(
             onPressed: state.isUpdating ? null : _handleUpdate,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF141E7A),
+              backgroundColor: primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               shape: RoundedRectangleBorder(

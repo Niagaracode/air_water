@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/profile_provider.dart';
 import '../model/profile_model.dart';
@@ -162,7 +163,7 @@ class _ProfileNarrowState extends ConsumerState<ProfileNarrow> {
       children: [
         CircleAvatar(
           radius: 44,
-          backgroundColor: const Color(0xFF141E7A),
+          backgroundColor: primary,
           child: Text(
             initial,
             style: GoogleFonts.outfit(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white),
@@ -201,7 +202,7 @@ class _ProfileNarrowState extends ConsumerState<ProfileNarrow> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: const Color(0xFF141E7A)),
+              Icon(icon, size: 18, color: primary),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -249,7 +250,7 @@ class _ProfileNarrowState extends ConsumerState<ProfileNarrow> {
       child: ElevatedButton(
         onPressed: state.isUpdating ? null : _handleUpdate,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF141E7A),
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),

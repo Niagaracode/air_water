@@ -366,7 +366,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
             flex: 30,
             child: Row(
               children: [
-                _buildActionIcon(Icons.edit_outlined, const Color(0xFF2563EB), const Color(0xFFEFF6FF), () => _showUserEditor(member)),
+                _buildActionIcon(Icons.edit_outlined, primary, primary.withValues(alpha: 0.1), () => _showUserEditor(member)),
                 const SizedBox(width: 8),
                 _buildActionIcon(Icons.delete_outline_rounded, const Color(0xFFDC2626), const Color(0xFFFEF2F2), () => _confirmDelete(member)),
               ],

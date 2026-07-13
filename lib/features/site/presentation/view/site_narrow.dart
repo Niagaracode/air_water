@@ -464,7 +464,7 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.blue, size: 14),
+                    icon: Icon(Icons.edit, color: primary, size: 14),
                     onPressed: () => _showEditModal(site.toSite()),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/profile_provider.dart';
 import '../model/profile_model.dart';
@@ -177,7 +178,7 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
         children: [
           CircleAvatar(
             radius: 36,
-            backgroundColor: const Color(0xFF141E7A),
+            backgroundColor: primary,
             child: Text(
               initial,
               style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
@@ -194,7 +195,7 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
                 ),
                 Text(
                   profile?.roleName?.toUpperCase() ?? 'USER',
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1E40AF), letterSpacing: 0.5),
+                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: primary, letterSpacing: 0.5),
                 ),
               ],
             ),
@@ -224,7 +225,7 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 20, color: const Color(0xFF141E7A)),
+              Icon(icon, size: 20, color: primary),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -272,7 +273,7 @@ class _ProfileMiddleState extends ConsumerState<ProfileMiddle> {
       child: ElevatedButton(
         onPressed: state.isUpdating ? null : _handleUpdate,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF141E7A),
+          backgroundColor: primary,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
