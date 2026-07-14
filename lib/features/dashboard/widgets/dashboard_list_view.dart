@@ -182,7 +182,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                     fillColor: Colors.grey.shade50,
                     hintText: 'Search devices...',
                     hintStyle: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade400),
-                    prefixIcon: Icon(Icons.search, size: 18, color: Colors.grey.shade400),
+                    prefixIcon: Icon(Icons.search, size: 18, color: Colors.grey),
                     suffixIcon: _localSearchQuery.isNotEmpty
                         ? IconButton(
                       icon: Icon(Icons.clear, size: 18, color: Colors.grey.shade400),
@@ -192,8 +192,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                           _searchController.clear();
                         });
                       },
-                    )
-                        : null,
+                    ) : null,
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     border: OutlineInputBorder(
