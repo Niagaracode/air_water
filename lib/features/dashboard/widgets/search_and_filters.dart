@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:debounce_throttle/debounce_throttle.dart';
+import '../../../core/app_theme/app_theme.dart';
 import '../provider/dashboard_provider.dart';
 import 'filter_dropdown.dart';
 
@@ -147,14 +148,14 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                     ),
                     prefixIcon: const Icon(
                       Icons.search,
-                      color: Color(0xFF94A3B8),
+                      color: Colors.black,
                       size: 20,
                     ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
                             icon: const Icon(
                               Icons.clear,
-                              color: Color(0xFF94A3B8),
+                              color: Colors.red,
                               size: 18,
                             ),
                             onPressed: _clearFilters,
@@ -251,12 +252,12 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
             Container(
               decoration: BoxDecoration(
                 color: hasFilters
-                    ? const Color(0xFF4F46E5).withOpacity(0.1)
+                    ? primary.withValues(alpha: 0.1)
                     : Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: hasFilters
-                      ? const Color(0xFF4F46E5).withOpacity(0.3)
+                      ? primary.withValues(alpha: 0.3)
                       : const Color(0xFFE2E8F0),
                 ),
               ),
@@ -264,7 +265,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                 icon: Icon(
                   Icons.filter_alt_off,
                   color: hasFilters
-                      ? const Color(0xFF4F46E5)
+                      ? primary
                       : const Color(0xFF94A3B8),
                   size: 20,
                 ),
@@ -297,7 +298,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: const Color(0xFF2563EB),
+                        color: primary,
                       ),
                     ),
                   ),

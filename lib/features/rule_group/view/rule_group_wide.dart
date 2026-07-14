@@ -157,7 +157,7 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
                     _buildActionButton(
                       icon: Icons.edit_outlined,
                       onPressed: () => _showAddModal(rule),
-                      color: const Color(0xFF6B7280),
+                      color: primary,
                     ),
                     const SizedBox(width: 4),
                     _buildActionButton(

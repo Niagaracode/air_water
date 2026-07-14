@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'app_config.dart';
 
 const airWaterConfig = AppConfig(
-  appName: 'Air Water',
+  appName: 'AIR WATER',
   apiUrl: 'https://irrigationcare.niagaraautomation.com:4000/api',
   mqttWebHost: 'wss://irrigationcare.niagaraautomation.com:9443/mqtt',
   mqttWebPort: 9443,
@@ -15,4 +15,8 @@ const airWaterConfig = AppConfig(
   primaryLightColor: Color(0xFF98A0E6),
   primaryDarkColor: Color(0xFF141E7A),
   backgroundColor: Color(0xFFFFFFFF),
+
+  appLogoPath: 'assets/logos/airwater/app_logo.svg',
+  companyLogoPath: 'assets/logos/airwater/company_logo.svg',
+  companySmallLogoPath: 'assets/logos/airwater/company_logo_small.svg',
 );
