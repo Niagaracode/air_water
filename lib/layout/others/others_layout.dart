@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/responsive/screen_layout_builder.dart';
 import '../../core/user_config/user_role.dart';
 import 'others_layout_middle.dart';
@@ -17,9 +18,18 @@ class OthersLayout extends ScreenLayoutBuilder {
 
   @override
   Widget buildNarrow(BuildContext context) {
-    return OthersLayoutNarrow(
-      userRole: userRole,
-      child: child,
+    return SafeArea(
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
+        child: OthersLayoutNarrow(
+          userRole: userRole,
+          child: child,
+        ),
+      ),
     );
   }
 

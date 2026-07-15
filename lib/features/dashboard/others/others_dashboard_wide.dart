@@ -37,7 +37,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
 
   String _selectedStatus = 'All Status';
   String _selectedRegion = 'All Regions';
-  String _selectedProduct = 'All Product'; // ADDED this
+  String _selectedProduct = 'All Product';
   String _searchQuery = '';
   bool _isListView = true;
 
@@ -67,6 +67,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                 StatisticsCards(statistics: statistics),
                 const SizedBox(height: 30),
                 SearchAndFilters(
+                  isNarrow: false,
                   onSearchChanged: (val) {
                     setState(() {
                       _searchQuery = val;
