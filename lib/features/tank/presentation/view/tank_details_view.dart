@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../config/app_config.dart';
 import '../../../../core/helpers/date_formatter.dart';
 import '../../../../shared/utils/app_text_styles.dart';
 import '../../../../shared/widgets/app_details_header.dart';
@@ -143,25 +144,18 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-
                                     Text(widget.tank.addressLine_1, style: AppTextStyles.body()),
                                     Text(widget.tank.addressLine_2, style: AppTextStyles.body()),
                                     Text(widget.tank.addressLine_3, style: AppTextStyles.body()),
                                     Text(widget.tank.city, style: AppTextStyles.body()),
-
-                                    Text('---------------', style: TextStyle(color: Colors.grey),),
-
-                                    Text("Tank Nr : ${widget.tank.tankName}", style: AppTextStyles.caption()),
-                                    Text("Tank Cap : ${widget.tank.level}", style: AppTextStyles.caption()),
-                                    Text("RTU SNo : ${widget.tank.deviceId}", style: AppTextStyles.caption()),
-                                    Text("Product : ${widget.tank.gasType}", style: AppTextStyles.caption()),
                                   ],
                                 ),
                               ),
                             ),
                             TankLevelWidget(
                               level: widget.tank.level.toDouble(),
-                              svgAsset: "assets/svg/tank.svg",
+                              svgAsset: AppConfig.current.tankImgPath,
+                              gasType: widget.tank.gasType,
                             ),
                           ],
                         )

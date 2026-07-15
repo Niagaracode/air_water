@@ -19,6 +19,7 @@ class AppConfig {
   final String appLogoPath;
   final String companyLogoPath;
   final String companySmallLogoPath;
+  final String tankImgPath;
 
   const AppConfig({
     required this.appName,
@@ -38,6 +39,7 @@ class AppConfig {
     required this.appLogoPath,
     required this.companyLogoPath,
     required this.companySmallLogoPath,
+    required this.tankImgPath,
   });
 
   static late AppConfig current;

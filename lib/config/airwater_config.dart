@@ -19,4 +19,5 @@ const airWaterConfig = AppConfig(
   appLogoPath: 'assets/logos/airwater/app_logo.svg',
   companyLogoPath: 'assets/logos/airwater/company_logo.svg',
   companySmallLogoPath: 'assets/logos/airwater/company_logo_small.svg',
+  tankImgPath: 'assets/images/tank.svg'
 );

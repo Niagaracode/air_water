@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../../layout/provider/sidebar_provider.dart';
+import '../../../core/helpers/app_colors_helper.dart';
 import '../../../core/user_config/user_role.dart';
 import '../data/models/site_group_model.dart';
 import '../data/models/tank_data_model.dart';
@@ -356,7 +357,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                   children: [
                     CircleAvatar(
                       radius: 15,
-                      backgroundColor: getGasTypeColor(tank.gasType),
+                      backgroundColor: AppColorsHelper.getGasTypeColor(tank.gasType),
                       child: Text(
                         tank.gasType,
                         style: const TextStyle(
@@ -383,14 +384,15 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('${tank.level.toStringAsFixed(1)}%', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: _getLevelColor(tank.level))),
+                    Text('${tank.level.toStringAsFixed(1)}%', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700,
+                        color: AppColorsHelper.getLevelColor(tank.level))),
                     const SizedBox(height: 4),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: tank.level / 100,
                         backgroundColor: Colors.grey.shade200,
-                        color: _getLevelColor(tank.level),
+                        color: AppColorsHelper.getLevelColor(tank.level),
                         minHeight: 5,
                       ),
                     ),
@@ -415,7 +417,8 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                 child: Center(
                   child: Text(
                     tank.isBatteryEnabled ? '${tank.batteryV.toStringAsFixed(1)} v' : '--',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: tank.isBatteryEnabled ? _getBatSolColor(tank.batteryV) : Colors.grey),
+                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: tank.isBatteryEnabled ?
+                    AppColorsHelper.getBatSolColor(tank.batteryV) : Colors.grey),
                   ),
                 ),
               ),
@@ -424,7 +427,8 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                 child: Center(
                   child: Text(
                     tank.isSolarEnabled ? '${tank.solarV.toStringAsFixed(1)} v' : '--',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: tank.isSolarEnabled ? _getBatSolColor(tank.solarV) : Colors.grey),
+                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: tank.isSolarEnabled ?
+                    AppColorsHelper.getBatSolColor(tank.solarV) : Colors.grey),
                   ),
                 ),
               ),
@@ -434,15 +438,15 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(tank.status).withOpacity(0.1),
+                      color: AppColorsHelper.getStatusColor(tank.status).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(width: 6, height: 6, decoration: BoxDecoration(color: _getStatusColor(tank.status), shape: BoxShape.circle)),
+                        Container(width: 6, height: 6, decoration: BoxDecoration(color: AppColorsHelper.getStatusColor(tank.status), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Text(tank.status, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: _getStatusColor(tank.status))),
+                        Text(tank.status, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColorsHelper.getStatusColor(tank.status))),
                       ],
                     ),
                   ),
@@ -513,7 +517,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
 
   Widget _buildCustomerTankListItem(TankDataModel tank) {
     final isSelected = _selectedTank?.deviceId == tank.deviceId;
-    final levelColor = _getLevelColor(tank.level);
+    final levelColor = AppColorsHelper.getLevelColor(tank.level);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -589,7 +593,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                         vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(tank.status).withValues(alpha: 0.12),
+                        color: AppColorsHelper.getStatusColor(tank.status).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Text(
@@ -597,7 +601,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                         style: GoogleFonts.outfit(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: _getStatusColor(tank.status),
+                          color: AppColorsHelper.getStatusColor(tank.status),
                         ),
                       ),
                     ),
@@ -622,7 +626,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                   title: 'Pressure',
                   value: '${tank.pressure.toStringAsFixed(0)} bar',
                   progress: getMaxPressure(tank.thresholds, tank.pressure)/100,
-                  color:  _getBatSolColor(tank.pressure), icon: Icons.speed_sharp,
+                  color: AppColorsHelper.getBatSolColor(tank.pressure), icon: Icons.speed_sharp,
                 ),
 
                 const SizedBox(height: 10),
@@ -856,45 +860,5 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
       color: Colors.black54,
       letterSpacing: 1,
     );
-  }
-
-  Color getGasTypeColor(String gasType) {
-    switch (gasType.toUpperCase()) {
-      case 'LAR':
-        return Colors.teal;
-      case 'LCO₂':
-        return Colors.grey;
-      case 'LIN':
-        return Colors.blueGrey;
-      case 'LMO':
-        return Colors.brown;
-      case 'LOX':
-        return Colors.black54;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Color _getBatSolColor(double level) {
-    if (level <= 3) return Colors.red;
-    if (level <= 7) return Colors.orange;
-    return Colors.green;
-  }
-
-  Color _getLevelColor(double level) {
-    if (level <= 20) return Colors.red;
-    if (level <= 40) return Colors.orange;
-    return Colors.green;
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'online': return Colors.green;
-      case 'warning': return Colors.orange;
-      case 'critical': return Colors.red;
-      case 'offline': return Colors.grey;
-      case 'out of order': return Colors.purple;
-      default: return Colors.blue;
-    }
   }
 }

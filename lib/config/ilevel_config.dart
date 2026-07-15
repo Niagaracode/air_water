@@ -16,7 +16,8 @@ const iLevelConfig = AppConfig(
   primaryDarkColor: Color(0xFF00695C),
   backgroundColor: Color(0xFFFFFFFF),
 
-  appLogoPath: 'assets/logos/airwater/app_logo.svg',
+  appLogoPath: 'assets/logos/ilevel/app_logo.svg',
   companyLogoPath: 'assets/logos/airwater/company_logo.svg',
-  companySmallLogoPath: 'assets/logos/airwater/company_logo_small.svg',
+  companySmallLogoPath: 'assets/logos/ilevel/company_logo_small.svg',
+  tankImgPath: 'assets/images/tank.svg'
 );
