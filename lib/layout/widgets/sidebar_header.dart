@@ -1,7 +1,9 @@
+import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:air_water/core/user_config/user_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import '../../config/app_config.dart';
 import '../../layout/provider/sidebar_provider.dart';
 
 
@@ -30,7 +32,7 @@ class SidebarHeader extends ConsumerWidget {
         Row(
           children: [
             SvgPicture.asset(
-              'assets/svg/app_logo.svg',
+              AppConfig.current.appLogoPath,
               height: 32,
               fit: BoxFit.contain,
             ),
@@ -41,7 +43,7 @@ class SidebarHeader extends ConsumerWidget {
                   Icons.keyboard_double_arrow_left_rounded,
                   size: 20,
                 ),
-                color: Colors.black.withValues(alpha: 0.60),
+                color: primary,
                 splashRadius: 20,
                 onPressed: () {
                   ref.read(sidebarExpandedProvider.notifier).toggle();
@@ -60,13 +62,13 @@ class SidebarHeader extends ConsumerWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.12),
+                color: primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.keyboard_double_arrow_right_rounded,
                 size: 18,
-                color: Colors.black54,
+                color: primary,
               ),
             ),
           ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../config/app_config.dart';
 import '../../core/router/sidebar_routes.dart';
 import '../../core/user_config/user_role.dart';
 import '../provider/sidebar_provider.dart';
@@ -103,7 +104,7 @@ class ScreenSidebar extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           SvgPicture.asset(
-            isExpanded ? 'assets/svg/company_logo.svg' : 'assets/svg/aw_logo.svg',
+            isExpanded ? AppConfig.current.companyLogoPath : AppConfig.current.companySmallLogoPath,
             height: 30,
             fit: BoxFit.contain,
           ),

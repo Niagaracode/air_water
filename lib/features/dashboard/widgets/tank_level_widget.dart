@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../core/helpers/app_colors_helper.dart';
+
 class TankLevelWidget extends StatelessWidget {
   final double level;
   final String svgAsset;
+  final String gasType;
 
   const TankLevelWidget({
     super.key,
     required this.level,
     required this.svgAsset,
+    required this.gasType,
   });
 
   @override
@@ -17,7 +21,7 @@ class TankLevelWidget extends StatelessWidget {
     const tankHeight = 200.0;
 
     // Height of the cylindrical body
-    const liquidAreaHeight = 128.0;
+    const liquidAreaHeight = 168.0;
 
     return SizedBox(
       width: 160,
@@ -31,32 +35,32 @@ class TankLevelWidget extends StatelessWidget {
           //--------------------------------------------------
 
           Positioned(
-            left: - 17.5,
-            right: 24,
-            bottom: 47,
+            left: - 17.9,
+            right: 22,
+            bottom: 30,
             child: ClipRRect(
               borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
+                bottomLeft: Radius.circular(8),
+                bottomRight: Radius.circular(8),
               ),
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 600),
                   curve: Curves.easeInOut,
-                  width: 61,
+                  width: 66,
                   height: liquidAreaHeight * (level / 100),
                   decoration: BoxDecoration(
                     borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(10),
-                      bottomRight: Radius.circular(10),
+                      bottomLeft: Radius.circular(7),
+                      bottomRight: Radius.circular(7),
                     ),
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.lightBlueAccent,
-                        Colors.blue.shade700,
+                        AppColorsHelper.getGasTypeColor(gasType).withValues(alpha: 0.7),
+                        AppColorsHelper.getGasTypeColor(gasType),
                       ],
                     ),
                   ),
@@ -91,7 +95,7 @@ class TankLevelWidget extends StatelessWidget {
                 vertical: 5,
               ),
               decoration: BoxDecoration(
-                color: Colors.blue,
+                color: AppColorsHelper.getGasTypeColor(gasType),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Text(
@@ -99,6 +103,7 @@ class TankLevelWidget extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontSize: 12,
                 ),
               ),
             ),
@@ -109,9 +114,9 @@ class TankLevelWidget extends StatelessWidget {
           //--------------------------------------------------
 
           Positioned(
-            left: 70,
-            top: 24,
-            bottom: 45,
+            left: 72,
+            top: 8,
+            bottom: 30,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [

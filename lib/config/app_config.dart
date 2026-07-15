@@ -16,6 +16,11 @@ class AppConfig {
   final Color primaryDarkColor;
   final Color backgroundColor;
 
+  final String appLogoPath;
+  final String companyLogoPath;
+  final String companySmallLogoPath;
+  final String tankImgPath;
+
   const AppConfig({
     required this.appName,
     required this.apiUrl,
@@ -30,6 +35,11 @@ class AppConfig {
     required this.primaryLightColor,
     required this.primaryDarkColor,
     required this.backgroundColor,
+
+    required this.appLogoPath,
+    required this.companyLogoPath,
+    required this.companySmallLogoPath,
+    required this.tankImgPath,
   });
 
   static late AppConfig current;

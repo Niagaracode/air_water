@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../config/app_config.dart';
 import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/auth_providers.dart';
@@ -45,7 +46,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               // Air Water logo at top
               Center(
                 child: SvgPicture.asset(
-                  'assets/svg/aw_logo.svg',
+                  AppConfig.current.companySmallLogoPath,
                   width: 60,
                   fit: BoxFit.contain,
                 ),
@@ -145,7 +146,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                 child: ElevatedButton(
                   onPressed: state.isLoading ? null : _submit,
                   child: state.isLoading
-                      ? const CircularProgressIndicator()
+                      ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Login'),
                 ),
               ),
@@ -203,7 +204,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         ),
         const SizedBox(height: 8),
         SvgPicture.asset(
-          'assets/svg/company_logo.svg',
+          AppConfig.current.companyLogoPath,
           height: 25,
         ),
       ],

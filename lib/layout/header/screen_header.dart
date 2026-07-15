@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../config/app_config.dart';
 import '../../core/app_theme/app_theme.dart';
 import '../../core/helpers/route_refresh_helper.dart';
 import '../../features/auth/presentation/controllers/auth_providers.dart';
@@ -48,7 +49,7 @@ class ScreenHeader extends ConsumerWidget {
             SidebarHeader(isExpanded: isExpanded, userRole: userRole),
             const SizedBox(width: 16),
             Text(
-              'AIR WATER welcomes, $finalDisplayName!',
+              '${AppConfig.current.appName} welcomes, $finalDisplayName!',
               style: GoogleFonts.outfit(fontSize: 20, color: Colors.black54),
             ),
             const Spacer(),
@@ -65,6 +66,7 @@ class ScreenHeader extends ConsumerWidget {
               elevation: 8,
               color: Colors.white,
               padding: EdgeInsets.zero,
+              tooltip: 'Notification',
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -108,6 +110,7 @@ class ScreenHeader extends ConsumerWidget {
               offset: const Offset(0, 48),
               elevation: 8,
               color: Colors.white,
+              tooltip: '${AppConfig.current.appName} Account',
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
                 side: const BorderSide(color: Color(0xFFE5E7EB)),

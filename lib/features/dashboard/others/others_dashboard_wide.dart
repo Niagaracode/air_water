@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart' as pdfLib;
 
+import '../../../config/app_config.dart';
 import '../../../core/app_theme/app_theme.dart';
 import '../../tank/presentation/view/tank_details_view.dart';
 import '../data/models/tank_data_model.dart';
@@ -262,7 +263,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
     final pdf = pw.Document();
 
     final svgLogo = await rootBundle.loadString(
-      'assets/svg/company_logo.svg',
+      AppConfig.current.companyLogoPath,
     );
 
     pdf.addPage(

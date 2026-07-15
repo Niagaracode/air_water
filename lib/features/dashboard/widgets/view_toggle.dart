@@ -16,7 +16,6 @@ class ViewToggle extends StatelessWidget {
     this.mapIcon = Icons.map,
     this.listLabel = 'List View',
     this.mapLabel = 'Map View',
-    this.activeColor = const Color(0xFF141E7A),
     this.backgroundColor = Colors.grey,
     this.borderRadius = 10,
     this.animationDuration = const Duration(milliseconds: 300),
@@ -28,7 +27,6 @@ class ViewToggle extends StatelessWidget {
   final IconData mapIcon;
   final String listLabel;
   final String mapLabel;
-  final Color activeColor;
   final Color backgroundColor;
   final double borderRadius;
   final Duration animationDuration;
@@ -97,7 +95,7 @@ class ViewToggle extends StatelessWidget {
           style: GoogleFonts.outfit(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? activeColor : Colors.grey.shade600,
+            color: isSelected ? primary : Colors.grey.shade600,
           ),
           child: Row(
             children: [
@@ -111,7 +109,7 @@ class ViewToggle extends StatelessWidget {
                     child: Icon(
                       icon,
                       size: 18,
-                      color: isSelected ? activeColor : backgroundColor,
+                      color: isSelected ? primary : backgroundColor,
                     ),
                   );
                 },

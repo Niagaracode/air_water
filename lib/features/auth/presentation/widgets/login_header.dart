@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../config/app_config.dart';
 import 'background_lines_painter.dart';
 
 class LoginHeader extends StatelessWidget {
@@ -26,7 +27,7 @@ class LoginHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SvgPicture.asset(
-                'assets/svg/app_logo.svg',
+                AppConfig.current.appLogoPath,
                 width: isNarrow ? 180 : 300,
                 fit: BoxFit.contain,
                 color: Colors.white,
