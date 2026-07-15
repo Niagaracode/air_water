@@ -19,7 +19,7 @@ class OthersLayoutMiddle extends StatelessWidget {
     return Scaffold(
       drawer: Drawer(
         child: ScreenSidebar(
-          userRole: userRole,
+          userRole: userRole, isNarrow: false,
         ),
       ),
       appBar: AppBar(title: Text(userRole.name)),

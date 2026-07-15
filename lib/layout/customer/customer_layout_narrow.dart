@@ -20,7 +20,7 @@ class CustomerLayoutNarrow extends StatelessWidget {
 
       drawer: Drawer(
         child: ScreenSidebar(
-          userRole: userRole,
+          userRole: userRole, isNarrow: true,
         ),
       ),
 
