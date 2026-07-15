@@ -18,58 +18,62 @@ class StatisticsCards extends StatelessWidget {
     final lowLevel = statistics['lowLevel'] ?? 0;
     final reorderLevel = statistics['reorder'] ?? 0;
 
-    return Row(
-      children: [
-        // Active Devices - Soft Green
-        StatusChip(title: 'Active Devices', value: active, color: Colors.green,
-          icon: Icons.devices, gradient: const LinearGradient(
-            colors: [
-              Color(0xFFA7F3D0),
-              Color(0xFF6EE7B7),
-            ],
-          ), subtitle: 'Online', total: total,),
-        const SizedBox(width: 16),
-
-        // Offline Devices - Soft Gray
-        StatusChip(title: 'Offline Devices', value: offline, color: Colors.grey,
-          icon: Icons.offline_bolt, gradient: const LinearGradient(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          // Active Devices - Soft Green
+          StatusChip(title: 'Active Devices', value: active, color: Colors.green,
+            icon: Icons.devices, gradient: const LinearGradient(
               colors: [
-                Color(0xFFD1D5DB),
-                Color(0xFF9CA3AF),
+                Color(0xFFA7F3D0),
+                Color(0xFF6EE7B7),
               ],
-            ), subtitle: 'Offline', total: total,),
-        const SizedBox(width: 16),
-
-        // Low Battery - Soft Yellow
-        StatusChip(title: 'Low Batt/Solar', value: lowBattery, color: Colors.yellow,
-          icon: Icons.battery_alert, gradient: const LinearGradient(
-              colors: [
-                Color(0xFFFDE68A),
-                Color(0xFFFBBF24),
-              ],
-            ), subtitle: 'Needs Charging', total: total,),
-        const SizedBox(width: 16),
-
-        // Low Level - Soft Orange
-        StatusChip(title: 'Low Level', value: lowLevel, color: Colors.orange,
-          icon: Icons.water_drop, gradient: const LinearGradient(
-              colors: [
-                Color(0xFFFED7AA),
-                Color(0xFFF97316),
-              ],
-            ), subtitle: 'Below Threshold', total: total,),
-        const SizedBox(width: 16),
-
-        // Reorder Level - Soft Amber
-        StatusChip(title: 'Reorder Level', value: reorderLevel, color: Colors.amber,
-          icon: Icons.inventory, gradient: const LinearGradient(
-              colors: [
-                Color(0xFFFEF3C7),
-                Color(0xFFFBBF24),
-              ],
-            ), subtitle: 'Need Restock', total: total,),
-
-      ],
+            ), subtitle: 'Online', total: total,),
+          const SizedBox(width: 16),
+      
+          // Offline Devices - Soft Gray
+          StatusChip(title: 'Offline Devices', value: offline, color: Colors.grey,
+            icon: Icons.offline_bolt, gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFD1D5DB),
+                  Color(0xFF9CA3AF),
+                ],
+              ), subtitle: 'Offline', total: total,),
+          const SizedBox(width: 16),
+      
+          // Low Battery - Soft Yellow
+          StatusChip(title: 'Low Batt/Solar', value: lowBattery, color: Colors.yellow,
+            icon: Icons.battery_alert, gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFFDE68A),
+                  Color(0xFFFBBF24),
+                ],
+              ), subtitle: 'Needs Charging', total: total,),
+          const SizedBox(width: 16),
+      
+          // Low Level - Soft Orange
+          StatusChip(title: 'Low Level', value: lowLevel, color: Colors.orange,
+            icon: Icons.water_drop, gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFFED7AA),
+                  Color(0xFFF97316),
+                ],
+              ), subtitle: 'Below Threshold', total: total,),
+          const SizedBox(width: 16),
+      
+          // Reorder Level - Soft Amber
+          StatusChip(title: 'Reorder Level', value: reorderLevel, color: Colors.amber,
+            icon: Icons.inventory, gradient: const LinearGradient(
+                colors: [
+                  Color(0xFFFEF3C7),
+                  Color(0xFFFBBF24),
+                ],
+              ), subtitle: 'Need Restock', total: total,),
+      
+        ],
+      ),
     );
   }
 }
