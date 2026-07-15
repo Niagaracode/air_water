@@ -20,6 +20,7 @@ class CustomerLayoutMiddle extends StatelessWidget {
       drawer: Drawer(
         child: ScreenSidebar(
           userRole: userRole,
+          isNarrow: false,
         ),
       ),
       appBar: AppBar(

@@ -12,13 +12,18 @@ import '../widgets/sidebar_menu_item.dart';
 import '../widgets/nave_menu.dart';
 
 class ScreenSidebar extends ConsumerWidget {
-  const ScreenSidebar({super.key, required this.userRole});
+  const ScreenSidebar({super.key, required this.userRole, required this.isNarrow});
   final UserRole userRole;
+  final bool isNarrow;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isExpanded = ref.watch(sidebarExpandedProvider);
+    var isExpanded = ref.watch(sidebarExpandedProvider);
     final location = GoRouterState.of(context).uri.toString();
+
+    if(isNarrow){
+      isExpanded = true;
+    }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
@@ -169,6 +174,10 @@ class ScreenSidebar extends ConsumerWidget {
             isExpanded: isExpanded,
             isSelected: route != null && location == route,
             onTap: () {
+
+              if (isNarrow) {
+                Navigator.of(context).pop();
+              }
               if (route != null) {
                 context.go(route);
               }

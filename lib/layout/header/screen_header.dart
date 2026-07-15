@@ -18,9 +18,9 @@ import '../provider/sidebar_provider.dart';
 import '../../features/user/presentation/controller/user_provider.dart';
 
 class ScreenHeader extends ConsumerWidget {
-  const ScreenHeader({super.key, required this.userRole});
-
+  const ScreenHeader({super.key, required this.userRole, required this.isNarrow});
   final UserRole userRole;
+  final bool isNarrow;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,12 +46,30 @@ class ScreenHeader extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            SidebarHeader(isExpanded: isExpanded, userRole: userRole),
-            const SizedBox(width: 16),
-            Text(
-              '${AppConfig.current.appName} welcomes, $finalDisplayName!',
-              style: GoogleFonts.outfit(fontSize: 20, color: Colors.black54),
-            ),
+
+            if (isNarrow) ...[
+              Builder(
+                builder: (context) => Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: IconButton(
+                    icon: Icon(Icons.menu, color: AppConfig.current.primaryColor),
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  ),
+                ),
+              ),
+            ],
+
+            if(!isNarrow)...[
+              SidebarHeader(isExpanded: isExpanded, userRole: userRole),
+              const SizedBox(width: 16),
+              Text(
+                '${AppConfig.current.appName} welcomes, $finalDisplayName!',
+                style: GoogleFonts.outfit(fontSize: 20, color: Colors.black54),
+              ),
+            ],
+
             const Spacer(),
             const MqttConnectionStatus(),
             const SizedBox(width: 16),

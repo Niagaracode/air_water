@@ -20,7 +20,7 @@ class CustomerLayoutWide extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
-          ScreenHeader(userRole: userRole),
+          ScreenHeader(userRole: userRole, isNarrow: false),
           Expanded(child: child),
         ],
       ),
