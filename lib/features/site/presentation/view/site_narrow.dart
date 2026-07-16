@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:air_water/shared/widgets/app_text_field.dart';
 import 'package:air_water/shared/widgets/app_dropdown.dart';
 import 'package:air_water/shared/widgets/app_date_picker.dart';
@@ -90,10 +91,66 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'SITE MANAGEMENT',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Expanded(
+              child: Text(
+                'SITE MANAGEMENT',
+                style: TextStyle(fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: () {
+                showGeneralDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  barrierLabel: 'AddSite',
+                  barrierColor: Colors.black54,
+                  transitionDuration: const Duration(milliseconds: 300),
+                  pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
+                  transitionBuilder: (context, anim1, anim2, child) {
+                    return SlideTransition(
+                      position:
+                          Tween<Offset>(
+                            begin: const Offset(1, 0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: anim1,
+                              curve: Curves.easeOut,
+                            ),
+                          ),
+                      child: child,
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('ADD'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                textStyle: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+                elevation: 0,
+              ),
+            ),
+          ],
         ),
+
         const SizedBox(height: 16),
         RawAutocomplete<SiteAutocompleteInfo>(
           optionsBuilder: (TextEditingValue textEditingValue) async {
@@ -200,45 +257,15 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
         ),
         const SizedBox(height: 12),
         Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Expanded(
-              child: AppClearButton(
-                onPressed: () {
-                  _siteSearchController.clear();
-                  siteNotifier.clearFilters();
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Expanded(child: SizedBox()),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton.icon(
-          onPressed: () {
-            showGeneralDialog(
-              context: context,
-              barrierDismissible: true,
-              barrierLabel: 'AddSite',
-              barrierColor: Colors.black54,
-              transitionDuration: const Duration(milliseconds: 300),
-              pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
-              transitionBuilder: (context, anim1, anim2, child) {
-                return SlideTransition(
-                  position:
-                      Tween<Offset>(
-                        begin: const Offset(1, 0),
-                        end: Offset.zero,
-                      ).animate(
-                        CurvedAnimation(parent: anim1, curve: Curves.easeOut),
-                      ),
-                  child: child,
-                );
+            AppClearButton(
+              onPressed: () {
+                _siteSearchController.clear();
+                siteNotifier.clearFilters();
               },
-            );
-          },
-          icon: const Icon(Icons.add, size: 16),
-          label: const Text('ADD'),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         Align(
@@ -336,6 +363,28 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
     int index,
     bool isLast,
   ) {
+    String headerText;
+    int addressesCount = 0;
+    try {
+      final raw = (group.name ?? '').trim();
+      if (raw.isNotEmpty && raw != 'null') {
+        headerText = raw;
+      } else {
+        String? foundSiteName;
+        for (final addr in group.addresses) {
+          final sn = (addr.siteName ?? '').trim();
+          if (sn.isNotEmpty && sn != 'null') {
+            foundSiteName = sn;
+            break;
+          }
+        }
+        headerText = foundSiteName ?? '';
+      }
+      addressesCount = group.addresses.length;
+    } catch (e) {
+      headerText = '';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -343,17 +392,10 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
         border: Border(
           left: BorderSide(color: Colors.grey.shade200),
           right: BorderSide(color: Colors.grey.shade200),
-          top: index == 1
-              ? BorderSide(color: Colors.grey.shade200)
-              : BorderSide.none,
+          top: BorderSide.none,
           bottom: BorderSide(color: Colors.grey.shade100),
         ),
-        borderRadius: index == 1
-            ? const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-              )
-            : BorderRadius.zero,
+        borderRadius: BorderRadius.zero,
       ),
       child: Row(
         children: [
@@ -372,12 +414,15 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
             child: Row(
               children: [
                 const SizedBox(width: 4),
-                Text(
-                  group.name,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E40AF),
+                Flexible(
+                  child: Text(
+                    headerText,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E40AF),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -392,7 +437,7 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
                     border: Border.all(color: const Color(0xFFBFDBFE)),
                   ),
                   child: Text(
-                    '${group.addresses.length} SITES',
+                    '$addressesCount SITES',
                     style: const TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.bold,
@@ -408,11 +453,7 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
     );
   }
 
-  Widget _buildSiteRow(
-    SiteGroupAddress site,
-    SiteGroup group,
-    bool isLast,
-  ) {
+  Widget _buildSiteRow(SiteGroupAddress site, SiteGroup group, bool isLast) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -440,15 +481,25 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(site.city ?? '—', style: const TextStyle(fontSize: 12)),
                   Text(
-                    '${site.companyName ?? '—'} (${site.country ?? '—'})',
+                    site.siteName ?? '—',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'City: ${site.city ?? '—'}  |  Company: ${site.companyName ?? '—'} (${site.country ?? '—'})',
                     style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
                   ),
                   if (site.timeZone != null)
                     Text(
                       'Time Zone: ${site.timeZone}',
-                      style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: Colors.grey.shade500,
+                      ),
                     ),
                   Text(
                     site.fullAddress,

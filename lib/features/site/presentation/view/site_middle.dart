@@ -218,6 +218,28 @@ class _SiteMiddleState extends ConsumerState<SiteMiddle> {
     int index,
     bool isLast,
   ) {
+    String headerText;
+    int addressesCount = 0;
+    try {
+      final raw = (group.name ?? '').trim();
+      if (raw.isNotEmpty && raw != 'null') {
+        headerText = raw;
+      } else {
+        String? foundSiteName;
+        for (final addr in group.addresses) {
+          final sn = (addr.siteName ?? '').trim();
+          if (sn.isNotEmpty && sn != 'null') {
+            foundSiteName = sn;
+            break;
+          }
+        }
+        headerText = foundSiteName ?? '';
+      }
+      addressesCount = group.addresses.length;
+    } catch (e) {
+      headerText = '';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
@@ -254,12 +276,15 @@ class _SiteMiddleState extends ConsumerState<SiteMiddle> {
             child: Row(
               children: [
                 const SizedBox(width: 4),
-                Text(
-                  group.name,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E40AF),
+                Flexible(
+                  child: Text(
+                    headerText,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E40AF),
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -274,7 +299,7 @@ class _SiteMiddleState extends ConsumerState<SiteMiddle> {
                     border: Border.all(color: const Color(0xFFBFDBFE)),
                   ),
                   child: Text(
-                    '${group.addresses.length} SITES',
+                    '$addressesCount SITES',
                     style: const TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.bold,

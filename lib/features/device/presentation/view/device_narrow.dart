@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/app_theme/app_theme.dart';
 import '../controller/device_provider.dart';
 import '../model/device_model.dart';
@@ -112,44 +113,66 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
 
   Widget _buildHeader(DeviceNotifier notifier) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'DEVICE MANAGEMENT',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            const Expanded(
+              child: Text(
+                'DEVICE MANAGEMENT',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            ElevatedButton(
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
               onPressed: () => _showAddModal(),
-              child: const Text('ADD'),
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('ADD'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                textStyle: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+                elevation: 0,
+              ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search By Device ID',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.white,
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                onSubmitted: (value) {
-                  notifier.setSearchDevice(value);
-                  notifier.loadGroupedDevices();
-                },
-              ),
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search By Device ID',
+            prefixIcon: const Icon(Icons.search),
+            filled: true,
+            fillColor: Colors.white,
+            isDense: true,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
             ),
-            const SizedBox(width: 8),
+          ),
+          onSubmitted: (value) {
+            notifier.setSearchDevice(value);
+            notifier.loadGroupedDevices();
+          },
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
             AppClearButton(
               onPressed: () {
                 _searchController.clear();
@@ -196,45 +219,127 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
       );
     }
 
+    final List<dynamic> items = [];
+    for (int i = 0; i < state.groupedDevices.length; i++) {
+      final group = state.groupedDevices[i];
+      items.add({'type': 'header', 'group': group, 'index': i + 1});
+      for (final dev in group.devices) {
+        items.add({'type': 'row', 'device': dev, 'group': group});
+      }
+    }
+
     return SliverList.builder(
-      itemCount: state.groupedDevices.length,
+      itemCount: items.length,
       itemBuilder: (context, index) {
-        return _buildGroup(state.groupedDevices[index], state, notifier);
+        final item = items[index];
+        final isLast = index == items.length - 1;
+
+        if (item['type'] == 'header') {
+          return _buildGroupHeader(
+            state,
+            item['group'] as DeviceGroup,
+            item['index'] as int,
+            isLast,
+          );
+        } else {
+          return _buildDeviceCard(item['device'] as Device, notifier);
+        }
       },
     );
   }
 
-  Widget _buildGroup(
-    DeviceGroup group,
+  Widget _buildGroupHeader(
     DeviceState state,
-    DeviceNotifier notifier,
+    DeviceGroup group,
+    int index,
+    bool isLast,
   ) {
-    final isExpanded = state.expandedGroups.contains(
-      group.siteOrganizationCode,
-    );
+    String headerText;
+    int devicesCount = 0;
+    try {
+      final raw = (group.siteName ?? '').trim();
+      if (raw.isNotEmpty && raw != 'null') {
+        headerText = raw;
+      } else {
+        String? foundSiteName;
+        for (final d in group.devices) {
+          final sn = (d.siteName ?? '').trim();
+          if (sn.isNotEmpty && sn != 'null') {
+            foundSiteName = sn;
+            break;
+          }
+        }
+        headerText = foundSiteName ?? '';
+      }
+      devicesCount = group.devices.length;
+    } catch (e) {
+      headerText = '';
+    }
 
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 8),
-        child: ExpansionTile(
-          initiallyExpanded: isExpanded,
-          onExpansionChanged: (_) =>
-              notifier.toggleGroup(group.siteOrganizationCode),
-          title: Text(
-            group.siteName ?? '',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          ),
-          subtitle: group.fullAddress.isNotEmpty
-              ? Text(
-                  group.fullAddress,
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
-                )
-              : null,
-          children: group.devices
-              .map((device) => _buildDeviceCard(device, notifier))
-              .toList(),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        border: Border(
+          left: BorderSide(color: Colors.grey.shade200),
+          right: BorderSide(color: Colors.grey.shade200),
+          top: BorderSide.none,
+          bottom: BorderSide(color: Colors.grey.shade100),
         ),
+        borderRadius: BorderRadius.zero,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 30,
+            child: Text(
+              index.toString().padLeft(2, '0'),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E40AF),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Row(
+              children: [
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    headerText,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E40AF),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                  ),
+                  child: Text(
+                    '$devicesCount DEVICES',
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -326,12 +431,16 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),

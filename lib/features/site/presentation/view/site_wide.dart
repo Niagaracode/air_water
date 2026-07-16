@@ -330,7 +330,19 @@ class _SiteWideState extends ConsumerState<SiteWide> {
               ),
             ),
             Text(
-              group.name,
+              () {
+                final raw = (group.name ?? '').trim();
+                if (raw.isNotEmpty && raw != 'null') return raw;
+                String? foundSiteName;
+                for (final addr in group.addresses) {
+                  final sn = (addr.siteName ?? '').trim();
+                  if (sn.isNotEmpty && sn != 'null') {
+                    foundSiteName = sn;
+                    break;
+                  }
+                }
+                return foundSiteName ?? '';
+              }(),
               style: GoogleFonts.outfit(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,

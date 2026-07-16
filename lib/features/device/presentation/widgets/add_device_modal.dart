@@ -130,6 +130,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
   @override
   Widget build(BuildContext context) {
     final deviceState = ref.watch(deviceNotifierProvider);
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     return Align(
       alignment: Alignment.centerRight,
@@ -140,7 +141,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
           bottomLeft: Radius.circular(20),
         ),
         child: SizedBox(
-          width: 600,
+          width: isMobile ? double.infinity : 600,
           height: MediaQuery.of(context).size.height,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -157,9 +158,9 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                 child: Stack(
                   children: [
                     SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 48,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 20 : 40,
+                        vertical: isMobile ? 24 : 48,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,44 +349,87 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                                 color: const Color(0xFFF3F4F6),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'DEVICE STATUS',
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 12,
-                                        color: primary,
-                                        letterSpacing: 1.1,
+                            child: isMobile
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'DEVICE STATUS',
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                          color: primary,
+                                          letterSpacing: 1.1,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Enable or disable this device.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: const Color(0xFF6B7280),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Enable or disable this device.',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: const Color(0xFF6B7280),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const Spacer(),
-                                _buildStatusToggle(
-                                  1,
-                                  'Active',
-                                  const Color(0xFF10B981),
-                                ),
-                                const SizedBox(width: 12),
-                                _buildStatusToggle(
-                                  0,
-                                  'Inactive',
-                                  const Color(0xFF6B7280),
-                                ),
-                              ],
-                            ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildStatusToggle(
+                                              1,
+                                              'Active',
+                                              const Color(0xFF10B981),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: _buildStatusToggle(
+                                              0,
+                                              'Inactive',
+                                              const Color(0xFF6B7280),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'DEVICE STATUS',
+                                            style: GoogleFonts.outfit(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12,
+                                              color: primary,
+                                              letterSpacing: 1.1,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Enable or disable this device.',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12,
+                                              color: const Color(0xFF6B7280),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const Spacer(),
+                                      _buildStatusToggle(
+                                        1,
+                                        'Active',
+                                        const Color(0xFF10B981),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildStatusToggle(
+                                        0,
+                                        'Inactive',
+                                        const Color(0xFF6B7280),
+                                      ),
+                                    ],
+                                  ),
                           ),
                           const SizedBox(height: 64),
                           SizedBox(
@@ -654,6 +698,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
           ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(

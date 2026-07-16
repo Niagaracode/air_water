@@ -356,14 +356,14 @@ class SiteGroupAddress {
 
 class SiteGroup {
   final String? siteOrganizationCode;
-  final String name;
+  final String? name;
   final String? timeZone;
   final String? createdAt;
   final List<SiteGroupAddress> addresses;
 
   SiteGroup({
     this.siteOrganizationCode,
-    required this.name,
+    this.name,
     this.timeZone,
     this.createdAt,
     required this.addresses,
@@ -372,7 +372,7 @@ class SiteGroup {
   factory SiteGroup.fromJson(Map<String, dynamic> json) {
     return SiteGroup(
       siteOrganizationCode: json['plant_organization_code'] as String?,
-      name: json['name'] as String,
+      name: (json['name'] as String?) ?? '',
       timeZone: json['time_zone'] as String?,
       createdAt: json['created_at'] as String?,
       addresses: (json['addresses'] as List)

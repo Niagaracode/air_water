@@ -358,6 +358,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   @override
   Widget build(BuildContext context) {
     final siteState = ref.watch(siteNotifierProvider);
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     return Align(
       alignment: Alignment.centerRight,
@@ -368,7 +369,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
           bottomLeft: Radius.circular(20),
         ),
         child: SizedBox(
-          width: 600,
+          width: isMobile ? double.infinity : 600,
           height: MediaQuery.of(context).size.height,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -385,9 +386,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                 child: Stack(
                   children: [
                     SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 48,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 20 : 40,
+                        vertical: isMobile ? 24 : 48,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,53 +442,95 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                           _buildInfoBar(),
                           const SizedBox(height: 48),
 
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  'CUSTOMER NAME',
-                                  AppAutocomplete<SiteAutocompleteInfo>(
-                                    controller: _nameController,
-                                    hint: 'e.g. South Site Unit A',
-                                    displayStringForOption: (site) =>
-                                        site.siteName,
-                                    subtitleBuilder: (site) =>
-                                        site.companyName ?? '',
-                                    optionsBuilder: (textEditingValue) async {
-                                      if (textEditingValue.text.isEmpty) {
-                                        return const Iterable<
-                                          SiteAutocompleteInfo
-                                        >.empty();
-                                      }
-                                      return await ref
-                                          .read(siteNotifierProvider.notifier)
-                                          .searchSites(textEditingValue.text);
-                                    },
-                                    onSelected: (site) {
-                                      setState(() {
-                                        _selectedSiteName = site.siteName;
-                                      });
-                                    },
+                          if (isMobile) ...[
+                            _buildLabelField(
+                              'CUSTOMER NAME',
+                              AppAutocomplete<SiteAutocompleteInfo>(
+                                controller: _nameController,
+                                hint: 'e.g. South Site Unit A',
+                                displayStringForOption: (site) =>
+                                    site.siteName,
+                                subtitleBuilder: (site) =>
+                                    site.companyName ?? '',
+                                optionsBuilder: (textEditingValue) async {
+                                  if (textEditingValue.text.isEmpty) {
+                                    return const Iterable<
+                                      SiteAutocompleteInfo
+                                    >.empty();
+                                  }
+                                  return await ref
+                                      .read(siteNotifierProvider.notifier)
+                                      .searchSites(textEditingValue.text);
+                                },
+                                onSelected: (site) {
+                                  setState(() {
+                                    _selectedSiteName = site.siteName;
+                                  });
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildLabelField(
+                              'SELECT COMPANY',
+                              _isLoadingCompanies
+                                  ? const LinearProgressIndicator(
+                                      minHeight: 2,
+                                    )
+                                  : AppTextField(
+                                      readOnly: true,
+                                      controller: _companyNameController,
+                                      hint: 'Company',
+                                    ),
+                            ),
+                          ] else ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildLabelField(
+                                    'CUSTOMER NAME',
+                                    AppAutocomplete<SiteAutocompleteInfo>(
+                                      controller: _nameController,
+                                      hint: 'e.g. South Site Unit A',
+                                      displayStringForOption: (site) =>
+                                          site.siteName,
+                                      subtitleBuilder: (site) =>
+                                          site.companyName ?? '',
+                                      optionsBuilder: (textEditingValue) async {
+                                        if (textEditingValue.text.isEmpty) {
+                                          return const Iterable<
+                                            SiteAutocompleteInfo
+                                          >.empty();
+                                        }
+                                        return await ref
+                                            .read(siteNotifierProvider.notifier)
+                                            .searchSites(textEditingValue.text);
+                                      },
+                                      onSelected: (site) {
+                                        setState(() {
+                                          _selectedSiteName = site.siteName;
+                                        });
+                                      },
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 32),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'SELECT COMPANY',
-                                  _isLoadingCompanies
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                        )
-                                      : AppTextField(
-                                          readOnly: true,
-                                          controller: _companyNameController,
-                                          hint: 'Company',
-                                        ),
+                                const SizedBox(width: 32),
+                                Expanded(
+                                  child: _buildLabelField(
+                                    'SELECT COMPANY',
+                                    _isLoadingCompanies
+                                        ? const LinearProgressIndicator(
+                                            minHeight: 2,
+                                          )
+                                        : AppTextField(
+                                            readOnly: true,
+                                            controller: _companyNameController,
+                                            hint: 'Company',
+                                          ),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
 
                           const SizedBox(height: 32),
 
@@ -549,44 +592,87 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                 color: const Color(0xFFF3F4F6),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'STATUS',
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 12,
-                                        color: primary,
-                                        letterSpacing: 1.1,
+                            child: isMobile
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'STATUS',
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                          color: primary,
+                                          letterSpacing: 1.1,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Set the operational status of this site.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: const Color(0xFF6B7280),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Set the operational status of this site.',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: const Color(0xFF6B7280),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const Spacer(),
-                                _buildStatusToggle(
-                                  1,
-                                  'Active',
-                                  const Color(0xFF10B981),
-                                ),
-                                const SizedBox(width: 12),
-                                _buildStatusToggle(
-                                  0,
-                                  'Inactive',
-                                  const Color(0xFF6B7280),
-                                ),
-                              ],
-                            ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildStatusToggle(
+                                              1,
+                                              'Active',
+                                              const Color(0xFF10B981),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: _buildStatusToggle(
+                                              0,
+                                              'Inactive',
+                                              const Color(0xFF6B7280),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'STATUS',
+                                            style: GoogleFonts.outfit(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 12,
+                                              color: primary,
+                                              letterSpacing: 1.1,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Set the operational status of this site.',
+                                            style: GoogleFonts.inter(
+                                              fontSize: 12,
+                                              color: const Color(0xFF6B7280),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const Spacer(),
+                                      _buildStatusToggle(
+                                        1,
+                                        'Active',
+                                        const Color(0xFF10B981),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildStatusToggle(
+                                        0,
+                                        'Inactive',
+                                        const Color(0xFF6B7280),
+                                      ),
+                                    ],
+                                  ),
                           ),
                           const SizedBox(height: 64),
 
@@ -660,6 +746,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
           ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
@@ -791,6 +878,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
             key: ValueKey(
               'loc_${controllers.country}_${controllers.state}_${controllers.city}',
             ),
+            isVertical: MediaQuery.sizeOf(context).width < 600,
             currentCountry: controllers.country,
             currentState: controllers.state,
             currentCity: controllers.city,

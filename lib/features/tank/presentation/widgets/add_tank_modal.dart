@@ -299,6 +299,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     final tankDimState = ref.watch(tankDimensionNotifierProvider);
     final List<TankDimension> dimensions = tankDimState.tankDimensions;
 
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     return Align(
       alignment: Alignment.centerRight,
       child: Material(
@@ -308,14 +310,14 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           bottomLeft: Radius.circular(16),
         ),
         child: SizedBox(
-          width: 600,
+          width: isMobile ? double.infinity : 600,
           height: MediaQuery.of(context).size.height,
           child: Stack(
             children: [
               SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 48,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 20 : 40,
+                  vertical: isMobile ? 24 : 48,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -440,44 +442,87 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: const Color(0xFFF3F4F6)),
                       ),
-                      child: Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'STATUS',
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                  color: primary,
-                                  letterSpacing: 1.1,
+                      child: isMobile
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'STATUS',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    color: primary,
+                                    letterSpacing: 1.1,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Set the visibility of this tank record.',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  color: const Color(0xFF6B7280),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Set the visibility of this tank record.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: const Color(0xFF6B7280),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          _buildStatusToggle(
-                            1,
-                            'Active',
-                            const Color(0xFF10B981),
-                          ),
-                          const SizedBox(width: 12),
-                          _buildStatusToggle(
-                            0,
-                            'Inactive',
-                            const Color(0xFF6B7280),
-                          ),
-                        ],
-                      ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildStatusToggle(
+                                        1,
+                                        'Active',
+                                        const Color(0xFF10B981),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildStatusToggle(
+                                        0,
+                                        'Inactive',
+                                        const Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'STATUS',
+                                      style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                        color: primary,
+                                        letterSpacing: 1.1,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Set the visibility of this tank record.',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: const Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Spacer(),
+                                _buildStatusToggle(
+                                  1,
+                                  'Active',
+                                  const Color(0xFF10B981),
+                                ),
+                                const SizedBox(width: 12),
+                                _buildStatusToggle(
+                                  0,
+                                  'Inactive',
+                                  const Color(0xFF6B7280),
+                                ),
+                              ],
+                            ),
                     ),
 
                     const SizedBox(height: 64),
@@ -564,6 +609,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(

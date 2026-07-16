@@ -212,7 +212,7 @@ class TankGroup {
         .toList();
 
     return TankGroup(
-      siteName: json['plant_name'] as String,
+      siteName: (json['plant_name'] as String?) ?? '',
       addressLine1: json['address_line_1'] as String?,
       city: json['city'] as String?,
       state: json['state'] as String?,

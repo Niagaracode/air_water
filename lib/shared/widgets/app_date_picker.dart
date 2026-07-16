@@ -63,47 +63,58 @@ class _AppDatePickerFieldState extends State<AppDatePickerField> {
 
     final size = renderBox.size;
 
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+
     _overlayEntry = OverlayEntry(
       builder: (context) {
+        final calendarCard = Material(
+          elevation: 12,
+          shadowColor: Colors.black.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.white,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFF3F4F6)),
+            ),
+            child: _DatePickerCalendar(
+              initialMonth: _currentMonth,
+              selectedDate: _tempSelected,
+              firstDate: widget.firstDate,
+              lastDate: widget.lastDate,
+              onCancel: _close,
+              onConfirm: (date) {
+                if (!_isDisposed && mounted) {
+                  widget.onDateChanged(date);
+                  _close();
+                }
+              },
+            ),
+          ),
+        );
+
         return Stack(
           children: [
             Positioned.fill(
               child: GestureDetector(
                 onTap: _close,
                 behavior: HitTestBehavior.opaque,
-                child: const SizedBox.expand(),
-              ),
-            ),
-            CompositedTransformFollower(
-              link: _layerLink,
-              showWhenUnlinked: false,
-              offset: Offset(0, size.height + 8),
-              child: Material(
-                elevation: 12,
-                shadowColor: Colors.black.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.white,
                 child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFF3F4F6)),
-                  ),
-                  child: _DatePickerCalendar(
-                    initialMonth: _currentMonth,
-                    selectedDate: _tempSelected,
-                    firstDate: widget.firstDate,
-                    lastDate: widget.lastDate,
-                    onCancel: _close,
-                    onConfirm: (date) {
-                      if (!_isDisposed && mounted) {
-                        widget.onDateChanged(date);
-                        _close();
-                      }
-                    },
-                  ),
+                  color: isMobile ? Colors.black26 : Colors.transparent,
                 ),
               ),
             ),
+            if (isMobile)
+              Center(
+                child: calendarCard,
+              )
+            else
+              CompositedTransformFollower(
+                link: _layerLink,
+                showWhenUnlinked: false,
+                offset: Offset(0, size.height + 8),
+                child: calendarCard,
+              ),
           ],
         );
       },

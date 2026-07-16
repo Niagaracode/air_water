@@ -1333,7 +1333,12 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
     if (rule.parameter == 'Site Name') {
       final siteState = ref.watch(siteNotifierProvider);
-      final sites = siteState.groupedSites.map((g) => g.name).toSet().toList()
+      final sites = siteState.groupedSites
+          .map((g) => g.name)
+          .whereType<String>()
+          .where((s) => s.trim().isNotEmpty)
+          .toSet()
+          .toList()
         ..sort();
 
       if (sites.isEmpty && siteState.isLoading) {

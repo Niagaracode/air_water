@@ -332,6 +332,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(userProvider);
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     return Align(
       alignment: Alignment.centerRight,
@@ -342,7 +343,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           bottomLeft: Radius.circular(20),
         ),
         child: SizedBox(
-          width: 600,
+          width: isMobile ? double.infinity : 600,
           height: MediaQuery.of(context).size.height,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -359,9 +360,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                 child: Stack(
                   children: [
                     SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 48,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 20 : 40,
+                        vertical: isMobile ? 24 : 48,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,138 +459,241 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                           ),
                           const SizedBox(height: 24),
 
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  'FIRST NAME',
-                                  AppTextField(
-                                    controller: _firstNameController,
-                                    focusNode: _firstNameFocus,
-                                    hint: 'First Name',
-                                    errorText: _firstNameError,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.allow(
-                                          RegExp(r'[a-zA-Z\s]')),
-                                    ],
+                          if (isMobile) ...[
+                            _buildLabelField(
+                              'FIRST NAME',
+                              AppTextField(
+                                controller: _firstNameController,
+                                focusNode: _firstNameFocus,
+                                hint: 'First Name',
+                                errorText: _firstNameError,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'[a-zA-Z\s]')),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildLabelField(
+                              'LAST NAME',
+                              AppTextField(
+                                controller: _lastNameController,
+                                focusNode: _lastNameFocus,
+                                hint: 'Last Name',
+                                errorText: _lastNameError,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'[a-zA-Z\s]')),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildLabelField(
+                                    'FIRST NAME',
+                                    AppTextField(
+                                      controller: _firstNameController,
+                                      focusNode: _firstNameFocus,
+                                      hint: 'First Name',
+                                      errorText: _firstNameError,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(
+                                            RegExp(r'[a-zA-Z\s]')),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'LAST NAME',
-                                  AppTextField(
-                                    controller: _lastNameController,
-                                    focusNode: _lastNameFocus,
-                                    hint: 'Last Name',
-                                    errorText: _lastNameError,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.allow(
-                                          RegExp(r'[a-zA-Z\s]')),
-                                    ],
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _buildLabelField(
+                                    'LAST NAME',
+                                    AppTextField(
+                                      controller: _lastNameController,
+                                      focusNode: _lastNameFocus,
+                                      hint: 'Last Name',
+                                      errorText: _lastNameError,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(
+                                            RegExp(r'[a-zA-Z\s]')),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
                           const SizedBox(height: 24),
 
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  'EMAIL ADDRESS*',
-                                  AppTextField(
-                                    controller: _emailController,
-                                    focusNode: _emailFocus,
-                                    hint: 'john@example.com',
-                                    errorText: _emailError,
+                          if (isMobile) ...[
+                            _buildLabelField(
+                              'EMAIL ADDRESS*',
+                              AppTextField(
+                                controller: _emailController,
+                                focusNode: _emailFocus,
+                                hint: 'john@example.com',
+                                errorText: _emailError,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildLabelField(
+                              'MOBILE NUMBER',
+                              AppTextField(
+                                controller: _mobileController,
+                                focusNode: _mobileFocus,
+                                hint: '+1 234 567 890',
+                                errorText: _mobileError,
+                                keyboardType: TextInputType.phone,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(15),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildLabelField(
+                                    'EMAIL ADDRESS*',
+                                    AppTextField(
+                                      controller: _emailController,
+                                      focusNode: _emailFocus,
+                                      hint: 'john@example.com',
+                                      errorText: _emailError,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'MOBILE NUMBER',
-                                  AppTextField(
-                                    controller: _mobileController,
-                                    focusNode: _mobileFocus,
-                                    hint: '+1 234 567 890',
-                                    errorText: _mobileError,
-                                    keyboardType: TextInputType.phone,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                      LengthLimitingTextInputFormatter(15),
-                                    ],
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _buildLabelField(
+                                    'MOBILE NUMBER',
+                                    AppTextField(
+                                      controller: _mobileController,
+                                      focusNode: _mobileFocus,
+                                      hint: '+1 234 567 890',
+                                      errorText: _mobileError,
+                                      keyboardType: TextInputType.phone,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                        LengthLimitingTextInputFormatter(15),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
                           const SizedBox(height: 24),
 
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildLabelField(
-                                  widget.user != null ? 'PASSWORD' : 'PASSWORD*',
-                                  AppTextField(
-                                    controller: _passwordController,
-                                    hint: '••••••••',
-                                    obscureText: true,
+                          if (isMobile) ...[
+                            _buildLabelField(
+                              widget.user != null ? 'PASSWORD' : 'PASSWORD*',
+                              AppTextField(
+                                controller: _passwordController,
+                                hint: '••••••••',
+                                obscureText: true,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildLabelField(
+                              widget.user != null ? 'CONFIRM PASSWORD' : 'CONFIRM PASSWORD*',
+                              AppTextField(
+                                controller: _confirmPasswordController,
+                                hint: '••••••••',
+                                obscureText: true,
+                              ),
+                            ),
+                          ] else ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildLabelField(
+                                    widget.user != null ? 'PASSWORD' : 'PASSWORD*',
+                                    AppTextField(
+                                      controller: _passwordController,
+                                      hint: '••••••••',
+                                      obscureText: true,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildLabelField(
-                                  widget.user != null ? 'CONFIRM PASSWORD' : 'CONFIRM PASSWORD*',
-                                  AppTextField(
-                                    controller: _confirmPasswordController,
-                                    hint: '••••••••',
-                                    obscureText: true,
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _buildLabelField(
+                                    widget.user != null ? 'CONFIRM PASSWORD' : 'CONFIRM PASSWORD*',
+                                    AppTextField(
+                                      controller: _confirmPasswordController,
+                                      hint: '••••••••',
+                                      obscureText: true,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
+                          ],
                           const SizedBox(height: 24),
 
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: _buildLabelField(
-                                  'ACCOUNT ROLE*',
-                                  _isLoadingRoles
-                                      ? const LinearProgressIndicator(
-                                          minHeight: 2,
-                                        )
-                                      : AppDropdown<Role>(
-                                          value: _selectedRole,
-                                          items: _roles ?? [],
-                                          itemLabel: (r) => r.name,
-                                          onChanged: (v) =>
-                                              setState(() => _selectedRole = v),
-                                          hint: 'Select Role',
-                                        ),
-                                ),
+                          if (isMobile) ...[
+                            _buildLabelField(
+                              'ACCOUNT ROLE*',
+                              _isLoadingRoles
+                                  ? const LinearProgressIndicator(
+                                      minHeight: 2,
+                                    )
+                                  : AppDropdown<Role>(
+                                      value: _selectedRole,
+                                      items: _roles ?? [],
+                                      itemLabel: (r) => r.name,
+                                      onChanged: (v) =>
+                                          setState(() => _selectedRole = v),
+                                      hint: 'Select Role',
+                                    ),
+                            ),
+                            const SizedBox(height: 24),
+                            _buildLabelField(
+                              'TIMEOUT (HOURS)',
+                              AppTextField(
+                                controller: _timeoutController,
+                                hint: 'e.g. 24',
+                                keyboardType: TextInputType.number,
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildLabelField(
-                                  'TIMEOUT (HOURS)',
-                                  AppTextField(
-                                    controller: _timeoutController,
-                                    hint: 'e.g. 24',
-                                    keyboardType: TextInputType.number,
+                            ),
+                          ] else ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildLabelField(
+                                    'ACCOUNT ROLE*',
+                                    _isLoadingRoles
+                                        ? const LinearProgressIndicator(
+                                            minHeight: 2,
+                                          )
+                                        : AppDropdown<Role>(
+                                            value: _selectedRole,
+                                            items: _roles ?? [],
+                                            itemLabel: (r) => r.name,
+                                            onChanged: (v) =>
+                                                setState(() => _selectedRole = v),
+                                            hint: 'Select Role',
+                                          ),
                                   ),
                                 ),
-
-                              ),
-                            ],
-                          ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _buildLabelField(
+                                    'TIMEOUT (HOURS)',
+                                    AppTextField(
+                                      controller: _timeoutController,
+                                      hint: 'e.g. 24',
+                                      keyboardType: TextInputType.number,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           const SizedBox(height: 48),
 
                           // Status Selector
@@ -602,12 +706,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                 color: const Color(0xFFF3F4F6),
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                            child: isMobile
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'ACCOUNT STATUS',
@@ -626,23 +727,69 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                                           color: const Color(0xFF6B7280),
                                         ),
                                       ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildStatusToggle(
+                                              1,
+                                              'Active',
+                                              const Color(0xFF10B981),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: _buildStatusToggle(
+                                              0,
+                                              'Inactive',
+                                              const Color(0xFF6B7280),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'ACCOUNT STATUS',
+                                              style: GoogleFonts.outfit(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 12,
+                                                color: primary,
+                                                letterSpacing: 1.1,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Set the operational status of this user account.',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 12,
+                                                color: const Color(0xFF6B7280),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      _buildStatusToggle(
+                                        1,
+                                        'Active',
+                                        const Color(0xFF10B981),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _buildStatusToggle(
+                                        0,
+                                        'Inactive',
+                                        const Color(0xFF6B7280),
+                                      ),
                                     ],
                                   ),
-                                ),
-                                const Spacer(),
-                                _buildStatusToggle(
-                                  1,
-                                  'Active',
-                                  const Color(0xFF10B981),
-                                ),
-                                const SizedBox(width: 12),
-                                _buildStatusToggle(
-                                  0,
-                                  'Inactive',
-                                  const Color(0xFF6B7280),
-                                ),
-                              ],
-                            ),
                           ),
                           const SizedBox(height: 64),
 
@@ -715,6 +862,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           ),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(

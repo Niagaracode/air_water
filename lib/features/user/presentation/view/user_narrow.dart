@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/app_theme/app_theme.dart';
 import '../controller/user_provider.dart';
 import '../model/user_model.dart';
@@ -115,47 +116,69 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
-          'USER MANAGEMENT',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        const Expanded(
+          child: Text(
+            'USER MANAGEMENT',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        ElevatedButton(
+        const SizedBox(width: 8),
+        ElevatedButton.icon(
           onPressed: () => _showAddModal(),
-          child: const Text('ADD'),
+          icon: const Icon(Icons.add, size: 16),
+          label: const Text('ADD'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            textStyle: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+            elevation: 0,
+          ),
         ),
       ],
     );
   }
 
   Widget _buildSearchRow(UserNotifier notifier) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search By Name / Email',
-              prefixIcon: const Icon(Icons.search, size: 20),
-              filled: true,
-              fillColor: Colors.white,
-              isDense: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide.none,
-              ),
+        TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search By Name / Email',
+            prefixIcon: const Icon(Icons.search, size: 20),
+            filled: true,
+            fillColor: Colors.white,
+            isDense: true,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
             ),
-            onSubmitted: (value) {
-              notifier.setSearchQuery(value);
-              notifier.loadUsers();
-            },
           ),
-        ),
-        const SizedBox(width: 8),
-        AppClearButton(
-          onPressed: () {
-            _searchController.clear();
-            notifier.clearFilters();
+          onSubmitted: (value) {
+            notifier.setSearchQuery(value);
+            notifier.loadUsers();
           },
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            AppClearButton(
+              onPressed: () {
+                _searchController.clear();
+                notifier.clearFilters();
+              },
+            ),
+          ],
         ),
       ],
     );
@@ -202,39 +225,33 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: Colors.grey.shade200),
       ),
-      child: ExpansionTile(
-        title: Text(
-          user.fullName,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-        ),
-        subtitle: Text(
-          '${user.roleName ?? '-'}',
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
-        ),
-        trailing: _buildStatusChip(user.status),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _infoRow(Icons.business_outlined, user.companyName ?? '-'),
-                const SizedBox(height: 6),
-                _infoRow(Icons.email_outlined, user.email ?? '-'),
-                const SizedBox(height: 6),
-                _infoRow(
-                  Icons.phone_android_outlined,
-                  user.mobileNumber ?? '-',
+                Expanded(
+                  child: Text(
+                    user.fullName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
                       onPressed: () => _showAddModal(user),
-                      icon: Icon(Icons.edit_outlined, size: 20, color: primary),
+                      icon: Icon(Icons.edit_outlined, size: 16, color: primary),
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 12),
                     IconButton(
                       onPressed: () async {
                         final confirm = await showDialog<bool>(
@@ -265,35 +282,30 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
                       },
                       icon: const Icon(
                         Icons.delete_outline,
-                        size: 20,
+                        size: 16,
                         color: Colors.red,
                       ),
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              user.roleName ?? '-',
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            _buildStatusChip(user.status),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _infoRow(IconData icon, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: Colors.grey),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontSize: 11),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildStatusChip(int status) {
     final isActive = status == 1;

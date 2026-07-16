@@ -106,6 +106,7 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
     return SafeArea(
       child: Container(
         color: Colors.grey.shade100,
@@ -145,56 +146,95 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              label: "Product Name *",
-                              child: AppTextField(
-                                controller: nameCtrl,
-                                hint: "Enter product name",
+                      if (isMobile) ...[
+                        _field(
+                          label: "Product Name *",
+                          child: AppTextField(
+                            controller: nameCtrl,
+                            hint: "Enter product name",
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        _field(
+                          label: "Specific Gravity",
+                          child: AppTextField(
+                            controller: gravityCtrl,
+                            hint: "Enter specific gravity",
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ] else ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _field(
+                                label: "Product Name *",
+                                child: AppTextField(
+                                  controller: nameCtrl,
+                                  hint: "Enter product name",
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: _field(
-                              label: "Specific Gravity",
-                              child: AppTextField(
-                                controller: gravityCtrl,
-                                hint: "Enter specific gravity",
-                                keyboardType: TextInputType.number,
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: _field(
+                                label: "Specific Gravity",
+                                child: AppTextField(
+                                  controller: gravityCtrl,
+                                  hint: "Enter specific gravity",
+                                  keyboardType: TextInputType.number,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              label: "Description",
-                              child: AppTextField(
-                                controller: descCtrl,
-                                hint: "Enter description",
-                                maxLines: 2,
+                      if (isMobile) ...[
+                        _field(
+                          label: "Description",
+                          child: AppTextField(
+                            controller: descCtrl,
+                            hint: "Enter description",
+                            maxLines: 2,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        _field(
+                          label: "Standard volume/ cubic meter",
+                          child: AppTextField(
+                            controller: scmCtrl,
+                            hint: "Standard volume/ cubic meter",
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ] else ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _field(
+                                label: "Description",
+                                child: AppTextField(
+                                  controller: descCtrl,
+                                  hint: "Enter description",
+                                  maxLines: 2,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: _field(
-                              label: "Standard volume/ cubic meter",
-                              child: AppTextField(
-                                controller: scmCtrl,
-                                hint: "Standard volume/ cubic meter",
-                                keyboardType: TextInputType.number,
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: _field(
+                                label: "Standard volume/ cubic meter",
+                                child: AppTextField(
+                                  controller: scmCtrl,
+                                  hint: "Standard volume/ cubic meter",
+                                  keyboardType: TextInputType.number,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 28),
                       SizedBox(
                         width: double.infinity,
