@@ -41,11 +41,11 @@ class RoasterNarrow extends ConsumerWidget {
         },
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'CREATE ROSTER',
+          'Create roster',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontSize: 16,
           ),
         ),
       ),

@@ -67,11 +67,11 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
         onPressed: () => _showAddModal(),
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'ADD DEVICE',
+          'Add device',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontSize: 16,
           ),
         ),
       ),

@@ -52,6 +52,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
     final state = ref.watch(notificationNotifierProvider);
     final notifier = ref.read(notificationNotifierProvider.notifier);
     final userRole = ref.watch(userRoleProvider);
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -64,11 +65,27 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
 
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24.0,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 12.0 : 24.0,
                       vertical: 8.0,
                     ),
-                    child: _buildTableBody(state, notifier, userRole),
+                    child: isMobile
+                        ? ListView.builder(
+                            controller: _scrollController,
+                            itemCount: state.notifications.length + (state.hasMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == state.notifications.length) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+                              return _buildMobileEventCard(state.notifications[index]);
+                            },
+                          )
+                        : _buildTableBody(state, notifier, userRole),
                   ),
                 ),
               ],
@@ -78,84 +95,124 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
 
   Widget _buildHeader() {
     final userRole = ref.watch(userRoleProvider);
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    final headerText = ViewHeader(
+      title: 'EVENTS',
+      subtitle:
+          'Real-time alerts and system notifications for levels, battery, and critical events.',
+      showButton: false,
+      showBackButton: userRole == UserRole.customer,
+      onBack: () => context.go('/dashboard'),
+    );
+
+    final downloadButton = PopupMenuButton<String>(
+      tooltip: 'Download Report',
+      onSelected: (value) {
+        _showDateRangeDownloadDialog(value);
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'excel',
+          child: Row(
+            children: [
+              Icon(Icons.table_chart_outlined, color: primary),
+              const SizedBox(width: 10),
+              Text(
+                'Download Excel',
+                style: GoogleFonts.inter(fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'pdf',
+          child: Row(
+            children: [
+              Icon(Icons.picture_as_pdf_outlined, color: primary),
+              const SizedBox(width: 10),
+              Text(
+                'Download PDF',
+                style: GoogleFonts.inter(fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: primary.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.download, size: 18, color: primary),
+            const SizedBox(width: 8),
+            Text(
+              'Download',
+              style: GoogleFonts.inter(
+                color: primary,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (isMobile) {
+      return Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Expanded(
+                  child: Text(
+                    'EVENTS',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ),
+                downloadButton,
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Real-time alerts and system notifications for levels, battery, and critical events.',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Row(
       children: [
         Expanded(
-          child: ViewHeader(
-            title: 'EVENTS',
-            subtitle:
-                'Real-time alerts and system notifications for levels, battery, and critical events.',
-            showButton: false,
-            showBackButton: userRole == UserRole.customer,
-            onBack: () => context.go('/dashboard'),
-          ),
+          child: headerText,
         ),
-
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              PopupMenuButton<String>(
-                tooltip: 'Download Report',
-                onSelected: (value) {
-                  _showDateRangeDownloadDialog(value);
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'excel',
-                    child: Row(
-                      children: [
-                        Icon(Icons.table_chart_outlined, color: primary),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Download Excel',
-                          style: GoogleFonts.inter(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'pdf',
-                    child: Row(
-                      children: [
-                        Icon(Icons.picture_as_pdf_outlined, color: primary),
-                        const SizedBox(width: 10),
-                        Text(
-                          'Download PDF',
-                          style: GoogleFonts.inter(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: primary.withValues(alpha: 0.1)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.download, size: 18, color: primary),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Download',
-                        style: GoogleFonts.inter(
-                          color: primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              downloadButton,
             ],
           ),
         ),
@@ -164,6 +221,33 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
   }
 
   Widget _buildSummaryCards(NotificationSummary summary) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    if (isMobile) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                _buildStatCard('Critical Level', summary.criticalLevel, Colors.red),
+                const SizedBox(width: 12),
+                _buildStatCard('Low Level', summary.lowLevel, Colors.orange),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                _buildStatCard('Low Battery', summary.lowBattery, Colors.amber),
+                const SizedBox(width: 12),
+                _buildStatCard('Total Alerts', summary.total, Colors.blue),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Row(
@@ -206,6 +290,8 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
                 color: Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
             Text(
@@ -218,6 +304,167 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMobileEventCard(NotificationModel n) {
+    final color = _getImportanceColor(n.importance);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: color.withValues(alpha: 0.15)),
+                ),
+                child: Text(
+                  n.importance?.toUpperCase() ?? 'WARNING',
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              Text(
+                _formatDate(n.createdAt),
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: const Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            n.subject ?? '—',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF1F2937),
+            ),
+          ),
+          if (n.body != null && n.body!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              n.body!,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: const Color(0xFF4B5563),
+                height: 1.4,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          const Divider(color: Color(0xFFF3F4F6), height: 1),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'TANK / SITE',
+                      style: GoogleFonts.inter(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF9CA3AF),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      n.tankNumber ?? 'N/A',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF374151),
+                      ),
+                    ),
+                    if (n.plantName != null && n.plantName!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        n.plantName!,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 32,
+                color: const Color(0xFFE5E7EB),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TYPE & VALUE',
+                    style: GoogleFonts.inter(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF9CA3AF),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        n.parameterType ?? '—',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: primary,
+                        ),
+                      ),
+                      if (n.value != null) ...[
+                        Text(
+                          ' (${n.value})',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF4B5563),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

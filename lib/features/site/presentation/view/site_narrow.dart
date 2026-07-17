@@ -76,11 +76,11 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
         },
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'ADD SITE',
+          'Add site',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontSize: 16,
           ),
         ),
       ),

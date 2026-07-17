@@ -50,11 +50,11 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
         onPressed: () => _showAddDialog(),
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'ADD TANK',
+          'Add tank',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontSize: 16,
           ),
         ),
       ),

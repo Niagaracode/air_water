@@ -83,11 +83,11 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
         onPressed: () => _showAddDialog(),
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'CREATE GROUP',
+          'Create group',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontSize: 16,
           ),
         ),
       ),

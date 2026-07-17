@@ -67,11 +67,11 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
         onPressed: () => _showAddModal(),
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
-          'ADD USER',
+          'Add user',
           style: GoogleFonts.inter(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 14,
+            fontSize: 16,
           ),
         ),
       ),
@@ -229,9 +229,10 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
                 Expanded(
                   child: Text(
                     user.fullName,
-                    style: const TextStyle(
+                    style: GoogleFonts.outfit(
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      fontSize: 16,
+                      color: const Color(0xFF1E293B),
                     ),
                   ),
                 ),
