@@ -20,7 +20,7 @@ class OthersLayoutWide extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
-          ScreenHeader(userRole: userRole, isNarrow: false),
+          ScreenHeader(userRole: userRole),
           Expanded(
             child: Row(
               children: [

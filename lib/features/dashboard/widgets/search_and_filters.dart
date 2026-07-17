@@ -121,62 +121,57 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
       return Column(
         children: [
 
-          Row(
-            children: [
-              /// Search Bar with improved styling
-              Expanded(
-                flex: 2,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              focusNode: _focusNode,
+              onChanged: (value) {
+                // Debouncer handles this
+              },
+              decoration: InputDecoration(
+                hintText: widget.searchHint,
+                hintStyle: GoogleFonts.inter(
+                  color: const Color(0xFF94A3B8),
+                  fontSize: 14,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Colors.black,
+                  size: 20,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                  icon: const Icon(
+                    Icons.clear,
+                    color: Colors.red,
+                    size: 18,
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _focusNode,
-                    onChanged: (value) {
-                      // Debouncer handles this
-                    },
-                    decoration: InputDecoration(
-                      hintText: widget.searchHint,
-                      hintStyle: GoogleFonts.inter(
-                        color: const Color(0xFF94A3B8),
-                        fontSize: 14,
-                      ),
-                      prefixIcon: const Icon(
-                        Icons.search,
-                        color: Colors.black,
-                        size: 20,
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                        icon: const Icon(
-                          Icons.clear,
-                          color: Colors.red,
-                          size: 18,
-                        ),
-                        onPressed: _clearFilters,
-                      )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                    ),
-                  ),
+                  onPressed: _clearFilters,
+                )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
                 ),
               ),
-              const SizedBox(width: 12),
-              /// Product Filter (NEW)
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
               Expanded(
                 child: FilterDropdown<String>(
                   borderColor: const Color(0xFFE2E8F0),
@@ -191,35 +186,27 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                   },
                 ),
               ),
-
+              Expanded(
+                child: FilterDropdown<String>(
+                  borderColor: const Color(0xFFE2E8F0),
+                  borderRadius: 12,
+                  label: 'Product',
+                  value: widget.selectedProduct,
+                  items: widget.products,
+                  onChanged: (value) {
+                    if (value != null) {
+                      widget.onProductChanged(value);
+                    }
+                  },
+                ),
+              ),
             ],
           ),
-
           const SizedBox(height: 12),
 
           Row(
             children: [
 
-
-              /// Product Filter (NEW)
-              Expanded(
-                child: FilterDropdown<String>(
-                  borderColor: const Color(0xFFE2E8F0),
-                  borderRadius: 12,
-                  label: 'Product',
-                  value: widget.selectedProduct,
-                  items: widget.products,
-                  onChanged: (value) {
-                    if (value != null) {
-                      widget.onProductChanged(value);
-                    }
-                  },
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              /// Region Filter
               Expanded(
                 child: regionsAsync.when(
                   data: (regions) {
@@ -257,9 +244,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                   ),
                 ),
               ),
-
               const SizedBox(width: 12),
-
               /// Status Filter
               Expanded(
                 child: FilterDropdown<String>(
@@ -276,25 +261,24 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                 ),
               ),
               const SizedBox(width: 12),
-
               /// Clear Filters Button
               Container(
+                height: 40,
                 decoration: BoxDecoration(
                   color: hasFilters
-                      ? primary.withValues(alpha: 0.1)
+                      ? Colors.red.withValues(alpha: 0.1)
                       : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: hasFilters
-                        ? primary.withValues(alpha: 0.3)
+                        ? Colors.red.withValues(alpha: 0.3)
                         : const Color(0xFFE2E8F0),
                   ),
                 ),
                 child: IconButton(
                   icon: Icon(
                     Icons.filter_alt_off,
-                    color: hasFilters
-                        ? primary
+                    color: hasFilters ? Colors.red
                         : const Color(0xFF94A3B8),
                     size: 20,
                   ),

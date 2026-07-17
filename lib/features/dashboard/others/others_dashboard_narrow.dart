@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -54,7 +53,7 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
 
         data: (tanks) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24, top: 12),
             child: Column(
               children: [
                 StatisticsCards(statistics: statistics),
@@ -180,7 +179,8 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
                   searchQuery: _searchQuery,
                   userRole: UserRole.superAdmin,
                   onTankTap: _callDetailsPage,
-                ) : DashboardMapView(tanksData: tanks),
+                ) :
+                DashboardMapView(tanksData: tanks),
               ],
             ),
           );
