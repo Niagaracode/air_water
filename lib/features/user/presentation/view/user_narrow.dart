@@ -62,6 +62,19 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: primary,
+        onPressed: () => _showAddModal(),
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: Text(
+          'ADD USER',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -113,34 +126,14 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
   }
 
   Widget _buildHeader() {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Expanded(
+        Expanded(
           child: Text(
             'USER MANAGEMENT',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton.icon(
-          onPressed: () => _showAddModal(),
-          icon: const Icon(Icons.add, size: 16),
-          label: const Text('ADD'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            textStyle: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-            elevation: 0,
           ),
         ),
       ],

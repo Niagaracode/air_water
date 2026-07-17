@@ -283,7 +283,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
           bottomLeft: Radius.circular(16),
         ),
         child: SizedBox(
-          width: 800,
+          width: MediaQuery.of(context).size.width < 800 ? MediaQuery.of(context).size.width : 800,
           height: MediaQuery.of(context).size.height,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -299,9 +299,9 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
               Expanded(
                 child: SingleChildScrollView(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 40,
-                      vertical: 48,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
+                      vertical: MediaQuery.of(context).size.width < 600 ? 24 : 48,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,29 +310,32 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.initialGroup != null
-                                      ? 'Edit Group'
-                                      : 'Create Group',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF111827),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.initialGroup != null
+                                        ? 'Edit Group'
+                                        : 'Create Group',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: MediaQuery.of(context).size.width < 600 ? 22 : 28,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF111827),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Define group details, criteria, and access control.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    color: const Color(0xFF6B7280),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Define group details, criteria, and access control.',
+                                    style: GoogleFonts.inter(
+                                      fontSize: MediaQuery.of(context).size.width < 600 ? 12 : 14,
+                                      color: const Color(0xFF6B7280),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             IconButton(
                               onPressed: () => Navigator.of(context).pop(),
                               icon: const Icon(Icons.close_rounded),
@@ -351,22 +354,41 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                             !state.groups.any((g) => g.name == 'All' && g.companyId == _selectedCompanyId)) ...[
                           _buildLabelField(
                             'GROUP TYPE',
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildRadioOption(
-                                    'All',
-                                    'Includes all assets automatically',
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildRadioOption(
-                                    'Other',
-                                    'Define custom criteria for this group',
-                                  ),
-                                ),
-                              ],
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                final isNarrow = constraints.maxWidth < 500;
+                                return isNarrow
+                                    ? Column(
+                                        children: [
+                                          _buildRadioOption(
+                                            'All',
+                                            'Includes all assets automatically',
+                                          ),
+                                          const SizedBox(height: 12),
+                                          _buildRadioOption(
+                                            'Other',
+                                            'Define custom criteria for this group',
+                                          ),
+                                        ],
+                                      )
+                                    : Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildRadioOption(
+                                              'All',
+                                              'Includes all assets automatically',
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: _buildRadioOption(
+                                              'Other',
+                                              'Define custom criteria for this group',
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                              },
                             ),
                           ),
                           const SizedBox(height: 32),
@@ -619,6 +641,9 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   );
 
   Widget _buildCriteriaHeader() {
+    if (MediaQuery.of(context).size.width < 600) {
+      return const SizedBox.shrink();
+    }
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF9FAFB),
@@ -1121,6 +1146,164 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
 
   Widget _buildCriteriaRow(int index) {
     final rule = _criteria[index];
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    if (isMobile) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'RULE #${index + 1}',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    value: rule.parameter,
+                    items: _parameters
+                        .where((p) {
+                          if (index < 3) {
+                            return true;
+                          } else {
+                            final isSelectedInFirstThree = _criteria.asMap().entries.any(
+                                  (e) => e.key < 3 && e.value.parameter == p,
+                                );
+                            return !isSelectedInFirstThree || p == rule.parameter;
+                          }
+                        })
+                        .map(
+                          (p) => DropdownMenuItem(
+                            value: p,
+                            child: Text(p, style: GoogleFonts.inter(fontSize: 12)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (index < _initialCriteriaCount &&
+                                !(ref.watch(userProvider).currentUser?.roleId == 1 ||
+                                  ref.watch(userProvider).currentUser?.roleId == 2))
+                        ? null
+                        : (v) {
+                            setState(() {
+                              rule.parameter = v!;
+                              rule.value = '';
+                            });
+                          },
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      labelText: 'Parameter',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    value: _logics.contains(rule.logic)
+                        ? rule.logic
+                        : (_logics.contains('=') ? '=' : _logics.first),
+                    items: _logics
+                        .map(
+                          (l) => DropdownMenuItem(
+                            value: l,
+                            child: Text(l, style: GoogleFonts.inter(fontSize: 12)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => rule.logic = v!),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      labelText: 'Logic',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _buildCriteriaValueField(index),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    value: _operators.contains(rule.operator)
+                        ? rule.operator
+                        : _operators.first,
+                    items: _operators
+                        .map(
+                          (o) => DropdownMenuItem(
+                            value: o,
+                            child: Text(
+                              o,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: primary,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setState(() => rule.operator = v!),
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      border: OutlineInputBorder(),
+                      fillColor: Color(0xFFF3F4FF),
+                      filled: true,
+                      labelText: 'Next Join',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: () => _removeCriteria(index),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                    size: 20,
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.red.withOpacity(0.05),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () => _addCriteria(),
+                  icon: const Icon(
+                    Icons.add,
+                    color: Colors.green,
+                    size: 20,
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.green.withOpacity(0.05),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       child: Row(
@@ -1267,32 +1450,15 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
               ),
             ],
           ),
-
-          //  SizedBox(
-          //     width: 48,
-          //     child: IconButton(
-          //       onPressed: () => _removeCriteria(index),
-          //       icon: const Icon(
-          //         Icons.delete_outline,
-          //         color: Colors.red,
-          //         size: 20,
-          //       ),
-          //       style: IconButton.styleFrom(
-          //         backgroundColor: Colors.red.withOpacity(0.05),
-          //         shape: RoundedRectangleBorder(
-          //           borderRadius: BorderRadius.circular(8),
-          //         ),
-          //       ),
-          //     ),
-          //   ),
         ],
       ),
     );
   }
 
   Widget _buildCriteriaSection() {
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 16 : 32),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -1304,40 +1470,42 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Asset Selection Criteria',
-                    style: GoogleFonts.outfit(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF111827),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Asset Selection Criteria',
+                      style: GoogleFonts.outfit(
+                        fontSize: isMobile ? 16 : 20,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Define the dynamic rules that populate this group.',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: const Color(0xFF6B7280),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Define the dynamic rules that populate this group.',
+                      style: GoogleFonts.inter(
+                        fontSize: isMobile ? 11 : 13,
+                        color: const Color(0xFF6B7280),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _criteria.clear();
-                      });
-                    },
-                    icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-                    label: const Text('CLEAR ALL'),
-                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _criteria.clear();
+                  });
+                },
+                icon: const Icon(Icons.delete_sweep_outlined, size: 16),
+                label: const Text('CLEAR ALL', style: TextStyle(fontSize: 11)),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  padding: EdgeInsets.zero,
+                ),
               ),
             ],
           ),
@@ -1420,8 +1588,9 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       return !isAlreadyAssigned && !isRestrictedRole && isCorrectCompany;
     }).toList();
 
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(isMobile ? 16 : 32),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -1430,64 +1599,128 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'User Access Control',
-                style: GoogleFonts.outfit(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF111827),
-                ),
-              ),
-              const Spacer(),
-              if (eligibleUsers.isNotEmpty)
-                TextButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      for (var user in eligibleUsers) {
-                        _assignedUsers.add(
-                          AssetGroupUser(
-                            userId: user.userId,
-                            username: user.username,
-                            firstName: user.firstName,
-                            lastName: user.lastName,
-                            roleName: user.roleName,
-                            groupNames: user.groupNames?.join(', '),
+          isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'User Access Control',
+                      style: GoogleFonts.outfit(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (eligibleUsers.isNotEmpty)
+                          TextButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                for (var user in eligibleUsers) {
+                                  _assignedUsers.add(
+                                    AssetGroupUser(
+                                      userId: user.userId,
+                                      username: user.username,
+                                      firstName: user.firstName,
+                                      lastName: user.lastName,
+                                      roleName: user.roleName,
+                                      groupNames: user.groupNames?.join(', '),
+                                    ),
+                                  );
+                                }
+                                _selectedUserForAssignment = null;
+                              });
+                            },
+                            icon: const Icon(Icons.group_add_outlined, size: 16),
+                            label: const Text('ASSIGN ALL', style: TextStyle(fontSize: 11)),
+                            style: TextButton.styleFrom(
+                              foregroundColor: primary,
+                              padding: EdgeInsets.zero,
+                            ),
                           ),
-                        );
-                      }
-                      _selectedUserForAssignment = null;
-                    });
-                  },
-                  icon: const Icon(Icons.group_add_outlined, size: 18),
-                  label: const Text('ASSIGN ALL USERS'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F4FF),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${_assignedUsers.length} Assigned',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Text(
+                      'User Access Control',
+                      style: GoogleFonts.outfit(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    const Spacer(),
+                    if (eligibleUsers.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            for (var user in eligibleUsers) {
+                              _assignedUsers.add(
+                                AssetGroupUser(
+                                  userId: user.userId,
+                                  username: user.username,
+                                  firstName: user.firstName,
+                                  lastName: user.lastName,
+                                  roleName: user.roleName,
+                                  groupNames: user.groupNames?.join(', '),
+                                ),
+                              );
+                            }
+                            _selectedUserForAssignment = null;
+                          });
+                        },
+                        icon: const Icon(Icons.group_add_outlined, size: 18),
+                        label: const Text('ASSIGN ALL USERS'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F4FF),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${_assignedUsers.length} Users Assigned',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4FF),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${_assignedUsers.length} Users Assigned',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 24),
 
           Container(
@@ -1686,76 +1919,142 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
 
           const SizedBox(height: 16),
 
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: DropdownButtonFormField<User>(
-                  isExpanded: true,
-                  value: eligibleUsers.contains(_selectedUserForAssignment)
-                      ? _selectedUserForAssignment
-                      : null,
-                  hint: const Text('Select User'),
-                  items: eligibleUsers.map((u) {
-                    return DropdownMenuItem(
-                      value: u,
-                      child: Text(
-                        '${u.fullName} (${u.roleName ?? "User"})',
-                        style: GoogleFonts.inter(fontSize: 13),
+          isMobile
+              ? Column(
+                  children: [
+                    DropdownButtonFormField<User>(
+                      isExpanded: true,
+                      value: eligibleUsers.contains(_selectedUserForAssignment)
+                          ? _selectedUserForAssignment
+                          : null,
+                      hint: const Text('Select User'),
+                      items: eligibleUsers.map((u) {
+                        return DropdownMenuItem(
+                          value: u,
+                          child: Text(
+                            '${u.fullName} (${u.roleName ?? "User"})',
+                            style: GoogleFonts.inter(fontSize: 13),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (v) =>
+                          setState(() => _selectedUserForAssignment = v),
+                      decoration: const InputDecoration(
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(),
+                        fillColor: Color(0xFFF9FAFB),
+                        filled: true,
                       ),
-                    );
-                  }).toList(),
-                  onChanged: (v) =>
-                      setState(() => _selectedUserForAssignment = v),
-                  decoration: const InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
                     ),
-                    border: OutlineInputBorder(),
-                    fillColor: Color(0xFFF9FAFB),
-                    filled: true,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: _selectedUserForAssignment == null
-                    ? null
-                    : () {
-                        setState(() {
-                          _assignedUsers.add(
-                            AssetGroupUser(
-                              userId: _selectedUserForAssignment!.userId,
-                              username: _selectedUserForAssignment!.username,
-                              firstName: _selectedUserForAssignment!.firstName,
-                              lastName: _selectedUserForAssignment!.lastName,
-                              roleName: _selectedUserForAssignment!.roleName,
-                              groupNames: _selectedUserForAssignment!.groupNames
-                                  ?.join(', '),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: _selectedUserForAssignment == null
+                            ? null
+                            : () {
+                                setState(() {
+                                  _assignedUsers.add(
+                                    AssetGroupUser(
+                                      userId: _selectedUserForAssignment!.userId,
+                                      username: _selectedUserForAssignment!.username,
+                                      firstName: _selectedUserForAssignment!.firstName,
+                                      lastName: _selectedUserForAssignment!.lastName,
+                                      roleName: _selectedUserForAssignment!.roleName,
+                                      groupNames: _selectedUserForAssignment!.groupNames
+                                          ?.join(', '),
+                                    ),
+                                  );
+                                  _selectedUserForAssignment = null;
+                                });
+                              },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF111827),
+                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add'),
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: DropdownButtonFormField<User>(
+                        isExpanded: true,
+                        value: eligibleUsers.contains(_selectedUserForAssignment)
+                            ? _selectedUserForAssignment
+                            : null,
+                        hint: const Text('Select User'),
+                        items: eligibleUsers.map((u) {
+                          return DropdownMenuItem(
+                            value: u,
+                            child: Text(
+                              '${u.fullName} (${u.roleName ?? "User"})',
+                              style: GoogleFonts.inter(fontSize: 13),
                             ),
                           );
-                          _selectedUserForAssignment = null;
-                        });
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF111827),
-                  side: const BorderSide(color: Color(0xFFE5E7EB)),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                        }).toList(),
+                        onChanged: (v) =>
+                            setState(() => _selectedUserForAssignment = v),
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          border: OutlineInputBorder(),
+                          fillColor: Color(0xFFF9FAFB),
+                          filled: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      onPressed: _selectedUserForAssignment == null
+                          ? null
+                          : () {
+                              setState(() {
+                                _assignedUsers.add(
+                                  AssetGroupUser(
+                                    userId: _selectedUserForAssignment!.userId,
+                                    username: _selectedUserForAssignment!.username,
+                                    firstName: _selectedUserForAssignment!.firstName,
+                                    lastName: _selectedUserForAssignment!.lastName,
+                                    roleName: _selectedUserForAssignment!.roleName,
+                                    groupNames: _selectedUserForAssignment!.groupNames
+                                        ?.join(', '),
+                                  ),
+                                );
+                                _selectedUserForAssignment = null;
+                              });
+                            },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF111827),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Add'),
+                    ),
+                  ],
                 ),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add'),
-              ),
-            ],
-          ),
         ],
       ),
     );

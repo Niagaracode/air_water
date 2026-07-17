@@ -35,30 +35,65 @@ class _EventNarrowState extends ConsumerState<EventNarrow> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        title: Text('Event Logs', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: primary,
-        actions: [
-          IconButton(
-            onPressed: () => ref.read(eventProvider.notifier).loadLogs(refresh: true),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: state.logs.isEmpty && !state.isLoading
-          ? _buildEmptyState()
-          : ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: state.logs.length + (state.isLoading ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == state.logs.length) {
-                  return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
-                }
-                return _buildEventCard(state.logs[index]);
-              },
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: _buildHeader(context),
             ),
+            Expanded(
+              child: state.logs.isEmpty && !state.isLoading
+                  ? _buildEmptyState()
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      itemCount: state.logs.length + (state.isLoading ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == state.logs.length) {
+                          return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
+                        }
+                        return _buildEventCard(state.logs[index]);
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Expanded(
+          child: Text(
+            'EVENT LOGS',
+            style: TextStyle(fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: () => ref.read(eventProvider.notifier).loadLogs(refresh: true),
+          icon: const Icon(Icons.refresh, size: 16),
+          label: const Text('REFRESH'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            textStyle: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+            elevation: 0,
+          ),
+        ),
+      ],
     );
   }
 

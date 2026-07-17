@@ -47,6 +47,43 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
     final siteNotifier = ref.read(siteNotifierProvider.notifier);
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: primary,
+        onPressed: () {
+          showGeneralDialog(
+            context: context,
+            barrierDismissible: true,
+            barrierLabel: 'AddSite',
+            barrierColor: Colors.black54,
+            transitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
+            transitionBuilder: (context, anim1, anim2, child) {
+              return SlideTransition(
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(1, 0),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: anim1,
+                        curve: Curves.easeOut,
+                      ),
+                    ),
+                child: child,
+              );
+            },
+          );
+        },
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: Text(
+          'ADD SITE',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -99,53 +136,6 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
                 'SITE MANAGEMENT',
                 style: TextStyle(fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: () {
-                showGeneralDialog(
-                  context: context,
-                  barrierDismissible: true,
-                  barrierLabel: 'AddSite',
-                  barrierColor: Colors.black54,
-                  transitionDuration: const Duration(milliseconds: 300),
-                  pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
-                  transitionBuilder: (context, anim1, anim2, child) {
-                    return SlideTransition(
-                      position:
-                          Tween<Offset>(
-                            begin: const Offset(1, 0),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: anim1,
-                              curve: Curves.easeOut,
-                            ),
-                          ),
-                      child: child,
-                    );
-                  },
-                );
-              },
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('ADD'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                textStyle: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-                elevation: 0,
               ),
             ),
           ],

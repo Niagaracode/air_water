@@ -105,7 +105,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 12 : 32),
         child: Column(
           children: [
             _buildSummaryHeader(),
@@ -120,6 +120,61 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
   }
 
   Widget _buildSummaryHeader() {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildSummaryCard(
+            label: 'DESCRIPTION',
+            child: Text(
+              _cleanDescription(_roster!.description),
+              style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1E293B),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  label: 'STATUS',
+                  child: Row(
+                    children: [
+                      _buildStatusBadge(_roster!.enabled == 1, 'Enabled', 'Disabled'),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  label: 'ACTIVE CONTACTS',
+                  icon: Icons.people_alt_rounded,
+                  child: Text(
+                    _roster!.activeContacts.toString(),
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: primary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: [
         Expanded(
@@ -127,7 +182,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
           child: _buildSummaryCard(
             label: 'DESCRIPTION',
             child: Text(
-              _roster!.description,
+              _cleanDescription(_roster!.description),
               style: GoogleFonts.inter(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -183,16 +238,17 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
   }
 
   Widget _buildSummaryCard({required String label, required Widget child, IconData? icon}) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
     return Container(
-      padding: const EdgeInsets.all(24),
-      height: 110,
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      height: isMobile ? null : 110,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -201,6 +257,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: isMobile ? MainAxisSize.min : MainAxisSize.max,
         children: [
           Row(
             children: [
@@ -223,6 +280,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
               ),
             ],
           ),
+          if (isMobile) const SizedBox(height: 12),
           child,
         ],
       ),
@@ -237,7 +295,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -513,6 +571,148 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
   }
 
   Widget _buildFilterBar() {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    final searchField = LayoutBuilder(
+      builder: (context, constraints) {
+        return RawAutocomplete<String>(
+          textEditingController: _searchController,
+          focusNode: _focusNode,
+          optionsBuilder: (TextEditingValue textEditingValue) async {
+            if (textEditingValue.text.isEmpty) {
+              return const Iterable<String>.empty();
+            }
+            return await ref.read(userProvider.notifier).getUserNameSuggestions(textEditingValue.text);
+          },
+          onSelected: (option) {
+            setState(() => _searchQuery = option);
+            _loadData();
+          },
+          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+            return AppTextField(
+              controller: controller,
+              focusNode: focusNode,
+              hint: 'Search Username...',
+              prefixIcon: const Icon(Icons.search, size: 20),
+              onChanged: (v) => setState(() => _searchQuery = v),
+              onSubmitted: (v) {
+                setState(() => _searchQuery = v);
+                _loadData();
+              },
+              suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
+                    onPressed: () {
+                      controller.clear();
+                      setState(() => _searchQuery = '');
+                      _loadData();
+                    },
+                  )
+                : null,
+            );
+          },
+          optionsViewBuilder: (context, onSelected, options) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                borderRadius: BorderRadius.circular(8),
+                child: SizedBox(
+                  width: constraints.maxWidth,
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (context, index) {
+                      final option = options.elementAt(index);
+                      return ListTile(
+                        title: Text(
+                          option,
+                          style: GoogleFonts.inter(fontSize: 13),
+                        ),
+                        onTap: () => onSelected(option),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    final roleDropdown = AppDropdown<Role>(
+      items: _roles,
+      value: _roles.where((r) => r.id == _selectedFilterRoleId).firstOrNull,
+      hint: 'Filter by Role',
+      itemLabel: (r) => r.name,
+      onChanged: (v) {
+        setState(() => _selectedFilterRoleId = v?.id);
+        _loadData();
+      },
+    );
+
+    final statusDropdown = AppDropdown<Map<String, dynamic>>(
+      items: const [
+        {'label': 'Active', 'value': 1},
+        {'label': 'Inactive', 'value': 0},
+      ],
+      value: _selectedFilterStatus == null
+        ? null
+        : [{'label': 'Active', 'value': 1}, {'label': 'Inactive', 'value': 0}].firstWhere((s) => s['value'] == _selectedFilterStatus),
+      hint: 'Filter by Status',
+      itemLabel: (s) => s['label'] as String,
+      onChanged: (v) {
+        setState(() => _selectedFilterStatus = v?['value']);
+        _loadData();
+      },
+    );
+
+    final clearButton = IconButton(
+      onPressed: () {
+        setState(() {
+          _searchController.clear();
+          _searchQuery = '';
+          _selectedFilterRoleId = null;
+          _selectedFilterStatus = null;
+        });
+        _loadData();
+      },
+      icon: const Icon(Icons.filter_list_off_rounded),
+      tooltip: 'Clear Filters',
+      color: const Color(0xFF64748B),
+    );
+
+    if (isMobile) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Column(
+          children: [
+            searchField,
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: roleDropdown),
+                const SizedBox(width: 12),
+                Expanded(child: statusDropdown),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: clearButton,
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -524,121 +724,18 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
         children: [
           Expanded(
             flex: 2,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return RawAutocomplete<String>(
-                  textEditingController: _searchController,
-                  focusNode: _focusNode,
-                  optionsBuilder: (TextEditingValue textEditingValue) async {
-                    if (textEditingValue.text.isEmpty) {
-                      return const Iterable<String>.empty();
-                    }
-                    return await ref.read(userProvider.notifier).getUserNameSuggestions(textEditingValue.text);
-                  },
-                  onSelected: (option) {
-                    setState(() => _searchQuery = option);
-                    _loadData();
-                  },
-                  fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-                    return AppTextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      hint: 'Search Username...',
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                      onChanged: (v) => setState(() => _searchQuery = v),
-                      onSubmitted: (v) {
-                        setState(() => _searchQuery = v);
-                        _loadData();
-                      },
-                      suffixIcon: _searchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              controller.clear();
-                              setState(() => _searchQuery = '');
-                              _loadData();
-                            },
-                          )
-                        : null,
-                    );
-                  },
-                  optionsViewBuilder: (context, onSelected, options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 4.0,
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: constraints.maxWidth,
-                          child: ListView.builder(
-                            padding: EdgeInsets.zero,
-                            shrinkWrap: true,
-                            itemCount: options.length,
-                            itemBuilder: (context, index) {
-                              final option = options.elementAt(index);
-                              return ListTile(
-                                title: Text(
-                                  option,
-                                  style: GoogleFonts.inter(fontSize: 13),
-                                ),
-                                onTap: () => onSelected(option),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+            child: searchField,
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: AppDropdown<Role>(
-              items: _roles,
-              value: _roles.where((r) => r.id == _selectedFilterRoleId).firstOrNull,
-              hint: 'Filter by Role',
-              itemLabel: (r) => r.name,
-              onChanged: (v) {
-                setState(() => _selectedFilterRoleId = v?.id);
-                _loadData();
-              },
-            ),
+            child: roleDropdown,
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: AppDropdown<Map<String, dynamic>>(
-              items: const [
-                {'label': 'Active', 'value': 1},
-                {'label': 'Inactive', 'value': 0},
-              ],
-              value: _selectedFilterStatus == null
-                ? null
-                : [{'label': 'Active', 'value': 1}, {'label': 'Inactive', 'value': 0}].firstWhere((s) => s['value'] == _selectedFilterStatus),
-              hint: 'Filter by Status',
-              itemLabel: (s) => s['label'] as String,
-              onChanged: (v) {
-                setState(() => _selectedFilterStatus = v?['value']);
-                _loadData();
-              },
-            ),
+            child: statusDropdown,
           ),
           const SizedBox(width: 16),
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _searchController.clear();
-                _searchQuery = '';
-                _selectedFilterRoleId = null;
-                _selectedFilterStatus = null;
-              });
-              _loadData();
-            },
-            icon: const Icon(Icons.filter_list_off_rounded),
-            tooltip: 'Clear Filters',
-            color: const Color(0xFF64748B),
-          ),
+          clearButton,
         ],
       ),
     );
@@ -650,6 +747,18 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
     _searchController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  String _cleanDescription(String desc) {
+    final enDashIndex = desc.indexOf(' – ');
+    if (enDashIndex != -1) {
+      return desc.substring(0, enDashIndex).trim();
+    }
+    final hyphenIndex = desc.indexOf(' - ');
+    if (hyphenIndex != -1) {
+      return desc.substring(0, hyphenIndex).trim();
+    }
+    return desc;
   }
 }
 

@@ -45,6 +45,19 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     final tankNotifier = ref.read(tankNotifierProvider.notifier);
 
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: primary,
+        onPressed: () => _showAddDialog(),
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: Text(
+          'ADD TANK',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -97,29 +110,6 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
                 'TANK MANAGEMENT',
                 style: TextStyle(fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton.icon(
-              onPressed: () => _showAddDialog(),
-              icon: const Icon(Icons.add, size: 16),
-              label: const Text('ADD'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                textStyle: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                ),
-                elevation: 0,
               ),
             ),
           ],

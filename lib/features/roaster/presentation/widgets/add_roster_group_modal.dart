@@ -209,10 +209,8 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
     if (createdId != null) {
       final rosterNotifier = ref.read(roasterNotifierProvider.notifier);
       for (final cfg in _userConfigs.values) {
-        final user =
-            _assignedUsers.firstWhere((u) => u.userId == cfg.userId);
         await rosterNotifier.createRoster({
-          'description': '$groupName – ${user.username}',
+          'description': groupName,
           'enabled': 1,
           'parameter_name': 'LEVEL',
           'company_id': _selectedCompany?.id ?? currentUser.companyId,
@@ -290,7 +288,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           bottomLeft: Radius.circular(16),
         ),
         child: SizedBox(
-          width: 640,
+          width: MediaQuery.of(context).size.width < 640 ? MediaQuery.of(context).size.width : 640,
           height: MediaQuery.of(context).size.height,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -308,8 +306,9 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
               // Scrollable body
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 40, vertical: 40),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
+                      vertical: MediaQuery.of(context).size.width < 600 ? 24 : 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -325,7 +324,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                 Text(
                                   'Create Roster Group',
                                   style: GoogleFonts.outfit(
-                                    fontSize: 26,
+                                    fontSize: MediaQuery.of(context).size.width < 600 ? 22 : 26,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF111827),
                                   ),
@@ -334,7 +333,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                 Text(
                                   'Define group info and assign users with notifications.',
                                   style: GoogleFonts.inter(
-                                    fontSize: 13,
+                                    fontSize: MediaQuery.of(context).size.width < 600 ? 12 : 13,
                                     color: const Color(0xFF6B7280),
                                   ),
                                 ),
@@ -386,22 +385,20 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                       const SizedBox(height: 10),
 
                       // User selector row: dropdown + Add button
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: _selectedCompany == null
-                                ? _buildDisabledDropdown(
-                                    isSuperAdmin
-                                        ? 'Select a company first…'
-                                        : 'Loading users…',
-                                  )
-                                : _isLoadingUsers
-                                    ? _buildLoadingDropdown()
-                                    : _buildUserDropdown(eligibleUsers),
-                          ),
-                          const SizedBox(width: 12),
-                          SizedBox(
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 500;
+                          final dropdownField = _selectedCompany == null
+                              ? _buildDisabledDropdown(
+                                  isSuperAdmin
+                                      ? 'Select a company first…'
+                                      : 'Loading users…',
+                                )
+                              : _isLoadingUsers
+                                  ? _buildLoadingDropdown()
+                                  : _buildUserDropdown(eligibleUsers);
+
+                          final addButton = SizedBox(
                             height: 50,
                             child: ElevatedButton.icon(
                               onPressed:
@@ -434,8 +431,28 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          );
+
+                          if (isNarrow) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                dropdownField,
+                                const SizedBox(height: 12),
+                                addButton,
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(child: dropdownField),
+                              const SizedBox(width: 12),
+                              addButton,
+                            ],
+                          );
+                        },
                       ),
 
                       // Hint when company users are empty
@@ -463,98 +480,105 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                       // ── Assigned users notification table ───────────────
                       if (_assignedUsers.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFF),
-                            borderRadius: BorderRadius.circular(12),
-                            border:
-                                Border.all(color: const Color(0xFFDDE1FF)),
-                          ),
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Sub-header
-                              Row(
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isMobile = constraints.maxWidth < 550;
+                            return Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFF),
+                                borderRadius: BorderRadius.circular(12),
+                                border:
+                                    Border.all(color: const Color(0xFFDDE1FF)),
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    Icons.notifications_active_outlined,
-                                    size: 15,
-                                    color: primary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'NOTIFICATION SETTINGS',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: primary,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: primary
-                                          .withValues(alpha: 0.08),
-                                      borderRadius:
-                                          BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      '${_assignedUsers.length} user${_assignedUsers.length == 1 ? '' : 's'}',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
+                                  // Sub-header
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.notifications_active_outlined,
+                                        size: 15,
                                         color: primary,
                                       ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              const Divider(height: 1),
-                              const SizedBox(height: 8),
-
-                              // Column headers
-                              Row(
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: Text(
-                                      'USER',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF6B7280),
-                                        letterSpacing: 1.0,
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'NOTIFICATION SETTINGS',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: primary,
+                                          letterSpacing: 0.5,
+                                        ),
                                       ),
-                                    ),
+                                      const Spacer(),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: primary
+                                              .withValues(alpha: 0.08),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          '${_assignedUsers.length} user${_assignedUsers.length == 1 ? '' : 's'}',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  _tableHeader('EMAIL'),
-                                  _tableHeader('PUSH'),
-                                  _tableHeader('SMS'),
-                                  _tableHeaderWide('TEMPLATE'),
-                                  const SizedBox(width: 36),
+                                  const SizedBox(height: 12),
+                                  const Divider(height: 1),
+                                  const SizedBox(height: 8),
+
+                                  // Column headers
+                                  if (!isMobile) ...[
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          flex: 3,
+                                          child: Text(
+                                            'USER',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w700,
+                                              color: const Color(0xFF6B7280),
+                                              letterSpacing: 1.0,
+                                            ),
+                                          ),
+                                        ),
+                                        _tableHeader('EMAIL'),
+                                        _tableHeader('PUSH'),
+                                        _tableHeader('SMS'),
+                                        _tableHeaderWide('TEMPLATE'),
+                                        const SizedBox(width: 36),
+                                      ],
+                                    ),
+                                    const Divider(height: 1),
+                                  ],
+
+                                  // User rows
+                                  ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: _assignedUsers.length,
+                                    separatorBuilder: (_, __) =>
+                                        const Divider(height: 1),
+                                    itemBuilder: (_, i) =>
+                                        _buildUserRow(_assignedUsers[i], isMobile),
+                                  ),
                                 ],
                               ),
-                              const Divider(height: 1),
-
-                              // User rows
-                              ListView.separated(
-                                shrinkWrap: true,
-                                physics:
-                                    const NeverScrollableScrollPhysics(),
-                                itemCount: _assignedUsers.length,
-                                separatorBuilder: (_, __) =>
-                                    const Divider(height: 1),
-                                itemBuilder: (_, i) =>
-                                    _buildUserRow(_assignedUsers[i]),
-                              ),
-                            ],
-                          ),
+                            );
+                          }
                         ),
                       ],
 
@@ -786,7 +810,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
   }
 
   // ─── Single assigned user row ──────────────────────────────────────────────
-  Widget _buildUserRow(AssetGroupUser user) {
+  Widget _buildUserRow(AssetGroupUser user, bool isMobile) {
     final cfg = _userConfigs[user.userId]!;
     final parts = [user.firstName, user.lastName]
         .whereType<String>()
@@ -794,6 +818,91 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
         .toList();
     final displayName =
         parts.isNotEmpty ? parts.join(', ') : user.username;
+
+    if (isMobile) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: primary.withValues(alpha: 0.08),
+                  child: Text(
+                    displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF111827),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (user.roleName != null)
+                        Text(
+                          user.roleName!,
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _assignedUsers.removeWhere((g) => g.userId == user.userId);
+                      _userConfigs.remove(user.userId);
+                    });
+                  },
+                  icon: const Icon(Icons.close_rounded, color: Colors.red, size: 16),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.red.withValues(alpha: 0.08),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildMobileToggle('EMAIL', cfg.email, (v) {
+                  setState(() => _userConfigs[user.userId] = cfg.copyWith(email: v));
+                }),
+                _buildMobileToggle('PUSH', cfg.push, (v) {
+                  setState(() => _userConfigs[user.userId] = cfg.copyWith(push: v));
+                }),
+                _buildMobileToggle('SMS', cfg.sms, (v) {
+                  setState(() => _userConfigs[user.userId] = cfg.copyWith(sms: v));
+                }),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildMobileTemplateDropdown(cfg, user),
+          ],
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1018,6 +1127,83 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: const Color(0xFFE5E7EB),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileToggle(String label, bool value, ValueChanged<bool> onChanged) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.outfit(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF6B7280),
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Switch(
+          value: value,
+          onChanged: onChanged,
+          activeTrackColor: primary,
+          activeThumbColor: Colors.white,
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: const Color(0xFFE5E7EB),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileTemplateDropdown(_UserConfig cfg, AssetGroupUser user) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        border: Border.all(color: const Color(0xFFD1D5DB)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          isExpanded: true,
+          value: cfg.messageTemplateId,
+          hint: Text(
+            'Select message template…',
+            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF9CA3AF)),
+          ),
+          icon: const Icon(Icons.arrow_drop_down, size: 20),
+          items: [
+            DropdownMenuItem<int>(
+              value: null,
+              child: Text(
+                'No template',
+                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
+              ),
+            ),
+            ...ref
+                .watch(messageTemplateProvider)
+                .templates
+                .map((t) => DropdownMenuItem<int>(
+                      value: t.id,
+                      child: Text(
+                        t.name,
+                        style: GoogleFonts.inter(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )),
+          ],
+          onChanged: (v) {
+            setState(() {
+              _userConfigs[user.userId] = cfg.copyWith(
+                messageTemplateId: v,
+                clearTemplate: v == null,
+              );
+            });
+          },
         ),
       ),
     );

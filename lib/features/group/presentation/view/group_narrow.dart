@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/app_theme/app_theme.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/group_provider.dart';
@@ -108,19 +109,32 @@ class _GroupNarrowState extends ConsumerState<GroupNarrow> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
-          'GROUP MANAGEMENT',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        ElevatedButton(
-          onPressed: () => _showAddModal(),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF141E7A),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        const Expanded(
+          child: Text(
+            'GROUP MANAGEMENT',
+            style: TextStyle(fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
           ),
-          child: const Text('ADD'),
+        ),
+        const SizedBox(width: 8),
+        ElevatedButton.icon(
+          onPressed: () => _showAddModal(),
+          icon: const Icon(Icons.add, size: 16),
+          label: const Text('ADD'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            textStyle: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+            elevation: 0,
+          ),
         ),
       ],
     );

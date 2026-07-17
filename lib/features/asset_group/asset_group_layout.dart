@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'presentation/view/asset_group_wide.dart';
+import 'presentation/view/asset_group_narrow.dart';
 import '../../core/responsive/page_layout_builder.dart';
 
 class AssetGroupLayout extends PageLayoutBuilder {
   const AssetGroupLayout({super.key});
 
   @override
-  Widget buildNarrow(BuildContext context) => const AssetGroupWide();
+  Widget buildNarrow(BuildContext context) => const AssetGroupNarrow();
 
   @override
   Widget buildMiddle(BuildContext context) => const AssetGroupWide();
