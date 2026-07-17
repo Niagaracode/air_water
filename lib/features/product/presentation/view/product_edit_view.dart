@@ -8,8 +8,9 @@ import '../../provider/product_provider.dart';
 
 class ProductEditView extends ConsumerStatefulWidget {
   final Product product;
+  final bool isNarrow;
 
-  const ProductEditView({super.key, required this.product});
+  const ProductEditView({super.key, required this.product, required this.isNarrow});
 
   @override
   ConsumerState<ProductEditView> createState() => _ProductEditViewState();
@@ -80,7 +81,8 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
             ),
           ),
         );
-        Navigator.of(context, rootNavigator: true).pop();
+        widget.isNarrow ?Navigator.pop(context, true) :
+        Navigator.of(context, rootNavigator: true).pop() ;
       } else {
         final error = ref.read(productNotifierProvider).error;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -109,30 +111,33 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
     return SafeArea(
       child: Container(
         color: Colors.grey.shade100,
-        padding: const EdgeInsets.all(20),
+        padding: widget.isNarrow ? const EdgeInsets.all(0) : const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// HEADER
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Product Information",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+
+            if(!widget.isNarrow)...[
+              /// HEADER
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "Product Information",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    Navigator.of(context, rootNavigator: true).pop();
-                  },
-                )
-              ],
-            ),
-            const SizedBox(height: 16),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      Navigator.of(context, rootNavigator: true).pop();
+                    },
+                  )
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
 
             /// CARD FORM
             Expanded(
@@ -198,7 +203,7 @@ class _ProductEditViewState extends ConsumerState<ProductEditView> {
                       const SizedBox(height: 28),
                       SizedBox(
                         width: double.infinity,
-                        height: 44,
+                        height: widget.isNarrow? 60:44,
                         child: ElevatedButton(
                           onPressed: isSaving ? null : _saveChanges,
                           style: ElevatedButton.styleFrom(

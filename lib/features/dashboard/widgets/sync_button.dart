@@ -12,6 +12,7 @@ class SyncButton extends StatefulWidget {
     this.foregroundColor = Colors.white,
     this.borderRadius = 20,
     this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    this.isNarrow = false,
   });
 
   final Future<void> Function() onSync;
@@ -21,6 +22,7 @@ class SyncButton extends StatefulWidget {
   final Color foregroundColor;
   final double borderRadius;
   final EdgeInsetsGeometry padding;
+  final bool isNarrow;
 
   @override
   State<SyncButton> createState() => _SyncButtonState();
@@ -51,7 +53,16 @@ class _SyncButtonState extends State<SyncButton> {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
+    return widget.isNarrow ? IconButton(
+      onPressed: _isSyncing ? null : _handleSync,
+      style: IconButton.styleFrom(
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
+      ),
+      icon: const Icon(Icons.refresh,),
+    ):
+    ElevatedButton(
       onPressed: _isSyncing ? null : _handleSync,
       style: ElevatedButton.styleFrom(
         backgroundColor: primary,
