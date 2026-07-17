@@ -1,273 +1,226 @@
+import 'package:air_water/core/app_theme/app_theme.dart';
+import 'package:air_water/features/product/presentation/view/product_edit_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/app_theme/app_theme.dart';
+
+import '../../../../core/helpers/app_colors_helper.dart';
+import '../../../../shared/widgets/view_header.dart';
 import '../../data/product_model.dart';
 import '../../provider/product_provider.dart';
-import 'product_edit_view.dart';
 
 class ProductNarrow extends ConsumerWidget {
   const ProductNarrow({super.key});
-
-  void _showProductModal(BuildContext context, WidgetRef ref, [Product? product]) {
-    final isMobile = MediaQuery.sizeOf(context).width < 600;
-
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: product == null ? 'Add Product' : 'Edit Product',
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return Align(
-          alignment: Alignment.centerRight,
-          child: Material(
-            elevation: 8,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20),
-              bottomLeft: Radius.circular(20),
-            ),
-            child: SizedBox(
-              width: isMobile ? double.infinity : 600,
-              height: MediaQuery.of(context).size.height,
-              child: ProductEditView(
-                product: product ?? const Product(
-                  id: 0,
-                  name: '',
-                  productCode: '',
-                  description: '',
-                  scmM3: 0,
-                  specificGravity: 0,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
-          child: child,
-        );
-      },
-    );
-  }
-
-  Future<void> _deleteProduct(BuildContext context, WidgetRef ref, Product product) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Product'),
-          content: const Text(
-            'Are you sure you want to delete this product?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirm != true) return;
-
-    final success = await ref
-        .read(productNotifierProvider.notifier)
-        .deleteProduct(product.id);
-
-    if (!context.mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: success ? Colors.green : Colors.red,
-        content: Text(
-          success
-              ? 'Product deleted successfully'
-              : ref.read(productNotifierProvider).error ?? 'Delete failed',
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(productNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'PRODUCT MANAGEMENT',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton.icon(
-                        onPressed: () => _showProductModal(context, ref),
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('ADD'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          textStyle: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                ],
-              ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: primary,
+        onPressed: () {
+          _showProductBottomSheet(
+            context,
+            product: const Product(
+              id: 0,
+              name: '',
+              productCode: '',
+              description: '',
+              scmM3: 0,
+              specificGravity: 0,
             ),
-          ),
-          if (state.isLoading && state.products.isEmpty)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (!state.isLoading && state.products.isEmpty)
-            const SliverFillRemaining(
-              child: Center(
-                child: Text(
-                  'No Record Found',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              sliver: SliverList.builder(
-                itemCount: state.products.length,
-                itemBuilder: (context, index) {
-                  final product = state.products[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Colors.grey.shade200),
+            isEditing: false,
+          );
+        },
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('Add product', style: TextStyle(color: Colors.white)),
+      ),
+      body: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: state.isLoading && state.products.isEmpty
+                ? const Center(
+              child: CircularProgressIndicator(),
+            ) : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.products.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final product = state.products[index];
+
+                return ListTile(
+                  onTap: () {
+                    _showProductBottomSheet(
+                      context,
+                      product: product,
+                      isEditing: true,
+                    );
+                  },
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColorsHelper.getGasTypeColor(product.name),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    alignment: Alignment.center,
+                    child: Text(
+                      product.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  title: Text(product.description),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                product.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
+                          Expanded(
+                            child: Text(
+                              'Specific gravity',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 12,
                               ),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(Icons.edit_outlined, size: 18, color: primary),
-                                    onPressed: () => _showProductModal(context, ref, product),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete_outline,
-                                      size: 18,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () => _deleteProduct(context, ref, product),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          if (product.description.isNotEmpty) ...[
-                            Text(
-                              product.description,
-                              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                             ),
-                            const SizedBox(height: 8),
-                          ],
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'SPECIFIC GRAVITY',
-                                    style: TextStyle(fontSize: 9, color: Colors.grey),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    product.specificGravity.toStringAsFixed(3),
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-                                  ),
-                                ],
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  const Text(
-                                    'STANDARD VOLUME / M3',
-                                    style: TextStyle(fontSize: 9, color: Colors.grey),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    product.scmM3.toStringAsFixed(2),
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-                                  ),
-                                ],
-                              ),
-                            ],
+                          ),
+                          SizedBox(
+                            width: 70,
+                            child: Text(
+                              product.specificGravity.toStringAsFixed(3),
+                              textAlign: TextAlign.right,
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  );
-                },
-              ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'SCM / m³',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 70,
+                            child: Text(
+                              product.scmM3.toStringAsFixed(2),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ),
         ],
       ),
     );
   }
+
+  Widget _buildHeader(BuildContext context) {
+    return ViewHeader(
+      title: 'PRODUCT MANAGEMENT',
+      subtitle:
+      'Manage fluid products, their descriptions, and specific properties like SCM/M3 and gravity.',
+      buttonText: null,
+      onPressed: () {
+        //_showAddProductSideSheet(context);
+      },
+    );
+  }
+
+  void _showProductBottomSheet(BuildContext context, {required Product product, required bool isEditing}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.5),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          height: 420,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              // Drag handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Header with title and close button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEditing ? 'Edit Product' : 'Add Product',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Form content
+              Expanded(
+                child: ProductEditView(
+                  product: product, isNarrow: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
 }

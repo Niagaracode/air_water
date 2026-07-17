@@ -9,8 +9,9 @@ import '../../../../core/app_theme/app_theme.dart';
 
 class MessageTemplateForm extends ConsumerStatefulWidget {
   final MessageTemplate? initialTemplate;
+  final bool isNarrow;
 
-  const MessageTemplateForm({super.key, this.initialTemplate});
+  const MessageTemplateForm({super.key, this.initialTemplate, required this.isNarrow});
 
   @override
   ConsumerState<MessageTemplateForm> createState() => _MessageTemplateFormState();
@@ -209,163 +210,170 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
         ),
         elevation: 24,
         shadowColor: Colors.black26,
-        child: SizedBox(
-          width: 780,
-          height: MediaQuery.of(context).size.height,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.initialTemplate != null ? 'Edit Template' : 'Create New Template',
-                            style: GoogleFonts.outfit(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF111827),
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            widget.initialTemplate != null
-                                ? 'Modify your message template settings'
-                                : 'Design professional message templates with dynamic placeholders',
-                            style: GoogleFonts.outfit(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFF6B7280),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close_rounded, size: 24),
-                          color: const Color(0xFF4B5563),
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            padding: const EdgeInsets.all(12),
+        child: SafeArea(
+          child: SizedBox(
+            width: 780,
+            height: MediaQuery.of(context).size.height,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.initialTemplate != null ? 'Edit Template' : 'Create New Template',
+                                style: GoogleFonts.outfit(
+                                  fontSize: widget.isNarrow? 26 : 32,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF111827),
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                maxLines: 2,
+                                widget.initialTemplate != null
+                                    ? 'Modify your message template settings'
+                                    : 'Design professional message templates with dynamic placeholders',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  color: const Color(0xFF6B7280),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 36),
-
-                  // TEMPLATE NAME
-                  _buildLabelField(
-                    'TEMPLATE NAME *',
-                    AppTextField(
-                      controller: _nameController,
-                      hint: 'e.g., Alarm Notification, Welcome Email',
-                      prefixIcon: const Icon(Icons.text_fields, size: 20, color: Color(0xFF6B7280)),
+                        SizedBox(width: 8,),
+                        Container(
+                          width: 50,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded, size: 24),
+                            color: const Color(0xFF4B5563),
+                            style: IconButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              padding: const EdgeInsets.all(12),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // DESCRIPTION
-                  _buildLabelField(
-                    'DESCRIPTION',
-                    AppTextField(
-                      controller: _descriptionController,
-                      hint: 'Short description of the template purpose',
-                      prefixIcon: const Icon(Icons.description_outlined, size: 20, color: Color(0xFF6B7280)),
-                      maxLines: 1,
+                    const SizedBox(height: 36),
+          
+                    // TEMPLATE NAME
+                    _buildLabelField(
+                      'TEMPLATE NAME *',
+                      AppTextField(
+                        controller: _nameController,
+                        hint: 'e.g., Alarm Notification, Welcome Email',
+                        prefixIcon: const Icon(Icons.text_fields, size: 20, color: Color(0xFF6B7280)),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // SUBJECT FIELD WITH PLACEHOLDER MENU
-                  _buildTextFieldWithPlaceholders(
-                    label: 'SUBJECT (WITH PLACEHOLDERS)',
-                    controller: _subjectController,
-                    hint: 'e.g., Alert: {site_name} - {customer_name} - {tank_name}',
-                    icon: Icons.subject,
-                  ),
-                  const SizedBox(height: 24),
-
-                  // BODY FIELD WITH PLACEHOLDER MENU
-                  _buildTextFieldWithPlaceholders(
-                    label: 'BODY CONTENT (HTML SUPPORTED)',
-                    controller: _bodyController,
-                    hint: 'Enter template body with HTML formatting...\n\nExample:\n<h2>{site_name} Alert</h2>\n<p>Dear {customer_name},</p>\n<p>Tank {tank_name} has reached {Tank_display_level} at {last_reading_time}</p>',
-                    icon: Icons.code,
-                    maxLines: 10,
-                  ),
-                  const SizedBox(height: 32),
-
-                  // ADVANCED CONFIGURATION SECTION
-                  _buildAdvancedConfigSection(),
-                  const SizedBox(height: 32),
-
-                  // STATUS CONFIGURATION
-                  _buildStatusSection(),
-                  const SizedBox(height: 48),
-
-                  // ACTION BUTTONS
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF4B5563),
-                            side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                    const SizedBox(height: 24),
+          
+                    // DESCRIPTION
+                    _buildLabelField(
+                      'DESCRIPTION',
+                      AppTextField(
+                        controller: _descriptionController,
+                        hint: 'Short description of the template purpose',
+                        prefixIcon: const Icon(Icons.description_outlined, size: 20, color: Color(0xFF6B7280)),
+                        maxLines: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+          
+                    // SUBJECT FIELD WITH PLACEHOLDER MENU
+                    _buildTextFieldWithPlaceholders(
+                      label: 'SUBJECT (WITH PLACEHOLDERS)',
+                      controller: _subjectController,
+                      hint: 'e.g., Alert: {site_name} - {customer_name} - {tank_name}',
+                      icon: Icons.subject,
+                    ),
+                    const SizedBox(height: 24),
+          
+                    // BODY FIELD WITH PLACEHOLDER MENU
+                    _buildTextFieldWithPlaceholders(
+                      label: 'BODY CONTENT (HTML SUPPORTED)',
+                      controller: _bodyController,
+                      hint: 'Enter template body with HTML formatting...\n\nExample:\n<h2>{site_name} Alert</h2>\n<p>Dear {customer_name},</p>\n<p>Tank {tank_name} has reached {Tank_display_level} at {last_reading_time}</p>',
+                      icon: Icons.code,
+                      maxLines: 10,
+                    ),
+                    const SizedBox(height: 32),
+          
+                    // ADVANCED CONFIGURATION SECTION
+                    _buildAdvancedConfigSection(),
+                    const SizedBox(height: 32),
+          
+                    // STATUS CONFIGURATION
+                    _buildStatusSection(),
+                    const SizedBox(height: 48),
+          
+                    // ACTION BUTTONS
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF4B5563),
+                              side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            'Cancel',
-                            style: GoogleFonts.outfit(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.outfit(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _save,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primary,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _save,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            widget.initialTemplate != null ? 'Update Template' : 'Create Template',
-                            style: GoogleFonts.outfit(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
+                            child: Text(
+                              widget.initialTemplate != null ? 'Update Template' : 'Create Template',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -384,35 +392,68 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-                color: const Color(0xFF374151),
-                letterSpacing: 0.8,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Click 📎 to insert placeholders',
+        if(widget.isNarrow)...[
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
                 style: GoogleFonts.outfit(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: primary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: const Color(0xFF374151),
+                  letterSpacing: 0.8,
                 ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Click 📎 to insert placeholders',
+                  style: GoogleFonts.outfit(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ]else...[
+          Row(
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: const Color(0xFF374151),
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Click 📎 to insert placeholders',
+                  style: GoogleFonts.outfit(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
         const SizedBox(height: 10),
         Container(
           decoration: BoxDecoration(

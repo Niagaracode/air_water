@@ -314,7 +314,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
       barrierLabel: 'AddMessageTemplate',
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) => MessageTemplateForm(initialTemplate: template),
+      pageBuilder: (context, anim1, anim2) => MessageTemplateForm(initialTemplate: template, isNarrow: false,),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
           position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(

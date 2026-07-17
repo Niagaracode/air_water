@@ -193,6 +193,7 @@ class ProductWide extends ConsumerWidget {
               width: 600,
               height: double.infinity,
               child: ProductEditView(
+                isNarrow: false,
                 product: const Product(
                   id: 0,
                   name: '',
@@ -237,6 +238,7 @@ class ProductWide extends ConsumerWidget {
               width: 600,
               height: double.infinity,
               child: ProductEditView(
+                isNarrow: false,
                 product: product,
               ),
             ),
