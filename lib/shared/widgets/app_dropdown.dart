@@ -21,6 +21,8 @@ class AppDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final safeValue = (value != null && items.contains(value)) ? value : null;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -30,7 +32,7 @@ class AppDropdown<T> extends StatelessWidget {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
-          value: value,
+          value: safeValue,
           hint: Text(
             hint,
             style: GoogleFonts.inter(
