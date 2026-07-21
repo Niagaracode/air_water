@@ -136,10 +136,15 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
       alignment: Alignment.centerRight,
       child: Material(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          bottomLeft: Radius.circular(20),
-        ),
+        borderRadius: isMobile
+            ? const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              )
+            : const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                bottomLeft: Radius.circular(20),
+              ),
         child: SizedBox(
           width: isMobile ? double.infinity : 600,
           height: MediaQuery.of(context).size.height,

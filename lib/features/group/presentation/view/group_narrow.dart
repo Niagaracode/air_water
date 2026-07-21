@@ -41,13 +41,54 @@ class _GroupNarrowState extends ConsumerState<GroupNarrow> {
   }
 
   void _showAddModal([Group? group]) {
-    showGeneralDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: group == null ? 'Add Group' : 'Edit Group',
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return AddGroupModal(group: group);
-      },
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                  child: AddGroupModal(group: group),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

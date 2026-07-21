@@ -21,22 +21,54 @@ class RoasterNarrow extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primary,
         onPressed: () {
-          showGeneralDialog(
+          showModalBottomSheet(
             context: context,
-            barrierDismissible: true,
-            barrierLabel: 'Dismiss',
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
             barrierColor: Colors.black.withValues(alpha: 0.5),
-            transitionDuration: const Duration(milliseconds: 300),
-            pageBuilder: (context, anim1, anim2) => const AddRosterGroupModal(),
-            transitionBuilder: (context, anim1, anim2, child) {
-              return SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(1, 0),
-                  end: Offset.zero,
-                ).animate(anim1),
-                child: child,
-              );
-            },
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            builder: (context) => Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.85,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                        ),
+                        child: AddRosterGroupModal(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           );
         },
         icon: const Icon(Icons.add, color: Colors.white),
@@ -123,23 +155,54 @@ class RoasterNarrow extends ConsumerWidget {
             ),
           );
 
-          await showGeneralDialog(
+          await showModalBottomSheet(
             context: context,
-            barrierDismissible: true,
-            barrierLabel: 'Dismiss',
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
             barrierColor: Colors.black.withValues(alpha: 0.5),
-            transitionDuration: const Duration(milliseconds: 300),
-            pageBuilder: (context, anim1, anim2) =>
-                EditRosterGroupModal(group: group),
-            transitionBuilder: (context, anim1, anim2, child) {
-              return SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(1, 0),
-                  end: Offset.zero,
-                ).animate(anim1),
-                child: child,
-              );
-            },
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            builder: (context) => Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.85,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                        ),
+                        child: EditRosterGroupModal(group: group),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           );
           ref.read(roasterNotifierProvider.notifier).loadRosters(isReload: true);
         },

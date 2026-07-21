@@ -278,10 +278,15 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       alignment: Alignment.centerRight,
       child: Material(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          bottomLeft: Radius.circular(16),
-        ),
+        borderRadius: MediaQuery.of(context).size.width < 600
+            ? const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              )
+            : const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
         child: SizedBox(
           width: MediaQuery.of(context).size.width < 800 ? MediaQuery.of(context).size.width : 800,
           height: MediaQuery.of(context).size.height,

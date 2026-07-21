@@ -536,27 +536,59 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
   }
 
   Future<void> _showAddDialog([Tank? tank]) async {
-    await showGeneralDialog<bool>(
+    await showModalBottomSheet<bool>(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: 'AddTank',
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) => AddTankModal(
-        tank: tank,
-        onSuccess: () {
-          ref.read(tankNotifierProvider.notifier).loadGroupedTanks();
-        },
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
       ),
-      transitionBuilder: (context, anim1, anim2, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOut)),
-          child: child,
-        );
-      },
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                  child: AddTankModal(
+                    tank: tank,
+                    onSuccess: () {
+                      ref.read(tankNotifierProvider.notifier).loadGroupedTanks();
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

@@ -49,31 +49,7 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primary,
-        onPressed: () {
-          showGeneralDialog(
-            context: context,
-            barrierDismissible: true,
-            barrierLabel: 'AddSite',
-            barrierColor: Colors.black54,
-            transitionDuration: const Duration(milliseconds: 300),
-            pageBuilder: (context, anim1, anim2) => const AddSiteModal(),
-            transitionBuilder: (context, anim1, anim2, child) {
-              return SlideTransition(
-                position:
-                    Tween<Offset>(
-                      begin: const Offset(1, 0),
-                      end: Offset.zero,
-                    ).animate(
-                      CurvedAnimation(
-                        parent: anim1,
-                        curve: Curves.easeOut,
-                      ),
-                    ),
-                child: child,
-              );
-            },
-          );
-        },
+        onPressed: () => _showSiteBottomSheet(),
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
           'Add site',
@@ -530,24 +506,60 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
     );
   }
 
-  void _showEditModal(Site site) {
-    showGeneralDialog(
+  void _showSiteBottomSheet([Site? site]) {
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: '',
-      pageBuilder: (context, anim1, anim2) {
-        return AddSiteModal(initialSite: site);
-      },
-      transitionBuilder: (context, anim1, anim2, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(anim1),
-          child: child,
-        );
-      },
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                  child: AddSiteModal(initialSite: site),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  void _showEditModal(Site site) {
+    _showSiteBottomSheet(site);
   }
 
   Future<void> _showDeleteDialog(Site site) async {
