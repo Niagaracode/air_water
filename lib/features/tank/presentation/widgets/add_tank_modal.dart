@@ -407,7 +407,12 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                             : AppDropdown<TankDimension?>(
                                 value: _selectedDimension,
                                 items: [null, ...dimensions],
-                                itemLabel: (dim) => dim == null ? 'Select Dimension' : dim.type,
+                                itemLabel: (dim) {
+                                  if (dim == null) return 'Select Dimension';
+                                  if (dim.name.isNotEmpty) return dim.name;
+                                  if (dim.typeName.isNotEmpty) return dim.typeName;
+                                  return dim.type;
+                                },
                                 hint: 'Select Dimension',
                                 onChanged: (value) {
                                   setState(() {
