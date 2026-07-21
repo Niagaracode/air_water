@@ -9,243 +9,449 @@ import '../../asset_group/domain/models/asset_group_model.dart';
 import '../../asset_group/presentation/controller/asset_group_provider.dart';
 import '../presentation/widgets/edit_roster_group_modal.dart';
 
-class RoasterNarrow extends ConsumerWidget {
+class RoasterNarrow extends ConsumerStatefulWidget {
   const RoasterNarrow({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<RoasterNarrow> createState() => _RoasterNarrowState();
+}
+
+class _RoasterNarrowState extends ConsumerState<RoasterNarrow> {
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      ref.read(roasterNotifierProvider.notifier).loadRosters(isReload: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _searchFocusNode.unfocus();
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(roasterNotifierProvider);
 
+    final filteredRosters = state.rosters.where((r) {
+      if (_searchController.text.isEmpty) return true;
+      final term = _searchController.text.toLowerCase();
+      final displayTitle = _cleanDescription(r.description).toLowerCase();
+      return displayTitle.contains(term);
+    }).toList();
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF6F7FB),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primary,
+        elevation: 2,
         onPressed: () {
-          showModalBottomSheet(
+          showGeneralDialog(
             context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
+            barrierDismissible: true,
+            barrierLabel: 'Dismiss',
             barrierColor: Colors.black.withValues(alpha: 0.5),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-            ),
-            builder: (context) => Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.85,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
+            transitionDuration: const Duration(milliseconds: 300),
+            pageBuilder: (context, anim1, anim2) => const AddRosterGroupModal(),
+            transitionBuilder: (context, anim1, anim2, child) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(1, 0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: anim1, curve: Curves.easeOut),
                 ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 12),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                        ),
-                        child: AddRosterGroupModal(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                child: child,
+              );
+            },
           );
         },
-        icon: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
           'Create roster',
           style: GoogleFonts.inter(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
           ),
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: _buildHeader(context, ref),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x0A000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+              child: _buildHeader(),
             ),
-            Expanded(
-              child: state.isLoading && state.rosters.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemCount: state.rosters.length,
-                      itemBuilder: (context, index) {
-                        final roster = state.rosters[index];
-                        return _buildRosterCard(context, ref, roster);
-                      },
-                    ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            sliver: state.isLoading && filteredRosters.isEmpty
+                ? const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(48.0),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            )
+                : filteredRosters.isEmpty
+                ? SliverToBoxAdapter(
+              child: _buildEmptyState(),
+            )
+                : SliverList.builder(
+              itemCount: filteredRosters.length,
+              itemBuilder: (context, index) {
+                final roster = filteredRosters[index];
+                return _buildRosterCard(roster);
+              },
             ),
-          ],
-        ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 90)),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, WidgetRef ref) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Expanded(
-          child: Text(
-            'ROSTER MANAGEMENT',
-            style: TextStyle(fontWeight: FontWeight.bold),
-            overflow: TextOverflow.ellipsis,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.schedule_rounded, color: primary, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ROSTER MANAGEMENT',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: const Color(0xFF111827),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Manage your roster groups and schedules',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        IconButton(
-          icon: Icon(Icons.refresh, color: primary, size: 20),
-          onPressed: () => ref.read(roasterNotifierProvider.notifier).loadRosters(isReload: true),
-          padding: const EdgeInsets.all(4),
-          constraints: const BoxConstraints(),
+        const SizedBox(height: 16),
+        // Search bar with built-in clear button
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6F7FB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE7E9F0)),
+          ),
+          child: TextFormField(
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            decoration: InputDecoration(
+              hintText: 'Search rosters by name',
+              hintStyle: GoogleFonts.inter(
+                color: Colors.grey.shade400,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: Colors.grey.shade400,
+                size: 20,
+              ),
+              suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _searchController,
+                builder: (context, value, child) {
+                  return value.text.isNotEmpty
+                      ? IconButton(
+                    onPressed: _clearSearch,
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: Colors.grey.shade400,
+                      size: 20,
+                    ),
+                    splashRadius: 20,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  )
+                      : const SizedBox.shrink();
+                },
+              ),
+              filled: true,
+              fillColor: Colors.transparent,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 12,
+              ),
+            ),
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1E293B),
+            ),
+            onChanged: (value) {
+              setState(() {});
+            },
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildRosterCard(BuildContext context, WidgetRef ref, Roster roster) {
+  Widget _buildRosterCard(Roster roster) {
     final displayTitle = _cleanDescription(roster.description);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200, width: 1),
-      ),
-      color: Colors.white,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () async {
-          final groupState = ref.read(rosterGroupProvider);
-          final group = groupState.groups.firstWhere(
-            (g) => g.id == roster.rosterGroupId,
-            orElse: () => AssetGroupModel(
-              id: roster.rosterGroupId ?? 0,
-              name: _cleanDescription(roster.description),
-              description: '',
-              displayInTree: true,
-              status: roster.enabled,
-              domain: 'ROSTER',
-              companyId: roster.companyId,
-              criteria: const [],
-            ),
-          );
+    final groupColor = _colorForGroup(displayTitle);
 
-          await showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            barrierColor: Colors.black.withValues(alpha: 0.5),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
+    return InkWell(
+      onTap: () async {
+        final groupState = ref.read(rosterGroupProvider);
+        final group = groupState.groups.firstWhere(
+              (g) => g.id == roster.rosterGroupId,
+          orElse: () => AssetGroupModel(
+            id: roster.rosterGroupId ?? 0,
+            name: _cleanDescription(roster.description),
+            description: '',
+            displayInTree: true,
+            status: roster.enabled,
+            domain: 'ROSTER',
+            companyId: roster.companyId,
+            criteria: const [],
+          ),
+        );
+
+        await showGeneralDialog(
+          context: context,
+          barrierDismissible: true,
+          barrierLabel: 'Dismiss',
+          barrierColor: Colors.black.withValues(alpha: 0.5),
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (context, anim1, anim2) =>
+              EditRosterGroupModal(group: group),
+          transitionBuilder: (context, anim1, anim2, child) {
+            return SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(1, 0),
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(parent: anim1, curve: Curves.easeOut),
               ),
+              child: child,
+            );
+          },
+        );
+        ref.read(roasterNotifierProvider.notifier).loadRosters(isReload: true);
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFEEF0F5)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 6,
+              offset: Offset(0, 2),
             ),
-            builder: (context) => Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Container(
-                height: MediaQuery.of(context).size.height * 0.85,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 12),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                        ),
-                        child: EditRosterGroupModal(group: group),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-          ref.read(roasterNotifierProvider.notifier).loadRosters(isReload: true);
-        },
+          ],
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Roster icon with color
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: groupColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.schedule_rounded,
+                      size: 20,
+                      color: groupColor,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      displayTitle,
-                      style: GoogleFonts.outfit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1E293B),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayTitle,
+                          style: GoogleFonts.outfit(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1E293B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        // Status chip
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: roster.enabled == 1
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : Colors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: roster.enabled == 1
+                                  ? Colors.green.withValues(alpha: 0.2)
+                                  : Colors.red.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Text(
+                            roster.enabled == 1 ? 'Enabled' : 'Disabled',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: roster.enabled == 1
+                                  ? Colors.green.shade700
+                                  : Colors.red.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Delete button
+                  InkWell(
+                    onTap: () => _deleteRoster(roster),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 18,
+                        color: Colors.red.shade400,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  _buildStatusChip(roster.enabled == 1),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFDC2626), size: 20),
-                    onPressed: () => _deleteRoster(context, ref, roster),
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                  ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
+              // Stats container
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  color: groupColor.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: groupColor.withValues(alpha: 0.15),
+                  ),
                 ),
                 child: Row(
                   children: [
-                     Expanded(child: _buildInfoItem(Icons.people_outline, 'Active Contacts', roster.activeContacts.toString())),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: groupColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.people_outline_rounded,
+                        size: 16,
+                        color: groupColor,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Active Contacts',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          roster.activeContacts.toString(),
+                          style: GoogleFonts.outfit(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF1E293B),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: groupColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Roster',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: groupColor,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -256,22 +462,90 @@ class RoasterNarrow extends ConsumerWidget {
     );
   }
 
-  Future<void> _deleteRoster(BuildContext context, WidgetRef ref, Roster roster) async {
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.all(48.0),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              Icons.schedule_outlined,
+              size: 48,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No rosters found',
+              style: GoogleFonts.inter(
+                color: Colors.grey.shade500,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Create your first roster to get started',
+              style: GoogleFonts.inter(
+                color: Colors.grey.shade400,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteRoster(Roster roster) async {
     final cleanDesc = _cleanDescription(roster.description);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete Roster', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
-        content: Text('Are you sure you want to delete "$cleanDesc"?', style: GoogleFonts.inter()),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        title: Text(
+          'Delete Roster',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: const Color(0xFF1E293B),
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "$cleanDesc"? This action cannot be undone.',
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: const Color(0xFF475569),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: const Color(0xFF64748B))),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: Text(
+              'CANCEL',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: GoogleFonts.inter(color: const Color(0xFFDC2626), fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red.shade700,
+            ),
+            child: Text(
+              'DELETE',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
           ),
         ],
       ),
@@ -279,9 +553,12 @@ class RoasterNarrow extends ConsumerWidget {
 
     if (confirm == true) {
       final success = await ref.read(roasterNotifierProvider.notifier).deleteRoaster(roster.id);
-      if (success && context.mounted) {
+      if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Roster deleted successfully')),
+          SnackBar(
+            content: const Text('Roster deleted successfully'),
+            backgroundColor: Colors.green.shade700,
+          ),
         );
       }
     }
@@ -299,53 +576,20 @@ class RoasterNarrow extends ConsumerWidget {
     return desc;
   }
 
-  Widget _buildStatusChip(bool enabled) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: enabled ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: enabled ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5), width: 0.5),
-      ),
-      child: Text(
-        enabled ? 'Enabled' : 'Disabled',
-        style: GoogleFonts.inter(
-          fontSize: 11,
-          color: enabled ? const Color(0xFF166534) : const Color(0xFF991B1B),
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
+  static final List<Color> _groupColors = [
+    const Color(0xFF6366F1), // indigo
+    const Color(0xFF0EA5E9), // sky
+    const Color(0xFF10B981), // emerald
+    const Color(0xFFF59E0B), // amber
+    const Color(0xFFEC4899), // pink
+    const Color(0xFF8B5CF6), // violet
+    const Color(0xFF14B8A6), // teal
+  ];
 
-  Widget _buildInfoItem(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF64748B)),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: const Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF334155),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
+  Color _colorForGroup(String key) {
+    if (key.trim().isEmpty) return primary;
+    final hash =
+    key.toLowerCase().trim().codeUnits.fold<int>(0, (p, c) => p + c);
+    return _groupColors[hash % _groupColors.length];
   }
 }

@@ -12,7 +12,6 @@ import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
 import '../../../tank_dimension/data/tank_dimension_model.dart';
 import '../../../tank_dimension/provider/tank_dimension_provider.dart';
-import '../../../tank_dimension/presentation/view/tank_dimension_edit_view.dart';
 
 class AddTankModal extends ConsumerStatefulWidget {
   final Tank? tank;
@@ -66,7 +65,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
         _companyAutocompleteController.text = tank.companyName!;
       }
     } else {
-      _selectedCompany = CompanyAutocomplete(id: 216, name: 'Air Water');
+      _selectedCompany = CompanyAutocomplete(
+        id: 216,
+        name: 'Air Water',
+      );
       _companyAutocompleteController.text = 'Air Water';
     }
 
@@ -95,13 +97,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           debugPrint('Error loading all tank rules: $e');
           return <TankRuleModel>[];
         }),
-        ref
-            .read(tankDimensionNotifierProvider.notifier)
-            .loadTankDimensions()
-            .catchError((e) {
-              debugPrint('Error loading tank dimensions in modal: $e');
-              return null;
-            }),
+        ref.read(tankDimensionNotifierProvider.notifier).loadTankDimensions().catchError((e) {
+          debugPrint('Error loading tank dimensions in modal: $e');
+          return null;
+        }),
       ]);
 
       if (results[0] is Map<String, dynamic>) {
@@ -129,44 +128,43 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       if (widget.tank != null) {
         // UNIT
         final units = (data['units'] as List?) ?? [];
-        final unitMatches = units.where((u) => u['id'] == widget.tank!.unitId);
+        final unitMatches =
+        units.where((u) => u['id'] == widget.tank!.unitId);
 
-        _selectedUnit = unitMatches.isNotEmpty ? unitMatches.first : null;
+        _selectedUnit =
+        unitMatches.isNotEmpty ? unitMatches.first : null;
 
         // TANK TYPE
         final tankTypes = (data['tank_types'] as List?) ?? [];
-        final tankTypeMatches = tankTypes.where(
-          (tt) => tt['id'] == widget.tank!.tankTypeId,
-        );
+        final tankTypeMatches =
+        tankTypes.where((tt) => tt['id'] == widget.tank!.tankTypeId);
 
-        _selectedTankType = tankTypeMatches.isNotEmpty
-            ? tankTypeMatches.first
-            : null;
+        _selectedTankType =
+        tankTypeMatches.isNotEmpty ? tankTypeMatches.first : null;
 
         // PRODUCT
-        final foundProducts = products.where(
-          (p) => p.productId == widget.tank!.productId,
-        );
+        final foundProducts =
+        products.where((p) => p.productId == widget.tank!.productId);
 
-        _selectedProduct = foundProducts.isNotEmpty
-            ? foundProducts.first
-            : null;
+        _selectedProduct =
+        foundProducts.isNotEmpty ? foundProducts.first : null;
 
         // RULE
-        final foundRule = rules.where((tr) => tr.id == widget.tank!.ruleId);
+        final foundRule =
+        rules.where((tr) => tr.id == widget.tank!.ruleId);
 
-        _selectedRule = foundRule.isNotEmpty ? foundRule.first : null;
+        _selectedRule =
+        foundRule.isNotEmpty ? foundRule.first : null;
 
         // TANK DIMENSION
         final dims = ref.read(tankDimensionNotifierProvider).tankDimensions;
-        final dimMatches = dims.where(
-          (d) => d.id == widget.tank!.tankDimension,
-        );
+        final dimMatches = dims.where((d) => d.id == widget.tank!.tankDimension);
         _selectedDimension = dimMatches.isNotEmpty ? dimMatches.first : null;
       }
       _isLoadingDropdowns = false;
     });
   }
+
 
   void _initializeChannels() {
     final apiChannels = widget.tank?.channelData ?? [];
@@ -294,50 +292,6 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     }
   }
 
-  void _showAddTankDimensionSideSheet(BuildContext context) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'Add Tank Dimension',
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (dialogContext, animation, secondaryAnimation) {
-        return Align(
-          alignment: Alignment.centerRight,
-          child: Material(
-            elevation: 8,
-            child: SizedBox(
-              width: 600,
-              height: double.infinity,
-              child: TankDimensionEditView(
-                tankDimension: const TankDimension(
-                  id: 0,
-                  type: '',
-                  unitOfMeasures: '',
-                  canLength: 0,
-                  diameter: 0,
-                  dishDepth: 0,
-                  maxOverflow: 0,
-                  description: '',
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(animation),
-          child: child,
-        );
-      },
-    ).then((_) {
-      ref.read(tankDimensionNotifierProvider.notifier).loadTankDimensions();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -351,361 +305,285 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       alignment: Alignment.centerRight,
       child: Material(
         color: Colors.white,
-        borderRadius: isMobile
-            ? const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              )
-            : const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-              ),
-        child: SizedBox(
-          width: isMobile ? double.infinity : 600,
-          height: MediaQuery.of(context).size.height,
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 20 : 40,
-                  vertical: isMobile ? 24 : 48,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.tank != null
-                                    ? 'Edit Tank Instance'
-                                    : 'Create New Tank',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF111827),
-                                  letterSpacing: -0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                widget.tank != null
-                                    ? 'Modify the existing tank configuration and properties.'
-                                    : 'Fill in the information below to register a new tank unit.',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close_rounded, size: 22),
-                          color: const Color(0xFF6B7280),
-                          style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFF3F4F6),
-                            padding: const EdgeInsets.all(12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 48),
-                    _buildLabelField('TANK ID', _buildTankAutocomplete()),
-                    const SizedBox(height: 25),
-                    if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                      _buildLabelField(
-                        'PRIMARY COMPANY',
-                        AppTextField(
-                          readOnly: true,
-                          controller: _companyAutocompleteController,
-                          hint: 'Company',
-                        ),
-                      ),
-                      const SizedBox(height: 25),
-                    ],
-                    _buildLabelField('SITE', _buildSiteAutocomplete()),
-                    const SizedBox(height: 25),
-                    _buildLabelField(
-                      'ASSIGNED PRODUCT',
-                      _isLoadingDropdowns
-                          ? const LinearProgressIndicator(minHeight: 2)
-                          : AppDropdown<TankProduct>(
-                              value: _selectedProduct,
-                              items: _products,
-                              itemLabel: (p) => p.productName,
-                              hint: 'Select Product',
-                              onChanged: (v) =>
-                                  setState(() => _selectedProduct = v),
-                            ),
-                    ),
-                    const SizedBox(height: 25),
-                    _buildLabelField(
-                      'TANK DIMENSION',
-                      _isLoadingDropdowns
-                          ? const LinearProgressIndicator(minHeight: 2)
-                          : Row(
-                              children: [
-                                Expanded(
-                                  child: AppDropdown<TankDimension?>(
-                                    value: _selectedDimension,
-                                    items: [null, ...dimensions],
-                                    itemLabel: (dim) {
-                                       if (dim == null) return 'Select Dimension';
-                                       if (dim.name.isNotEmpty) return dim.name;
-                                       if (dim.typeName.isNotEmpty) return dim.typeName;
-                                       return dim.type;
-                                     },
-                                    hint: 'Select Dimension',
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _selectedDimension = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                                // const SizedBox(width: 8),
-                                // Tooltip(
-                                //   message: 'Add Tank Dimension',
-                                //   child: Material(
-                                //     color: primary.withValues(alpha: 0.1),
-                                //     borderRadius: BorderRadius.circular(12),
-                                //     child: InkWell(
-                                //       borderRadius: BorderRadius.circular(12),
-                                //       onTap: () => _showAddTankDimensionSideSheet(context),
-                                //       child: Container(
-                                //         height: 48,
-                                //         width: 48,
-                                //         decoration: BoxDecoration(
-                                //           border: Border.all(
-                                //             color: primary.withValues(alpha: 0.3),
-                                //           ),
-                                //           borderRadius: BorderRadius.circular(12),
-                                //         ),
-                                //         child: Icon(
-                                //           Icons.add_rounded,
-                                //           color: primary,
-                                //           size: 22,
-                                //         ),
-                                //       ),
-                                //     ),
-                                //   ),
-                                // ),
-                              ],
-                            ),
-                      action: InkWell(
-                        onTap: () => _showAddTankDimensionSideSheet(context),
-                        borderRadius: BorderRadius.circular(4),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.add_circle_outline,
-                                size: 15,
-                                color: primary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Add New',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    _buildLabelField(
-                      'EVENT RULE GROUP',
-                      _isLoadingDropdowns
-                          ? const LinearProgressIndicator(minHeight: 2)
-                          : AppDropdown<TankRuleModel>(
-                              value: _selectedRule,
-                              items: _tankRules,
-                              itemLabel: (rule) => rule.ruleName,
-                              hint: 'Select rule',
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedRule = value;
-                                });
-                              },
-                            ),
-                    ),
-                    const SizedBox(height: 25),
-                    _buildLabelField('DATA CHANNELS', _buildChannelsTable()),
-                    const SizedBox(height: 32),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9FAFB),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFF3F4F6)),
-                      ),
-                      child: isMobile
-                          ? Column(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            width: isMobile ? double.infinity : 600,
+            height: MediaQuery.of(context).size.height,
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 20 : 40,
+                    vertical: isMobile ? 24 : 48,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'STATUS',
+                                  widget.tank != null
+                                      ? 'Edit Tank Instance'
+                                      : 'Create New Tank',
                                   style: GoogleFonts.outfit(
+                                    fontSize: 28,
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                    color: primary,
-                                    letterSpacing: 1.1,
+                                    color: const Color(0xFF111827),
+                                    letterSpacing: -0.5,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 8),
                                 Text(
-                                  'Set the visibility of this tank record.',
+                                  widget.tank != null
+                                      ? 'Modify the existing tank configuration and properties.'
+                                      : 'Fill in the information below to register a new tank unit.',
                                   style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: const Color(0xFF6B7280),
+                                    fontSize: 13,
+                                    color: Colors.grey
                                   ),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildStatusToggle(
-                                        1,
-                                        'Active',
-                                        const Color(0xFF10B981),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _buildStatusToggle(
-                                        0,
-                                        'Inactive',
-                                        const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'STATUS',
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 12,
-                                        color: primary,
-                                        letterSpacing: 1.1,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Set the visibility of this tank record.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: const Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const Spacer(),
-                                _buildStatusToggle(
-                                  1,
-                                  'Active',
-                                  const Color(0xFF10B981),
-                                ),
-                                const SizedBox(width: 12),
-                                _buildStatusToggle(
-                                  0,
-                                  'Inactive',
-                                  const Color(0xFF6B7280),
                                 ),
                               ],
                             ),
-                    ),
-
-                    const SizedBox(height: 64),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _save,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          elevation: 4,
-                          shadowColor: primary.withValues(alpha: 0.4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          const SizedBox(width: 16),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close_rounded, size: 22),
+                            color: const Color(0xFF6B7280),
+                            style: IconButton.styleFrom(
+                              backgroundColor: const Color(0xFFF3F4F6),
+                              padding: const EdgeInsets.all(12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 48),
+                      _buildLabelField('TANK ID', _buildTankAutocomplete()),
+                      const SizedBox(height: 25),
+                      if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
+                        _buildLabelField(
+                          'PRIMARY COMPANY',
+                          AppTextField(
+                            readOnly: true,
+                            controller: _companyAutocompleteController,
+                            hint: 'Company',
                           ),
                         ),
-                        child: Text(
-                          widget.tank != null ? 'UPDATE TANK' : 'CREATE TANK',
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            letterSpacing: 0.5,
+                        const SizedBox(height: 25),
+                      ],
+                      _buildLabelField('SITE', _buildSiteAutocomplete()),
+                      const SizedBox(height: 25),
+                      _buildLabelField(
+                        'ASSIGNED PRODUCT',
+                        _isLoadingDropdowns
+                            ? const LinearProgressIndicator(minHeight: 2)
+                            : AppDropdown<TankProduct>(
+                                value: _selectedProduct,
+                                items: _products,
+                                itemLabel: (p) => p.productName,
+                                hint: 'Select Product',
+                                onChanged: (v) =>
+                                    setState(() => _selectedProduct = v),
+                              ),
+                      ),
+                      const SizedBox(height: 25),
+                      _buildLabelField(
+                        'TANK DIMENSION',
+                        _isLoadingDropdowns
+                            ? const LinearProgressIndicator(minHeight: 2)
+                            : AppDropdown<TankDimension?>(
+                                value: _selectedDimension,
+                                items: [null, ...dimensions],
+                                itemLabel: (dim) => dim == null ? 'Select Dimension' : dim.type,
+                                hint: 'Select Dimension',
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedDimension = value;
+                                  });
+                                },
+                              ),
+                      ),
+                      const SizedBox(height: 25),
+                      _buildLabelField(
+                        'EVENT RULE GROUP',
+                        _isLoadingDropdowns
+                            ? const LinearProgressIndicator(minHeight: 2)
+                            : AppDropdown<TankRuleModel>(
+                                value: _selectedRule,
+                                items: _tankRules,
+                                itemLabel: (rule) => rule.ruleName,
+                                hint: 'Select rule',
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedRule = value;
+                                  });
+                                },
+                              ),
+                      ),
+                      const SizedBox(height: 25),
+                      _buildLabelField('DATA CHANNELS', _buildChannelsTable()),
+                      const SizedBox(height: 32),
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF3F4F6)),
+                        ),
+                        child: isMobile
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'STATUS',
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                      color: primary,
+                                      letterSpacing: 1.1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Set the visibility of this tank record.',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildStatusToggle(
+                                          1,
+                                          'Active',
+                                          const Color(0xFF10B981),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: _buildStatusToggle(
+                                          0,
+                                          'Inactive',
+                                          const Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            : Row(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'STATUS',
+                                        style: GoogleFonts.outfit(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 12,
+                                          color: primary,
+                                          letterSpacing: 1.1,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Set the visibility of this tank record.',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: const Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  _buildStatusToggle(
+                                    1,
+                                    'Active',
+                                    const Color(0xFF10B981),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  _buildStatusToggle(
+                                    0,
+                                    'Inactive',
+                                    const Color(0xFF6B7280),
+                                  ),
+                                ],
+                              ),
+                      ),
+          
+                      const SizedBox(height: 64),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _save,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primary,
+                            foregroundColor: Colors.white,
+                            elevation: 4,
+                            shadowColor: primary.withValues(alpha: 0.4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            widget.tank != null ? 'UPDATE TANK' : 'CREATE TANK',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              if (tankState.isProcessing)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black26,
-                    child: const Center(child: CircularProgressIndicator()),
+                    ],
                   ),
                 ),
-            ],
+                if (tankState.isProcessing)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black26,
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildLabelField(String label, Widget field, {Widget? action}) {
+  Widget _buildLabelField(String label, Widget field) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
           height: 20,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: Color(0xFF333333),
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (action != null) action,
-            ],
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              color: Color(0xFF333333),
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         const SizedBox(height: 8),
@@ -1057,7 +935,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide(color: primary, width: 1.5),
+                            borderSide: BorderSide(
+                              color: primary,
+                              width: 1.5,
+                            ),
                           ),
                           disabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
@@ -1109,7 +990,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide(color: primary, width: 1.5),
+                            borderSide: BorderSide(
+                              color: primary,
+                              width: 1.5,
+                            ),
                           ),
                           disabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),

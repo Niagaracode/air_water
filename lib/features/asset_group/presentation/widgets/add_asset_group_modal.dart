@@ -278,229 +278,218 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       alignment: Alignment.centerRight,
       child: Material(
         color: Colors.white,
-        borderRadius: MediaQuery.of(context).size.width < 600
-            ? const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              )
-            : const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-              ),
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width < 800 ? MediaQuery.of(context).size.width : 800,
-          height: MediaQuery.of(context).size.height,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top accent bar
-              Container(
-                height: 4,
-                decoration: BoxDecoration(
-                  color: primary,
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(16)),
-                ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
-                      vertical: MediaQuery.of(context).size.width < 600 ? 24 : 48,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    widget.initialGroup != null
-                                        ? 'Edit Group'
-                                        : 'Create Group',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: MediaQuery.of(context).size.width < 600 ? 22 : 28,
-                                      fontWeight: FontWeight.w700,
-                                      color: const Color(0xFF111827),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width < 800 ? MediaQuery.of(context).size.width : 800,
+            height: MediaQuery.of(context).size.height,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
+                        vertical: MediaQuery.of(context).size.width < 600 ? 24 : 48,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.initialGroup != null
+                                          ? 'Edit Group'
+                                          : 'Create Group',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: MediaQuery.of(context).size.width < 600 ? 22 : 28,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF111827),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Define group details, criteria, and access control.',
-                                    style: GoogleFonts.inter(
-                                      fontSize: MediaQuery.of(context).size.width < 600 ? 12 : 14,
-                                      color: const Color(0xFF6B7280),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Define group details, criteria, and access control.',
+                                      style: GoogleFonts.inter(
+                                        fontSize: MediaQuery.of(context).size.width < 600 ? 12 : 14,
+                                        color: const Color(0xFF6B7280),
+                                      ),
                                     ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                icon: const Icon(Icons.close_rounded),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF3F4F6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 32),
+          
+                          if (widget.initialGroup == null &&
+                              !state.groups.any((g) => g.name == 'All' && g.companyId == _selectedCompanyId)) ...[
+                            _buildLabelField(
+                              'GROUP TYPE',
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final isNarrow = constraints.maxWidth < 500;
+                                  return isNarrow
+                                      ? Column(
+                                          children: [
+                                            _buildRadioOption(
+                                              'All',
+                                              'Includes all assets automatically',
+                                            ),
+                                            const SizedBox(height: 12),
+                                            _buildRadioOption(
+                                              'Other',
+                                              'Define custom criteria for this group',
+                                            ),
+                                          ],
+                                        )
+                                      : Row(
+                                          children: [
+                                            Expanded(
+                                              child: _buildRadioOption(
+                                                'All',
+                                                'Includes all assets automatically',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: _buildRadioOption(
+                                                'Other',
+                                                'Define custom criteria for this group',
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                },
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              icon: const Icon(Icons.close_rounded),
-                              style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xFFF3F4F6),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                            const SizedBox(height: 32),
+                          ],
+          
+                          if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
+                            _buildLabelField(
+                              'COMPANY',
+                              AppTextField(
+                                readOnly: true,
+                                controller: TextEditingController(
+                                  text: _companies
+                                      .where((c) => c.id == _selectedCompanyId)
+                                      .firstOrNull
+                                      ?.name ?? (_selectedCompanyId == 216 ? 'Air Water' : ''),
+                                ),
+                                hint: 'Company',
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+          
+                          if (_groupType == 'Other') ...[
+                            _buildLabelField(
+                              'GROUP NAME',
+                              AppTextField(
+                                controller: _nameController,
+                                hint: 'e.g. Battery Tanks',
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+          
+                          _buildLabelField(
+                            'DETAILED DESCRIPTION',
+                            AppTextField(
+                              controller: _descriptionController,
+                              hint:
+                                  'e.g. This group includes all tanks categorized under battery maintenance...',
+                              maxLines: 3,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          _buildStatusToggle(),
+          
+                          if (_groupType == 'Other') ...[
+                            const SizedBox(height: 32),
+                            _buildCriteriaSection(),
+                          ],
+          
+                          const SizedBox(height: 32),
+                          _buildUserSection(userState),
+          
+                          if (widget.initialGroup?.id != null &&
+                              _groupType == 'Other') ...[
+                            const SizedBox(height: 32),
+                            Center(
+                              child: OutlinedButton.icon(
+                                onPressed: _showPreviewDialog,
+                                icon: const Icon(Icons.remove_red_eye_outlined),
+                                label: const Text('PREVIEW MATCHING ASSETS'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.indigo,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 16,
+                                  ),
                                 ),
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 32),
-
-                        if (widget.initialGroup == null &&
-                            !state.groups.any((g) => g.name == 'All' && g.companyId == _selectedCompanyId)) ...[
-                          _buildLabelField(
-                            'GROUP TYPE',
-                            LayoutBuilder(
-                              builder: (context, constraints) {
-                                final isNarrow = constraints.maxWidth < 500;
-                                return isNarrow
-                                    ? Column(
-                                        children: [
-                                          _buildRadioOption(
-                                            'All',
-                                            'Includes all assets automatically',
-                                          ),
-                                          const SizedBox(height: 12),
-                                          _buildRadioOption(
-                                            'Other',
-                                            'Define custom criteria for this group',
-                                          ),
-                                        ],
-                                      )
-                                    : Row(
-                                        children: [
-                                          Expanded(
-                                            child: _buildRadioOption(
-                                              'All',
-                                              'Includes all assets automatically',
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: _buildRadioOption(
-                                              'Other',
-                                              'Define custom criteria for this group',
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                        ],
-
-                        if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                          _buildLabelField(
-                            'COMPANY',
-                            AppTextField(
-                              readOnly: true,
-                              controller: TextEditingController(
-                                text: _companies
-                                    .where((c) => c.id == _selectedCompanyId)
-                                    .firstOrNull
-                                    ?.name ?? (_selectedCompanyId == 216 ? 'Air Water' : ''),
-                              ),
-                              hint: 'Company',
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                        ],
-
-                        if (_groupType == 'Other') ...[
-                          _buildLabelField(
-                            'GROUP NAME',
-                            AppTextField(
-                              controller: _nameController,
-                              hint: 'e.g. Battery Tanks',
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                        ],
-
-                        _buildLabelField(
-                          'DETAILED DESCRIPTION',
-                          AppTextField(
-                            controller: _descriptionController,
-                            hint:
-                                'e.g. This group includes all tanks categorized under battery maintenance...',
-                            maxLines: 3,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        _buildStatusToggle(),
-
-                        if (_groupType == 'Other') ...[
-                          const SizedBox(height: 32),
-                          _buildCriteriaSection(),
-                        ],
-
-                        const SizedBox(height: 32),
-                        _buildUserSection(userState),
-
-                        if (widget.initialGroup?.id != null &&
-                            _groupType == 'Other') ...[
-                          const SizedBox(height: 32),
-                          Center(
-                            child: OutlinedButton.icon(
-                              onPressed: _showPreviewDialog,
-                              icon: const Icon(Icons.remove_red_eye_outlined),
-                              label: const Text('PREVIEW MATCHING ASSETS'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.indigo,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
-                                  vertical: 16,
+          
+                          const SizedBox(height: 48),
+          
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: state.isProcessing ? null : _save,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
+                              child: state.isProcessing
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                  : Text(
+                                      widget.initialGroup != null
+                                          ? 'UPDATE GROUP'
+                                          : 'CREATE GROUP',
+                                      style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],
-
-                        const SizedBox(height: 48),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: state.isProcessing ? null : _save,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: state.isProcessing
-                                ? const CircularProgressIndicator(
-                                    color: Colors.white,
-                                  )
-                                : Text(
-                                    widget.initialGroup != null
-                                        ? 'UPDATE GROUP'
-                                        : 'CREATE GROUP',
-                                    style: GoogleFonts.outfit(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
