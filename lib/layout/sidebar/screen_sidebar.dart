@@ -44,6 +44,22 @@ class ScreenSidebar extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 12),
             children: [
+              if(isNarrow)...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SvgPicture.asset(
+                      AppConfig.current.appLogoPath,
+                      height: 32,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Divider()
+              ],
+
               _buildGroup(
                 title: 'MAIN MENU',
                 items: mainMenu,

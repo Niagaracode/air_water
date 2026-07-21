@@ -439,7 +439,7 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
       barrierLabel: 'AddMessageTemplate',
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) => RuleGroupForm(initialRule: model),
+      pageBuilder: (context, anim1, anim2) => RuleGroupForm(initialRule: model, isNarrow: false,),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
           position: Tween<Offset>(

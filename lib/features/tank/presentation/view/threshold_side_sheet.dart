@@ -9,11 +9,13 @@ import '../../data/model/tank_channel_model.dart';
 class ThresholdSideSheet extends ConsumerStatefulWidget {
   final List<TankChannelModel> channels;
   final Function(Map<String, dynamic>) onSave;
+  final bool isNarrow;
 
   const ThresholdSideSheet({
     super.key,
     required this.channels,
     required this.onSave,
+    required this.isNarrow,
   });
 
   @override
@@ -21,7 +23,6 @@ class ThresholdSideSheet extends ConsumerStatefulWidget {
 }
 
 class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
-
   late final Map<String, dynamic> selectedRostersMap;
   bool _isInitialized = false;
 
@@ -52,39 +53,30 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
     }
 
     for (var channel in widget.channels) {
-      // Initialize Full threshold rosters
       if (channel.threshold.full != null && channel.threshold.full!.rosterIds.isNotEmpty) {
-        selectedRostersMap["${channel.id}_full"] =
-            _getRosterFromIds(channel.threshold.full!.rosterIds);
+        selectedRostersMap["${channel.id}_full"] = _getRosterFromIds(channel.threshold.full!.rosterIds);
       } else {
         selectedRostersMap["${channel.id}_full"] = null;
       }
 
-      // Initialize Reorder threshold rosters
       if (channel.threshold.reorder != null && channel.threshold.reorder!.rosterIds.isNotEmpty) {
-        selectedRostersMap["${channel.id}_reorder"] =
-            _getRosterFromIds(channel.threshold.reorder!.rosterIds);
+        selectedRostersMap["${channel.id}_reorder"] = _getRosterFromIds(channel.threshold.reorder!.rosterIds);
       } else {
         selectedRostersMap["${channel.id}_reorder"] = null;
       }
 
-      // Initialize Critical threshold rosters
       if (channel.threshold.critical != null && channel.threshold.critical!.rosterIds.isNotEmpty) {
-        selectedRostersMap["${channel.id}_critical"] =
-            _getRosterFromIds(channel.threshold.critical!.rosterIds);
+        selectedRostersMap["${channel.id}_critical"] = _getRosterFromIds(channel.threshold.critical!.rosterIds);
       } else {
         selectedRostersMap["${channel.id}_critical"] = null;
       }
 
-      // Initialize Low threshold rosters
       if (channel.threshold.low != null && channel.threshold.low!.rosterIds.isNotEmpty) {
-        selectedRostersMap["${channel.id}_low"] =
-            _getRosterFromIds(channel.threshold.low!.rosterIds);
+        selectedRostersMap["${channel.id}_low"] = _getRosterFromIds(channel.threshold.low!.rosterIds);
       } else {
         selectedRostersMap["${channel.id}_low"] = null;
       }
 
-      // Initialize Missing Interval rosters (only for Level channel)
       if (channel.name == "Level" &&
           channel.threshold.missingInterval != null &&
           channel.threshold.missingInterval!.rosterIds.isNotEmpty) {
@@ -98,13 +90,11 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
     setState(() {});
   }
 
-
   dynamic _getRosterFromIds(List<String> rosterIds) {
     if (rosterIds.isEmpty) return null;
 
     try {
       final rosterState = ref.read(rosterGroupProvider);
-
       if (rosterState.groups.isEmpty) {
         return null;
       }
@@ -121,16 +111,12 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
     }
   }
 
-
   void _saveAllData() {
-    // Build the complete threshold data structure for all channels
     final Map<String, dynamic> updatedThresholdsData = {};
 
     for (var channel in widget.channels) {
-      // Create a threshold object for this channel
       final Map<String, dynamic> channelThreshold = {};
 
-      // Process Full threshold
       if (channel.threshold.full != null) {
         final roster = selectedRostersMap["${channel.id}_full"];
         final rosterIds = roster != null ? [roster.id.toString()] : [];
@@ -142,9 +128,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
         };
       }
 
-      // Process Reorder threshold
       if (channel.threshold.reorder != null) {
-
         final roster = selectedRostersMap["${channel.id}_reorder"];
         final rosterIds = roster != null ? [roster.id.toString()] : [];
 
@@ -155,7 +139,6 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
         };
       }
 
-      // Process Critical threshold
       if (channel.threshold.critical != null) {
         final roster = selectedRostersMap["${channel.id}_critical"];
         final rosterIds = roster != null ? [roster.id.toString()] : [];
@@ -167,7 +150,6 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
         };
       }
 
-      // Process Low threshold
       if (channel.threshold.low != null) {
         final roster = selectedRostersMap["${channel.id}_low"];
         final rosterIds = roster != null ? [roster.id.toString()] : [];
@@ -179,7 +161,6 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
         };
       }
 
-      // Process Missing Interval (only for Level channel)
       if (channel.name == "Level" && channel.threshold.missingInterval != null) {
         final roster = selectedRostersMap["${channel.id}_missing_interval"];
         final rosterIds = roster != null ? [roster.id.toString()] : [];
@@ -191,11 +172,9 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
         };
       }
 
-      // Add to main data structure
       updatedThresholdsData[channel.name] = channelThreshold;
     }
 
-    // Build the complete request payload
     final Map<String, dynamic> requestPayload = {
       'thresholds': updatedThresholdsData,
     };
@@ -204,120 +183,167 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
     Navigator.pop(context);
   }
 
-
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      width: 900,
-      backgroundColor: Colors.white,
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 32,
-              vertical: 16,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return SafeArea(
+      child: Drawer(
+        width: widget.isNarrow ? MediaQuery.of(context).size.width : 900,
+        backgroundColor: Colors.white,
+        child: Column(
+          children: [
+            // Header
+            _buildHeader(),
+            // Body
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(widget.isNarrow ? 12 : 24),
+                child: Column(
                   children: [
-                    Text(
-                      'Tank Events',
-                      style: GoogleFonts.outfit(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Configure roster alerts for each tank threshold condition',
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
+                    ...widget.channels.map((channel) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: widget.isNarrow ? 16 : 24),
+                        child: _buildRuleSection(channel),
+                      );
+                    }),
                   ],
                 ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.close),
-                ),
-              ],
+              ),
             ),
-          ),
-          // Body
+            // Bottom Save Bar
+            _buildBottomBar(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =========================================================
+  // HEADER
+  // =========================================================
+
+  Widget _buildHeader() {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: widget.isNarrow ? 16 : 32,
+        vertical: widget.isNarrow ? 12 : 16,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  ...widget.channels.map((channel) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: _buildRuleSection(channel),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
-          // Bottom Save Bar
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(
-                  color: Colors.grey.shade200,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    'Cancel',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                Text(
+                  'Tank Events',
+                  style: GoogleFonts.outfit(
+                    fontSize: widget.isNarrow ? 22 : 28,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(width: 16),
-                ElevatedButton(
-                  onPressed: _saveAllData,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    'Save Changes',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  'Configure roster alerts for each tank threshold condition',
+                  maxLines: 2,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
               ],
             ),
           ),
+          if (widget.isNarrow) const SizedBox(width: 8),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.close),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================
+  // BOTTOM BAR
+  // =========================================================
+
+  Widget _buildBottomBar() {
+    return Container(
+      padding: EdgeInsets.all(widget.isNarrow ? 12 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade200,
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: widget.isNarrow ? MainAxisAlignment.spaceEvenly : MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
+          SizedBox(width: widget.isNarrow ? 40 : 16),
+          if(widget.isNarrow)...[
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _saveAllData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: widget.isNarrow ? 16 : 32,
+                    vertical: widget.isNarrow ? 10 : 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  minimumSize: widget.isNarrow ? const Size(double.infinity, 40) : null,
+                ),
+                child: Text(
+                  'Save Changes',
+                  style: GoogleFonts.outfit(
+                    fontSize: widget.isNarrow ? 13 : 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ]else...[
+            ElevatedButton(
+              onPressed: _saveAllData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(
+                  horizontal: widget.isNarrow ? 16 : 32,
+                  vertical: widget.isNarrow ? 10 : 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                minimumSize: widget.isNarrow ? const Size(double.infinity, 40) : null,
+              ),
+              child: Text(
+                'Save Changes',
+                style: GoogleFonts.outfit(
+                  fontSize: widget.isNarrow ? 13 : 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -328,6 +354,9 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
   // =========================================================
 
   Widget _buildRuleSection(TankChannelModel channel) {
+    if (!channel.channelEnable) {
+      return const SizedBox.shrink();
+    }
 
     final rules = [
       if (channel.threshold.full != null)
@@ -376,10 +405,6 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
         },
     ];
 
-    if (!channel.channelEnable) {
-      return const SizedBox.shrink();
-    }
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -394,9 +419,9 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
           // Header
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 16,
+            padding: EdgeInsets.symmetric(
+              horizontal: widget.isNarrow ? 16 : 20,
+              vertical: widget.isNarrow ? 12 : 16,
             ),
             decoration: BoxDecoration(
               color: primary.withOpacity(0.05),
@@ -408,64 +433,68 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
             child: Text(
               "${channel.name} Events",
               style: GoogleFonts.outfit(
-                fontSize: 16,
+                fontSize: widget.isNarrow ? 14 : 16,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          // Table Header
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 12,
-            ),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.grey.shade200,
+
+          // Table Header - Hidden on narrow
+          if (!widget.isNarrow)
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey.shade200,
+                  ),
                 ),
               ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 40),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 130,
+                    child: _tableHeader("Condition", Icons.info_outline),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 100,
+                    child: _tableHeader("Operator", Icons.compare_arrows),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 100,
+                    child: _tableHeader("Threshold", Icons.numbers),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 50,
+                    child: _tableHeader("Unit", Icons.ad_units),
+                  ),
+                  const SizedBox(width: 26),
+                  Expanded(
+                    flex: 2,
+                    child: _tableHeader("Roster(s)", Icons.supervised_user_circle),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                const SizedBox(width: 40),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 130,
-                  child: _tableHeader("Condition", Icons.info_outline),
-                ),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 100,
-                  child: _tableHeader("Operator", Icons.compare_arrows),
-                ),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 100,
-                  child: _tableHeader("Threshold", Icons.numbers),
-                ),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 50,
-                  child: _tableHeader("Unit", Icons.ad_units),
-                ),
-                const SizedBox(width: 26),
-                Expanded(
-                  flex: 2,
-                  child: _tableHeader("Roster(s)", Icons.supervised_user_circle),
-                ),
-              ],
-            ),
-          ),
+
           // Rules
           ...List.generate(
             rules.length,
                 (index) => _buildRuleRow(rules[index], index),
           ),
+
           // Missing Data
           if (channel.name == "Level" && channel.threshold.missingInterval != null)
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(widget.isNarrow ? 8 : 12),
               child: _buildMissingDataSection(
                 channel.threshold.missingInterval!.value,
                 selectedRostersMap["${channel.id}_missing_interval"],
@@ -507,6 +536,14 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
   // =========================================================
 
   Widget _buildRuleRow(Map<String, dynamic> rule, int index) {
+    if (widget.isNarrow) {
+      return _buildNarrowRuleRow(rule, index);
+    }
+    return _buildWideRuleRow(rule, index);
+  }
+
+  // Wide screen rule row
+  Widget _buildWideRuleRow(Map<String, dynamic> rule, int index) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 20,
@@ -518,7 +555,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Icon Container
+          // Icon
           SizedBox(
             width: 40,
             child: Container(
@@ -554,9 +591,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
             child: Center(
               child: Text(
                 rule["comparator"] ?? ">=",
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                ),
+                style: GoogleFonts.outfit(fontSize: 14),
               ),
             ),
           ),
@@ -581,9 +616,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
             child: Center(
               child: Text(
                 rule["unit"],
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                ),
+                style: GoogleFonts.outfit(fontSize: 14),
               ),
             ),
           ),
@@ -601,16 +634,107 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
     );
   }
 
+  // Narrow screen rule row
+  Widget _buildNarrowRuleRow(Map<String, dynamic> rule, int index) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: index % 2 == 0 ? Colors.white : Colors.grey.shade50,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Icon
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: (rule["color"] as Color).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  rule["icon"],
+                  size: 16,
+                  color: rule["color"],
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Title
+              Expanded(
+                child: Text(
+                  rule["title"],
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              // Value and Unit
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${rule["value"] ?? "-"} ${rule["unit"]}',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Comparator and Roster in same row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  rule["comparator"] ?? ">=",
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildRosterSelector(
+                  rule["selectedRoster"],
+                  rule["key"],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   // =========================================================
   // REUSABLE ROSTER SELECTOR
   // =========================================================
 
   Widget _buildRosterSelector(dynamic selectedRoster, String key) {
-
     final rosterState = ref.watch(rosterGroupProvider);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: widget.isNarrow ? 8 : 12,
+      ),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(8),
@@ -621,12 +745,12 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
           hint: Text(
             'Select roster',
             style: GoogleFonts.outfit(
-              fontSize: 13,
+              fontSize: widget.isNarrow ? 12 : 13,
               color: Colors.grey,
             ),
           ),
           isExpanded: true,
-          icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade700),
+          icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade700, size: widget.isNarrow ? 20 : 24),
           items: [
             const DropdownMenuItem(
               value: null,
@@ -641,7 +765,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
                 child: Text(
                   roster.name,
                   style: GoogleFonts.outfit(
-                    fontSize: 13,
+                    fontSize: widget.isNarrow ? 12 : 13,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -671,6 +795,14 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
     final int hours = totalMinutes ~/ 60;
     final int minutes = totalMinutes % 60;
 
+    if (widget.isNarrow) {
+      return _buildNarrowMissingDataSection(hours, minutes, selectedRoster, key);
+    }
+    return _buildWideMissingDataSection(hours, minutes, selectedRoster, key);
+  }
+
+  // Wide missing data section
+  Widget _buildWideMissingDataSection(int hours, int minutes, dynamic selectedRoster, String key) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 16,
@@ -733,6 +865,73 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
             width: 350,
             child: _buildRosterSelector(selectedRoster, key),
           ),
+        ],
+      ),
+    );
+  }
+
+  // Narrow missing data section
+  Widget _buildNarrowMissingDataSection(int hours, int minutes, dynamic selectedRoster, String key) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEFCE8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFFEF08A),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.timer_outlined,
+                size: 14,
+                color: const Color(0xFFCA8A04),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Missing Data:',
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: const Color(0xFFFEF08A),
+                  ),
+                ),
+                child: Text(
+                  '${hours.toString().padLeft(2, '0')}h ${minutes.toString().padLeft(2, '0')}m',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFFCA8A04),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text('- Alert when no data received',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildRosterSelector(selectedRoster, key),
         ],
       ),
     );

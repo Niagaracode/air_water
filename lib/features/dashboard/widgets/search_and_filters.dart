@@ -120,7 +120,6 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
     if(widget.isNarrow) {
       return Column(
         children: [
-
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -186,6 +185,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                   },
                 ),
               ),
+              const SizedBox(width: 12),
               Expanded(
                 child: FilterDropdown<String>(
                   borderColor: const Color(0xFFE2E8F0),
@@ -203,10 +203,8 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
             ],
           ),
           const SizedBox(height: 12),
-
           Row(
             children: [
-
               Expanded(
                 child: regionsAsync.when(
                   data: (regions) {
@@ -288,7 +286,6 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
               ),
             ],
           ),
-
           /// Search Stats & Active Filters (Optional)
           if (widget.showStats && hasFilters)
             Padding(
@@ -395,7 +392,6 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
               ),
             ),
             const SizedBox(width: 12),
-
             /// Product Filter (NEW)
             Expanded(
               child: FilterDropdown<String>(
@@ -411,9 +407,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                 },
               ),
             ),
-
             const SizedBox(width: 12),
-
             /// Region Filter
             Expanded(
               child: regionsAsync.when(
@@ -452,9 +446,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                 ),
               ),
             ),
-
             const SizedBox(width: 12),
-
             /// Status Filter
             Expanded(
               child: FilterDropdown<String>(
@@ -471,7 +463,6 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
               ),
             ),
             const SizedBox(width: 12),
-
             /// Clear Filters Button
             Container(
               decoration: BoxDecoration(

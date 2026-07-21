@@ -6,6 +6,7 @@ import '../../tank/presentation/view/tank_details_view.dart';
 import '../data/models/tank_data_model.dart';
 import '../provider/dashboard_controller.dart';
 import '../provider/dashboard_provider.dart';
+import '../widgets/build_empty_tank_view.dart';
 import '../widgets/build_loading_view.dart';
 import '../widgets/dashboard_list_view.dart';
 
@@ -60,48 +61,12 @@ class _CustomerDashboardWideState extends ConsumerState<CustomerDashboardWide> {
               // Right Panel - Tank Details
               Expanded(
                 child: _selectedTank != null
-                    ? TankDetailsView(tankId: _selectedTank!.id, tank: _selectedTank!)
-                    : _buildEmptyDetailView(),
+                    ? TankDetailsView(tankId: _selectedTank!.id, tank: _selectedTank!, isNarrow: false,)
+                    : buildEmptyDetailView(),
               ),
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildEmptyDetailView() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.devices, size: 64, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            Text(
-              'No Tank Selected',
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Select a tank from the left panel to view details',
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                color: Colors.grey.shade500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

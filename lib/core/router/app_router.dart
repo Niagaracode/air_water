@@ -130,7 +130,7 @@ class AppRouter {
                   builder: (context, state) {
                     final id = int.parse(state.pathParameters['id']!);
                     final tank = state.extra as TankDataModel?;
-                    return TankDetailsView(tankId: id, tank: tank!);
+                    return TankDetailsView(tankId: id, tank: tank!, isNarrow: false,);
                   },
                 ),
               ],
