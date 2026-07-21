@@ -28,12 +28,7 @@ const configurationMenu = [
     icon: Icons.storage_rounded,
     allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
   ),
-  SidebarMenuItem(
-    key: 'Tank Dimension',
-    label: 'Tank Dimension',
-    icon: Icons.square_foot_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
-  ),
+
   SidebarMenuItem(
     key: 'Device',
     label: 'Device',
