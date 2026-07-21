@@ -44,7 +44,7 @@ class TankDimensionWide extends ConsumerWidget {
     return ViewHeader(
       title: 'TANK DIMENSION MANAGEMENT',
       subtitle:
-          'Configure physical dimensions for your tank fleet, specifying type, unit of measure, can length, and diameter.',
+          'Configure physical dimensions for your tank fleet, specifying name, type, and max overflow.',
       buttonText: 'Add Tank Dimension',
       onPressed: () {
         _showAddTankDimensionSideSheet(context);
@@ -109,7 +109,7 @@ class TankDimensionWide extends ConsumerWidget {
         dataRowColor: WidgetStateProperty.all(Colors.white),
         columnSpacing: 12,
         horizontalMargin: 12,
-        minWidth: 800,
+        minWidth: 600,
         headingRowHeight: 45,
         dataRowHeight: 45,
         dividerThickness: 0.4,
@@ -121,32 +121,16 @@ class TankDimensionWide extends ConsumerWidget {
             label: Center(child: TableHeaderCell(label: 'SI.NO')),
           ),
           const DataColumn2(
+            size: ColumnSize.L,
+            label: Center(child: TableHeaderCell(label: 'NAME')),
+          ),
+          const DataColumn2(
             size: ColumnSize.M,
             label: Center(child: TableHeaderCell(label: 'TYPE')),
           ),
           const DataColumn2(
-            size: ColumnSize.S,
-            label: Center(child: TableHeaderCell(label: 'UNIT OF MEASURES')),
-          ),
-          const DataColumn2(
-            size: ColumnSize.S,
-            label: Center(child: TableHeaderCell(label: 'CAN LENGTH')),
-          ),
-          const DataColumn2(
-            size: ColumnSize.S,
-            label: Center(child: TableHeaderCell(label: 'DIAMETER')),
-          ),
-          const DataColumn2(
-            size: ColumnSize.S,
-            label: Center(child: TableHeaderCell(label: 'DISH DEPTH')),
-          ),
-          const DataColumn2(
-            size: ColumnSize.S,
+            size: ColumnSize.M,
             label: Center(child: TableHeaderCell(label: 'MAX OVERFLOW')),
-          ),
-          const DataColumn2(
-            size: ColumnSize.L,
-            label: TableHeaderCell(label: 'DESCRIPTION'),
           ),
           const DataColumn2(
             fixedWidth: 120,
@@ -162,27 +146,12 @@ class TankDimensionWide extends ConsumerWidget {
                 DataCell(Center(child: TableDataCell(label: '${index + 1}'))),
                 DataCell(
                   Center(
-                    child: TableDataCell(label: td.type, bold: true),
+                    child: TableDataCell(label: td.name.isNotEmpty ? td.name : '-', bold: true),
                   ),
                 ),
                 DataCell(
                   Center(
-                    child: TableDataCell(label: td.unitOfMeasures),
-                  ),
-                ),
-                DataCell(
-                  Center(
-                    child: TableDataCell(label: td.canLength.toStringAsFixed(2)),
-                  ),
-                ),
-                DataCell(
-                  Center(
-                    child: TableDataCell(label: td.diameter.toStringAsFixed(2)),
-                  ),
-                ),
-                DataCell(
-                  Center(
-                    child: TableDataCell(label: td.dishDepth.toStringAsFixed(2)),
+                    child: TableDataCell(label: td.type),
                   ),
                 ),
                 DataCell(
@@ -190,7 +159,6 @@ class TankDimensionWide extends ConsumerWidget {
                     child: TableDataCell(label: td.maxOverflow.toStringAsFixed(2)),
                   ),
                 ),
-                DataCell(TableDataCell(label: td.description)),
                 DataCell(
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -237,12 +205,13 @@ class TankDimensionWide extends ConsumerWidget {
           child: Material(
             elevation: 8,
             child: SizedBox(
-              width: 600,
+              width: 700,
               height: double.infinity,
               child: TankDimensionEditView(
                 showViewList: false,
                 tankDimension: const TankDimension(
                   id: 0,
+                  name: '',
                   type: '',
                   unitOfMeasures: '',
                   canLength: 0,
@@ -285,7 +254,7 @@ class TankDimensionWide extends ConsumerWidget {
           child: Material(
             elevation: 8,
             child: SizedBox(
-              width: 600,
+              width: 700,
               height: double.infinity,
               child: TankDimensionEditView(
                 showViewList: false,

@@ -17,6 +17,7 @@ class DeviceNarrow extends ConsumerStatefulWidget {
 class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -35,6 +36,7 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
   void dispose() {
     _searchController.dispose();
     _scrollController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -90,6 +92,13 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
     );
   }
 
+  void _clearSearch() {
+    _searchController.clear();
+    _searchFocusNode.unfocus();
+    ref.read(deviceNotifierProvider.notifier).setSearchDevice('');
+    ref.read(deviceNotifierProvider.notifier).loadGroupedDevices();
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(deviceNotifierProvider);
@@ -102,17 +111,18 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color(0xFFF6F7FB),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primary,
+        elevation: 2,
         onPressed: () => _showAddModal(),
-        icon: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
           'Add device',
           style: GoogleFonts.inter(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
           ),
         ),
       ),
@@ -120,46 +130,55 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
         controller: _scrollController,
         slivers: [
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: [
-                  _buildHeader(notifier),
-                  const SizedBox(height: 12),
-                  if (state.error != null) _buildErrorBanner(state.error!),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x0A000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
                 ],
               ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+              child: _buildHeader(notifier),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
             sliver: _buildVirtualizedList(state, notifier),
           ),
           if (state.isLoading && state.groupedDevices.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: primary,
+                      ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Text(
-                      'Please wait loading new record',
-                      style: TextStyle(
+                      'Loading more devices…',
+                      style: GoogleFonts.inter(
                         color: Colors.grey.shade600,
-                        fontSize: 11,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          const SliverToBoxAdapter(child: SizedBox(height: 90)),
         ],
       ),
     );
@@ -170,47 +189,104 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Expanded(
-              child: Text(
-                'DEVICE MANAGEMENT',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.devices_rounded, color: primary, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'DEVICE MANAGEMENT',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: const Color(0xFF111827),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Manage all your devices',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Search By Device ID',
-            prefixIcon: const Icon(Icons.search),
-            filled: true,
-            fillColor: Colors.white,
-            isDense: true,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
-            ),
+        const SizedBox(height: 16),
+        // Search bar with built-in clear button
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6F7FB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE7E9F0)),
           ),
-          onSubmitted: (value) {
-            notifier.setSearchDevice(value);
-            notifier.loadGroupedDevices();
-          },
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            AppClearButton(
-              onPressed: () {
-                _searchController.clear();
-                notifier.clearFilters();
-              },
+          child: TextFormField(
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            decoration: InputDecoration(
+              hintText: 'Search by device ID or name',
+              hintStyle: GoogleFonts.inter(
+                color: Colors.grey.shade400,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: Colors.grey.shade400,
+                size: 20,
+              ),
+              suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _searchController,
+                builder: (context, value, child) {
+                  return value.text.isNotEmpty
+                      ? IconButton(
+                    onPressed: _clearSearch,
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: Colors.grey.shade400,
+                      size: 20,
+                    ),
+                    splashRadius: 20,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  )
+                      : const SizedBox.shrink();
+                },
+              ),
+              filled: true,
+              fillColor: Colors.transparent,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 12,
+              ),
             ),
-          ],
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1E293B),
+            ),
+            onFieldSubmitted: (value) {
+              notifier.setSearchDevice(value);
+              notifier.loadGroupedDevices();
+            },
+          ),
         ),
       ],
     );
@@ -220,30 +296,46 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
     if (state.isLoading && state.groupedDevices.isEmpty) {
       return SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 12),
-              Text(
-                'Please wait loading new record',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-              ),
-            ],
+          padding: const EdgeInsets.all(48.0),
+          child: Center(
+            child: Column(
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 12),
+                Text(
+                  'Loading devices...',
+                  style: GoogleFonts.inter(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     if (!state.isLoading && state.groupedDevices.isEmpty) {
-      return const SliverToBoxAdapter(
+      return SliverToBoxAdapter(
         child: Padding(
-          padding: EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(48.0),
           child: Center(
-            child: Text(
-              'No Record Found',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
+            child: Column(
+              children: [
+                Icon(Icons.devices,
+                    size: 40, color: Colors.grey.shade300),
+                const SizedBox(height: 12),
+                Text(
+                  'No devices found',
+                  style: GoogleFonts.inter(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -280,11 +372,11 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
   }
 
   Widget _buildGroupHeader(
-    DeviceState state,
-    DeviceGroup group,
-    int index,
-    bool isLast,
-  ) {
+      DeviceState state,
+      DeviceGroup group,
+      int index,
+      bool isLast,
+      ) {
     String headerText;
     int devicesCount = 0;
     try {
@@ -300,74 +392,68 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
             break;
           }
         }
-        headerText = foundSiteName ?? '';
+        headerText = foundSiteName ?? 'Untitled group';
       }
       devicesCount = group.devices.length;
     } catch (e) {
-      headerText = '';
+      headerText = 'Untitled group';
     }
 
+    final groupColor = _colorForGroup(headerText);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade200),
-          right: BorderSide(color: Colors.grey.shade200),
-          top: BorderSide.none,
-          bottom: BorderSide(color: Colors.grey.shade100),
-        ),
-        borderRadius: BorderRadius.zero,
+        color: groupColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: groupColor.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 30,
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: groupColor.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Text(
               index.toString().padLeft(2, '0'),
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E40AF),
+                fontWeight: FontWeight.w700,
+                color: groupColor,
               ),
             ),
           ),
+          const SizedBox(width: 12),
           Expanded(
-            child: Row(
-              children: [
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    headerText,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E40AF),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
-                  ),
-                  child: Text(
-                    '$devicesCount DEVICES',
-                    style: const TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2563EB),
-                    ),
-                  ),
-                ),
-              ],
+            child: Text(
+              headerText,
+              style: GoogleFonts.outfit(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1E293B),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: groupColor.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              '$devicesCount devices',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: groupColor,
+              ),
             ),
           ),
         ],
@@ -376,101 +462,178 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
   }
 
   Widget _buildDeviceCard(Device device, DeviceNotifier notifier) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      elevation: 0,
-      color: Colors.grey.shade50,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
+    return InkWell(
+      onTap: () => _showAddModal(device),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFEEF0F5)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  device.deviceId,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                // Device icon
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.devices_rounded,
+                    size: 20,
+                    color: primary,
+                  ),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit_outlined, size: 18, color: primary),
-                      onPressed: () => _showAddModal(device),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                    const SizedBox(width: 12),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: Colors.red,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        device.deviceId,
+                        style: GoogleFonts.outfit(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Delete Device'),
-                            content: const Text(
-                              'Are you sure you want to delete this device?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text(
-                                  'Delete',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            ],
+                      if (device.tankName != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          device.tankName!,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
                           ),
-                        );
-                        if (confirm == true) {
-                          await notifier.deleteDevice(device.id);
-                        }
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // Delete button
+                InkWell(
+                  onTap: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        title: const Text('Delete Device'),
+                        content: Text(
+                          'Are you sure you want to delete device "${device.deviceId}"? This action cannot be undone.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                            ),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await notifier.deleteDevice(device.id);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  ],
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 18,
+                      color: Colors.red.shade400,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: Colors.grey.shade300,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            _infoRow('Site', device.siteName ?? '-'),
-            _infoRow('Address', device.siteInformation?.fullAddress ?? '-'),
-            _infoRow('Tank', device.tankName ?? '-'),
-            _infoRow('Category', device.category ?? '-'),
-            _infoRow('Sim Number', device.simNumber ?? '-'),
-            _infoRow('Power Source', device.powerSource ?? '-'),
-            _infoRow('Auto Sync', device.lastSync == '1' ? 'ON' : 'OFF'),
-            _infoRow('Start Hour', device.startHour?.toString() ?? '-'),
-            _infoRow('Duration', device.duration?.toString() ?? '-'),
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            const SizedBox(height: 12),
+            // Device details in a grid
+            Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: [
+                _buildDetailChip(
+                  Icons.apartment_rounded,
+                  device.siteName ?? '-',
+                ),
+                _buildDetailChip(
+                  Icons.location_on_outlined,
+                  device.siteInformation?.fullAddress ?? '-',
+                ),
+                _buildDetailChip(
+                  Icons.sim_card_rounded,
+                  'SIM No : ${device.simNumber ?? '-'}',
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+  Widget _buildDetailChip(IconData icon, String label, {bool wrap = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: wrap ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          const SizedBox(width: 16),
-          Expanded(
+          Icon(icon, size: 14, color: Colors.grey.shade500),
+          const SizedBox(width: 6),
+          Flexible(
             child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF475569),
+              ),
+              overflow: wrap ? TextOverflow.visible : TextOverflow.ellipsis,
+              maxLines: wrap ? null : 1,
+              softWrap: wrap,
             ),
           ),
         ],
@@ -478,33 +641,20 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
     );
   }
 
-  Widget _buildErrorBanner(String error) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.red.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.red.shade100),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline, color: Colors.red.shade700, size: 16),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              error,
-              style: TextStyle(color: Colors.red.shade700, fontSize: 11),
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.close, color: Colors.red.shade700, size: 16),
-            onPressed: () =>
-                ref.read(deviceNotifierProvider.notifier).loadGroupedDevices(),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
-      ),
-    );
+  static final List<Color> _groupColors = [
+    const Color(0xFF6366F1), // indigo
+    const Color(0xFF0EA5E9), // sky
+    const Color(0xFF10B981), // emerald
+    const Color(0xFFF59E0B), // amber
+    const Color(0xFFEC4899), // pink
+    const Color(0xFF8B5CF6), // violet
+    const Color(0xFF14B8A6), // teal
+  ];
+
+  Color _colorForGroup(String key) {
+    if (key.trim().isEmpty) return primary;
+    final hash =
+    key.toLowerCase().trim().codeUnits.fold<int>(0, (p, c) => p + c);
+    return _groupColors[hash % _groupColors.length];
   }
 }

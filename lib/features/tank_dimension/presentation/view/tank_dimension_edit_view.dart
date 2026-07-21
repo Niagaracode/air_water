@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
+import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../data/tank_dimension_model.dart';
 import '../../provider/tank_dimension_provider.dart';
 
@@ -22,55 +23,106 @@ class TankDimensionEditView extends ConsumerStatefulWidget {
 }
 
 class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
-  late TextEditingController typeCtrl;
-  late TextEditingController canLengthCtrl;
-  late TextEditingController diameterCtrl;
-  late TextEditingController dishDepthCtrl;
+  late TextEditingController nameCtrl;
   late TextEditingController maxOverflowCtrl;
-  late TextEditingController descCtrl;
-  String? selectedUnit;
+  String? selectedType;
+  List<String> tankTypes = [
+    'Horizontal Cylindrical',
+    'Vertical Cylindrical',
+    'Spherical',
+    'Rectangular',
+    'Box Cylinder',
+    'Round Tank',
+  ];
+  bool isLoadingTypes = false;
   bool isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    typeCtrl = TextEditingController(text: widget.tankDimension.type);
-    
-    // Initialize selectedUnit from the allowed options
-    final initialUnit = widget.tankDimension.unitOfMeasures.trim();
-    const allowedUnits = ['cm', 'ft', 'in', 'm', 'mm', 'yd'];
-    if (allowedUnits.contains(initialUnit)) {
-      selectedUnit = initialUnit;
-    } else {
-      selectedUnit = null;
-    }
+    nameCtrl = TextEditingController(text: widget.tankDimension.name);
+    selectedType = widget.tankDimension.type.isNotEmpty ? widget.tankDimension.type : null;
+    maxOverflowCtrl = TextEditingController(
+      text: widget.tankDimension.id == 0 && widget.tankDimension.maxOverflow == 0.0
+          ? ''
+          : widget.tankDimension.maxOverflow.toString(),
+    );
 
-    canLengthCtrl = TextEditingController(text: widget.tankDimension.canLength.toString());
-    diameterCtrl = TextEditingController(text: widget.tankDimension.diameter.toString());
-    dishDepthCtrl = TextEditingController(text: widget.tankDimension.dishDepth.toString());
-    maxOverflowCtrl = TextEditingController(text: widget.tankDimension.maxOverflow.toString());
-    descCtrl = TextEditingController(text: widget.tankDimension.description);
+    _loadTankTypes();
+  }
+
+  Future<void> _loadTankTypes() async {
+    setState(() => isLoadingTypes = true);
+    try {
+      final dropdownData = await ref.read(tankNotifierProvider.notifier).getDropdowns();
+      if (dropdownData.containsKey('tank_types') && dropdownData['tank_types'] is List) {
+        final List rawList = dropdownData['tank_types'];
+        final fetchedTypes = rawList
+            .map((item) {
+              if (item is Map && item['name'] != null) {
+                return item['name'].toString();
+              }
+              return item.toString();
+            })
+            .where((t) => t.isNotEmpty)
+            .toList();
+
+        if (fetchedTypes.isNotEmpty) {
+          final uniqueTypes = <String>{...tankTypes, ...fetchedTypes}.toList();
+          setState(() {
+            tankTypes = uniqueTypes;
+            if (selectedType != null && !tankTypes.contains(selectedType)) {
+              tankTypes.add(selectedType!);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading tank types for dropdown: $e');
+    } finally {
+      if (mounted) {
+        setState(() => isLoadingTypes = false);
+      }
+    }
   }
 
   @override
   void dispose() {
-    typeCtrl.dispose();
-    canLengthCtrl.dispose();
-    diameterCtrl.dispose();
-    dishDepthCtrl.dispose();
+    nameCtrl.dispose();
     maxOverflowCtrl.dispose();
-    descCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _saveChanges() async {
     FocusScope.of(context).unfocus();
 
-    if (typeCtrl.text.trim().isEmpty) {
+    final name = nameCtrl.text.trim();
+    if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Type is required"),
-        ),
+        const SnackBar(content: Text("Name is required")),
+      );
+      return;
+    }
+
+    if (selectedType == null || selectedType!.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Type is required")),
+      );
+      return;
+    }
+
+    final maxOverflowText = maxOverflowCtrl.text.trim();
+    if (maxOverflowText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Max Overflow is required")),
+      );
+      return;
+    }
+
+    final maxOverflowVal = double.tryParse(maxOverflowText);
+    if (maxOverflowVal == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a valid number for Max Overflow")),
       );
       return;
     }
@@ -79,13 +131,9 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
 
     try {
       final data = {
-        'type': typeCtrl.text.trim(),
-        'unit_of_measures': selectedUnit ?? '',
-        'can_length': double.tryParse(canLengthCtrl.text.trim()) ?? 0.0,
-        'diameter': double.tryParse(diameterCtrl.text.trim()) ?? 0.0,
-        'dish_depth': double.tryParse(dishDepthCtrl.text.trim()) ?? 0.0,
-        'max_overflow': double.tryParse(maxOverflowCtrl.text.trim()) ?? 0.0,
-        'description': descCtrl.text.trim(),
+        'name': name,
+        'type': selectedType!.trim(),
+        'max_overflow': maxOverflowVal,
       };
 
       final notifier = ref.read(tankDimensionNotifierProvider.notifier);
@@ -143,9 +191,9 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "Tank Dimension Information",
-                  style: TextStyle(
+                Text(
+                  widget.tankDimension.id == 0 ? "Create Tank Dimension" : "Edit Tank Dimension",
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -172,32 +220,29 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
                   child: Column(
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: _field(
-                              label: "Type *",
+                              label: "Name *",
                               child: AppTextField(
-                                controller: typeCtrl,
-                                hint: "Enter type",
+                                controller: nameCtrl,
+                                hint: "Enter dimension name",
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
+                          const SizedBox(width: 12),
                           Expanded(
                             child: _field(
-                              label: "Unit of Measures",
+                              label: "Type *",
                               child: AppDropdown<String?>(
-                                value: selectedUnit,
-                                items: const [null, 'cm', 'ft', 'in', 'm', 'mm', 'yd'],
-                                itemLabel: (v) => v ?? 'Select',
-                                hint: 'Select',
+                                value: selectedType,
+                                items: [null, ...tankTypes],
+                                itemLabel: (v) => v ?? 'Select Type',
+                                hint: 'Select Type',
                                 onChanged: (value) {
                                   setState(() {
-                                    selectedUnit = value;
+                                    selectedType = value;
                                   });
                                 },
                               ),
@@ -206,18 +251,7 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _field(
-                              label: "Can Length",
-                              child: AppTextField(
-                                controller: canLengthCtrl,
-                                hint: "Enter can length",
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(
-                              label: "Max Overflow",
+                              label: "Max Overflow *",
                               child: AppTextField(
                                 controller: maxOverflowCtrl,
                                 hint: "Enter max overflow",
@@ -227,48 +261,7 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              label: "Diameter",
-                              child: AppTextField(
-                                controller: diameterCtrl,
-                                hint: "Enter diameter",
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: _field(
-                              label: "Dish Depth",
-                              child: AppTextField(
-                                controller: dishDepthCtrl,
-                                hint: "Enter dish depth",
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              label: "Description",
-                              child: AppTextField(
-                                controller: descCtrl,
-                                hint: "Enter description",
-                                maxLines: 2,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 32),
                       if (widget.showViewList)
                         Row(
                           children: [
