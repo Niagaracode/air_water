@@ -151,7 +151,7 @@ class TankDimensionWide extends ConsumerWidget {
                 ),
                 DataCell(
                   Center(
-                    child: TableDataCell(label: td.type),
+                    child: TableDataCell(label: td.typeName.isNotEmpty ? td.typeName : td.type),
                   ),
                 ),
                 DataCell(

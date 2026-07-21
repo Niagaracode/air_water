@@ -2,6 +2,7 @@ class TankDimension {
   final int id;
   final String name;
   final String type;
+  final String typeName;
   final String unitOfMeasures;
   final double canLength;
   final double diameter;
@@ -13,6 +14,7 @@ class TankDimension {
     required this.id,
     this.name = '',
     required this.type,
+    this.typeName = '',
     this.unitOfMeasures = '',
     this.canLength = 0.0,
     this.diameter = 0.0,
@@ -26,6 +28,7 @@ class TankDimension {
       id: json['id'] ?? 0,
       name: json['name']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
+      typeName: json['type_name']?.toString() ?? json['type']?.toString() ?? '',
       unitOfMeasures: json['unit_of_measures']?.toString() ?? '',
       canLength: double.tryParse(json['can_length']?.toString() ?? '0') ?? 0.0,
       diameter: double.tryParse(json['diameter']?.toString() ?? '0') ?? 0.0,
@@ -39,6 +42,7 @@ class TankDimension {
     int? id,
     String? name,
     String? type,
+    String? typeName,
     String? unitOfMeasures,
     double? canLength,
     double? diameter,
@@ -50,6 +54,7 @@ class TankDimension {
       id: id ?? this.id,
       name: name ?? this.name,
       type: type ?? this.type,
+      typeName: typeName ?? this.typeName,
       unitOfMeasures: unitOfMeasures ?? this.unitOfMeasures,
       canLength: canLength ?? this.canLength,
       diameter: diameter ?? this.diameter,
