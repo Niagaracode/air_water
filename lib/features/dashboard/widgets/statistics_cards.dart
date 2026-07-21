@@ -225,6 +225,8 @@ class StatusChip extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                   color: Colors.black.withValues(alpha: 0.5),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -284,32 +286,33 @@ class CompactStatCard extends StatelessWidget {
             ),
           ),
           SizedBox(width: 5),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                data.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.outfit(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black.withValues(alpha: textColorOpacity),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black.withValues(alpha: textColorOpacity),
+                  ),
                 ),
-              ),
-              Text(
-                '${data.subtitle} \u00b7 of ${data.total}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.outfit(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black.withValues(alpha: 0.55),
+                Text(
+                  '${data.subtitle} \u00b7 of ${data.total}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.outfit(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black.withValues(alpha: 0.55),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Spacer(),
           Text(
             '${data.value}',
             style: GoogleFonts.outfit(
