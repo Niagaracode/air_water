@@ -342,501 +342,490 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           topLeft: Radius.circular(20),
           bottomLeft: Radius.circular(20),
         ),
-        child: SizedBox(
-          width: isMobile ? double.infinity : 600,
-          height: MediaQuery.of(context).size.height,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top accent bar
-              Container(
-                height: 4,
-                decoration: BoxDecoration(
-                  color: primary,
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
-                ),
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 20 : 40,
-                        vertical: isMobile ? 24 : 48,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header
+        child: SafeArea(
+          child: SizedBox(
+            width: isMobile ? double.infinity : 600,
+            height: MediaQuery.of(context).size.height,
+            child: Expanded(
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 20 : 40,
+                      vertical: isMobile ? 24 : 48,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.user != null
+                                        ? 'Edit User'
+                                        : 'Register New User',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF111827),
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Manage user profiles, roles, and access permissions.',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close_rounded, size: 22),
+                              color: const Color(0xFF6B7280),
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFFF3F4F6),
+                                padding: const EdgeInsets.all(12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        _buildInfoBar(),
+                        const SizedBox(height: 48),
+                        if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
+                          _buildLabelField(
+                            'PRIMARY COMPANY',
+                            _buildCompanyAutocomplete(),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+
+
+
+                        _buildLabelField(
+                          'USERNAME*',
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: AppTextField(
+                                  controller: _usernameController,
+                                  hint: 'e.g. john_doe',
+                                ),
+                              ),
+                              if (ref.read(userProvider).currentUser?.roleId == 2 && _selectedCompany != null) ...[
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3F4F6),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                                  ),
+                                  child: Text(
+                                    '@${_selectedCompany!.name}',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        if (isMobile) ...[
+                          _buildLabelField(
+                            'FIRST NAME',
+                            AppTextField(
+                              controller: _firstNameController,
+                              focusNode: _firstNameFocus,
+                              hint: 'First Name',
+                              errorText: _firstNameError,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                    RegExp(r'[a-zA-Z\s]')),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _buildLabelField(
+                            'LAST NAME',
+                            AppTextField(
+                              controller: _lastNameController,
+                              focusNode: _lastNameFocus,
+                              hint: 'Last Name',
+                              errorText: _lastNameError,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                    RegExp(r'[a-zA-Z\s]')),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildLabelField(
+                                  'FIRST NAME',
+                                  AppTextField(
+                                    controller: _firstNameController,
+                                    focusNode: _firstNameFocus,
+                                    hint: 'First Name',
+                                    errorText: _firstNameError,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[a-zA-Z\s]')),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildLabelField(
+                                  'LAST NAME',
+                                  AppTextField(
+                                    controller: _lastNameController,
+                                    focusNode: _lastNameFocus,
+                                    hint: 'Last Name',
+                                    errorText: _lastNameError,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.allow(
+                                          RegExp(r'[a-zA-Z\s]')),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+
+                        if (isMobile) ...[
+                          _buildLabelField(
+                            'EMAIL ADDRESS*',
+                            AppTextField(
+                              controller: _emailController,
+                              focusNode: _emailFocus,
+                              hint: 'john@example.com',
+                              errorText: _emailError,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _buildLabelField(
+                            'MOBILE NUMBER',
+                            AppTextField(
+                              controller: _mobileController,
+                              focusNode: _mobileFocus,
+                              hint: '+1 234 567 890',
+                              errorText: _mobileError,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(15),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildLabelField(
+                                  'EMAIL ADDRESS*',
+                                  AppTextField(
+                                    controller: _emailController,
+                                    focusNode: _emailFocus,
+                                    hint: 'john@example.com',
+                                    errorText: _emailError,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildLabelField(
+                                  'MOBILE NUMBER',
+                                  AppTextField(
+                                    controller: _mobileController,
+                                    focusNode: _mobileFocus,
+                                    hint: '+1 234 567 890',
+                                    errorText: _mobileError,
+                                    keyboardType: TextInputType.phone,
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly,
+                                      LengthLimitingTextInputFormatter(15),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+
+                        if (isMobile) ...[
+                          _buildLabelField(
+                            widget.user != null ? 'PASSWORD' : 'PASSWORD*',
+                            AppTextField(
+                              controller: _passwordController,
+                              hint: '••••••••',
+                              obscureText: true,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _buildLabelField(
+                            widget.user != null ? 'CONFIRM PASSWORD' : 'CONFIRM PASSWORD*',
+                            AppTextField(
+                              controller: _confirmPasswordController,
+                              hint: '••••••••',
+                              obscureText: true,
+                            ),
+                          ),
+                        ] else ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildLabelField(
+                                  widget.user != null ? 'PASSWORD' : 'PASSWORD*',
+                                  AppTextField(
+                                    controller: _passwordController,
+                                    hint: '••••••••',
+                                    obscureText: true,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildLabelField(
+                                  widget.user != null ? 'CONFIRM PASSWORD' : 'CONFIRM PASSWORD*',
+                                  AppTextField(
+                                    controller: _confirmPasswordController,
+                                    hint: '••••••••',
+                                    obscureText: true,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+
+                        if (isMobile) ...[
+                          _buildLabelField(
+                            'ACCOUNT ROLE*',
+                            _isLoadingRoles
+                                ? const LinearProgressIndicator(
+                              minHeight: 2,
+                            )
+                                : AppDropdown<Role>(
+                              value: _selectedRole,
+                              items: _roles ?? [],
+                              itemLabel: (r) => r.name,
+                              onChanged: (v) =>
+                                  setState(() => _selectedRole = v),
+                              hint: 'Select Role',
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _buildLabelField(
+                            'TIMEOUT (HOURS)',
+                            AppTextField(
+                              controller: _timeoutController,
+                              hint: 'e.g. 24',
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                        ] else ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: _buildLabelField(
+                                  'ACCOUNT ROLE*',
+                                  _isLoadingRoles
+                                      ? const LinearProgressIndicator(
+                                    minHeight: 2,
+                                  )
+                                      : AppDropdown<Role>(
+                                    value: _selectedRole,
+                                    items: _roles ?? [],
+                                    itemLabel: (r) => r.name,
+                                    onChanged: (v) =>
+                                        setState(() => _selectedRole = v),
+                                    hint: 'Select Role',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildLabelField(
+                                  'TIMEOUT (HOURS)',
+                                  AppTextField(
+                                    controller: _timeoutController,
+                                    hint: 'e.g. 24',
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 48),
+
+                        // Status Selector
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFF3F4F6),
+                            ),
+                          ),
+                          child: isMobile
+                              ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'ACCOUNT STATUS',
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  color: primary,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Set the operational status of this user account.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: const Color(0xFF6B7280),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildStatusToggle(
+                                      1,
+                                      'Active',
+                                      const Color(0xFF10B981),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildStatusToggle(
+                                      0,
+                                      'Inactive',
+                                      const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          )
+                              : Row(
                             children: [
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      widget.user != null
-                                          ? 'Edit User'
-                                          : 'Register New User',
+                                      'ACCOUNT STATUS',
                                       style: GoogleFonts.outfit(
-                                        fontSize: 28,
                                         fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF111827),
-                                        letterSpacing: -0.5,
+                                        fontSize: 12,
+                                        color: primary,
+                                        letterSpacing: 1.1,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 4),
                                     Text(
-                                      'Manage user profiles, roles, and access permissions.',
+                                      'Set the operational status of this user account.',
                                       style: GoogleFonts.inter(
-                                        fontSize: 14,
+                                        fontSize: 12,
                                         color: const Color(0xFF6B7280),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              IconButton(
-                                onPressed: () => Navigator.pop(context),
-                                icon: const Icon(Icons.close_rounded, size: 22),
-                                color: const Color(0xFF6B7280),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF3F4F6),
-                                  padding: const EdgeInsets.all(12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
+                              const Spacer(),
+                              _buildStatusToggle(
+                                1,
+                                'Active',
+                                const Color(0xFF10B981),
+                              ),
+                              const SizedBox(width: 12),
+                              _buildStatusToggle(
+                                0,
+                                'Inactive',
+                                const Color(0xFF6B7280),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 32),
-                          _buildInfoBar(),
-                          const SizedBox(height: 48),
-                          if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                            _buildLabelField(
-                              'PRIMARY COMPANY',
-                              _buildCompanyAutocomplete(),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
+                        ),
+                        const SizedBox(height: 64),
 
-
-
-                          _buildLabelField(
-                            'USERNAME*',
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: AppTextField(
-                                    controller: _usernameController,
-                                    hint: 'e.g. john_doe',
-                                  ),
-                                ),
-                                if (ref.read(userProvider).currentUser?.roleId == 2 && _selectedCompany != null) ...[
-                                  const SizedBox(width: 12),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF3F4F6),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                                    ),
-                                    child: Text(
-                                      '@${_selectedCompany!.name}',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: primary,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          if (isMobile) ...[
-                            _buildLabelField(
-                              'FIRST NAME',
-                              AppTextField(
-                                controller: _firstNameController,
-                                focusNode: _firstNameFocus,
-                                hint: 'First Name',
-                                errorText: _firstNameError,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(
-                                      RegExp(r'[a-zA-Z\s]')),
-                                ],
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: userState.isProcessing ? null : _save,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            const SizedBox(height: 24),
-                            _buildLabelField(
-                              'LAST NAME',
-                              AppTextField(
-                                controller: _lastNameController,
-                                focusNode: _lastNameFocus,
-                                hint: 'Last Name',
-                                errorText: _lastNameError,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(
-                                      RegExp(r'[a-zA-Z\s]')),
-                                ],
+                            child: userState.isProcessing
+                                ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                                : Text(
+                              widget.user != null
+                                  ? 'UPDATE USER'
+                                  : 'REGISTER USER',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
                               ),
                             ),
-                          ] else ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildLabelField(
-                                    'FIRST NAME',
-                                    AppTextField(
-                                      controller: _firstNameController,
-                                      focusNode: _firstNameFocus,
-                                      hint: 'First Name',
-                                      errorText: _firstNameError,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(
-                                            RegExp(r'[a-zA-Z\s]')),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildLabelField(
-                                    'LAST NAME',
-                                    AppTextField(
-                                      controller: _lastNameController,
-                                      focusNode: _lastNameFocus,
-                                      hint: 'Last Name',
-                                      errorText: _lastNameError,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(
-                                            RegExp(r'[a-zA-Z\s]')),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-
-                          if (isMobile) ...[
-                            _buildLabelField(
-                              'EMAIL ADDRESS*',
-                              AppTextField(
-                                controller: _emailController,
-                                focusNode: _emailFocus,
-                                hint: 'john@example.com',
-                                errorText: _emailError,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            _buildLabelField(
-                              'MOBILE NUMBER',
-                              AppTextField(
-                                controller: _mobileController,
-                                focusNode: _mobileFocus,
-                                hint: '+1 234 567 890',
-                                errorText: _mobileError,
-                                keyboardType: TextInputType.phone,
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.digitsOnly,
-                                  LengthLimitingTextInputFormatter(15),
-                                ],
-                              ),
-                            ),
-                          ] else ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildLabelField(
-                                    'EMAIL ADDRESS*',
-                                    AppTextField(
-                                      controller: _emailController,
-                                      focusNode: _emailFocus,
-                                      hint: 'john@example.com',
-                                      errorText: _emailError,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildLabelField(
-                                    'MOBILE NUMBER',
-                                    AppTextField(
-                                      controller: _mobileController,
-                                      focusNode: _mobileFocus,
-                                      hint: '+1 234 567 890',
-                                      errorText: _mobileError,
-                                      keyboardType: TextInputType.phone,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.digitsOnly,
-                                        LengthLimitingTextInputFormatter(15),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-
-                          if (isMobile) ...[
-                            _buildLabelField(
-                              widget.user != null ? 'PASSWORD' : 'PASSWORD*',
-                              AppTextField(
-                                controller: _passwordController,
-                                hint: '••••••••',
-                                obscureText: true,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            _buildLabelField(
-                              widget.user != null ? 'CONFIRM PASSWORD' : 'CONFIRM PASSWORD*',
-                              AppTextField(
-                                controller: _confirmPasswordController,
-                                hint: '••••••••',
-                                obscureText: true,
-                              ),
-                            ),
-                          ] else ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildLabelField(
-                                    widget.user != null ? 'PASSWORD' : 'PASSWORD*',
-                                    AppTextField(
-                                      controller: _passwordController,
-                                      hint: '••••••••',
-                                      obscureText: true,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildLabelField(
-                                    widget.user != null ? 'CONFIRM PASSWORD' : 'CONFIRM PASSWORD*',
-                                    AppTextField(
-                                      controller: _confirmPasswordController,
-                                      hint: '••••••••',
-                                      obscureText: true,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          const SizedBox(height: 24),
-
-                          if (isMobile) ...[
-                            _buildLabelField(
-                              'ACCOUNT ROLE*',
-                              _isLoadingRoles
-                                  ? const LinearProgressIndicator(
-                                      minHeight: 2,
-                                    )
-                                  : AppDropdown<Role>(
-                                      value: _selectedRole,
-                                      items: _roles ?? [],
-                                      itemLabel: (r) => r.name,
-                                      onChanged: (v) =>
-                                          setState(() => _selectedRole = v),
-                                      hint: 'Select Role',
-                                    ),
-                            ),
-                            const SizedBox(height: 24),
-                            _buildLabelField(
-                              'TIMEOUT (HOURS)',
-                              AppTextField(
-                                controller: _timeoutController,
-                                hint: 'e.g. 24',
-                                keyboardType: TextInputType.number,
-                              ),
-                            ),
-                          ] else ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: _buildLabelField(
-                                    'ACCOUNT ROLE*',
-                                    _isLoadingRoles
-                                        ? const LinearProgressIndicator(
-                                            minHeight: 2,
-                                          )
-                                        : AppDropdown<Role>(
-                                            value: _selectedRole,
-                                            items: _roles ?? [],
-                                            itemLabel: (r) => r.name,
-                                            onChanged: (v) =>
-                                                setState(() => _selectedRole = v),
-                                            hint: 'Select Role',
-                                          ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _buildLabelField(
-                                    'TIMEOUT (HOURS)',
-                                    AppTextField(
-                                      controller: _timeoutController,
-                                      hint: 'e.g. 24',
-                                      keyboardType: TextInputType.number,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          const SizedBox(height: 48),
-
-                          // Status Selector
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFFF3F4F6),
-                              ),
-                            ),
-                            child: isMobile
-                                ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'ACCOUNT STATUS',
-                                        style: GoogleFonts.outfit(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 12,
-                                          color: primary,
-                                          letterSpacing: 1.1,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Set the operational status of this user account.',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 12,
-                                          color: const Color(0xFF6B7280),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: _buildStatusToggle(
-                                              1,
-                                              'Active',
-                                              const Color(0xFF10B981),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: _buildStatusToggle(
-                                              0,
-                                              'Inactive',
-                                              const Color(0xFF6B7280),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  )
-                                : Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'ACCOUNT STATUS',
-                                              style: GoogleFonts.outfit(
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 12,
-                                                color: primary,
-                                                letterSpacing: 1.1,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'Set the operational status of this user account.',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 12,
-                                                color: const Color(0xFF6B7280),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      _buildStatusToggle(
-                                        1,
-                                        'Active',
-                                        const Color(0xFF10B981),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _buildStatusToggle(
-                                        0,
-                                        'Inactive',
-                                        const Color(0xFF6B7280),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                          const SizedBox(height: 64),
-
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: userState.isProcessing ? null : _save,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primary,
-                                foregroundColor: Colors.white,
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: userState.isProcessing
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : Text(
-                                      widget.user != null
-                                          ? 'UPDATE USER'
-                                          : 'REGISTER USER',
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (userState.isProcessing)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black12,
-                          child: const Center(
-                            child: CircularProgressIndicator(),
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                  if (userState.isProcessing)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.black12,
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
