@@ -140,344 +140,333 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
           topLeft: Radius.circular(20),
           bottomLeft: Radius.circular(20),
         ),
-        child: SizedBox(
-          width: isMobile ? double.infinity : 600,
-          height: MediaQuery.of(context).size.height,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top accent bar
-              Container(
-                height: 4,
-                decoration: BoxDecoration(
-                  color: primary,
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(20)),
-                ),
-              ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 20 : 40,
-                        vertical: isMobile ? 24 : 48,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header with close button
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      widget.device != null
-                                          ? 'Edit Device'
-                                          : 'Create New Device',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF111827),
-                                        letterSpacing: -0.5,
-                                      ),
+        child: SafeArea(
+          child: SizedBox(
+            width: isMobile ? double.infinity : 600,
+            height: MediaQuery.of(context).size.height,
+            child: Expanded(
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 20 : 40,
+                      vertical: isMobile ? 24 : 48,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header with close button
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    widget.device != null
+                                        ? 'Edit Device'
+                                        : 'Create New Device',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF111827),
+                                      letterSpacing: -0.5,
                                     ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Configure device settings and network association.',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        color: const Color(0xFF6B7280),
-                                      ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Configure device settings and network association.',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: const Color(0xFF6B7280),
                                     ),
-                                  ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(Icons.close_rounded, size: 22),
+                              color: const Color(0xFF6B7280),
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFFF3F4F6),
+                                padding: const EdgeInsets.all(12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                               ),
-                              IconButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                icon: const Icon(Icons.close_rounded, size: 22),
-                                color: const Color(0xFF6B7280),
-                                style: IconButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF3F4F6),
-                                  padding: const EdgeInsets.all(12),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        _buildInfoBar(),
+                        const SizedBox(height: 48),
+
+                        _buildLabelField(
+                          'DEVICE',
+                          AppAutocomplete<String>(
+                            controller: _deviceIdController,
+                            hint: 'Enter Unique Device ID',
+                            optionsBuilder: (textEditingValue) async {
+                              if (textEditingValue.text.isEmpty) {
+                                return const Iterable<String>.empty();
+                              }
+                              return await ref
+                                  .read(deviceNotifierProvider.notifier)
+                                  .getDeviceNameSuggestions(
+                                textEditingValue.text,
+                              );
+                            },
+                            displayStringForOption: (option) => option,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        _buildLabelField('SITE', _buildSiteAutocomplete()),
+                        const SizedBox(height: 32),
+                        _buildLabelField('TANK', _buildTankAutocomplete()),
+                        const SizedBox(height: 40),
+
+                        // Section: Network & Location
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.hub_rounded,
+                              size: 18,
+                              color: primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'NETWORK & LOCATION',
+                              style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: primary,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Divider(
+                          height: 32,
+                          thickness: 1,
+                          color: Color(0xFFF3F4F6),
+                        ),
+
+                        _buildLabelField(
+                          'SIM CARD NUMBER',
+                          AppTextField(
+                            controller: _simNumberController,
+                            hint: 'Enter ICCID / Sim Number',
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        _buildLabelField(
+                          'POWER SOURCE',
+                          AppDropdown<String>(
+                            value: _selectedPowerSource,
+                            items: const ['Main', 'Solar', 'Battery', 'Volt'],
+                            itemLabel: (v) => v,
+                            hint: 'Select Power Source',
+                            onChanged: (v) =>
+                                setState(() => _selectedPowerSource = v),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _selectedSite == null
+                                    ? null
+                                    : _pickLocation,
+                                icon: const Icon(
+                                  Icons.location_on_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  _latitude != null
+                                      ? 'Location Set (${_latitude!.toStringAsFixed(4)})'
+                                      : 'Map Location',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  side: BorderSide(
+                                    color: _latitude != null
+                                        ? primary
+                                        : const Color(0xFFD1D5DB),
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
                               ),
+                            ),
+                            if (_latitude != null) ...[
+                              const SizedBox(width: 12),
+                              IconButton(
+                                onPressed: () => setState(() {
+                                  _latitude = null;
+                                  _longitude = null;
+                                }),
+                                icon: const Icon(
+                                  Icons.delete_outline_rounded,
+                                  color: Colors.red,
+                                ),
+                              ),
                             ],
-                          ),
-                          const SizedBox(height: 32),
-                          _buildInfoBar(),
-                          const SizedBox(height: 48),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
 
-                          _buildLabelField(
-                            'DEVICE',
-                            AppAutocomplete<String>(
-                              controller: _deviceIdController,
-                              hint: 'Enter Unique Device ID',
-                              optionsBuilder: (textEditingValue) async {
-                                if (textEditingValue.text.isEmpty) {
-                                  return const Iterable<String>.empty();
-                                }
-                                return await ref
-                                    .read(deviceNotifierProvider.notifier)
-                                    .getDeviceNameSuggestions(
-                                      textEditingValue.text,
-                                    );
-                              },
-                              displayStringForOption: (option) => option,
+                        const SizedBox(height: 40),
+
+                        const SizedBox(height: 40),
+
+                        // Status Selector
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFF3F4F6),
                             ),
                           ),
-                          const SizedBox(height: 32),
-                          _buildLabelField('SITE', _buildSiteAutocomplete()),
-                          const SizedBox(height: 32),
-                          _buildLabelField('TANK', _buildTankAutocomplete()),
-                          const SizedBox(height: 40),
-
-                          // Section: Network & Location
-                          Row(
+                          child: isMobile
+                              ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.hub_rounded,
-                                size: 18,
-                                color: primary,
-                              ),
-                              const SizedBox(width: 8),
                               Text(
-                                'NETWORK & LOCATION',
+                                'DEVICE STATUS',
                                 style: GoogleFonts.outfit(
-                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
+                                  fontSize: 12,
                                   color: primary,
-                                  letterSpacing: 1.2,
+                                  letterSpacing: 1.1,
                                 ),
                               ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Enable or disable this device.',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: const Color(0xFF6B7280),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildStatusToggle(
+                                      1,
+                                      'Active',
+                                      const Color(0xFF10B981),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildStatusToggle(
+                                      0,
+                                      'Inactive',
+                                      const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
-                          ),
-                          const Divider(
-                            height: 32,
-                            thickness: 1,
-                            color: Color(0xFFF3F4F6),
-                          ),
-
-                          _buildLabelField(
-                            'SIM CARD NUMBER',
-                            AppTextField(
-                              controller: _simNumberController,
-                              hint: 'Enter ICCID / Sim Number',
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          _buildLabelField(
-                            'POWER SOURCE',
-                            AppDropdown<String>(
-                              value: _selectedPowerSource,
-                              items: const ['Main', 'Solar', 'Battery', 'Volt'],
-                              itemLabel: (v) => v,
-                              hint: 'Select Power Source',
-                              onChanged: (v) =>
-                                  setState(() => _selectedPowerSource = v),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
+                          )
+                              : Row(
                             children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _selectedSite == null
-                                      ? null
-                                      : _pickLocation,
-                                  icon: const Icon(
-                                    Icons.location_on_rounded,
-                                    size: 18,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'DEVICE STATUS',
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                      color: primary,
+                                      letterSpacing: 1.1,
+                                    ),
                                   ),
-                                  label: Text(
-                                    _latitude != null
-                                        ? 'Location Set (${_latitude!.toStringAsFixed(4)})'
-                                        : 'Map Location',
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Enable or disable this device.',
                                     style: GoogleFonts.inter(
-                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                      color: const Color(0xFF6B7280),
                                     ),
                                   ),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    side: BorderSide(
-                                      color: _latitude != null
-                                          ? primary
-                                          : const Color(0xFFD1D5DB),
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                ),
+                                ],
                               ),
-                              if (_latitude != null) ...[
-                                const SizedBox(width: 12),
-                                IconButton(
-                                  onPressed: () => setState(() {
-                                    _latitude = null;
-                                    _longitude = null;
-                                  }),
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ],
+                              const Spacer(),
+                              _buildStatusToggle(
+                                1,
+                                'Active',
+                                const Color(0xFF10B981),
+                              ),
+                              const SizedBox(width: 12),
+                              _buildStatusToggle(
+                                0,
+                                'Inactive',
+                                const Color(0xFF6B7280),
+                              ),
                             ],
-                          ),
-                          const SizedBox(height: 24),
-
-                          const SizedBox(height: 40),
-
-                          const SizedBox(height: 40),
-
-                          // Status Selector
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: const Color(0xFFF3F4F6),
-                              ),
-                            ),
-                            child: isMobile
-                                ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'DEVICE STATUS',
-                                        style: GoogleFonts.outfit(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 12,
-                                          color: primary,
-                                          letterSpacing: 1.1,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Enable or disable this device.',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 12,
-                                          color: const Color(0xFF6B7280),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: _buildStatusToggle(
-                                              1,
-                                              'Active',
-                                              const Color(0xFF10B981),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: _buildStatusToggle(
-                                              0,
-                                              'Inactive',
-                                              const Color(0xFF6B7280),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  )
-                                : Row(
-                                    children: [
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'DEVICE STATUS',
-                                            style: GoogleFonts.outfit(
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 12,
-                                              color: primary,
-                                              letterSpacing: 1.1,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Enable or disable this device.',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 12,
-                                              color: const Color(0xFF6B7280),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const Spacer(),
-                                      _buildStatusToggle(
-                                        1,
-                                        'Active',
-                                        const Color(0xFF10B981),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      _buildStatusToggle(
-                                        0,
-                                        'Inactive',
-                                        const Color(0xFF6B7280),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                          const SizedBox(height: 64),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: deviceState.isProcessing
-                                  ? null
-                                  : _save,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primary,
-                                foregroundColor: Colors.white,
-                                elevation: 4,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: deviceState.isProcessing
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                    )
-                                  : Text(
-                                      widget.device != null
-                                          ? 'UPDATE DEVICE'
-                                          : 'REGISTER DEVICE',
-                                      style: GoogleFonts.outfit(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (deviceState.isProcessing)
-                      Positioned.fill(
-                        child: Container(
-                          color: Colors.black26,
-                          child: const Center(
-                            child: CircularProgressIndicator(),
                           ),
                         ),
+                        const SizedBox(height: 64),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: deviceState.isProcessing
+                                ? null
+                                : _save,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: deviceState.isProcessing
+                                ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                                : Text(
+                              widget.device != null
+                                  ? 'UPDATE DEVICE'
+                                  : 'REGISTER DEVICE',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (deviceState.isProcessing)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.black26,
+                        child: const Center(
+                          child: CircularProgressIndicator(),
+                        ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
