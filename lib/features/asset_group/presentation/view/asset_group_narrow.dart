@@ -21,6 +21,7 @@ class AssetGroupNarrow extends ConsumerStatefulWidget {
 
 class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -36,6 +37,7 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -44,20 +46,28 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
       context: context,
       barrierDismissible: true,
       barrierLabel: 'AddAssetGroup',
-      barrierColor: Colors.black45,
-      transitionDuration: const Duration(milliseconds: 180),
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) =>
           AddAssetGroupModal(initialGroup: group),
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
-          position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-              .animate(
-            CurvedAnimation(parent: anim1, curve: Curves.fastOutSlowIn),
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(
+            CurvedAnimation(parent: anim1, curve: Curves.easeOut),
           ),
           child: child,
         );
       },
     );
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _searchFocusNode.unfocus();
+    setState(() {});
   }
 
   @override
@@ -77,133 +87,175 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF6F7FB),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primary,
+        elevation: 2,
         onPressed: () => _showAddDialog(),
-        icon: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
           'Create group',
           style: GoogleFonts.inter(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
           ),
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: _buildHeader(context),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x0A000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+              child: _buildHeader(),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: _buildFilterRow(),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            sliver: state.isLoading && filteredGroups.isEmpty
+                ? const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(48.0),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            )
+                : filteredGroups.isEmpty
+                ? SliverToBoxAdapter(
+              child: _buildEmptyState(),
+            )
+                : SliverList.builder(
+              itemCount: filteredGroups.length,
+              itemBuilder: (context, index) {
+                return _buildGroupCard(
+                  filteredGroups[index],
+                  userState,
+                  productState,
+                  tankState,
+                  deviceState,
+                  companyState,
+                );
+              },
             ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: state.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: Color(0xFF141E7A)),
-                    )
-                  : filteredGroups.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          itemCount: filteredGroups.length,
-                          itemBuilder: (context, index) {
-                            return _buildGroupCard(
-                              filteredGroups[index],
-                              userState,
-                              productState,
-                              tankState,
-                              deviceState,
-                              companyState,
-                            );
-                          },
-                        ),
-            ),
-          ],
-        ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 90)),
+        ],
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Expanded(
-              child: Text(
-                'ASSET GROUP MANAGER',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                overflow: TextOverflow.ellipsis,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.layers_rounded, color: primary, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ASSET GROUP MANAGEMENT',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: const Color(0xFF111827),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Define dynamic grouping rules based on asset parameters',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Define dynamic grouping rules based on asset parameters and assign users.',
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFilterRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade200),
-            ),
-            child: TextField(
-              controller: _searchController,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: const Color(0xFF1A1A2E),
-              ),
-              decoration: InputDecoration(
-                hintText: 'Search groups...',
-                hintStyle: GoogleFonts.inter(
-                  color: Colors.grey.shade400,
-                  fontSize: 13,
-                ),
-                prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 18),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              onChanged: (v) {
-                setState(() {});
-              },
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
+        const SizedBox(height: 16),
+        // Search bar with built-in clear button
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFFF6F7FB),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: const Color(0xFFE7E9F0)),
           ),
-          child: IconButton(
-            icon: const Icon(Icons.filter_list_off_rounded, color: Colors.grey, size: 18),
-            tooltip: 'Clear filters',
-            onPressed: () {
-              setState(() {
-                _searchController.clear();
-              });
+          child: TextFormField(
+            controller: _searchController,
+            focusNode: _searchFocusNode,
+            decoration: InputDecoration(
+              hintText: 'Search groups by name or description',
+              hintStyle: GoogleFonts.inter(
+                color: Colors.grey.shade400,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: Colors.grey.shade400,
+                size: 20,
+              ),
+              suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _searchController,
+                builder: (context, value, child) {
+                  return value.text.isNotEmpty
+                      ? IconButton(
+                    onPressed: _clearSearch,
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: Colors.grey.shade400,
+                      size: 20,
+                    ),
+                    splashRadius: 20,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  )
+                      : const SizedBox.shrink();
+                },
+              ),
+              filled: true,
+              fillColor: Colors.transparent,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 12,
+              ),
+            ),
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1E293B),
+            ),
+            onChanged: (value) {
+              setState(() {});
             },
           ),
         ),
@@ -212,96 +264,96 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
   }
 
   Widget _buildGroupCard(
-    AssetGroupModel group,
-    UserState userState,
-    ProductState productState,
-    AsyncValue<List<dynamic>> tankState,
-    DeviceState deviceState,
-    CompanyState companyState,
-  ) {
+      AssetGroupModel group,
+      UserState userState,
+      ProductState productState,
+      AsyncValue<List<dynamic>> tankState,
+      DeviceState deviceState,
+      CompanyState companyState,
+      ) {
     final isAllGroup = group.name.toLowerCase() == 'all';
     final criteriaStr = isAllGroup
         ? 'Includes all assets'
         : () {
-            final buffer = StringBuffer();
-            for (int i = 0; i < group.criteria.length; i++) {
-              final c = group.criteria[i];
-              String displayValue = c.value;
+      final buffer = StringBuffer();
+      for (int i = 0; i < group.criteria.length; i++) {
+        final c = group.criteria[i];
+        String displayValue = c.value;
 
-              if (c.parameter == 'Product') {
-                final productId = int.tryParse(c.value);
-                if (productId != null) {
-                  final productList = productState.products;
-                  final product = productList.isEmpty
-                      ? null
-                      : productList.cast<dynamic>().firstWhere(
-                          (p) => p.id == productId || p.id.toString() == c.value,
-                          orElse: () => null,
-                        );
-                  if (product != null) {
-                    displayValue = product.productCode != null && product.productCode.isNotEmpty
-                        ? product.productCode
-                        : product.name;
-                  }
-                }
-              }
-
-              if (c.parameter == 'Tank Name') {
-                final tankId = int.tryParse(c.value);
-                if (tankId != null) {
-                  final tankList = tankState.value ?? [];
-                  final tank = tankList.isEmpty
-                      ? null
-                      : tankList.cast<dynamic>().firstWhere(
-                          (t) => t.tankId == tankId || t.tankId.toString() == c.value,
-                          orElse: () => null,
-                        );
-                  if (tank != null) {
-                    displayValue = tank.tankNumber;
-                  }
-                }
-              }
-
-              if (c.parameter == 'DeviceID') {
-                final deviceNumId = int.tryParse(c.value);
-                if (deviceNumId != null) {
-                  final allDevices = deviceState.groupedDevices.expand((g) => g.devices).toList();
-                  final device = allDevices.isEmpty
-                      ? null
-                      : allDevices.cast<dynamic>().firstWhere(
-                          (d) => d.id == deviceNumId || d.id.toString() == c.value,
-                          orElse: () => null,
-                        );
-                  if (device != null) {
-                    displayValue = device.deviceId;
-                  }
-                }
-              }
-
-              if (c.parameter == 'Customer Name') {
-                final companyId = int.tryParse(c.value);
-                if (companyId != null) {
-                  final companyList = companyState.groupedCompanies;
-                  final company = companyList.isEmpty
-                      ? null
-                      : companyList.firstWhere(
-                          (g) => g.addresses.isNotEmpty && g.addresses.first.companyId == companyId,
-                          orElse: () => CompanyGroup(name: '', addresses: []),
-                        );
-                  if (company != null && company.name.isNotEmpty) {
-                    displayValue = company.name;
-                  }
-                }
-              }
-
-              final paramLabel = c.parameter == 'DeviceID' ? 'Device Name' : c.parameter;
-              buffer.write('$paramLabel ${c.logic} $displayValue');
-              if (i < group.criteria.length - 1) {
-                buffer.write(' ${c.operator} ');
-              }
+        if (c.parameter == 'Product') {
+          final productId = int.tryParse(c.value);
+          if (productId != null) {
+            final productList = productState.products;
+            final product = productList.isEmpty
+                ? null
+                : productList.cast<dynamic>().firstWhere(
+                  (p) => p.id == productId || p.id.toString() == c.value,
+              orElse: () => null,
+            );
+            if (product != null) {
+              displayValue = product.productCode != null && product.productCode.isNotEmpty
+                  ? product.productCode
+                  : product.name;
             }
-            return buffer.toString();
-          }();
+          }
+        }
+
+        if (c.parameter == 'Tank Name') {
+          final tankId = int.tryParse(c.value);
+          if (tankId != null) {
+            final tankList = tankState.value ?? [];
+            final tank = tankList.isEmpty
+                ? null
+                : tankList.cast<dynamic>().firstWhere(
+                  (t) => t.tankId == tankId || t.tankId.toString() == c.value,
+              orElse: () => null,
+            );
+            if (tank != null) {
+              displayValue = tank.tankNumber;
+            }
+          }
+        }
+
+        if (c.parameter == 'DeviceID') {
+          final deviceNumId = int.tryParse(c.value);
+          if (deviceNumId != null) {
+            final allDevices = deviceState.groupedDevices.expand((g) => g.devices).toList();
+            final device = allDevices.isEmpty
+                ? null
+                : allDevices.cast<dynamic>().firstWhere(
+                  (d) => d.id == deviceNumId || d.id.toString() == c.value,
+              orElse: () => null,
+            );
+            if (device != null) {
+              displayValue = device.deviceId;
+            }
+          }
+        }
+
+        if (c.parameter == 'Customer Name') {
+          final companyId = int.tryParse(c.value);
+          if (companyId != null) {
+            final companyList = companyState.groupedCompanies;
+            final company = companyList.isEmpty
+                ? null
+                : companyList.firstWhere(
+                  (g) => g.addresses.isNotEmpty && g.addresses.first.companyId == companyId,
+              orElse: () => CompanyGroup(name: '', addresses: []),
+            );
+            if (company != null && company.name.isNotEmpty) {
+              displayValue = company.name;
+            }
+          }
+        }
+
+        final paramLabel = c.parameter == 'DeviceID' ? 'Device Name' : c.parameter;
+        buffer.write('$paramLabel ${c.logic} $displayValue');
+        if (i < group.criteria.length - 1) {
+          buffer.write(' ${c.operator} ');
+        }
+      }
+      return buffer.toString();
+    }();
 
     final displayUserCount = userState.users.where((u) {
       if (group.companyId != null && u.companyId != group.companyId) {
@@ -313,123 +365,224 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
       return isInThisGroup && !isInAllGroup;
     }).length;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200, width: 1),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    group.name,
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: const Color(0xFF1E293B),
+    final groupColor = _colorForGroup(group.name);
+
+    return InkWell(
+      onTap: () => _showAddDialog(group),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFEEF0F5)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  // Group icon with color
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: groupColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.folder_rounded,
+                      size: 20,
+                      color: groupColor,
                     ),
                   ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit_outlined, color: primary, size: 18),
-                      onPressed: () => _showAddDialog(group),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          group.name,
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: const Color(0xFF1E293B),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (group.description.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            group.description,
+                            style: GoogleFonts.inter(
+                              fontSize: 12.5,
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    IconButton(
-                      icon: Icon(Icons.delete_outline, color: Colors.red.shade400, size: 18),
-                      onPressed: () => _confirmDelete(group),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                  ),
+                  // Delete button only
+                  InkWell(
+                    onTap: () => _confirmDelete(group),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 18,
+                        color: Colors.red.shade400,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              // Criteria section
+              Container(
+                padding: const EdgeInsets.all(12),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: groupColor.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: groupColor.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.rule_rounded,
+                          size: 14,
+                          color: groupColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'CRITERIA',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: groupColor,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      criteriaStr,
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        color: const Color(0xFF1E293B),
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
-              ],
-            ),
-            if (group.description.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                group.description,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+              ),
+              const SizedBox(height: 14),
+              // User count
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      Icons.people_outline_rounded,
+                      size: 14,
+                      color: primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$displayUserCount users assigned',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF475569),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: groupColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${group.criteria.length} rules',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: groupColor,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
-            const Divider(height: 24, thickness: 1),
-            Text(
-              'CRITERIA:',
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey.shade500,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.all(10),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFBFDBFE).withValues(alpha: 0.5)),
-              ),
-              child: Text(
-                criteriaStr,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: const Color(0xFF1E40AF),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.people_outline, size: 14, color: primary),
-                const SizedBox(width: 4),
-                Text(
-                  '$displayUserCount users assigned',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: primary,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.layers_outlined, size: 64, color: Color(0xFFD1D5DB)),
-          const SizedBox(height: 16),
-          Text(
-            'No asset groups found',
-            style: GoogleFonts.inter(color: const Color(0xFF6B7280)),
-          ),
-        ],
+    return Padding(
+      padding: const EdgeInsets.all(48.0),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              Icons.layers_outlined,
+              size: 48,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No asset groups found',
+              style: GoogleFonts.inter(
+                color: Colors.grey.shade500,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Create your first asset group to get started',
+              style: GoogleFonts.inter(
+                color: Colors.grey.shade400,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -438,14 +591,37 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Asset Group'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        title: Text(
+          'Delete Asset Group',
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: const Color(0xFF1E293B),
+          ),
+        ),
         content: Text(
           'Are you sure you want to delete "${group.name}"? This action cannot be undone.',
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            color: const Color(0xFF475569),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL'),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: Text(
+              'CANCEL',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -460,17 +636,41 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
                     content: Text(
                       'Error: ${ref.read(assetGroupProvider).error ?? 'Failed to delete group'}',
                     ),
+                    backgroundColor: Colors.red.shade700,
                   ),
                 );
               }
             },
             style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+              foregroundColor: Colors.red.shade700,
             ),
-            child: const Text('DELETE'),
+            child: Text(
+              'DELETE',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  static final List<Color> _groupColors = [
+    const Color(0xFF6366F1), // indigo
+    const Color(0xFF0EA5E9), // sky
+    const Color(0xFF10B981), // emerald
+    const Color(0xFFF59E0B), // amber
+    const Color(0xFFEC4899), // pink
+    const Color(0xFF8B5CF6), // violet
+    const Color(0xFF14B8A6), // teal
+  ];
+
+  Color _colorForGroup(String key) {
+    if (key.trim().isEmpty) return primary;
+    final hash =
+    key.toLowerCase().trim().codeUnits.fold<int>(0, (p, c) => p + c);
+    return _groupColors[hash % _groupColors.length];
   }
 }

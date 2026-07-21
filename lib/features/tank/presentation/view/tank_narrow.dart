@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:air_water/shared/widgets/app_text_field.dart';
 import 'package:air_water/shared/widgets/app_dropdown.dart';
 import '../../../../core/app_theme/app_theme.dart';
 import '../controller/tank_provider.dart';
@@ -27,6 +26,14 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.9) {
+      ref.read(tankNotifierProvider.notifier).loadGroupedTanks();
+    }
   }
 
   @override
@@ -39,22 +46,65 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     super.dispose();
   }
 
+  void _clearSiteSearch() {
+    _siteSearchController.clear();
+    _siteFocusNode.unfocus();
+    ref.read(tankNotifierProvider.notifier).setSearchSite('');
+    ref.read(tankNotifierProvider.notifier).loadGroupedTanks();
+  }
+
+  void _clearTankSearch() {
+    _tankSearchController.clear();
+    _tankFocusNode.unfocus();
+    ref.read(tankNotifierProvider.notifier).setSearchTank('');
+    ref.read(tankNotifierProvider.notifier).loadGroupedTanks();
+  }
+
+  static final List<Color> _groupColors = [
+    const Color(0xFF6366F1), // indigo
+    const Color(0xFF0EA5E9), // sky
+    const Color(0xFF10B981), // emerald
+    const Color(0xFFF59E0B), // amber
+    const Color(0xFFEC4899), // pink
+    const Color(0xFF8B5CF6), // violet
+    const Color(0xFF14B8A6), // teal
+  ];
+
+  Color _colorForGroup(String key) {
+    if (key.trim().isEmpty) return primary;
+    final hash =
+    key.toLowerCase().trim().codeUnits.fold<int>(0, (p, c) => p + c);
+    return _groupColors[hash % _groupColors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
     final tankState = ref.watch(tankNotifierProvider);
     final tankNotifier = ref.read(tankNotifierProvider.notifier);
 
+    // Sync controllers
+    if (tankState.searchSite != _siteSearchController.text &&
+        tankState.searchSite.isEmpty) {
+      _siteSearchController.text = '';
+    }
+    if (tankState.searchTank != _tankSearchController.text &&
+        tankState.searchTank.isEmpty) {
+      _tankSearchController.text = '';
+    }
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F7FB),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primary,
+        elevation: 2,
         onPressed: () => _showAddDialog(),
-        icon: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
           'Add tank',
           style: GoogleFonts.inter(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
           ),
         ),
       ),
@@ -62,37 +112,56 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
         controller: _scrollController,
         slivers: [
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                BorderRadius.vertical(bottom: Radius.circular(20)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x0A000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
               child: _buildHeader(tankState, tankNotifier),
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-            sliver: _buildVirtualizedTable(tankState, tankNotifier),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+            sliver: _buildVirtualizedList(tankState, tankNotifier),
           ),
           if (tankState.isLoading && tankState.groupedTanks.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                    SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: primary,
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Please wait loading new record',
-                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Loading more tanks…',
+                      style: GoogleFonts.inter(
+                        color: Colors.grey.shade600,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          const SliverToBoxAdapter(child: SizedBox(height: 90)),
         ],
       ),
     );
@@ -103,145 +172,275 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Expanded(
-              child: Text(
-                'TANK MANAGEMENT',
-                style: TextStyle(fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.propane_tank_rounded, color: primary, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'TANK MANAGEMENT',
+                    style: GoogleFonts.outfit(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: const Color(0xFF111827),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Showing ${tankState.totalEntries} entries',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        RawAutocomplete<SiteAutocompleteInfo>(
-          textEditingController: _siteSearchController,
-          focusNode: _siteFocusNode,
-          optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty) {
-              return const Iterable<SiteAutocompleteInfo>.empty();
-            }
-            return await tankNotifier.searchSites(textEditingValue.text);
-          },
-          displayStringForOption: (SiteAutocompleteInfo option) =>
-              option.siteName,
-          onSelected: (SiteAutocompleteInfo selection) {
-            _siteSearchController.text = selection.siteName;
-            tankNotifier.setSearchSite(selection.siteName);
-            tankNotifier.loadGroupedTanks();
-          },
-          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return AppTextField(
-              controller: controller,
-              focusNode: focusNode,
-              hint: 'Filter By Site',
-              onSubmitted: (value) {
-                _siteSearchController.text = value;
-                tankNotifier.setSearchSite(value);
-                tankNotifier.loadGroupedTanks();
-              },
-            );
-          },
-          optionsViewBuilder: (context, onSelected, options) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: MediaQuery.of(context).size.width - 24,
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final option = options.elementAt(index);
-                      return ListTile(
-                        title: Text(
-                          option.siteName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
+        // Site Search with clear button
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6F7FB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE7E9F0)),
+          ),
+          child: RawAutocomplete<SiteAutocompleteInfo>(
+            textEditingController: _siteSearchController,
+            focusNode: _siteFocusNode,
+            optionsBuilder: (TextEditingValue textEditingValue) async {
+              if (textEditingValue.text.isEmpty) {
+                return const Iterable<SiteAutocompleteInfo>.empty();
+              }
+              return await tankNotifier.searchSites(textEditingValue.text);
+            },
+            displayStringForOption: (SiteAutocompleteInfo option) =>
+            option.siteName,
+            onSelected: (SiteAutocompleteInfo selection) {
+              _siteSearchController.text = selection.siteName;
+              tankNotifier.setSearchSite(selection.siteName);
+              tankNotifier.loadGroupedTanks();
+            },
+            fieldViewBuilder:
+                (context, controller, focusNode, onFieldSubmitted) {
+              return TextFormField(
+                controller: controller,
+                focusNode: focusNode,
+                decoration: InputDecoration(
+                  hintText: 'Filter by site',
+                  hintStyle: GoogleFonts.inter(
+                    color: Colors.grey.shade400,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: Colors.grey.shade400,
+                    size: 20,
+                  ),
+                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller,
+                    builder: (context, value, child) {
+                      return value.text.isNotEmpty
+                          ? IconButton(
+                        onPressed: _clearSiteSearch,
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Colors.grey.shade400,
+                          size: 20,
                         ),
-                        subtitle: option.fullAddress.isNotEmpty
-                            ? Text(
-                                option.fullAddress,
-                                style: const TextStyle(fontSize: 11),
-                              )
-                            : null,
-                        onTap: () => onSelected(option),
-                      );
+                        splashRadius: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      )
+                          : const SizedBox.shrink();
                     },
                   ),
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 12,
+                  ),
                 ),
-              ),
-            );
-          },
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF1E293B),
+                ),
+                onFieldSubmitted: (value) {
+                  _siteSearchController.text = value;
+                  tankNotifier.setSearchSite(value);
+                  tankNotifier.loadGroupedTanks();
+                },
+              );
+            },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4.0,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width - 32,
+                    constraints: const BoxConstraints(maxHeight: 220),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: options.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final option = options.elementAt(index);
+                        return ListTile(
+                          title: Text(
+                            option.siteName,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: option.fullAddress.isNotEmpty
+                              ? Text(
+                            option.fullAddress,
+                            style: GoogleFonts.inter(fontSize: 12.5),
+                          )
+                              : null,
+                          onTap: () => onSelected(option),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
         const SizedBox(height: 12),
-        RawAutocomplete<String>(
-          textEditingController: _tankSearchController,
-          focusNode: _tankFocusNode,
-          optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty) {
-              return const Iterable<String>.empty();
-            }
-            return await tankNotifier.getTankNameSuggestions(
-              textEditingValue.text,
-            );
-          },
-          displayStringForOption: (String option) => option,
-          onSelected: (String selection) {
-            _tankSearchController.text = selection;
-            tankNotifier.setSearchTank(selection);
-            tankNotifier.loadGroupedTanks();
-          },
-          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return AppTextField(
-              controller: controller,
-              focusNode: focusNode,
-              hint: 'Filter By Tank',
-              onSubmitted: (value) {
-                _tankSearchController.text = value;
-                tankNotifier.setSearchTank(value);
-                tankNotifier.loadGroupedTanks();
-              },
-            );
-          },
-          optionsViewBuilder: (context, onSelected, options) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  width: MediaQuery.of(context).size.width - 24,
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final option = options.elementAt(index);
-                      return ListTile(
-                        title: Text(
-                          option,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
+        // Tank Search with clear button
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6F7FB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE7E9F0)),
+          ),
+          child: RawAutocomplete<String>(
+            textEditingController: _tankSearchController,
+            focusNode: _tankFocusNode,
+            optionsBuilder: (TextEditingValue textEditingValue) async {
+              if (textEditingValue.text.isEmpty) {
+                return const Iterable<String>.empty();
+              }
+              return await tankNotifier.getTankNameSuggestions(
+                textEditingValue.text,
+              );
+            },
+            displayStringForOption: (String option) => option,
+            onSelected: (String selection) {
+              _tankSearchController.text = selection;
+              tankNotifier.setSearchTank(selection);
+              tankNotifier.loadGroupedTanks();
+            },
+            fieldViewBuilder:
+                (context, controller, focusNode, onFieldSubmitted) {
+              return TextFormField(
+                controller: controller,
+                focusNode: focusNode,
+                decoration: InputDecoration(
+                  hintText: 'Filter by tank',
+                  hintStyle: GoogleFonts.inter(
+                    color: Colors.grey.shade400,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: Colors.grey.shade400,
+                    size: 20,
+                  ),
+                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: controller,
+                    builder: (context, value, child) {
+                      return value.text.isNotEmpty
+                          ? IconButton(
+                        onPressed: _clearTankSearch,
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Colors.grey.shade400,
+                          size: 20,
                         ),
-                        onTap: () => onSelected(option),
-                      );
+                        splashRadius: 20,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      )
+                          : const SizedBox.shrink();
                     },
                   ),
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 12,
+                  ),
                 ),
-              ),
-            );
-          },
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF1E293B),
+                ),
+                onFieldSubmitted: (value) {
+                  _tankSearchController.text = value;
+                  tankNotifier.setSearchTank(value);
+                  tankNotifier.loadGroupedTanks();
+                },
+              );
+            },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4.0,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width - 32,
+                    constraints: const BoxConstraints(maxHeight: 220),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: options.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        final option = options.elementAt(index);
+                        return ListTile(
+                          title: Text(
+                            option,
+                            style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          onTap: () => onSelected(option),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -251,122 +450,63 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
                 value: tankState.selectedStatus,
                 items: const [null, 1, 0],
                 itemLabel: (v) =>
-                    v == null ? 'All Status' : (v == 1 ? 'Active' : 'Inactive'),
+                v == null ? 'All Status' : (v == 1 ? 'Active' : 'Inactive'),
                 hint: 'Status',
                 onChanged: (v) => tankNotifier.setStatus(v),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            AppClearButton(
-              onPressed: () {
-                _siteSearchController.clear();
-                _tankSearchController.clear();
-                tankNotifier.clearFilters();
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: Text(
-            'Showing  ${tankState.totalEntries} entries',
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-        ),
       ],
     );
   }
 
-  Widget _buildVirtualizedTable(TankState tankState, TankNotifier notifier) {
+  Widget _buildVirtualizedList(TankState tankState, TankNotifier notifier) {
     if (tankState.groupedTanks.isEmpty && !tankState.isLoading) {
       return SliverToBoxAdapter(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          alignment: Alignment.center,
-          child: const Text(
-            'No tanks found',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
+        child: Padding(
+          padding: const EdgeInsets.all(48.0),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(Icons.propane_tank_outlined,
+                    size: 40, color: Colors.grey.shade300),
+                const SizedBox(height: 12),
+                Text(
+                  'No tanks found',
+                  style: GoogleFonts.inter(
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     if (tankState.isLoading && tankState.groupedTanks.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Container(
-          padding: const EdgeInsets.all(24.0),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: const Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 12),
-              Text(
-                'Please wait loading new record',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-            ],
-          ),
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(48.0),
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
     }
 
-    final List<dynamic> items = [];
-    for (int i = 0; i < tankState.groupedTanks.length; i++) {
-      final group = tankState.groupedTanks[i];
-      items.add({'type': 'header', 'group': group, 'index': i + 1});
-      for (final tank in group.tanks) {
-        items.add({'type': 'row', 'tank': tank, 'group': group});
-      }
-    }
-
     return SliverList.builder(
-      itemCount: items.length,
+      itemCount: tankState.groupedTanks.length,
       itemBuilder: (context, index) {
-        final item = items[index];
-        final isLast = index == items.length - 1;
-
-        if (item['type'] == 'header') {
-          return _buildGroupHeader(
-            tankState,
-            item['group'] as TankGroup,
-            item['index'] as int,
-            isLast,
-          );
-        } else {
-          return _buildTankRow(
-            item['tank'] as Tank,
-            item['group'] as TankGroup,
-            isLast,
-          );
-        }
+        final group = tankState.groupedTanks[index];
+        return _buildGroupCard(group, index + 1);
       },
     );
   }
 
-  Widget _buildGroupHeader(
-    TankState state,
-    TankGroup group,
-    int index,
-    bool isLast,
-  ) {
+  Widget _buildGroupCard(TankGroup group, int index) {
     String headerText;
-    int tanksCount = 0;
     try {
       final raw = group.siteName.trim();
       if (raw.isNotEmpty && raw != 'null') {
@@ -380,154 +520,251 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
             break;
           }
         }
-        headerText = foundSiteName ?? '';
+        headerText = foundSiteName ?? 'Untitled site';
       }
-      tanksCount = group.tanks.length;
     } catch (e) {
-      headerText = '';
+      headerText = 'Untitled site';
     }
 
+    final groupColor = _colorForGroup(headerText);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade200),
-          right: BorderSide(color: Colors.grey.shade200),
-          top: BorderSide.none,
-          bottom: BorderSide(color: Colors.grey.shade100),
-        ),
-        borderRadius: BorderRadius.zero,
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 30,
-            child: Text(
-              index.toString().padLeft(2, '0'),
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E40AF),
-              ),
-            ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEEF0F5)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
           ),
-          Expanded(
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: groupColor.withValues(alpha: 0.08),
+              borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
             child: Row(
               children: [
-                const SizedBox(width: 4),
-                Flexible(
+                Container(
+                  width: 26,
+                  height: 26,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: groupColor.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    index.toString().padLeft(2, '0'),
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: groupColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
                   child: Text(
                     headerText,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E40AF),
+                    style: GoogleFonts.outfit(
+                      fontSize: 15.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1E293B),
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFBFDBFE)),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: groupColor.withValues(alpha: 0.3)),
                   ),
                   child: Text(
-                    '$tanksCount TANKS',
-                    style: const TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2563EB),
+                    '${group.tanks.length} tanks',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: groupColor,
                     ),
                   ),
                 ),
               ],
             ),
           ),
+          ...List.generate(group.tanks.length, (i) {
+            final isLast = i == group.tanks.length - 1;
+            return _buildTankRow(group.tanks[i], isLast);
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildTankRow(Tank tank, TankGroup group, bool isLast) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade200),
-          right: BorderSide(color: Colors.grey.shade200),
-          bottom: isLast
-              ? BorderSide(color: Colors.grey.shade200)
-              : BorderSide(color: Colors.grey.shade100),
-        ),
-        borderRadius: isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
-              )
-            : BorderRadius.zero,
+  Widget _buildTankRow(Tank tank, bool isLast) {
+    final groupColor = _colorForGroup(tank.siteName ?? '');
+
+    return InkWell(
+      onTap: () => _showAddDialog(tank),
+      borderRadius: BorderRadius.only(
+        bottomLeft: isLast ? Radius.circular(16) : Radius.zero,
+        bottomRight: isLast ? Radius.circular(16) : Radius.zero,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Colors.grey.shade100),
+          ),
+          borderRadius: isLast
+              ? const BorderRadius.only(
+            bottomLeft: Radius.circular(16),
+            bottomRight: Radius.circular(16),
+          )
+              : BorderRadius.zero,
+        ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(width: 30),
+            const SizedBox(width: 8),
+            // Main content
             Expanded(
-              flex: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     tank.tankNumber,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                    style: GoogleFonts.outfit(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1E293B),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Site: ${tank.siteName ?? '—'}  |  Device: ${tank.deviceId ?? '—'}  |  Product: ${tank.productName ?? '—'}',
-                    style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    tank.fullAddress,
-                    style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
-                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.location_on_outlined,
+                          size: 14, color: Colors.grey.shade400),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          tank.siteName ?? '—',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.memory_rounded,
+                          size: 13, color: Colors.grey.shade400),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          'Device: ${tank.deviceId ?? '—'}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.water_drop_outlined,
+                          size: 13, color: Colors.grey.shade400),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          'Product: ${tank.productName ?? '—'}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.place_outlined,
+                          size: 13, color: Colors.grey.shade400),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          tank.fullAddress,
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            Expanded(
-              flex: 1,
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.edit, color: primary, size: 14),
-                    onPressed: () => _showAddDialog(tank),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: Icon(
-                      Icons.delete,
-                      color: Colors.red.shade400,
-                      size: 14,
+            const SizedBox(width: 10),
+            // Delete button only
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                InkWell(
+                  onTap: () => _showDeleteDialog(tank),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    onPressed: () => _showDeleteDialog(tank),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 18,
+                      color: Colors.red.shade400,
+                    ),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 6),
+                // Small chevron indicator
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: Colors.grey.shade300,
+                ),
+              ],
             ),
           ],
         ),
@@ -564,37 +801,47 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: Text(
           'Delete Tank',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 16),
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: const Color(0xFF1E293B),
+          ),
         ),
         content: Text(
-          'Are you sure you want to delete tank "${tank.tankNumber}"?',
+          'Are you sure you want to delete tank "${tank.tankNumber}"? This action cannot be undone.',
           style: GoogleFonts.inter(
             fontSize: 14,
-            color: const Color(0xFF6B7280),
+            color: const Color(0xFF475569),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
             child: Text(
               'CANCEL',
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFF6B7280),
+                fontSize: 13,
               ),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.red.shade700,
             ),
             child: Text(
               'DELETE',
-              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
             ),
           ),
         ],
@@ -612,7 +859,7 @@ class _TankNarrowState extends ConsumerState<TankNarrow> {
               'Tank deleted successfully',
               style: GoogleFonts.inter(fontSize: 13),
             ),
-            backgroundColor: const Color(0xFF16A34A),
+            backgroundColor: Colors.green.shade700,
           ),
         );
       }

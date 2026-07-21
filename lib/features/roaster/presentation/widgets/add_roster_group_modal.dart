@@ -287,200 +287,187 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           topLeft: Radius.circular(16),
           bottomLeft: Radius.circular(16),
         ),
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width < 640 ? MediaQuery.of(context).size.width : 640,
-          height: MediaQuery.of(context).size.height,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top accent bar
-              Container(
-                height: 4,
-                decoration: BoxDecoration(
-                  color: primary,
-                  borderRadius:
-                      const BorderRadius.only(topLeft: Radius.circular(16)),
-                ),
-              ),
-
-              // Scrollable body
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
-                      vertical: MediaQuery.of(context).size.width < 600 ? 24 : 40),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ── Header ─────────────────────────────────────────
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Create Roster Group',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: MediaQuery.of(context).size.width < 600 ? 22 : 26,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF111827),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Define group info and assign users with notifications.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: MediaQuery.of(context).size.width < 600 ? 12 : 13,
-                                    color: const Color(0xFF6B7280),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          IconButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close_rounded),
-                            style: IconButton.styleFrom(
-                              backgroundColor: const Color(0xFFF3F4F6),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-
-                      // ── GROUP NAME ─────────────────────────────────────
-                      _buildLabel('GROUP NAME*'),
-                      const SizedBox(height: 10),
-                      AppTextField(
-                        controller: _nameController,
-                        hint: 'e.g. Battery Maintenance Group',
-                      ),
-                      const SizedBox(height: 24),
-
-                      // ── DESCRIPTION ────────────────────────────────────
-                      _buildLabel('DESCRIPTION'),
-                      const SizedBox(height: 10),
-                      AppTextField(
-                        controller: _descController,
-                        hint: 'e.g. Roster group for notifications',
-                      ),
-                      const SizedBox(height: 24),
-
-                      // ── COMPANY (Super Admin only) ──────────────────────
-                      if (isSuperAdmin) ...[
-                        _buildLabel('COMPANY*'),
-                        const SizedBox(height: 10),
-                        _buildCompanyDropdown(),
-                        const SizedBox(height: 24),
-                      ],
-
-                      // ── ASSIGN USERS (always visible) ──────────────────
-                      _buildLabel('ASSIGN USERS'),
-                      const SizedBox(height: 10),
-
-                      // User selector row: dropdown + Add button
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final isNarrow = constraints.maxWidth < 500;
-                          final dropdownField = _selectedCompany == null
-                              ? _buildDisabledDropdown(
-                                  isSuperAdmin
-                                      ? 'Select a company first…'
-                                      : 'Loading users…',
-                                )
-                              : _isLoadingUsers
-                                  ? _buildLoadingDropdown()
-                                  : _buildUserDropdown(eligibleUsers);
-
-                          final addButton = SizedBox(
-                            height: 50,
-                            child: ElevatedButton.icon(
-                              onPressed:
-                                  (_selectedCompany == null ||
-                                          _selectedUserToAdd == null ||
-                                          _isLoadingUsers)
-                                      ? null
-                                      : _addSelectedUser,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primary,
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor:
-                                    const Color(0xFFE5E7EB),
-                                disabledForegroundColor:
-                                    const Color(0xFF9CA3AF),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(10)),
-                                elevation: 0,
-                              ),
-                              icon: const Icon(Icons.person_add_alt_1,
-                                  size: 18),
-                              label: Text(
-                                'Add User',
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          );
-
-                          if (isNarrow) {
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                dropdownField,
-                                const SizedBox(height: 12),
-                                addButton,
-                              ],
-                            );
-                          }
-
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+        child: SafeArea(
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width < 640 ? MediaQuery.of(context).size.width : 640,
+            height: MediaQuery.of(context).size.height,
+            child: Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
+                    vertical: MediaQuery.of(context).size.width < 600 ? 24 : 40),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Header ─────────────────────────────────────────
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(child: dropdownField),
-                              const SizedBox(width: 12),
-                              addButton,
-                            ],
-                          );
-                        },
-                      ),
-
-                      // Hint when company users are empty
-                      if (_selectedCompany != null &&
-                          !_isLoadingUsers &&
-                          _companyUsers.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.info_outline,
-                                  size: 14, color: Color(0xFF9CA3AF)),
-                              const SizedBox(width: 6),
                               Text(
-                                'No users found for this company.',
+                                'Create Roster Group',
+                                style: GoogleFonts.outfit(
+                                  fontSize: MediaQuery.of(context).size.width < 600 ? 22 : 26,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF111827),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Define group info and assign users with notifications.',
                                 style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  color: const Color(0xFF9CA3AF),
+                                  fontSize: MediaQuery.of(context).size.width < 600 ? 12 : 13,
+                                  color: const Color(0xFF6B7280),
                                 ),
                               ),
                             ],
                           ),
                         ),
+                        const SizedBox(width: 16),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close_rounded),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFF3F4F6),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
 
-                      // ── Assigned users notification table ───────────────
-                      if (_assignedUsers.isNotEmpty) ...[
-                        const SizedBox(height: 20),
-                        LayoutBuilder(
+                    // ── GROUP NAME ─────────────────────────────────────
+                    _buildLabel('GROUP NAME*'),
+                    const SizedBox(height: 10),
+                    AppTextField(
+                      controller: _nameController,
+                      hint: 'e.g. Battery Maintenance Group',
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── DESCRIPTION ────────────────────────────────────
+                    _buildLabel('DESCRIPTION'),
+                    const SizedBox(height: 10),
+                    AppTextField(
+                      controller: _descController,
+                      hint: 'e.g. Roster group for notifications',
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── COMPANY (Super Admin only) ──────────────────────
+                    if (isSuperAdmin) ...[
+                      _buildLabel('COMPANY*'),
+                      const SizedBox(height: 10),
+                      _buildCompanyDropdown(),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // ── ASSIGN USERS (always visible) ──────────────────
+                    _buildLabel('ASSIGN USERS'),
+                    const SizedBox(height: 10),
+
+                    // User selector row: dropdown + Add button
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isNarrow = constraints.maxWidth < 500;
+                        final dropdownField = _selectedCompany == null
+                            ? _buildDisabledDropdown(
+                          isSuperAdmin
+                              ? 'Select a company first…'
+                              : 'Loading users…',
+                        )
+                            : _isLoadingUsers
+                            ? _buildLoadingDropdown()
+                            : _buildUserDropdown(eligibleUsers);
+
+                        final addButton = SizedBox(
+                          height: 50,
+                          child: ElevatedButton.icon(
+                            onPressed:
+                            (_selectedCompany == null ||
+                                _selectedUserToAdd == null ||
+                                _isLoadingUsers)
+                                ? null
+                                : _addSelectedUser,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor:
+                              const Color(0xFFE5E7EB),
+                              disabledForegroundColor:
+                              const Color(0xFF9CA3AF),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                  BorderRadius.circular(10)),
+                              elevation: 0,
+                            ),
+                            icon: const Icon(Icons.person_add_alt_1,
+                                size: 18),
+                            label: Text(
+                              'Add User',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        );
+
+                        if (isNarrow) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              dropdownField,
+                              const SizedBox(height: 12),
+                              addButton,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(child: dropdownField),
+                            const SizedBox(width: 12),
+                            addButton,
+                          ],
+                        );
+                      },
+                    ),
+
+                    // Hint when company users are empty
+                    if (_selectedCompany != null &&
+                        !_isLoadingUsers &&
+                        _companyUsers.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline,
+                                size: 14, color: Color(0xFF9CA3AF)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'No users found for this company.',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: const Color(0xFF9CA3AF),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                    // ── Assigned users notification table ───────────────
+                    if (_assignedUsers.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      LayoutBuilder(
                           builder: (context, constraints) {
                             final isMobile = constraints.maxWidth < 550;
                             return Container(
@@ -489,7 +476,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                 color: const Color(0xFFF8FAFF),
                                 borderRadius: BorderRadius.circular(12),
                                 border:
-                                    Border.all(color: const Color(0xFFDDE1FF)),
+                                Border.all(color: const Color(0xFFDDE1FF)),
                               ),
                               padding: const EdgeInsets.all(16),
                               child: Column(
@@ -521,7 +508,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                           color: primary
                                               .withValues(alpha: 0.08),
                                           borderRadius:
-                                              BorderRadius.circular(20),
+                                          BorderRadius.circular(20),
                                         ),
                                         child: Text(
                                           '${_assignedUsers.length} user${_assignedUsers.length == 1 ? '' : 's'}',
@@ -568,10 +555,10 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                                   ListView.separated(
                                     shrinkWrap: true,
                                     physics:
-                                        const NeverScrollableScrollPhysics(),
+                                    const NeverScrollableScrollPhysics(),
                                     itemCount: _assignedUsers.length,
                                     separatorBuilder: (_, __) =>
-                                        const Divider(height: 1),
+                                    const Divider(height: 1),
                                     itemBuilder: (_, i) =>
                                         _buildUserRow(_assignedUsers[i], isMobile),
                                   ),
@@ -579,45 +566,44 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                               ),
                             );
                           }
-                        ),
-                      ],
-
-                      const SizedBox(height: 32),
-
-                      // ── CREATE GROUP button ─────────────────────────────
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: state.isProcessing ? null : _save,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16)),
-                            elevation: 2,
-                          ),
-                          child: state.isProcessing
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                      color: Colors.white, strokeWidth: 2),
-                                )
-                              : Text(
-                                  'CREATE GROUP',
-                                  style: GoogleFonts.outfit(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                        ),
                       ),
                     ],
-                  ),
+
+                    const SizedBox(height: 32),
+
+                    // ── CREATE GROUP button ─────────────────────────────
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: state.isProcessing ? null : _save,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                          elevation: 2,
+                        ),
+                        child: state.isProcessing
+                            ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                            : Text(
+                          'CREATE GROUP',
+                          style: GoogleFonts.outfit(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
