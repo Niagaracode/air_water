@@ -83,7 +83,7 @@ const reportMenu = [
     key: 'Event',
     label: 'Event',
     icon: Icons.event_note_rounded,
-    allowedRoles: [UserRole.customer],
+    allowedRoles: [UserRole.superAdmin],
   ),
 
   SidebarMenuItem(

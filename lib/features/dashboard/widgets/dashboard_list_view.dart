@@ -10,6 +10,8 @@ import '../../../core/user_config/user_role.dart';
 import '../data/models/site_group_model.dart';
 import '../data/models/tank_data_model.dart';
 import '../extensions/tank_filter_extension.dart';
+import 'animated_pressure_gauge.dart';
+import 'animated_tank_level.dart';
 
 
 class DashboardListView extends ConsumerStatefulWidget {
@@ -27,6 +29,7 @@ class DashboardListView extends ConsumerStatefulWidget {
     this.emptyStateSubtitle = 'Try adjusting your filters',
     this.showHeader = true,
     this.userRole = UserRole.customer,
+    this.isNarrow = false,
   });
 
   final List<SiteGroupModel> groupedTanks;
@@ -41,6 +44,10 @@ class DashboardListView extends ConsumerStatefulWidget {
   final String emptyStateSubtitle;
   final bool showHeader;
   final UserRole userRole;
+  // When true, this list is rendered inside the narrow (phone) layout where
+  // tapping a tank pushes a new screen rather than just "selecting" it.
+  // Used to tweak visuals (chevron affordance, no persistent selection tint).
+  final bool isNarrow;
 
   @override
   ConsumerState<DashboardListView> createState() => _DashboardListViewState();
@@ -82,7 +89,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
     return widget.groupedTanks.applyFilters(
       selectedRegion: widget.selectedRegion,
       selectedStatus: widget.selectedStatus,
-      selectedProduct: widget.selectedProduct, // Add this
+      selectedProduct: widget.selectedProduct,
       searchQuery: searchTerm,
     );
   }
@@ -94,7 +101,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
     return widget.groupedTanks.getTotalTanksCount(
       selectedRegion: widget.selectedRegion,
       selectedStatus: widget.selectedStatus,
-      selectedProduct: widget.selectedProduct, // Add this
+      selectedProduct: widget.selectedProduct,
       searchQuery: searchTerm,
     );
   }
@@ -116,6 +123,9 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
 
     // Admin View: Always show full list view (no split)
     if (widget.userRole == UserRole.superAdmin) {
+      if(widget.isNarrow){
+        return _buildOtherTankListPanel(filteredGroups);
+      }
       return _buildAdminListView(filteredGroups, screenWidth);
     }
 
@@ -130,101 +140,164 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
     return _buildCustomerTankListPanel(filteredGroups);
   }
 
+  // Add this new method
+  Widget _buildOtherTankListPanel(List<SiteGroupModel> groups) {
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height - 350,
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          for (final site in groups) ...[
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _SiteHeaderDelegate(
+                site: site,
+                onTap: widget.onSiteTap == null ? null : () => widget.onSiteTap!(site),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
+              sliver: SliverList.builder(
+                itemCount: site.tanks.length,
+                itemBuilder: (context, index) => _buildCustomerTankListItem(site.tanks[index]),
+              ),
+            ),
+          ],
+          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+        ],
+      ),
+    );
+  }
+
 // Add this new method
   Widget _buildCustomerTankListPanel(List<SiteGroupModel> groups) {
     return Column(
       children: [
-        // Header with search
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.propane_tank_outlined, size: 20, color: primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'My Tanks',
-                    style: GoogleFonts.outfit(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+        widget.isNarrow ? SizedBox(height: 0) : SizedBox(height: 5),
+        _buildCustomerHeader(),
+        // Scrollable tank list with sticky site headers - much better for
+        // browsing many sites/tanks on a phone, and lazily builds rows.
+        Expanded(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              for (final site in groups) ...[
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _SiteHeaderDelegate(
+                    site: site,
+                    onTap: widget.onSiteTap == null ? null : () => widget.onSiteTap!(site),
                   ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_getTotalTanksCount()}',
-                      style: GoogleFonts.outfit(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                  sliver: SliverList.builder(
+                    itemCount: site.tanks.length,
+                    itemBuilder: (context, index) => _buildCustomerTankListItem(site.tanks[index]),
                   ),
-                ],
-              ),
-              if(_getTotalTanksCount() > 5)...[
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      _localSearchQuery = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    hintText: 'Search devices...',
-                    hintStyle: GoogleFonts.outfit(fontSize: 13, color: Colors.grey.shade400),
-                    prefixIcon: Icon(Icons.search, size: 18, color: Colors.grey),
-                    suffixIcon: _localSearchQuery.isNotEmpty
-                        ? IconButton(
-                      icon: Icon(Icons.clear, size: 18, color: Colors.grey.shade400),
-                      onPressed: () {
-                        setState(() {
-                          _localSearchQuery = '';
-                          _searchController.clear();
-                        });
-                      },
-                    ) : null,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.grey.shade200),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.grey.shade200),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: primary, width: 1.5),
-                    ),
-                  ),
-                )
-              ]
+                ),
+              ],
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
             ],
           ),
         ),
-        // Scrollable tank list
-        Expanded(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: groups.map((site) => _buildCustomerSiteGroupCompact(site)).toList(),
-            ),
-          ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildCustomerHeader() {
+    final total = _getTotalTanksCount();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.propane_tank_outlined, size: 20, color: primary),
+              const SizedBox(width: 8),
+              Text(
+                'My Tanks',
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '$total',
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (total > 5) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _localSearchQuery = value;
+                });
+              },
+              style: GoogleFonts.outfit(fontSize: 15),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.grey.shade50,
+                hintText: 'Search devices...',
+                hintStyle: GoogleFonts.outfit(fontSize: 14, color: Colors.grey.shade400),
+                prefixIcon: Icon(Icons.search, size: 20, color: Colors.grey.shade500),
+                suffixIcon: _localSearchQuery.isNotEmpty
+                    ? IconButton(
+                  icon: Icon(Icons.clear_rounded, size: 18, color: Colors.grey.shade400),
+                  onPressed: () {
+                    setState(() {
+                      _localSearchQuery = '';
+                      _searchController.clear();
+                    });
+                  },
+                )
+                    : null,
+                isDense: true,
+                // Taller, thumb-friendly tap target on phones.
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: primary, width: 1.5),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -468,99 +541,64 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
     );
   }
 
-
-  Widget _buildCustomerSiteGroupCompact(SiteGroupModel site) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Site Header Compact
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            border: Border(bottom: BorderSide(color: primary.withValues(alpha: 0.08))),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.location_on, size: 14, color: primary),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  site.siteName,
-                  style: GoogleFonts.outfit(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF111827),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${site.tanks.length}',
-                  style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w500, color: primary),
-                ),
-              ),
-            ],
-          ),
-        ),
-        ...site.tanks.map((tank) => _buildCustomerTankListItem(tank)),
-      ],
-    );
-  }
+  // ==================== CUSTOMER VIEW (MOBILE-OPTIMIZED) ====================
 
   Widget _buildCustomerTankListItem(TankDataModel tank) {
-    final isSelected = _selectedTank?.deviceId == tank.deviceId;
+    final isSelected = !widget.isNarrow && _selectedTank?.deviceId == tank.deviceId;
     final levelColor = AppColorsHelper.getLevelColor(tank.level);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: isSelected ? primary.withValues(alpha: 0.07) : Colors.white,
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isSelected
-              ? primary.withValues(alpha: 0.2)
-              : Colors.grey.shade200,
-          width: 1.2,
+          color: isSelected ? primary.withValues(alpha: 0.25) : Colors.grey.shade200,
+          width: isSelected ? 1.4 : 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           onTap: () {
             setState(() {
               _selectedTank = tank;
             });
-
             widget.onTankTap?.call(tank);
           },
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
                 /// TOP ROW
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppColorsHelper.getGasTypeColor(tank.gasType),
+                      child: Text(
+                        tank.gasType,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -568,18 +606,18 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                           Text(
                             tank.tankName,
                             style: GoogleFonts.outfit(
-                              fontSize: 17,
+                              fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF1E293B),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 2),
                           Text(
                             tank.deviceId,
                             style: GoogleFonts.outfit(
-                              fontSize: 13,
+                              fontSize: 12.5,
                               fontWeight: FontWeight.w500,
                               color: Colors.grey.shade500,
                             ),
@@ -587,22 +625,96 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                         ],
                       ),
                     ),
+                    const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 7,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppColorsHelper.getStatusColor(tank.status).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      child: Text(
-                        tank.status,
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColorsHelper.getStatusColor(tank.status),
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: AppColorsHelper.getStatusColor(tank.status),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            tank.status,
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColorsHelper.getStatusColor(tank.status),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (widget.isNarrow) ...[
+                      const SizedBox(width: 2),
+                      Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey.shade400),
+                    ],
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                /// LEVEL (animated liquid-fill tank) + PRESSURE (animated gauge)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          AnimatedTankLevel(
+                            level: tank.level,
+                            color: levelColor,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${tank.level.toStringAsFixed(0)}%',
+                            style: GoogleFonts.outfit(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: levelColor,
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            'Level',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          AnimatedPressureGauge(
+                            percentage: getMaxPressure(tank.thresholds, tank.pressure),
+                            valueLabel: '${tank.pressure.toStringAsFixed(0)} bar',
+                            color: AppColorsHelper.getBatSolColor(tank.pressure),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            'Pressure',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -610,33 +722,9 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
 
                 const SizedBox(height: 12),
 
-                /// LEVEL
-                _buildProgressRow(
-                  title: 'Level',
-                  value:
-                  '${tank.level.toStringAsFixed(0)}%',
-                  progress: tank.level / 100,
-                  color: levelColor, icon: Icons.water_drop_rounded,
-                ),
-
-                const SizedBox(height: 5),
-
-                /// BATTERY
-                _buildProgressRow(
-                  title: 'Pressure',
-                  value: '${tank.pressure.toStringAsFixed(0)} bar',
-                  progress: getMaxPressure(tank.thresholds, tank.pressure)/100,
-                  color: AppColorsHelper.getBatSolColor(tank.pressure), icon: Icons.speed_sharp,
-                ),
+                Divider(color: Colors.grey.shade200, height: 1),
 
                 const SizedBox(height: 10),
-
-                Divider(
-                  color: Colors.grey.shade200,
-                  height: 1,
-                ),
-
-                const SizedBox(height: 12),
 
                 /// BOTTOM METRICS
                 Row(
@@ -645,30 +733,24 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                       flex: 2,
                       child: _buildBottomMetric(
                         'Battery',
-                        tank.isBatteryEnabled
-                            ? '${tank.batteryV.toStringAsFixed(1)} v'
-                            : '--',
-                          Icons.battery_std
+                        tank.isBatteryEnabled ? '${tank.batteryV.toStringAsFixed(1)} v' : '--',
+                        Icons.battery_std,
                       ),
                     ),
-
                     Expanded(
                       flex: 2,
                       child: _buildBottomMetric(
                         'Solar',
-                        tank.isSolarEnabled
-                            ? '${tank.solarV.toStringAsFixed(1)} v'
-                            : '--',
-                          Icons.solar_power
+                        tank.isSolarEnabled ? '${tank.solarV.toStringAsFixed(1)} v' : '--',
+                        Icons.solar_power,
                       ),
                     ),
-
                     Expanded(
                       flex: 3,
                       child: _buildBottomMetric(
                         'Last Reading',
                         _formatDateTime(tank.lastUpdate),
-                          Icons.access_time
+                        Icons.access_time,
                       ),
                     ),
                   ],
@@ -679,7 +761,6 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
         ),
       ),
     );
-
   }
 
   double getMaxPressure(String thresholds, double cVal) {
@@ -692,90 +773,40 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
     return 20.0;
   }
 
-  Widget _buildProgressRow({
-    required String title,
-    required String value,
-    required double progress,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _buildBottomMetric(String title, String value, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13),
-        const SizedBox(width: 8),
-        /// LABEL
-        SizedBox(
-          width: 60,
-          child: Text(
-            title,
-            style: GoogleFonts.outfit(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF444444),
+        Row(
+          children: [
+            Icon(icon, size: 15, color: Colors.grey.shade500),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade500,
+                ),
+              ),
             ),
-          ),
+          ],
         ),
-        const SizedBox(width: 14),
-        /// PROGRESS BAR
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 4,
-              backgroundColor: Colors.grey.shade200,
-              valueColor: AlwaysStoppedAnimation(color),
-            ),
-          ),
-        ),
-        const SizedBox(width: 14),
-        /// VALUE
-        SizedBox(
-          width: 55,
+        const SizedBox(height: 2),
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
           child: Text(
             value,
-            textAlign: TextAlign.right,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.outfit(
-              fontSize: 16,
+              fontSize: 12.5,
               fontWeight: FontWeight.w700,
-              color: color,
+              color: const Color(0xFF222222),
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomMetric(String title, String value, IconData icon) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(children: [
-          const SizedBox(height: 5),
-          Icon(icon, size: 13),
-        ],),
-        const SizedBox(width: 5),
-        Column(
-          children: [
-            Text(
-              title,
-              style: GoogleFonts.outfit(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              value,
-              style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF222222),
-              ),
-            )
-          ],
         ),
       ],
     );
@@ -860,5 +891,73 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
       color: Colors.black54,
       letterSpacing: 1,
     );
+  }
+}
+
+/// Sticky site header used inside the customer's mobile tank list.
+/// Keeps the current site name visible while its tanks scroll underneath,
+/// so users always know which site they're looking at.
+class _SiteHeaderDelegate extends SliverPersistentHeaderDelegate {
+  _SiteHeaderDelegate({required this.site, this.onTap});
+
+  final SiteGroupModel site;
+  final VoidCallback? onTap;
+
+  static const double _height = 44;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Material(
+      color: const Color(0xFFF8FAFC),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          height: _height,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: primary.withValues(alpha: 0.08))),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.location_on, size: 15, color: primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  site.siteName,
+                  style: GoogleFonts.outfit(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF111827),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${site.tanks.length}',
+                  style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w500, color: primary),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _SiteHeaderDelegate oldDelegate) {
+    return oldDelegate.site != site;
   }
 }

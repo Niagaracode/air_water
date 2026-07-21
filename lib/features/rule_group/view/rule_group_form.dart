@@ -7,10 +7,11 @@ import '../model/rule_group_model.dart';
 
 class RuleGroupForm extends ConsumerStatefulWidget {
   final RuleGroupModel? initialRule;
+  final bool isNarrow;
 
   const RuleGroupForm({
     super.key,
-    this.initialRule,
+    this.initialRule, required this.isNarrow,
   });
 
   @override
@@ -209,7 +210,7 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
               // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(32),
+                  padding:  EdgeInsets.all(widget.isNarrow ? 16 : 32),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -350,7 +351,7 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
           ),
           // Table Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: widget.isNarrow? 10:20, vertical: 12),
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(color: Colors.grey.shade200),
@@ -358,9 +359,8 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
             ),
             child: Row(
               children: [
-                const SizedBox(width: 40),
                 Expanded(
-                  flex: 3,
+                  flex: widget.isNarrow ? 2:3,
                   child: _tableHeader("Condition", Icons.info_outline),
                 ),
                 Expanded(
@@ -391,7 +391,7 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
     final controller = TextEditingController(text: rule["value"].toString());
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: widget.isNarrow? 10:20, vertical: 8),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: Colors.grey.shade100),
@@ -420,7 +420,7 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
           const SizedBox(width: 8),
           // Description
           Expanded(
-            flex: 3,
+            flex: widget.isNarrow? 2:3,
             child: Text(
               rule["description"],
               style: GoogleFonts.outfit(
@@ -531,83 +531,167 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              const SizedBox(width: 26),
-              Expanded(
-                flex: 3,
-                child: Text(
-                  "Alert if no data received for:",
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: const Color(0xFF92400E),
+          if(widget.isNarrow)...[
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 26),
+                  child: Text(
+                    "Alert if no data received for:",
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: const Color(0xFF92400E),
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                flex: 3,
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 80,
-                      height: 40,
-                      child: TextFormField(
-                        controller: _missingHourController,
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return null; // Optional field
-                          }
-                          if (int.tryParse(value) == null) {
-                            return 'Invalid';
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          hintText: "Hours",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: SizedBox(
+                    height: 60,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          height: 40,
+                          child: TextFormField(
+                            controller: _missingHourController,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return null; // Optional field
+                              }
+                              if (int.tryParse(value) == null) {
+                                return 'Invalid';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                              hintText: "Hours",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            ),
+                            style: GoogleFonts.outfit(fontSize: 13),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
-                        style: GoogleFonts.outfit(fontSize: 13),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text("Hour(s)", style: GoogleFonts.outfit(fontSize: 13)),
-                    const SizedBox(width: 20),
-                    SizedBox(
-                      width: 80,
-                      height: 40,
-                      child: TextFormField(
-                        controller: _missingMinuteController,
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return null; // Optional field
-                          }
-                          if (int.tryParse(value) == null) {
-                            return 'Invalid';
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          hintText: "Minutes",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                        const SizedBox(width: 8),
+                        Text("Hour(s)", style: GoogleFonts.outfit(fontSize: 13)),
+                        const SizedBox(width: 20),
+                        SizedBox(
+                          width: 80,
+                          height: 40,
+                          child: TextFormField(
+                            controller: _missingMinuteController,
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return null; // Optional field
+                              }
+                              if (int.tryParse(value) == null) {
+                                return 'Invalid';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                              hintText: "Minutes",
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            ),
+                            style: GoogleFonts.outfit(fontSize: 13),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
-                        style: GoogleFonts.outfit(fontSize: 13),
-                      ),
+                        const SizedBox(width: 8),
+                        Text("Min(s)", style: GoogleFonts.outfit(fontSize: 13)),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Text("Min(s)", style: GoogleFonts.outfit(fontSize: 13)),
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ]else...[
+            Row(
+              children: [
+                const SizedBox(width: 26),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    "Alert if no data received for:",
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        height: 40,
+                        child: TextFormField(
+                          controller: _missingHourController,
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return null; // Optional field
+                            }
+                            if (int.tryParse(value) == null) {
+                              return 'Invalid';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Hours",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          ),
+                          style: GoogleFonts.outfit(fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text("Hour(s)", style: GoogleFonts.outfit(fontSize: 13)),
+                      const SizedBox(width: 20),
+                      SizedBox(
+                        width: 80,
+                        height: 40,
+                        child: TextFormField(
+                          controller: _missingMinuteController,
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return null; // Optional field
+                            }
+                            if (int.tryParse(value) == null) {
+                              return 'Invalid';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Minutes",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          ),
+                          style: GoogleFonts.outfit(fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text("Min(s)", style: GoogleFonts.outfit(fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+
         ],
       ),
     );

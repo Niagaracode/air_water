@@ -201,7 +201,7 @@ class _RuleGroupNarrowState extends ConsumerState<RuleGroupNarrow> {
                       onPressed: () => _showAddModal(rule),
                       color: primary,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 12),
                     _buildActionButton(
                       icon: Icons.delete_outline,
                       onPressed: () => _confirmDelete(rule),
@@ -467,9 +467,10 @@ class _RuleGroupNarrowState extends ConsumerState<RuleGroupNarrow> {
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.all(6),
-          child: Icon(icon, size: 18, color: color),
+        child: CircleAvatar(
+          radius: 16,
+          backgroundColor: color.withValues(alpha: 0.3),
+          child: Icon(icon, size: 20, color: color),
         ),
       ),
     );
@@ -506,7 +507,7 @@ class _RuleGroupNarrowState extends ConsumerState<RuleGroupNarrow> {
                 ),
               ),
               Expanded(
-                child: RuleGroupForm(initialRule: model),
+                child: RuleGroupForm(initialRule: model, isNarrow: true,),
               ),
             ],
           ),

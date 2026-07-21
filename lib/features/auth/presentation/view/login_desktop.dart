@@ -33,7 +33,7 @@ class _LoginDesktopState extends ConsumerState<LoginDesktop> {
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: Padding(
                   padding: const EdgeInsets.only(left: 20, right: 20, top: 40, bottom: 40),
-                  child: const LoginForm(),
+                  child: const LoginForm(isNarrow: false,),
                 ),
               ),
             ),

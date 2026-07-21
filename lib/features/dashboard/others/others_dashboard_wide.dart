@@ -63,6 +63,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 StatisticsCards(statistics: statistics),
                 const SizedBox(height: 30),
@@ -200,7 +201,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TankDetailsView(tankId: tank.id, tank: tank),
+        builder: (context) => TankDetailsView(tankId: tank.id, tank: tank, isNarrow: false,),
       ),
     );
   }
