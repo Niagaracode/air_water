@@ -80,20 +80,19 @@ const eventsMenu = [
 
 const reportMenu = [
   SidebarMenuItem(
-    key: 'Event',
-    label: 'Event',
-    icon: Icons.event_note_rounded,
-    allowedRoles: [UserRole.superAdmin],
-  ),
-
-  SidebarMenuItem(
     key: 'Report',
     label: 'Events',
-    icon: Icons.assessment_rounded,
+    icon: Icons.event_note_rounded,
     allowedRoles: [
       UserRole.superAdmin,
       UserRole.companyAdmin,
       UserRole.customer,
     ],
+  ),
+  SidebarMenuItem(
+    key: 'Activity',
+    label: 'User Activity Logs',
+    icon: Icons.report,
+    allowedRoles: [UserRole.superAdmin],
   ),
 ];
