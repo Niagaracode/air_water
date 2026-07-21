@@ -12,6 +12,7 @@ import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
 import '../../../tank_dimension/data/tank_dimension_model.dart';
 import '../../../tank_dimension/provider/tank_dimension_provider.dart';
+import '../../../tank_dimension/presentation/view/tank_dimension_edit_view.dart';
 
 class AddTankModal extends ConsumerStatefulWidget {
   final Tank? tank;
@@ -292,6 +293,52 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     }
   }
 
+  void _showAddTankDimensionSideSheet(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Add Tank Dimension',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            elevation: 8,
+            child: SizedBox(
+              width: 600,
+              height: double.infinity,
+              child: TankDimensionEditView(
+                showViewList: false,
+                tankDimension: const TankDimension(
+                  id: 0,
+                  type: '',
+                  unitOfMeasures: '',
+                  canLength: 0,
+                  diameter: 0,
+                  dishDepth: 0,
+                  maxOverflow: 0,
+                  description: '',
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      },
+    ).then((_) {
+      ref.read(tankDimensionNotifierProvider.notifier).loadTankDimensions();
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -420,6 +467,35 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                   });
                                 },
                               ),
+                        action: InkWell(
+                          onTap: () => _showAddTankDimensionSideSheet(context),
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.add_circle_outline,
+                                  size: 15,
+                                  color: primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Add New',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 25),
                       _buildLabelField(
@@ -574,22 +650,25 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
-  Widget _buildLabelField(String label, Widget field) {
+  Widget _buildLabelField(String label, Widget field, {Widget? action}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          height: 20,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-              color: Color(0xFF333333),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: Color(0xFF333333),
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
+            if (action != null) action,
+          ],
         ),
         const SizedBox(height: 8),
         field,
