@@ -46,14 +46,14 @@ class OthersLayoutNarrow extends ConsumerWidget {
         actions: [
           const Spacer(),
           const MqttConnectionStatus(),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           SyncButton(
             isNarrow: true,
             onSync: () async {
               await RouteRefreshHelper.refreshCurrentPage(ref, context);
             },
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           PopupMenuButton<void>(
             offset: const Offset(0, 48),
             elevation: 8,
@@ -66,11 +66,11 @@ class OthersLayoutNarrow extends ConsumerWidget {
             ),
             position: PopupMenuPosition.under,
             child: Container(
-              width: 35,
-              height: 35,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: primary,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
               child: Center(
@@ -98,7 +98,7 @@ class OthersLayoutNarrow extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           PopupMenuButton<String>(
             offset: const Offset(0, 48),
             elevation: 8,
@@ -117,7 +117,7 @@ class OthersLayoutNarrow extends ConsumerWidget {
             },
             child: userNameAsync.when(
               data: (name) => CircleAvatar(
-                radius: 16,
+                radius: 20,
                 backgroundColor: primary,
                 child: Text(
                   (name ?? 'U').isNotEmpty
@@ -125,7 +125,7 @@ class OthersLayoutNarrow extends ConsumerWidget {
                       : 'U',
                   style: GoogleFonts.inter(
                     color: Colors.white,
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

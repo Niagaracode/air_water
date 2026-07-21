@@ -222,5 +222,4 @@ class ProductNarrow extends ConsumerWidget {
       ),
     );
   }
-
 }

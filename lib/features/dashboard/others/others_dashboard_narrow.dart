@@ -78,7 +78,7 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
                     });
                   },
 
-                  onProductChanged: (val) { // ADDED this
+                  onProductChanged: (val) {
                     setState(() {
                       _selectedProduct = val;
                     });
@@ -88,7 +88,7 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
                     setState(() {
                       _selectedRegion = 'All Regions';
                       _selectedStatus = 'All Status';
-                      _selectedProduct = 'All Product'; // ADDED this
+                      _selectedProduct = 'All Product';
                       _searchQuery = '';
                     });
                     _searchController.clear();
@@ -96,7 +96,7 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
 
                   selectedRegion: _selectedRegion,
                   selectedStatus: _selectedStatus,
-                  selectedProduct: _selectedProduct, // ADDED this
+                  selectedProduct: _selectedProduct,
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -179,6 +179,7 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
                   searchQuery: _searchQuery,
                   userRole: UserRole.superAdmin,
                   onTankTap: _callDetailsPage,
+                  isNarrow: true,
                 ) :
                 DashboardMapView(tanksData: tanks),
               ],
@@ -194,9 +195,8 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TankDetailsView(tankId: tank.id, tank: tank),
+        builder: (context) => TankDetailsView(tankId: tank.id, tank: tank, isNarrow: true,),
       ),
     );
   }
-
 }

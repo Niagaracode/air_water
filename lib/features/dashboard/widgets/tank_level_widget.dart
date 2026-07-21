@@ -19,9 +19,8 @@ class TankLevelWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     const tankWidth = 120.0;
     const tankHeight = 200.0;
-
     // Height of the cylindrical body
-    const liquidAreaHeight = 168.0;
+    const liquidAreaHeight = 169.0;
 
     return SizedBox(
       width: 160,
@@ -29,11 +28,9 @@ class TankLevelWidget extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-
           //--------------------------------------------------
           // WATER
           //--------------------------------------------------
-
           Positioned(
             left: - 17.9,
             right: 22,
@@ -59,8 +56,8 @@ class TankLevelWidget extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        AppColorsHelper.getGasTypeColor(gasType).withValues(alpha: 0.7),
-                        AppColorsHelper.getGasTypeColor(gasType),
+                        AppColorsHelper.getGasTypeColor(gasType).withValues(alpha: 0.3),
+                        AppColorsHelper.getGasTypeColor(gasType).withValues(alpha: 0.6),
                       ],
                     ),
                   ),
@@ -68,11 +65,9 @@ class TankLevelWidget extends StatelessWidget {
               ),
             ),
           ),
-
           //--------------------------------------------------
           // SVG
           //--------------------------------------------------
-
           SizedBox(
             width: tankWidth,
             height: tankHeight,
@@ -85,7 +80,6 @@ class TankLevelWidget extends StatelessWidget {
           //--------------------------------------------------
           // PERCENTAGE BADGE
           //--------------------------------------------------
-
           Positioned(
             left: 100,
             top: tankHeight - 32 - (liquidAreaHeight * level / 100) - 18,
@@ -112,7 +106,6 @@ class TankLevelWidget extends StatelessWidget {
           //--------------------------------------------------
           // SCALE
           //--------------------------------------------------
-
           Positioned(
             left: 72,
             top: 8,

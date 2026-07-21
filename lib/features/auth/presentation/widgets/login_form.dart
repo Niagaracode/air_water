@@ -10,7 +10,8 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../controllers/auth_providers.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
-  const LoginForm({super.key});
+  const LoginForm({super.key, required this.isNarrow});
+  final bool isNarrow;
 
   @override
   ConsumerState<LoginForm> createState() => _LoginFormState();
@@ -142,7 +143,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
               SizedBox(
                 width: double.infinity,
-                height: 54,
+                height: widget.isNarrow ? 60 : 54,
                 child: ElevatedButton(
                   onPressed: state.isLoading ? null : _submit,
                   child: state.isLoading
@@ -162,8 +163,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                   ),
                 ),
               ],
-
-              const SizedBox(height: 40), // Extra bottom space
+              const SizedBox(height: 40),
             ],
           ),
         ),
