@@ -141,6 +141,10 @@ class TankDimensionWide extends ConsumerWidget {
             label: Center(child: TableHeaderCell(label: 'DISH DEPTH')),
           ),
           const DataColumn2(
+            size: ColumnSize.S,
+            label: Center(child: TableHeaderCell(label: 'MAX OVERFLOW')),
+          ),
+          const DataColumn2(
             size: ColumnSize.L,
             label: TableHeaderCell(label: 'DESCRIPTION'),
           ),
@@ -179,6 +183,11 @@ class TankDimensionWide extends ConsumerWidget {
                 DataCell(
                   Center(
                     child: TableDataCell(label: td.dishDepth.toStringAsFixed(2)),
+                  ),
+                ),
+                DataCell(
+                  Center(
+                    child: TableDataCell(label: td.maxOverflow.toStringAsFixed(2)),
                   ),
                 ),
                 DataCell(TableDataCell(label: td.description)),
@@ -231,6 +240,7 @@ class TankDimensionWide extends ConsumerWidget {
               width: 600,
               height: double.infinity,
               child: TankDimensionEditView(
+                showViewList: false,
                 tankDimension: const TankDimension(
                   id: 0,
                   type: '',
@@ -238,6 +248,7 @@ class TankDimensionWide extends ConsumerWidget {
                   canLength: 0,
                   diameter: 0,
                   dishDepth: 0,
+                  maxOverflow: 0,
                   description: '',
                 ),
               ),
@@ -277,6 +288,7 @@ class TankDimensionWide extends ConsumerWidget {
               width: 600,
               height: double.infinity,
               child: TankDimensionEditView(
+                showViewList: false,
                 tankDimension: tankDimension,
               ),
             ),

@@ -12,6 +12,7 @@ import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
 import '../../../tank_dimension/data/tank_dimension_model.dart';
 import '../../../tank_dimension/provider/tank_dimension_provider.dart';
+import '../../../tank_dimension/presentation/view/tank_dimension_edit_view.dart';
 
 class AddTankModal extends ConsumerStatefulWidget {
   final Tank? tank;
@@ -65,10 +66,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
         _companyAutocompleteController.text = tank.companyName!;
       }
     } else {
-      _selectedCompany = CompanyAutocomplete(
-        id: 216,
-        name: 'Air Water',
-      );
+      _selectedCompany = CompanyAutocomplete(id: 216, name: 'Air Water');
       _companyAutocompleteController.text = 'Air Water';
     }
 
@@ -97,10 +95,13 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           debugPrint('Error loading all tank rules: $e');
           return <TankRuleModel>[];
         }),
-        ref.read(tankDimensionNotifierProvider.notifier).loadTankDimensions().catchError((e) {
-          debugPrint('Error loading tank dimensions in modal: $e');
-          return null;
-        }),
+        ref
+            .read(tankDimensionNotifierProvider.notifier)
+            .loadTankDimensions()
+            .catchError((e) {
+              debugPrint('Error loading tank dimensions in modal: $e');
+              return null;
+            }),
       ]);
 
       if (results[0] is Map<String, dynamic>) {
@@ -128,43 +129,44 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       if (widget.tank != null) {
         // UNIT
         final units = (data['units'] as List?) ?? [];
-        final unitMatches =
-        units.where((u) => u['id'] == widget.tank!.unitId);
+        final unitMatches = units.where((u) => u['id'] == widget.tank!.unitId);
 
-        _selectedUnit =
-        unitMatches.isNotEmpty ? unitMatches.first : null;
+        _selectedUnit = unitMatches.isNotEmpty ? unitMatches.first : null;
 
         // TANK TYPE
         final tankTypes = (data['tank_types'] as List?) ?? [];
-        final tankTypeMatches =
-        tankTypes.where((tt) => tt['id'] == widget.tank!.tankTypeId);
+        final tankTypeMatches = tankTypes.where(
+          (tt) => tt['id'] == widget.tank!.tankTypeId,
+        );
 
-        _selectedTankType =
-        tankTypeMatches.isNotEmpty ? tankTypeMatches.first : null;
+        _selectedTankType = tankTypeMatches.isNotEmpty
+            ? tankTypeMatches.first
+            : null;
 
         // PRODUCT
-        final foundProducts =
-        products.where((p) => p.productId == widget.tank!.productId);
+        final foundProducts = products.where(
+          (p) => p.productId == widget.tank!.productId,
+        );
 
-        _selectedProduct =
-        foundProducts.isNotEmpty ? foundProducts.first : null;
+        _selectedProduct = foundProducts.isNotEmpty
+            ? foundProducts.first
+            : null;
 
         // RULE
-        final foundRule =
-        rules.where((tr) => tr.id == widget.tank!.ruleId);
+        final foundRule = rules.where((tr) => tr.id == widget.tank!.ruleId);
 
-        _selectedRule =
-        foundRule.isNotEmpty ? foundRule.first : null;
+        _selectedRule = foundRule.isNotEmpty ? foundRule.first : null;
 
         // TANK DIMENSION
         final dims = ref.read(tankDimensionNotifierProvider).tankDimensions;
-        final dimMatches = dims.where((d) => d.id == widget.tank!.tankDimension);
+        final dimMatches = dims.where(
+          (d) => d.id == widget.tank!.tankDimension,
+        );
         _selectedDimension = dimMatches.isNotEmpty ? dimMatches.first : null;
       }
       _isLoadingDropdowns = false;
     });
   }
-
 
   void _initializeChannels() {
     final apiChannels = widget.tank?.channelData ?? [];
@@ -292,6 +294,50 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     }
   }
 
+  void _showAddTankDimensionSideSheet(BuildContext context) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Add Tank Dimension',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            elevation: 8,
+            child: SizedBox(
+              width: 600,
+              height: double.infinity,
+              child: TankDimensionEditView(
+                tankDimension: const TankDimension(
+                  id: 0,
+                  type: '',
+                  unitOfMeasures: '',
+                  canLength: 0,
+                  diameter: 0,
+                  dishDepth: 0,
+                  maxOverflow: 0,
+                  description: '',
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      },
+    ).then((_) {
+      ref.read(tankDimensionNotifierProvider.notifier).loadTankDimensions();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -353,7 +399,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                     : 'Fill in the information below to register a new tank unit.',
                                 style: GoogleFonts.inter(
                                   fontSize: 13,
-                                  color: Colors.grey
+                                  color: Colors.grey,
                                 ),
                               ),
                             ],
@@ -408,17 +454,81 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       'TANK DIMENSION',
                       _isLoadingDropdowns
                           ? const LinearProgressIndicator(minHeight: 2)
-                          : AppDropdown<TankDimension?>(
-                              value: _selectedDimension,
-                              items: [null, ...dimensions],
-                              itemLabel: (dim) => dim == null ? 'Select Dimension' : dim.type,
-                              hint: 'Select Dimension',
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedDimension = value;
-                                });
-                              },
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: AppDropdown<TankDimension?>(
+                                    value: _selectedDimension,
+                                    items: [null, ...dimensions],
+                                    itemLabel: (dim) => dim == null
+                                        ? 'Select Dimension'
+                                        : dim.type,
+                                    hint: 'Select Dimension',
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedDimension = value;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                // const SizedBox(width: 8),
+                                // Tooltip(
+                                //   message: 'Add Tank Dimension',
+                                //   child: Material(
+                                //     color: primary.withValues(alpha: 0.1),
+                                //     borderRadius: BorderRadius.circular(12),
+                                //     child: InkWell(
+                                //       borderRadius: BorderRadius.circular(12),
+                                //       onTap: () => _showAddTankDimensionSideSheet(context),
+                                //       child: Container(
+                                //         height: 48,
+                                //         width: 48,
+                                //         decoration: BoxDecoration(
+                                //           border: Border.all(
+                                //             color: primary.withValues(alpha: 0.3),
+                                //           ),
+                                //           borderRadius: BorderRadius.circular(12),
+                                //         ),
+                                //         child: Icon(
+                                //           Icons.add_rounded,
+                                //           color: primary,
+                                //           size: 22,
+                                //         ),
+                                //       ),
+                                //     ),
+                                //   ),
+                                // ),
+                              ],
                             ),
+                      action: InkWell(
+                        onTap: () => _showAddTankDimensionSideSheet(context),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.add_circle_outline,
+                                size: 15,
+                                color: primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Add New',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 25),
                     _buildLabelField(
@@ -572,21 +682,27 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
-  Widget _buildLabelField(String label, Widget field) {
+  Widget _buildLabelField(String label, Widget field, {Widget? action}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
           height: 20,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-              color: Color(0xFF333333),
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: Color(0xFF333333),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (action != null) action,
+            ],
           ),
         ),
         const SizedBox(height: 8),
@@ -938,10 +1054,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide(
-                              color: primary,
-                              width: 1.5,
-                            ),
+                            borderSide: BorderSide(color: primary, width: 1.5),
                           ),
                           disabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
@@ -993,10 +1106,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: BorderSide(
-                              color: primary,
-                              width: 1.5,
-                            ),
+                            borderSide: BorderSide(color: primary, width: 1.5),
                           ),
                           disabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),

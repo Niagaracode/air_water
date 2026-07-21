@@ -140,7 +140,10 @@ class AppRouter {
               path: '/product',
               builder: (_, __) => const ProductLayout(),
             ),
-            // GoRoute(path: '/tank-dimension', builder: (_, __) => const TankDimensionLayout()),
+            GoRoute(
+              path: '/tank-dimension',
+              builder: (_, __) => const TankDimensionLayout(),
+            ),
             GoRoute(path: '/user', builder: (_, __) => const UserLayout()),
             GoRoute(
               path: '/group',

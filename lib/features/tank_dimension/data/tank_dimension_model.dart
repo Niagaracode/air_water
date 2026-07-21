@@ -5,6 +5,7 @@ class TankDimension {
   final double canLength;
   final double diameter;
   final double dishDepth;
+  final double maxOverflow;
   final String description;
 
   const TankDimension({
@@ -14,6 +15,7 @@ class TankDimension {
     required this.canLength,
     required this.diameter,
     required this.dishDepth,
+    required this.maxOverflow,
     required this.description,
   });
 
@@ -25,6 +27,7 @@ class TankDimension {
       canLength: double.tryParse(json['can_length']?.toString() ?? '0') ?? 0.0,
       diameter: double.tryParse(json['diameter']?.toString() ?? '0') ?? 0.0,
       dishDepth: double.tryParse(json['dish_depth']?.toString() ?? '0') ?? 0.0,
+      maxOverflow: double.tryParse(json['max_overflow']?.toString() ?? '0') ?? 0.0,
       description: json['description']?.toString() ?? '',
     );
   }
@@ -36,6 +39,7 @@ class TankDimension {
     double? canLength,
     double? diameter,
     double? dishDepth,
+    double? maxOverflow,
     String? description,
   }) {
     return TankDimension(
@@ -45,6 +49,7 @@ class TankDimension {
       canLength: canLength ?? this.canLength,
       diameter: diameter ?? this.diameter,
       dishDepth: dishDepth ?? this.dishDepth,
+      maxOverflow: maxOverflow ?? this.maxOverflow,
       description: description ?? this.description,
     );
   }

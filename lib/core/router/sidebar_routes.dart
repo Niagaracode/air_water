@@ -4,6 +4,7 @@ const Map<String, String> menuRoutes = {
   'Company': '/company',
   'Site': '/site',
   'Tank': '/tank',
+  'Tank Dimension': '/tank-dimension',
   'Device': '/device',
   'Product': '/product',
 

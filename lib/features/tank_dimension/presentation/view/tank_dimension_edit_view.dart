@@ -1,6 +1,7 @@
 import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
 import '../../data/tank_dimension_model.dart';
@@ -8,8 +9,13 @@ import '../../provider/tank_dimension_provider.dart';
 
 class TankDimensionEditView extends ConsumerStatefulWidget {
   final TankDimension tankDimension;
+  final bool showViewList;
 
-  const TankDimensionEditView({super.key, required this.tankDimension});
+  const TankDimensionEditView({
+    super.key,
+    required this.tankDimension,
+    this.showViewList = true,
+  });
 
   @override
   ConsumerState<TankDimensionEditView> createState() => _TankDimensionEditViewState();
@@ -20,6 +26,7 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
   late TextEditingController canLengthCtrl;
   late TextEditingController diameterCtrl;
   late TextEditingController dishDepthCtrl;
+  late TextEditingController maxOverflowCtrl;
   late TextEditingController descCtrl;
   String? selectedUnit;
   bool isSaving = false;
@@ -41,6 +48,7 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
     canLengthCtrl = TextEditingController(text: widget.tankDimension.canLength.toString());
     diameterCtrl = TextEditingController(text: widget.tankDimension.diameter.toString());
     dishDepthCtrl = TextEditingController(text: widget.tankDimension.dishDepth.toString());
+    maxOverflowCtrl = TextEditingController(text: widget.tankDimension.maxOverflow.toString());
     descCtrl = TextEditingController(text: widget.tankDimension.description);
   }
 
@@ -50,6 +58,7 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
     canLengthCtrl.dispose();
     diameterCtrl.dispose();
     dishDepthCtrl.dispose();
+    maxOverflowCtrl.dispose();
     descCtrl.dispose();
     super.dispose();
   }
@@ -75,6 +84,7 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
         'can_length': double.tryParse(canLengthCtrl.text.trim()) ?? 0.0,
         'diameter': double.tryParse(diameterCtrl.text.trim()) ?? 0.0,
         'dish_depth': double.tryParse(dishDepthCtrl.text.trim()) ?? 0.0,
+        'max_overflow': double.tryParse(maxOverflowCtrl.text.trim()) ?? 0.0,
         'description': descCtrl.text.trim(),
       };
 
@@ -193,13 +203,24 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 20),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: _field(
                               label: "Can Length",
                               child: AppTextField(
                                 controller: canLengthCtrl,
                                 hint: "Enter can length",
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _field(
+                              label: "Max Overflow",
+                              child: AppTextField(
+                                controller: maxOverflowCtrl,
+                                hint: "Enter max overflow",
                                 keyboardType: TextInputType.number,
                               ),
                             ),
@@ -219,7 +240,7 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 20),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: _field(
                               label: "Dish Depth",
@@ -248,25 +269,75 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
                         ],
                       ),
                       const SizedBox(height: 28),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 44,
-                        child: ElevatedButton(
-                          onPressed: isSaving ? null : _saveChanges,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primary,
-                            foregroundColor: Colors.white,
+                      if (widget.showViewList)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 44,
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _openTankDimensionList(context),
+                                  icon: const Icon(Icons.list_alt_rounded, size: 18),
+                                  label: const Text("View List"),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: primary,
+                                    side: BorderSide(color: primary),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: SizedBox(
+                                height: 44,
+                                child: ElevatedButton(
+                                  onPressed: isSaving ? null : _saveChanges,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: isSaving
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white, strokeWidth: 2),
+                                        )
+                                      : const Text("Save Changes"),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: isSaving ? null : _saveChanges,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child: isSaving
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Text("Save Changes"),
                           ),
-                          child: isSaving
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                      color: Colors.white, strokeWidth: 2),
-                                )
-                              : const Text("Save Changes"),
-                        ),
-                      )
+                        )
                     ],
                   ),
                 ),
@@ -276,6 +347,22 @@ class _TankDimensionEditViewState extends ConsumerState<TankDimensionEditView> {
         ),
       ),
     );
+  }
+
+  void _openTankDimensionList(BuildContext context) {
+    final router = GoRouter.of(context);
+
+    final rootNav = Navigator.of(context, rootNavigator: true);
+    while (rootNav.canPop()) {
+      rootNav.pop();
+    }
+
+    final localNav = Navigator.of(context);
+    while (localNav.canPop()) {
+      localNav.pop();
+    }
+
+    router.go('/tank-dimension');
   }
 
   Widget _field({required String label, required Widget child}) {
