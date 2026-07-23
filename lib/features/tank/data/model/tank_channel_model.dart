@@ -1,8 +1,10 @@
+import '../../../../shared/utils/app_helper.dart';
+
 class TankChannelModel {
   final int id;
   final String name;
   final dynamic value;
-  final String readingTime;
+  final DateTime readingTime;
   final ThresholdModel threshold;
   final bool channelEnable;
 
@@ -20,7 +22,7 @@ class TankChannelModel {
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
       value: json['value'],
-      readingTime: json['cd_ct'] ?? '',
+      readingTime: parseDateTime(json['cd_ct']),
       threshold: ThresholdModel.fromJson(
         json['threshold'] is Map ? json['threshold'] : {},
       ),

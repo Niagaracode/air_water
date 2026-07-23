@@ -1,10 +1,12 @@
+import '../../../../shared/utils/app_helper.dart';
+
 class TankEventModel {
 
   final String type;
   final String value;
   final String message;
   final String status;
-  final String createdAt;
+  final DateTime createdAt;
 
   TankEventModel({
 
@@ -18,13 +20,11 @@ class TankEventModel {
 
   factory TankEventModel.fromJson(Map<String, dynamic> json) {
     return TankEventModel(
-
       type: json['type'] ?? '',
       value: json['value']?.toString() ?? '',
       message: json['message'] ?? '',
       status: json['status'] ?? '',
-      createdAt: json['created_at'] ?? '',
-
+      createdAt: parseDateTime(json['created_at']),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -14,7 +15,7 @@ AsyncNotifierProvider<DashboardController, void>(
 class DashboardController extends AsyncNotifier<void> {
 
   late final MqttNotifier mqttNotifier;
-  final String topic = 'tweet';
+  final String topic = kIsWeb ? 'tweet' : 'tweet';
   bool _initialized = false;
 
   @override
@@ -35,7 +36,7 @@ class DashboardController extends AsyncNotifier<void> {
   }
 
   void _onMqttMessage(MqttMessageModel msg) {
-    print("✅ MQTT MESSAGE: ${msg.rawPayload}");
+   // print("✅ MQTT MESSAGE: ${msg.rawPayload}");
     final parsed = _parseMqtt(msg.data);
     ref.read(tankDataProvider.notifier)
         .updateFromMqtt(parsed);

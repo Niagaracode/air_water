@@ -365,7 +365,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                               ),
                               DataCell(
                                 Text(
-                                  formatDateTime(item.readingTime),
+                                  DateFormatter.formatDateTime(item.readingTime),
                                 ),
                               ),
                               DataCell(
@@ -636,7 +636,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                                       ),
                                       DataCell(
                                         Text(
-                                          formatDateTime(item.readingTime),
+                                          DateFormatter.formatDateTime(item.readingTime),
                                         ),
                                       ),
                                       DataCell(
@@ -1879,20 +1879,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     return items.join('    ');
   }
 
-  String formatDateTime(String dateTime) {
-    try {
-      final parsedDate =
-      DateFormat('dd/MM/yyyy HH:mm:ss')
-          .parse(dateTime);
-
-      return DateFormat(
-        'dd/MM/yyyy hh:mm a',
-      ).format(parsedDate);
-
-    } catch (e) {
-      return dateTime;
-    }
-  }
 
   Future<void> exportTankReadingsExcel(
       List<TankReadingModel> readings,
@@ -1935,8 +1921,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
 
     sheet.getRangeByName('A6').setText('Device ID');
     sheet.getRangeByName('B6').setText(widget.tank.deviceId);
-
-
 
     sheet.getRangeByName('D5').setText('Generated On');
     sheet.getRangeByName('E5').setText(
@@ -2297,5 +2281,4 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
       ),
     );
   }
-
 }
