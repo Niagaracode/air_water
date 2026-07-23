@@ -4,10 +4,18 @@ import 'app_config.dart';
 const airWaterConfig = AppConfig(
   appName: 'AIR WATER',
   apiUrl: 'http://localhost:4000/api',
+
+  // Web MQTT
   mqttWebHost: 'wss://irrigationcare.niagaraautomation.com:9443/mqtt',
   mqttWebPort: 9443,
+
+  // Mobile MQTT
+  mqttMobileHost: 'irrigationcare.niagaraautomation.com',
+  mqttMobilePort: 8883,
+
   mqttUserName: 'mqttuser',
   mqttPassword: 'Mqtt@456',
+
   encryptionKey: '0febba516bd1c549147a823b127c96e0',
   packageName: 'com.airwater.monitor',
 

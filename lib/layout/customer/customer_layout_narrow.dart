@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../config/app_config.dart';
@@ -11,11 +12,12 @@ import '../../features/dashboard/widgets/mqtt_connection_status.dart';
 import '../../features/dashboard/widgets/sync_button.dart';
 import '../../features/notification/presentation/controller/notification_provider.dart';
 import '../../features/notification/presentation/widgets/notification_dropdown.dart';
-import '../sidebar/screen_sidebar.dart';
 
-class CustomerLayoutNarrow extends ConsumerWidget {
+
+class CustomerLayoutNarrow extends ConsumerStatefulWidget {
   final Widget child;
   final UserRole userRole;
+
   const CustomerLayoutNarrow({
     super.key,
     required this.child,
@@ -23,22 +25,39 @@ class CustomerLayoutNarrow extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CustomerLayoutNarrow> createState() => _CustomerLayoutNarrowState();
+}
 
+class _CustomerLayoutNarrowState extends ConsumerState<CustomerLayoutNarrow> {
+  int _selectedIndex = 0;
+
+  final List<CustomerMenuItem> _customerMenuItems = [
+    const CustomerMenuItem(
+      key: 'home',
+      icon: Icons.home_rounded,
+      label: 'Home',
+      route: '/dashboard',
+    ),
+    const CustomerMenuItem(
+      key: 'Report',
+      icon: Icons.event_note_rounded,
+      label: 'Events',
+      route: '/notification',
+    ),
+  ];
+
+
+  @override
+  Widget build(BuildContext context) {
     final userNameAsync = ref.watch(userNameProvider);
 
+    // Get current route to highlight active item
+    final currentLocation = GoRouterState.of(context).uri.toString();
+    final currentIndex = _getCurrentIndex(currentLocation);
+
     return Scaffold(
-      drawer: Drawer(
-        surfaceTintColor: Colors.white,
-        backgroundColor: Colors.white,
-        child: SafeArea(
-          child: ScreenSidebar(
-            userRole: userRole, isNarrow: true,
-          ),
-        ),
-      ),
       appBar: AppBar(
-        title: Text(userRole.name),
+        title: Text(widget.userRole.name),
         shadowColor: primary.withValues(alpha: 0.3),
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -48,14 +67,14 @@ class CustomerLayoutNarrow extends ConsumerWidget {
         actions: [
           const Spacer(),
           const MqttConnectionStatus(),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           SyncButton(
             isNarrow: true,
             onSync: () async {
               await RouteRefreshHelper.refreshCurrentPage(ref, context);
             },
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           PopupMenuButton<void>(
             offset: const Offset(0, 48),
             elevation: 8,
@@ -68,11 +87,11 @@ class CustomerLayoutNarrow extends ConsumerWidget {
             ),
             position: PopupMenuPosition.under,
             child: Container(
-              width: 35,
-              height: 35,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: primary,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
               child: Center(
@@ -100,7 +119,7 @@ class CustomerLayoutNarrow extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           PopupMenuButton<String>(
             offset: const Offset(0, 48),
             elevation: 8,
@@ -119,7 +138,7 @@ class CustomerLayoutNarrow extends ConsumerWidget {
             },
             child: userNameAsync.when(
               data: (name) => CircleAvatar(
-                radius: 16,
+                radius: 20,
                 backgroundColor: primary,
                 child: Text(
                   (name ?? 'U').isNotEmpty
@@ -127,32 +146,32 @@ class CustomerLayoutNarrow extends ConsumerWidget {
                       : 'U',
                   style: GoogleFonts.inter(
                     color: Colors.white,
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
               loading: () => CircleAvatar(
-                radius: 16,
+                radius: 20,
                 backgroundColor: primary.withValues(alpha: 0.2),
               ),
               error: (_, __) => CircleAvatar(
-                radius: 16,
+                radius: 20,
                 backgroundColor: primary,
                 child: Text(
                   'U',
                   style: GoogleFonts.inter(
                     color: Colors.white,
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ),
             itemBuilder: (context) => [
-              if (userRole == UserRole.superAdmin ||
-                  userRole == UserRole.companyAdmin ||
-                  userRole == UserRole.customer)
+              if (widget.userRole == UserRole.superAdmin ||
+                  widget.userRole == UserRole.companyAdmin ||
+                  widget.userRole == UserRole.customer)
                 PopupMenuItem(
                   value: 'profile',
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -214,7 +233,118 @@ class CustomerLayoutNarrow extends ConsumerWidget {
           const SizedBox(width: 12),
         ],
       ),
-      body: child,
+      body: widget.child,
+      bottomNavigationBar: Container(
+        height: 65,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ..._customerMenuItems.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              final isSelected = index == currentIndex;
+
+              return _buildNavItem(
+                icon: item.icon,
+                label: item.label,
+                isSelected: isSelected,
+                onTap: () {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                  context.go(item.route);
+                },
+              );
+            }),
+            SizedBox(width: 50, child: SvgPicture.asset(
+              AppConfig.current.appLogoPath,
+              height: 32,
+              fit: BoxFit.contain,
+            ),),
+          ],
+        ),
+      ),
     );
   }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? primary : Colors.grey.shade500,
+              size: 24,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected ? primary : Colors.grey.shade500,
+              ),
+            ),
+            if (isSelected)
+              Container(
+                margin: const EdgeInsets.only(top: 2),
+                height: 2,
+                width: 20,
+                decoration: BoxDecoration(
+                  color: primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  int _getCurrentIndex(String currentLocation) {
+    for (int i = 0; i < _customerMenuItems.length; i++) {
+      if (currentLocation.startsWith(_customerMenuItems[i].route)) {
+        return i;
+      }
+    }
+    // If route doesn't match, check if it's home or events
+    if (currentLocation.contains('/home')) return 0;
+    if (currentLocation.contains('/events')) return 1;
+    return 0; // Default to Home
+  }
+}
+
+// Model class for customer menu items
+class CustomerMenuItem {
+  final String key;
+  final IconData icon;
+  final String label;
+  final String route;
+
+  const CustomerMenuItem({
+    required this.key,
+    required this.icon,
+    required this.label,
+    required this.route,
+  });
 }

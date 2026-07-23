@@ -4,10 +4,17 @@ class AppConfig {
   final String appName;
   final String apiUrl;
 
+  // MQTT Web
   final String mqttWebHost;
   final int mqttWebPort;
+
+  // MQTT Mobile
+  final String mqttMobileHost;
+  final int mqttMobilePort;
+
   final String mqttUserName;
   final String mqttPassword;
+
   final String encryptionKey;
   final String packageName;
 
@@ -24,10 +31,18 @@ class AppConfig {
   const AppConfig({
     required this.appName,
     required this.apiUrl,
+
+    // MQTT Web
     required this.mqttWebHost,
     required this.mqttWebPort,
+
+    // MQTT Mobile
+    required this.mqttMobileHost,
+    required this.mqttMobilePort,
+
     required this.mqttUserName,
     required this.mqttPassword,
+
     required this.encryptionKey,
     required this.packageName,
 
