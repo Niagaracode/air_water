@@ -9,8 +9,8 @@ import 'mqtt_client_setup.dart';
 
 
 class MqttService {
-  static MqttService? _instance;
 
+  static MqttService? _instance;
   static MqttService get instance {
     _instance ??= MqttService._internal();
     return _instance!;
@@ -26,9 +26,7 @@ class MqttService {
   Timer? _connectionCheckTimer;
 
   int _reconnectAttempts = 0;
-
   static const int maxReconnectAttempts = 10;
-
   static const Duration reconnectDelay = Duration(seconds: 3);
 
   bool _isReconnecting = false;
@@ -58,16 +56,25 @@ class MqttService {
 
     final clientId = const Uuid().v4();
 
+    final mqttHost = kIsWeb
+        ? AppConfig.current.mqttWebHost
+        : AppConfig.current.mqttMobileHost;
+
+    final mqttPort = kIsWeb
+        ? AppConfig.current.mqttWebPort
+        : AppConfig.current.mqttMobilePort;
+
     _client = setupMqttClient(
-      Env.mqttWebUrl,
+      mqttHost,
       clientId,
     );
 
-    _client!.port = AppConfig.current.mqttWebPort;
+    _client!.port = mqttPort;
     _client!.keepAlivePeriod = 30;
-    // Manual reconnect handling
+    // Manual reconnect
     _client!.autoReconnect = false;
     _client!.logging(on: false);
+
     _client!.onConnected = _handleConnected;
     _client!.onDisconnected = _handleDisconnected;
     _client!.onSubscribed = _handleSubscribed;
@@ -77,10 +84,23 @@ class MqttService {
         .authenticateAs(
       AppConfig.current.mqttUserName,
       AppConfig.current.mqttPassword,
-    ).startClean().keepAliveFor(30);
+    ).startClean()
+        .keepAliveFor(30);
 
     _client!.connectionMessage = connMessage;
   }
+
+  Future<void> _resetClient() async {
+    await _updatesSubscription?.cancel();
+    _updatesSubscription = null;
+
+    try {
+      _client?.disconnect();
+    } catch (_) {}
+
+    _client = null;
+  }
+
 
   Future<void> connect() async {
     if (_client == null || isConnected) return;
@@ -119,10 +139,8 @@ class MqttService {
       );
 
       try {
-        _client = null;
-
+        await _resetClient();
         initialize();
-
         await connect();
       } catch (e) {
         debugPrint('Reconnect error: $e');
@@ -186,16 +204,11 @@ class MqttService {
 
     // Create updates listener only once
     _updatesSubscription ??=
-        _client?.updates?.listen(
-              (
-              List<MqttReceivedMessage<MqttMessage?>> messages,
-              ) {
+        _client?.updates?.listen((List<MqttReceivedMessage<MqttMessage?>> messages) {
             for (final message in messages) {
-              final payload =
-              message.payload as MqttPublishMessage;
+              final payload = message.payload as MqttPublishMessage;
 
-              final payloadString =
-              MqttPublishPayload.bytesToStringAsString(
+              final payloadString = MqttPublishPayload.bytesToStringAsString(
                 payload.payload.message,
               );
 

@@ -8,7 +8,6 @@ class StatisticsCards extends StatelessWidget {
   });
 
   final Map<String, dynamic> statistics;
-
   static const double _narrowBreakpoint = 600;
 
   @override
@@ -21,7 +20,7 @@ class StatisticsCards extends StatelessWidget {
     final reorderLevel = statistics['reorder'] ?? 0;
 
     final items = [
-      _StatData(
+      StatData(
         title: 'Active Devices',
         subtitle: 'Online',
         value: active,
@@ -32,7 +31,7 @@ class StatisticsCards extends StatelessWidget {
           colors: [Color(0xFFA7F3D0), Color(0xFF6EE7B7)],
         ),
       ),
-      _StatData(
+      StatData(
         title: 'Offline Devices',
         subtitle: 'Offline',
         value: offline,
@@ -43,7 +42,7 @@ class StatisticsCards extends StatelessWidget {
           colors: [Color(0xFFD1D5DB), Color(0xFF9CA3AF)],
         ),
       ),
-      _StatData(
+      StatData(
         title: 'Low Batt/Solar',
         subtitle: 'Needs Charging',
         value: lowBattery,
@@ -54,7 +53,7 @@ class StatisticsCards extends StatelessWidget {
           colors: [Color(0xFFFDE68A), Color(0xFFFBBF24)],
         ),
       ),
-      _StatData(
+      StatData(
         title: 'Low Level',
         subtitle: 'Below Threshold',
         value: lowLevel,
@@ -65,7 +64,7 @@ class StatisticsCards extends StatelessWidget {
           colors: [Color(0xFFFED7AA), Color(0xFFF97316)],
         ),
       ),
-      _StatData(
+      StatData(
         title: 'Reorder Level',
         subtitle: 'Need Restock',
         value: reorderLevel,
@@ -120,8 +119,8 @@ class StatisticsCards extends StatelessWidget {
   }
 }
 
-class _StatData {
-  const _StatData({
+class StatData {
+  const StatData({
     required this.title,
     required this.subtitle,
     required this.value,
@@ -150,7 +149,7 @@ class StatusChip extends StatelessWidget {
     this.textColorOpacity = 0.7,
   });
 
-  final _StatData data;
+  final StatData data;
   final double iconBackgroundOpacity;
   final double textColorOpacity;
 
@@ -249,7 +248,7 @@ class CompactStatCard extends StatelessWidget {
     this.textColorOpacity = 0.72,
   });
 
-  final _StatData data;
+  final StatData data;
   final double iconBackgroundOpacity;
   final double textColorOpacity;
 

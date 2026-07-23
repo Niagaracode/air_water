@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
+import '../../../../../core/helpers/date_formatter.dart';
 import '../../controller/tank_event_provider.dart';
 
 class TankEventsTab extends ConsumerWidget {
@@ -59,13 +59,10 @@ class TankEventsTab extends ConsumerWidget {
                   ? Colors.red
                   : Colors.orange,
             ),
-
             title: Text(event.type),
-
             subtitle: Text(
               '${event.message} • ${event.status}',
             ),
-
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -76,13 +73,9 @@ class TankEventsTab extends ConsumerWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
-                  DateFormat('dd MMM yyyy hh:mm a').format(
-                    DateTime.parse(event.createdAt).toLocal(),
-                  ),
+                  DateFormatter.formatDateTime(event.createdAt),
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey.shade600,

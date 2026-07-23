@@ -1,9 +1,18 @@
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import '../../../config/app_config.dart';
-import '../../constants/app_constants.dart';
+
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
+
 
 MqttClient setupMqttClient(String host, String clientId) {
+  return MqttServerClient(
+    host,
+    clientId,
+  );
+}
+/*MqttClient setupMqttClient(String host, String clientId) {
   String cleanHost = host;
   bool secure = false;
   if (host.startsWith('wss://')) {
@@ -28,4 +37,4 @@ MqttClient setupMqttClient(String host, String clientId) {
   client.useWebSocket = true;
   client.secure = secure;
   return client;
-}
+}*/

@@ -3,9 +3,9 @@ import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import '../../../../layout/provider/sidebar_provider.dart';
 import '../../../core/helpers/app_colors_helper.dart';
+import '../../../core/helpers/date_formatter.dart';
 import '../../../core/user_config/user_role.dart';
 import '../data/models/site_group_model.dart';
 import '../data/models/tank_data_model.dart';
@@ -143,7 +143,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
   // Add this new method
   Widget _buildOtherTankListPanel(List<SiteGroupModel> groups) {
     return SizedBox(
-      height: MediaQuery.sizeOf(context).height - 350,
+      height: MediaQuery.sizeOf(context).height - 200,
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -529,7 +529,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                 width: 150,
                 child: Center(
                   child: Text(
-                    _formatDateTime(tank.lastUpdate),
+                    DateFormatter.formatDateTime(tank.lastUpdate),
                     style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ),
@@ -581,7 +581,6 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 /// TOP ROW
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -661,9 +660,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                     ],
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
                 /// LEVEL (animated liquid-fill tank) + PRESSURE (animated gauge)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,13 +716,9 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 12),
-
                 Divider(color: Colors.grey.shade200, height: 1),
-
                 const SizedBox(height: 10),
-
                 /// BOTTOM METRICS
                 Row(
                   children: [
@@ -749,7 +742,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                       flex: 3,
                       child: _buildBottomMetric(
                         'Last Reading',
-                        _formatDateTime(tank.lastUpdate),
+                        DateFormatter.formatDateTime(tank.lastUpdate),
                         Icons.access_time,
                       ),
                     ),
@@ -872,17 +865,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
     );
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final messageDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
-    final time = DateFormat('hh:mm a').format(dateTime);
 
-    if (messageDate == today) return 'Today at $time';
-    if (messageDate == yesterday) return 'Yesterday at $time';
-    return DateFormat('dd MMM yyyy \'at\' hh:mm a').format(dateTime);
-  }
 
   TextStyle _adminHeaderStyle() {
     return GoogleFonts.outfit(
