@@ -339,6 +339,119 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     });
   }
 
+  void _showEditTankDimensionSideSheet(BuildContext context, TankDimension dim) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Edit Tank Dimension',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            elevation: 8,
+            child: SizedBox(
+              width: 600,
+              height: double.infinity,
+              child: TankDimensionEditView(
+                showViewList: false,
+                tankDimension: dim,
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      },
+    ).then((_) async {
+      await ref.read(tankDimensionNotifierProvider.notifier).loadTankDimensions();
+      if (!mounted) return;
+      final updatedDims = ref.read(tankDimensionNotifierProvider).tankDimensions;
+      if (_selectedDimension != null) {
+        final matches = updatedDims.where((d) => d.id == _selectedDimension!.id);
+        setState(() {
+          _selectedDimension = matches.isNotEmpty ? matches.first : null;
+        });
+      }
+    });
+  }
+
+  Future<void> _confirmAndDeleteTankDimension(
+    BuildContext context,
+    TankDimension dim,
+  ) async {
+    final displayName = dim.name.isNotEmpty
+        ? dim.name
+        : (dim.typeName.isNotEmpty ? dim.typeName : dim.type);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Tank Dimension'),
+          content: Text(
+            'Are you sure you want to delete "$displayName"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    final success = await ref
+        .read(tankDimensionNotifierProvider.notifier)
+        .deleteTankDimension(dim.id);
+
+    if (!mounted) return;
+
+    if (success) {
+      if (_selectedDimension?.id == dim.id) {
+        setState(() {
+          _selectedDimension = null;
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.green,
+          content: Text('Tank dimension deleted successfully'),
+        ),
+      );
+    } else {
+      final error = ref.read(tankDimensionNotifierProvider).error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(error ?? 'Delete failed'),
+        ),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -459,6 +572,45 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                   if (dim.name.isNotEmpty) return dim.name;
                                   if (dim.typeName.isNotEmpty) return dim.typeName;
                                   return dim.type;
+                                },
+                                itemTrailingBuilder: (context, dim) {
+                                  if (dim == null) return const SizedBox.shrink();
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          _showEditTankDimensionSideSheet(context, dim);
+                                        },
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Icon(
+                                            Icons.edit_outlined,
+                                            size: 16,
+                                            color: primary,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          _confirmAndDeleteTankDimension(context, dim);
+                                        },
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: const Padding(
+                                          padding: EdgeInsets.all(4.0),
+                                          child: Icon(
+                                            Icons.delete_outline_rounded,
+                                            size: 16,
+                                            color: Color(0xFFDC2626),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
                                 },
                                 hint: 'Select Dimension',
                                 onChanged: (value) {

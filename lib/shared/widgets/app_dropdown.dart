@@ -8,6 +8,7 @@ class AppDropdown<T> extends StatelessWidget {
   final String Function(T) itemLabel;
   final ValueChanged<T?>? onChanged;
   final bool enabled;
+  final Widget? Function(BuildContext context, T item)? itemTrailingBuilder;
 
   const AppDropdown({
     super.key,
@@ -17,6 +18,7 @@ class AppDropdown<T> extends StatelessWidget {
     required this.itemLabel,
     this.onChanged,
     this.enabled = true,
+    this.itemTrailingBuilder,
   });
 
   @override
@@ -48,16 +50,43 @@ class AppDropdown<T> extends StatelessWidget {
           onChanged: enabled ? onChanged : null,
           dropdownColor: Colors.white,
           borderRadius: BorderRadius.circular(12),
+          selectedItemBuilder: itemTrailingBuilder != null
+              ? (BuildContext context) {
+                  return items.map((T item) {
+                    return Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        itemLabel(item),
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF111827),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList();
+                }
+              : null,
           items: items.map((T item) {
+            final trailing = itemTrailingBuilder?.call(context, item);
             return DropdownMenuItem<T>(
               value: item,
-              child: Text(
-                itemLabel(item),
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF111827),
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      itemLabel(item),
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF111827),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (trailing != null) trailing,
+                ],
               ),
             );
           }).toList(),
