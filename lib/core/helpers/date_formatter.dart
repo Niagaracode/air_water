@@ -2,11 +2,6 @@ import 'package:intl/intl.dart';
 
 class DateFormatter {
 
- /* static String formatDateTime(DateTime dateTime) {
-    final localDateTime = dateTime.toLocal();
-    return DateFormat('dd MMM yyyy hh:mm a').format(localDateTime);
-  }*/
-
   static String formatDateShort(DateTime dateTime) {
     return DateFormat('dd-MM-yyyy').format(dateTime);
   }

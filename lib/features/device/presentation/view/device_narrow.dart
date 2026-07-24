@@ -1,3 +1,4 @@
+import 'package:air_water/core/helpers/app_colors_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -399,7 +400,7 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
       headerText = 'Untitled group';
     }
 
-    final groupColor = _colorForGroup(headerText);
+    final groupColor = AppColorsHelper.colorForGroup(headerText);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -639,22 +640,5 @@ class _DeviceNarrowState extends ConsumerState<DeviceNarrow> {
         ],
       ),
     );
-  }
-
-  static final List<Color> _groupColors = [
-    const Color(0xFF6366F1), // indigo
-    const Color(0xFF0EA5E9), // sky
-    const Color(0xFF10B981), // emerald
-    const Color(0xFFF59E0B), // amber
-    const Color(0xFFEC4899), // pink
-    const Color(0xFF8B5CF6), // violet
-    const Color(0xFF14B8A6), // teal
-  ];
-
-  Color _colorForGroup(String key) {
-    if (key.trim().isEmpty) return primary;
-    final hash =
-    key.toLowerCase().trim().codeUnits.fold<int>(0, (p, c) => p + c);
-    return _groupColors[hash % _groupColors.length];
   }
 }

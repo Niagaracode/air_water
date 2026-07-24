@@ -1,3 +1,4 @@
+import 'package:air_water/core/helpers/app_colors_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -245,7 +246,7 @@ class _RoasterNarrowState extends ConsumerState<RoasterNarrow> {
 
   Widget _buildRosterCard(Roster roster) {
     final displayTitle = _cleanDescription(roster.description);
-    final groupColor = _colorForGroup(displayTitle);
+    final groupColor = AppColorsHelper.colorForGroup(displayTitle);
 
     return InkWell(
       onTap: () async {
@@ -574,22 +575,5 @@ class _RoasterNarrowState extends ConsumerState<RoasterNarrow> {
       return desc.substring(0, hyphenIndex).trim();
     }
     return desc;
-  }
-
-  static final List<Color> _groupColors = [
-    const Color(0xFF6366F1), // indigo
-    const Color(0xFF0EA5E9), // sky
-    const Color(0xFF10B981), // emerald
-    const Color(0xFFF59E0B), // amber
-    const Color(0xFFEC4899), // pink
-    const Color(0xFF8B5CF6), // violet
-    const Color(0xFF14B8A6), // teal
-  ];
-
-  Color _colorForGroup(String key) {
-    if (key.trim().isEmpty) return primary;
-    final hash =
-    key.toLowerCase().trim().codeUnits.fold<int>(0, (p, c) => p + c);
-    return _groupColors[hash % _groupColors.length];
   }
 }
