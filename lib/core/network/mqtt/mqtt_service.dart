@@ -4,7 +4,6 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../config/app_config.dart';
-import '../../config/env.dart';
 import 'mqtt_client_setup.dart';
 
 

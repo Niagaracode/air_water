@@ -1,4 +1,3 @@
-import 'package:air_water/features/company/company_layout.dart';
 import 'package:air_water/features/dashboard/data/models/tank_data_model.dart';
 import 'package:air_water/features/group/user_group_layout.dart';
 import 'package:air_water/features/message_template/message_template_layout.dart';
@@ -115,10 +114,6 @@ class AppRouter {
             GoRoute(
               path: '/dashboard',
               builder: (_, _) => const DashboardLayout(),
-            ),
-            GoRoute(
-              path: '/company',
-              builder: (_, __) => const CompanyLayout(),
             ),
             GoRoute(path: '/site', builder: (_, __) => const SiteLayout()),
             GoRoute(

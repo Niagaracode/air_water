@@ -4,8 +4,6 @@ import '../../data/api/site_api.dart';
 import '../../data/repository/site_repository.dart';
 import '../../data/repository/site_repository_impl.dart';
 import '../../../../core/network/http/api_service.dart';
-import '../../../../features/company/presentation/controller/company_provider.dart';
-import '../../../../features/company/presentation/model/company_model.dart';
 import '../../../../features/user/presentation/controller/user_provider.dart';
 import '../../../../features/tank/presentation/controller/tank_provider.dart';
 import '../../../../features/device/presentation/controller/device_provider.dart';
@@ -173,17 +171,6 @@ class SiteNotifier extends Notifier<SiteState> {
     try {
       final repository = ref.read(siteRepositoryProvider);
       return await repository.getSiteAutocomplete(q: query);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  Future<List<CompanyAutocompleteInfo>> searchCompanies(String query) async {
-    try {
-      final repository = ref.read(companyRepositoryProvider);
-      final results = await repository.getCompanyAutocomplete(q: query);
-      // Filter out Super Admin company (ID 1)
-      return results.where((c) => c.companyId != 1).toList();
     } catch (e) {
       return [];
     }

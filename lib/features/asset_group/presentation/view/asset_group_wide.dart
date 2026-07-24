@@ -12,8 +12,6 @@ import '../widgets/add_asset_group_modal.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../device/presentation/controller/device_provider.dart';
-import '../../../company/presentation/controller/company_provider.dart';
-import '../../../company/presentation/model/company_model.dart';
 
 class AssetGroupWide extends ConsumerStatefulWidget {
   const AssetGroupWide({super.key});
@@ -32,7 +30,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
       ref.read(assetGroupProvider.notifier).loadGroups();
       ref.read(userProvider.notifier).loadUsers();
       ref.read(productNotifierProvider.notifier).loadProducts();
-      ref.read(companyNotifierProvider.notifier).loadGroupedCompanies();
     });
   }
 
@@ -77,7 +74,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     final productState = ref.watch(productNotifierProvider);
     final tankState = ref.watch(allTanksProvider);
     final deviceState = ref.watch(deviceNotifierProvider);
-    final companyState = ref.watch(companyNotifierProvider);
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -105,7 +101,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                       productState,
                       tankState,
                       deviceState,
-                      companyState,
                     ),
                   ),
           ),
@@ -180,7 +175,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     ProductState productState,
     AsyncValue<List<dynamic>> tankState,
     DeviceState deviceState,
-    CompanyState companyState,
   ) {
     if (state.groups.isEmpty) {
       return const AppTableEmptyState(
@@ -290,25 +284,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                         }
                       }
 
-                      // Resolve Company ID to Name if parameter is Customer Name
-                      if (c.parameter == 'Customer Name') {
-                        final companyId = int.tryParse(c.value);
-                        if (companyId != null) {
-                          final companyList = companyState.groupedCompanies;
-                          final company = companyList.isEmpty
-                              ? null
-                              : companyList.firstWhere(
-                                  (g) =>
-                                      g.addresses.isNotEmpty &&
-                                      g.addresses.first.companyId == companyId,
-                                  orElse: () =>
-                                      CompanyGroup(name: '', addresses: []),
-                                );
-                          if (company != null && company.name.isNotEmpty) {
-                            displayValue = company.name;
-                          }
-                        }
-                      }
 
                       // Map parameter display label
                       final paramLabel = c.parameter == 'DeviceID'
