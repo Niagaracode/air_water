@@ -10,8 +10,6 @@ import '../../../../core/app_theme/app_theme.dart';
 import '../../../product/provider/product_provider.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../user/presentation/model/user_model.dart';
-import '../../../company/presentation/controller/company_provider.dart';
-import '../../../company/presentation/model/company_model.dart';
 import '../../../site/presentation/controller/site_provider.dart';
 import '../../../device/presentation/controller/device_provider.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
@@ -386,23 +384,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                             ),
                             const SizedBox(height: 32),
                           ],
-          
-                          if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                            _buildLabelField(
-                              'COMPANY',
-                              AppTextField(
-                                readOnly: true,
-                                controller: TextEditingController(
-                                  text: _companies
-                                      .where((c) => c.id == _selectedCompanyId)
-                                      .firstOrNull
-                                      ?.name ?? (_selectedCompanyId == 216 ? 'Air Water' : ''),
-                                ),
-                                hint: 'Company',
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                          ],
+
           
                           if (_groupType == 'Other') ...[
                             _buildLabelField(
@@ -676,57 +658,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   Widget _buildCriteriaValueField(int index) {
     final rule = _criteria[index];
 
-    if (rule.parameter == 'Customer Name') {
-      final companies = ref
-          .watch(companyNotifierProvider)
-          .groupedCompanies
-          .map((g) {
-            final companyId = g.addresses.isNotEmpty
-                ? g.addresses.first.companyId
-                : null;
-            return {'id': companyId?.toString() ?? '', 'name': g.name};
-          })
-          .where((c) => c['id'] != '')
-          .toList();
-      companies.sort((a, b) => a['name']!.compareTo(b['name']!));
-
-      // Filter out companies selected in other rows
-      final selectedVals = _criteria
-          .asMap()
-          .entries
-          .where((e) => e.key != index && e.value.parameter == 'Customer Name' && e.value.value.isNotEmpty)
-          .map((e) => e.value.value)
-          .toSet();
-
-      final filteredCompanies = companies
-          .where((c) => 
-              (!selectedVals.contains(c['id']) && !selectedVals.contains(c['name'])) || 
-              c['id'] == rule.value || 
-              c['name'] == rule.value)
-          .toList();
-
-      final matchIndex = filteredCompanies.indexWhere((c) => c['id'] == rule.value || c['name'] == rule.value);
-      final dropdownValue = matchIndex != -1 ? filteredCompanies[matchIndex]['id'] : null;
-
-      return DropdownButtonFormField<String>(
-        isExpanded: true,
-        value: dropdownValue,
-        items: filteredCompanies
-            .map(
-              (c) => DropdownMenuItem<String>(
-                value: c['id'] as String,
-                child: Text(c['name']!, style: GoogleFonts.inter(fontSize: 13)),
-              ),
-            )
-            .toList(),
-        onChanged: (v) => setState(() => rule.value = v!),
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-          labelText: 'Select Customer',
-        ),
-      );
-    }
-
     if (rule.parameter == 'Product') {
       final state = ref.watch(productNotifierProvider);
       final products = state.products.map((p) {
@@ -776,19 +707,14 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
     }
 
     if (rule.parameter == 'City') {
-      final companyCities = ref
-          .watch(companyNotifierProvider)
-          .groupedCompanies
-          .expand((g) => g.addresses)
-          .map((a) => a.city)
-          .whereType<String>();
+
       final siteCities = ref
           .watch(siteNotifierProvider)
           .groupedSites
           .expand((g) => g.addresses)
           .map((a) => a.city)
           .whereType<String>();
-      final cities = <String>{...companyCities, ...siteCities}.toList()..sort();
+      final cities = <String>{ ...siteCities}.toList()..sort();
 
       // Filter out cities selected in other rows
       final selectedVals = _criteria
@@ -822,19 +748,14 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
     }
 
     if (rule.parameter == 'Country') {
-      final companyCountries = ref
-          .watch(companyNotifierProvider)
-          .groupedCompanies
-          .expand((g) => g.addresses)
-          .map((a) => a.country)
-          .whereType<String>();
+
       final siteCountries = ref
           .watch(siteNotifierProvider)
           .groupedSites
           .expand((g) => g.addresses)
           .map((a) => a.country)
           .whereType<String>();
-      final countries = <String>{...companyCountries, ...siteCountries}.toList()
+      final countries = <String>{ ...siteCountries}.toList()
         ..sort();
 
       // Filter out countries selected in other rows
@@ -869,19 +790,14 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
     }
 
     if (rule.parameter == 'State or Province') {
-      final companyStates = ref
-          .watch(companyNotifierProvider)
-          .groupedCompanies
-          .expand((g) => g.addresses)
-          .map((a) => a.state)
-          .whereType<String>();
+
       final siteStates = ref
           .watch(siteNotifierProvider)
           .groupedSites
           .expand((g) => g.addresses)
           .map((a) => a.state)
           .whereType<String>();
-      final states = <String>{...companyStates, ...siteStates}.toList()..sort();
+      final states = <String>{ ...siteStates}.toList()..sort();
 
       // Filter out states selected in other rows
       final selectedVals = _criteria
@@ -1536,12 +1452,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   }
 
   Widget _buildUserSection(UserState userState) {
-    final allGroupUsers = userState.users
-        .where(
-          (u) =>
-              u.companyId == _selectedCompanyId,
-        )
-        .toList();
+    final allGroupUsers = userState.users.where((u) => u.companyId == _selectedCompanyId).toList();
 
     final isEditingAllGroup = _groupType == 'All';
 

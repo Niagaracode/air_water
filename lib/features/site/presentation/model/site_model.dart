@@ -1,4 +1,3 @@
-import '../../../company/presentation/model/company_model.dart';
 
 class Site {
   final int id;
@@ -409,24 +408,20 @@ class SiteGroupedResponse {
 class SiteCreateRequest {
   final String name;
   final String orgCode;
-  final int companyId;
   final String? country;
   final String? state;
   final String? city;
   final String? timeZone;
-  final List<CompanyAddress> addresses;
   final bool isPartialUpdate;
 
 
   SiteCreateRequest({
     required this.name,
     required this.orgCode,
-    required this.companyId,
     this.country,
     this.state,
     this.city,
     this.timeZone,
-    required this.addresses,
     this.isPartialUpdate = false,
   });
 
@@ -435,12 +430,10 @@ class SiteCreateRequest {
     return {
       'name': name,
       'plant_organization_code': orgCode,
-      'company_id': companyId,
       'country': country,
       'state': state,
       'city': city,
       'time_zone': timeZone,
-      'addresses': addresses.map((a) => a.toJson()).toList(),
       'is_partial_update': isPartialUpdate,
     };
 
