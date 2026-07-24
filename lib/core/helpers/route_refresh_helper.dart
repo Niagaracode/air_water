@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/company/presentation/controller/company_provider.dart';
 import '../../features/dashboard/provider/dashboard_provider.dart';
 import '../../features/device/presentation/controller/device_provider.dart';
 import '../../features/rule_group/provider/rule_group_provider.dart';
@@ -38,12 +37,6 @@ class RouteRefreshHelper {
             !mqttState.isConnecting) {
           await mqttNotifier.reconnectAndRestore();
         }
-        break;
-
-      case '/company':
-        await ref
-            .read(companyNotifierProvider.notifier)
-            .loadGroupedCompanies(isReload: true);
         break;
 
       case '/site':

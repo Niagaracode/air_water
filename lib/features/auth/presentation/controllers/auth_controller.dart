@@ -6,7 +6,6 @@ import '../../../../core/user_config/user_role_provider.dart';
 import '../../domain/repository/auth_repository.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../product/provider/product_provider.dart';
-import '../../../company/presentation/controller/company_provider.dart';
 import '../../../site/presentation/controller/site_provider.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
 import '../../../device/presentation/controller/device_provider.dart';
@@ -49,7 +48,6 @@ class AuthController extends AsyncNotifier<void> {
 
     ref.invalidate(userNameProvider);
     ref.invalidate(userProvider);
-    ref.invalidate(companyNotifierProvider);
     ref.invalidate(siteNotifierProvider);
     ref.invalidate(tankNotifierProvider);
     ref.invalidate(deviceNotifierProvider);

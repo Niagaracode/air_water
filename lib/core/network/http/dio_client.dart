@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../config/env.dart';
+import '../../../config/app_config.dart';
 import '../../storage/secure_storage.dart';
 import '../interceptors/auth_interceptor.dart';
 import '../../../app_startup/app_startup.dart';
@@ -11,7 +11,7 @@ class DioClient {
 
   DioClient(SecureStorage storage, {required VoidCallback onLogout}) : _dio = Dio(
     BaseOptions(
-      baseUrl: Env.apiUrl,
+      baseUrl: AppConfig.current.apiUrl,
       connectTimeout: const Duration(seconds: 60),
       receiveTimeout: const Duration(seconds: 60),
     ),

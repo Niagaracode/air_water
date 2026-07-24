@@ -5,11 +5,6 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_autocomplete.dart';
 import '../../../../shared/widgets/location_picker.dart';
 import '../controller/site_provider.dart';
-import '../../../../core/user_config/user_role.dart';
-import '../../../../core/user_config/user_role_provider.dart';
-import '../../../company/presentation/controller/company_provider.dart';
-import '../../../../shared/widgets/app_dropdown.dart';
-import '../../../company/presentation/model/company_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/utils/time_zones.dart';
 import '../../../../core/app_theme/app_theme.dart';
@@ -36,7 +31,6 @@ class AddressControllers {
 
   String? state;
   String? city;
-  CompanyAddress? selectedRegisteredAddress;
   bool isProgrammaticUpdate = false;
 
   void dispose() {
@@ -47,29 +41,11 @@ class AddressControllers {
     contactController.dispose();
     timeZoneController.dispose();
   }
-
-  void updateFromRegistered(CompanyAddress addr) {
-    isProgrammaticUpdate = true;
-    selectedRegisteredAddress = addr;
-    addressController.text = addr.addressLine1 ?? '';
-    address2Controller.text = addr.addressLine2 ?? '';
-    address3Controller.text = addr.addressLine3 ?? '';
-    pinCodeController.text = addr.pincode ?? '';
-
-    contactController.text = addr.contactNumber ?? '';
-    timeZoneController.text = addr.timeZone ?? '';
-    country = addr.country;
-    state = addr.state;
-    city = addr.city;
-    isProgrammaticUpdate = false;
-  }
 }
 
 class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   final _nameController = TextEditingController();
   final _companyNameController = TextEditingController();
-  CompanyGroup? _selectedGroup;
-  List<CompanyGroup> _companyGroups = [];
   final List<AddressControllers> _addressRows = [AddressControllers()];
   int _status = 1;
   bool _isLoadingCompanies = false;
@@ -114,131 +90,68 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
 
   Future<void> _loadInitialData() async {
     setState(() => _isLoadingCompanies = true);
-    try {
-      final repository = ref.read(companyRepositoryProvider);
-      final response = await repository.getGroupedCompanies(limit: 1000);
-      _companyGroups = response.data;
 
-      if (_companyGroups.isNotEmpty) {
-        final targetGroup = _companyGroups.firstWhere(
-          (g) => g.addresses.any((a) => a.companyId == 216),
-          orElse: () => _companyGroups.first,
-        );
-        _onCompanyChanged(targetGroup);
-      }
-    } catch (e) {
-      debugPrint('Error loading companies: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingCompanies = false);
-        if (widget.initialSite != null) {
-          // Find initial group
-          final initialGroup = _companyGroups
-              .where(
-                (g) => g.addresses.any(
-                  (a) => a.companyId == widget.initialSite!.companyId,
-                ),
-              )
-              .firstOrNull;
-          if (initialGroup != null) {
-            _selectedGroup = initialGroup;
+    if (mounted) {
+      if (widget.initialSite != null) {
+
+        // Fetch ALL addresses for this plant
+        try {
+          final siteRepo = ref.read(siteRepositoryProvider);
+          final addressesData = await siteRepo.getSiteWithAddresses(
+            widget.initialSite!.id,
+          );
+
+          if (addressesData.isNotEmpty) {
+            setState(() {
+              // Dispose existing rows first
+              for (var row in _addressRows) {
+                row.dispose();
+              }
+              _addressRows.clear();
+
+              // If targetAddressId is provided, filter to show only that address
+              var finalAddresses = addressesData;
+              if (widget.targetAddressId != null) {
+                finalAddresses = addressesData
+                    .where(
+                      (a) =>
+                  a['address_id'].toString() ==
+                      widget.targetAddressId.toString(),
+                )
+                    .toList();
+              }
+
+              for (var addrJson in finalAddresses) {
+                final controllers = AddressControllers();
+                controllers.id = addrJson['address_id'] as int?;
+
+                controllers.addressController.text =
+                    addrJson['address_line_1'] ?? '';
+                controllers.address2Controller.text =
+                    addrJson['address_line_2'] ?? '';
+                controllers.address3Controller.text =
+                    addrJson['address_line_3'] ?? '';
+                controllers.pinCodeController.text =
+                    addrJson['pincode'] ?? '';
+                controllers.contactController.text =
+                    addrJson['contact_number'] ?? '';
+                controllers.timeZoneController.text =
+                    addrJson['time_zone'] ?? '';
+                controllers.country = addrJson['country_name'];
+                controllers.state = addrJson['state_name'];
+                controllers.city = addrJson['city_name'];
+
+                _addressRows.add(controllers);
+              }
+            });
           }
-
-          // Fetch ALL addresses for this plant
-          try {
-            final siteRepo = ref.read(siteRepositoryProvider);
-            final addressesData = await siteRepo.getSiteWithAddresses(
-              widget.initialSite!.id,
-            );
-
-            if (addressesData.isNotEmpty) {
-              setState(() {
-                // Dispose existing rows first
-                for (var row in _addressRows) {
-                  row.dispose();
-                }
-                _addressRows.clear();
-
-                // If targetAddressId is provided, filter to show only that address
-                var finalAddresses = addressesData;
-                if (widget.targetAddressId != null) {
-                  finalAddresses = addressesData
-                      .where(
-                        (a) =>
-                            a['address_id'].toString() ==
-                            widget.targetAddressId.toString(),
-                      )
-                      .toList();
-                }
-
-                for (var addrJson in finalAddresses) {
-                  final controllers = AddressControllers();
-                  controllers.id = addrJson['address_id'] as int?;
-
-                  controllers.addressController.text =
-                      addrJson['address_line_1'] ?? '';
-                  controllers.address2Controller.text =
-                      addrJson['address_line_2'] ?? '';
-                  controllers.address3Controller.text =
-                      addrJson['address_line_3'] ?? '';
-                  controllers.pinCodeController.text =
-                      addrJson['pincode'] ?? '';
-                  controllers.contactController.text =
-                      addrJson['contact_number'] ?? '';
-                  controllers.timeZoneController.text =
-                      addrJson['time_zone'] ?? '';
-                  controllers.country = addrJson['country_name'];
-                  controllers.state = addrJson['state_name'];
-                  controllers.city = addrJson['city_name'];
-
-                  // Try to find if this matches a registered address in the selected group
-                  if (_selectedGroup != null) {
-                    controllers.selectedRegisteredAddress = _selectedGroup!
-                        .addresses
-                        .where((a) => a.companyId == addrJson['company_id'])
-                        .firstOrNull;
-                  }
-
-                  _addressRows.add(controllers);
-                }
-              });
-            }
-          } catch (e) {
-            debugPrint('Error fetching plant addresses: $e');
-          }
+        } catch (e) {
+          debugPrint('Error fetching plant addresses: $e');
         }
       }
     }
   }
 
-  void _onCompanyChanged(CompanyGroup? group) {
-    if (_selectedGroup == group) return;
-
-    setState(() {
-      _selectedGroup = group;
-      _companyNameController.text = group?.name ?? '';
-
-      for (var row in _addressRows) {
-        // ALWAYS clear selectedRegisteredAddress because it belongs to the PREVIOUS company.
-        row.selectedRegisteredAddress = null;
-
-        // Only clear the actual text fields if we are creating a NEW site.
-        // If we are EDITING, we want to keep the physical location text.
-        if (widget.initialSite == null) {
-          row.addressController.clear();
-          row.address2Controller.clear();
-          row.address3Controller.clear();
-          row.pinCodeController.clear();
-          row.contactController.clear();
-          row.country = null;
-          row.state = null;
-          row.city = null;
-        }
-      }
-
-      // Auto-fill logic removed as per user request
-    });
-  }
 
   void _addAddressRow() {
     setState(() {
@@ -262,7 +175,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   }
 
   Future<void> _save() async {
-    if (_nameController.text.isEmpty || _selectedGroup == null) {
+    if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in Site Name and select a Company'),
@@ -280,62 +193,12 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
       }
     }
 
-    final addresses = _addressRows.map((row) {
-      // Determine correct company_id:
-      // 1. Explicitly selected branch address
-      // 2. Or, if we are editing and the group matches the site's current company group,
-      //    use the site's current companyId to preserve the specific branch.
-      // 3. Fallback to the first address in the selected group.
-      int? resolvedCompanyId = row.selectedRegisteredAddress?.companyId;
-
-      if (resolvedCompanyId == null &&
-          widget.initialSite != null &&
-          _selectedGroup != null) {
-        // Search if initial site belongs to this group
-        final belongsToGroup = _selectedGroup!.addresses.any(
-          (a) => a.companyId == widget.initialSite!.companyId,
-        );
-        if (belongsToGroup) {
-          resolvedCompanyId = widget.initialSite!.companyId;
-        }
-      }
-
-      resolvedCompanyId ??= _selectedGroup?.addresses.firstOrNull?.companyId;
-
-      return CompanyAddress(
-        id: row.id,
-        addressLine1: row.addressController.text,
-        addressLine2: row.address2Controller.text,
-        addressLine3: row.address3Controller.text,
-        pincode: row.pinCodeController.text,
-        country: row.country ?? '',
-        state: row.state ?? '',
-        city: row.city ?? '',
-        contactNumber: row.contactController.text,
-        status: _status,
-        companyId: resolvedCompanyId,
-        timeZone: row.timeZoneController.text.isNotEmpty
-            ? row.timeZoneController.text
-            : null,
-      );
-    }).toList();
-
-    final primaryCompanyId = addresses.first.companyId;
-
-    if (primaryCompanyId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a valid company location')),
-      );
-      return;
-    }
 
     final request = SiteCreateRequest(
       name: _nameController.text,
-      orgCode: '', // Removed from UI
-      companyId: primaryCompanyId,
+      orgCode: '',
       city: _addressRows.first.city,
       timeZone: '--',
-      addresses: addresses,
       isPartialUpdate: widget.targetAddressId != null,
     );
 
@@ -456,17 +319,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                             },
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        _buildLabelField(
-                          'SELECT COMPANY',
-                          _isLoadingCompanies
-                              ? const LinearProgressIndicator(minHeight: 2)
-                              : AppTextField(
-                                  readOnly: true,
-                                  controller: _companyNameController,
-                                  hint: 'Company',
-                                ),
-                        ),
                       ] else ...[
                         Row(
                           children: [
@@ -495,21 +347,6 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                                     });
                                   },
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 32),
-                            Expanded(
-                              child: _buildLabelField(
-                                'SELECT COMPANY',
-                                _isLoadingCompanies
-                                    ? const LinearProgressIndicator(
-                                        minHeight: 2,
-                                      )
-                                    : AppTextField(
-                                        readOnly: true,
-                                        controller: _companyNameController,
-                                        hint: 'Company',
-                                      ),
                               ),
                             ),
                           ],
