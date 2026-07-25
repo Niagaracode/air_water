@@ -7,7 +7,6 @@ import '../../../../shared/widgets/view_header.dart';
 import '../controller/asset_group_provider.dart';
 import '../../../product/provider/product_provider.dart';
 import '../../domain/models/asset_group_model.dart';
-import 'asset_group_edit_page.dart';
 import '../widgets/add_asset_group_modal.dart';
 import '../../../user/presentation/controller/user_provider.dart';
 import '../../../tank/presentation/controller/tank_provider.dart';
@@ -37,13 +36,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  void _navigateToEdit([AssetGroupModel? group]) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => AssetGroupEditPage(group: group)),
-    );
   }
 
   void _showAddDialog([AssetGroupModel? group]) {
@@ -284,7 +276,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                         }
                       }
 
-
                       // Map parameter display label
                       final paramLabel = c.parameter == 'DeviceID'
                           ? 'Device Name'
@@ -346,9 +337,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                             style: GoogleFonts.inter(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-                              // color: const Color(
-                              //   0xFF141E7A,
-                              // ), // Make it look clickable
                             ),
                           ),
                           if (group.description.isNotEmpty)
@@ -388,18 +376,6 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                     textAlign: TextAlign.center,
                   ),
 
-                  // SizedBox(
-                  //   width: 100,
-                  //   child: Switch(
-                  //     value: group.displayInTree,
-                  //     onChanged: (v) {
-                  //       ref
-                  //           .read(assetGroupProvider.notifier)
-                  //           .updateGroupStatus(group.id!, v);
-                  //     },
-                  //     activeColor: const Color(0xFF141E7A),
-                  //   ),
-                  // ),
                   SizedBox(
                     width: 100,
                     child: Row(

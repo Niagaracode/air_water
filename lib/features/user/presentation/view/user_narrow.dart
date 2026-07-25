@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/app_theme/app_theme.dart';
+import '../../../../core/helpers/app_colors_helper.dart';
 import '../controller/user_provider.dart';
 import '../model/user_model.dart';
 import '../widgets/add_user_modal.dart';
@@ -195,7 +196,7 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: primary.withOpacity(0.1),
+            color: primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(Icons.people_alt_rounded, color: primary, size: 22),
@@ -329,7 +330,7 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
         ? user.fullName.trim()[0].toUpperCase()
         : '?';
 
-    final roleColor = _colorForRole(user.roleName);
+    final roleColor = AppColorsHelper.colorForRole(user.roleName);
 
     return Material(
       color: Colors.white,
@@ -510,18 +511,6 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
         ),
       ),
     );
-  }
-
-  static final Map<String, Color> _roleColorMap = {
-    'super admin': const Color(0xFF6366F1),
-    'admin': const Color(0xFF0EA5E9),
-    'asset user': const Color(0xFF10B981),
-    'end customer': const Color(0xFFF59E0B),
-  };
-
-  Color _colorForRole(String? role) {
-    if (role == null || role.trim().isEmpty) return primary;
-    return _roleColorMap[role.toLowerCase().trim()] ?? primary;
   }
 
   Widget _buildErrorBanner(String error) {
