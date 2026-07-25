@@ -23,7 +23,15 @@ class AppDropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final safeValue = (value != null && items.contains(value)) ? value : null;
+    T? safeValue;
+    if (value != null) {
+      for (final item in items) {
+        if (item == value) {
+          safeValue = item;
+          break;
+        }
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),

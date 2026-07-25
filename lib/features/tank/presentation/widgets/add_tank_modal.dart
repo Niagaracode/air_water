@@ -34,6 +34,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   SiteAutocompleteInfo? _selectedSite;
   CompanyAutocomplete? _selectedCompany;
   List<TankProduct> _products = [];
+  List<SiteAutocompleteInfo> _sites = [];
   bool _isLoadingDropdowns = false;
 
   List<TankRuleModel> _tankRules = [];
@@ -57,6 +58,13 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       _tonnesController.text = tank.tonnes?.toString() ?? '';
       _descriptionController.text = tank.description ?? '';
       _siteAutocompleteController.text = tank.siteName ?? '';
+      if (tank.siteId != null) {
+        _selectedSite = SiteAutocompleteInfo(
+          siteId: tank.siteId!,
+          siteName: tank.siteName ?? '',
+          addressId: tank.addressId,
+        );
+      }
       _status = tank.status;
       if (tank.companyId != null && tank.companyName != null) {
         _selectedCompany = CompanyAutocomplete(
@@ -83,6 +91,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     Map<String, dynamic> data = {};
     List<TankProduct> products = [];
     List<TankRuleModel> rules = [];
+    List<SiteAutocompleteInfo> sites = [];
 
     try {
       final results = await Future.wait<dynamic>([
@@ -102,6 +111,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           debugPrint('Error loading tank dimensions in modal: $e');
           return null;
         }),
+        ref.read(tankNotifierProvider.notifier).searchSites('').catchError((e) {
+          debugPrint('Error loading sites list: $e');
+          return <SiteAutocompleteInfo>[];
+        }),
       ]);
 
       if (results[0] is Map<String, dynamic>) {
@@ -115,6 +128,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       if (results[2] is List) {
         rules = List<TankRuleModel>.from(results[2] as Iterable);
       }
+
+      if (results.length > 4 && results[4] is List) {
+        sites = List<SiteAutocompleteInfo>.from(results[4] as Iterable);
+      }
     } catch (e, stackTrace) {
       debugPrint('Error loading dropdowns in Future.wait: $e');
       debugPrintStack(stackTrace: stackTrace);
@@ -122,9 +139,19 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
 
     if (!mounted) return;
 
+    if (_selectedSite != null) {
+      final siteMatches = sites.where((s) => s == _selectedSite);
+      if (siteMatches.isNotEmpty) {
+        _selectedSite = siteMatches.first;
+      } else {
+        sites.insert(0, _selectedSite!);
+      }
+    }
+
     setState(() {
       _products = products;
       _tankRules = rules;
+      _sites = sites;
 
       if (widget.tank != null) {
         // UNIT
@@ -544,7 +571,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                         ),
                         const SizedBox(height: 25),
                       ],
-                      _buildLabelField('SITE', _buildSiteAutocomplete()),
+                      _buildLabelField('SITE', _buildSiteDropdown()),
                       const SizedBox(height: 25),
                       _buildLabelField(
                         'ASSIGNED PRODUCT',
@@ -985,64 +1012,25 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
-  Widget _buildSiteAutocomplete() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return RawAutocomplete<SiteAutocompleteInfo>(
-          textEditingController: _siteAutocompleteController,
-          focusNode: FocusNode(),
-          optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty) {
-              return const Iterable<SiteAutocompleteInfo>.empty();
-            }
-            return await ref
-                .read(tankNotifierProvider.notifier)
-                .searchSites(
-                  textEditingValue.text,
-                  companyId: _selectedCompany?.id,
-                );
-          },
-          displayStringForOption: (SiteAutocompleteInfo option) =>
-              option.displayName ?? option.siteName,
-          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return AppTextField(
-              controller: controller,
-              focusNode: focusNode,
-              hint: 'Search Site by Name',
-            );
-          },
-          optionsViewBuilder: (context, onSelected, options) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                child: SizedBox(
-                  width: constraints.maxWidth,
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options.elementAt(index);
-                      return ListTile(
-                        title: Text(
-                          option.displayName ??
-                              "${option.siteName} ${option.fullAddress}",
-                        ),
-                        onTap: () {
-                          onSelected(option);
-                          setState(() {
-                            _selectedSite = option;
-                          });
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
-        );
+  Widget _buildSiteDropdown() {
+    if (_isLoadingDropdowns) {
+      return const LinearProgressIndicator(minHeight: 2);
+    }
+    return AppDropdown<SiteAutocompleteInfo>(
+      value: _selectedSite,
+      items: _sites,
+      itemLabel: (site) {
+        if (site.displayName != null && site.displayName!.isNotEmpty) {
+          return site.displayName!;
+        }
+        final addr = site.fullAddress;
+        return addr.isNotEmpty ? '${site.siteName}, $addr' : site.siteName;
+      },
+      hint: 'Select Site',
+      onChanged: (v) {
+        setState(() {
+          _selectedSite = v;
+        });
       },
     );
   }

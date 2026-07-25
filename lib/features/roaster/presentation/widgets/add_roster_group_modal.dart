@@ -291,8 +291,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           child: SizedBox(
             width: MediaQuery.of(context).size.width < 640 ? MediaQuery.of(context).size.width : 640,
             height: MediaQuery.of(context).size.height,
-            child: Expanded(
-              child: SingleChildScrollView(
+            child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
                     horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
                     vertical: MediaQuery.of(context).size.width < 600 ? 24 : 40),
@@ -606,7 +605,6 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
             ),
           ),
         ),
-      ),
     );
   }
 

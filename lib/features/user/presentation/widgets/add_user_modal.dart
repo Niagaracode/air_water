@@ -346,10 +346,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           child: SizedBox(
             width: isMobile ? double.infinity : 600,
             height: MediaQuery.of(context).size.height,
-            child: Expanded(
-              child: Stack(
-                children: [
-                  SingleChildScrollView(
+            child: Stack(
+              children: [
+                SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
                       horizontal: isMobile ? 20 : 40,
                       vertical: isMobile ? 24 : 48,
@@ -827,7 +826,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
               ),
             ),
           ),
-        ),
       ),
     );
   }

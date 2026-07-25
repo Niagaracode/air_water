@@ -1,13 +1,88 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/site_model.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/app_dropdown.dart';
 import '../../../../shared/widgets/app_autocomplete.dart';
 import '../../../../shared/widgets/location_picker.dart';
 import '../controller/site_provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/utils/time_zones.dart';
 import '../../../../core/app_theme/app_theme.dart';
+
+const Map<String, String> _countryDialCodes = {
+  'India': '+91',
+  'United States': '+1',
+  'United Kingdom': '+44',
+  'United Arab Emirates': '+971',
+  'Canada': '+1',
+  'Australia': '+61',
+  'Singapore': '+65',
+  'Malaysia': '+60',
+  'Germany': '+49',
+  'France': '+33',
+  'Japan': '+81',
+  'China': '+86',
+  'Brazil': '+55',
+  'South Africa': '+27',
+  'Saudi Arabia': '+966',
+  'Qatar': '+974',
+  'Oman': '+968',
+  'Kuwait': '+965',
+  'Bahrain': '+973',
+  'Sri Lanka': '+94',
+  'Bangladesh': '+880',
+  'Pakistan': '+92',
+  'Nepal': '+977',
+  'Indonesia': '+62',
+  'Thailand': '+66',
+  'Vietnam': '+84',
+  'Philippines': '+63',
+  'New Zealand': '+64',
+  'Mexico': '+52',
+  'Spain': '+34',
+  'Italy': '+39',
+  'Netherlands': '+31',
+  'Switzerland': '+41',
+  'Sweden': '+46',
+};
+
+const List<String> _commonDialCodes = [
+  '+91',
+  '+1',
+  '+44',
+  '+971',
+  '+61',
+  '+65',
+  '+60',
+  '+49',
+  '+33',
+  '+81',
+  '+86',
+  '+966',
+  '+974',
+  '+968',
+  '+965',
+  '+973',
+  '+94',
+  '+880',
+  '+92',
+  '+977',
+  '+62',
+  '+66',
+  '+84',
+  '+63',
+  '+64',
+  '+52',
+  '+34',
+  '+39',
+  '+31',
+  '+41',
+  '+46',
+  '+27',
+  '+55',
+];
 
 class AddSiteModal extends ConsumerStatefulWidget {
   final Site? initialSite;
@@ -31,6 +106,7 @@ class AddressControllers {
 
   String? state;
   String? city;
+  String selectedCountryCode = '+91';
   bool isProgrammaticUpdate = false;
 
   void dispose() {
@@ -65,11 +141,15 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
           widget.initialSite!.addressLine3 ?? '';
       _addressRows.first.pinCodeController.text =
           widget.initialSite!.pincode ?? '';
-      _addressRows.first.contactController.text =
-          widget.initialSite!.contactNumber ?? '';
+      _parseContactNumber(_addressRows.first, widget.initialSite!.contactNumber);
       _addressRows.first.country = widget.initialSite!.countryName;
       _addressRows.first.state = widget.initialSite!.stateName;
       _addressRows.first.city = widget.initialSite!.cityName;
+      if (_addressRows.first.country != null &&
+          _countryDialCodes.containsKey(_addressRows.first.country)) {
+        _addressRows.first.selectedCountryCode =
+            _countryDialCodes[_addressRows.first.country]!;
+      }
       _addressRows.first.timeZoneController.text =
           widget.initialSite!.timeZone ?? '';
       _selectedSiteName = widget.initialSite!.name;
@@ -77,6 +157,23 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
     _nameController.addListener(_onNameChanged);
 
     Future.microtask(() => _loadInitialData());
+  }
+
+  void _parseContactNumber(AddressControllers controllers, String? rawContact) {
+    if (rawContact == null || rawContact.trim().isEmpty) {
+      controllers.contactController.text = '';
+      return;
+    }
+    final trimmed = rawContact.trim();
+    final match = RegExp(r'^(\+\d{1,4})[\s\-]*(.*)$').firstMatch(trimmed);
+    if (match != null) {
+      final code = match.group(1)!;
+      final rest = match.group(2)!;
+      controllers.selectedCountryCode = code;
+      controllers.contactController.text = rest;
+    } else {
+      controllers.contactController.text = trimmed;
+    }
   }
 
   void _onNameChanged() {
@@ -91,63 +188,70 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   Future<void> _loadInitialData() async {
     setState(() => _isLoadingCompanies = true);
 
-    if (mounted) {
-      if (widget.initialSite != null) {
+    if (mounted && widget.initialSite != null) {
+      try {
+        final siteRepo = ref.read(siteRepositoryProvider);
+        final addressesData = await siteRepo.getSiteWithAddresses(
+          widget.initialSite!.id,
+        );
 
-        // Fetch ALL addresses for this plant
-        try {
-          final siteRepo = ref.read(siteRepositoryProvider);
-          final addressesData = await siteRepo.getSiteWithAddresses(
-            widget.initialSite!.id,
-          );
+        if (addressesData.isNotEmpty && mounted) {
+          setState(() {
+            var finalAddresses = addressesData;
+            if (widget.targetAddressId != null) {
+              finalAddresses = addressesData
+                  .where(
+                    (a) =>
+                        a['address_id'].toString() ==
+                        widget.targetAddressId.toString(),
+                  )
+                  .toList();
+            }
 
-          if (addressesData.isNotEmpty) {
-            setState(() {
-              // Dispose existing rows first
-              for (var row in _addressRows) {
-                row.dispose();
+            for (int i = 0; i < finalAddresses.length; i++) {
+              final addrJson = finalAddresses[i];
+              final controllers = i < _addressRows.length
+                  ? _addressRows[i]
+                  : AddressControllers();
+
+              controllers.id = addrJson['address_id'] as int?;
+              controllers.addressController.text =
+                  addrJson['address_line_1'] ?? '';
+              controllers.address2Controller.text =
+                  addrJson['address_line_2'] ?? '';
+              controllers.address3Controller.text =
+                  addrJson['address_line_3'] ?? '';
+              controllers.pinCodeController.text =
+                  addrJson['pincode'] ?? '';
+              _parseContactNumber(
+                  controllers, addrJson['contact_number'] as String?);
+              controllers.timeZoneController.text =
+                  addrJson['time_zone'] ?? '';
+              controllers.country = addrJson['country_name'] ?? addrJson['country'];
+              controllers.state = addrJson['state_name'] ?? addrJson['state'];
+              controllers.city = addrJson['city_name'] ?? addrJson['city'];
+
+              if (controllers.country != null &&
+                  _countryDialCodes.containsKey(controllers.country)) {
+                controllers.selectedCountryCode =
+                    _countryDialCodes[controllers.country]!;
               }
-              _addressRows.clear();
 
-              // If targetAddressId is provided, filter to show only that address
-              var finalAddresses = addressesData;
-              if (widget.targetAddressId != null) {
-                finalAddresses = addressesData
-                    .where(
-                      (a) =>
-                  a['address_id'].toString() ==
-                      widget.targetAddressId.toString(),
-                )
-                    .toList();
-              }
-
-              for (var addrJson in finalAddresses) {
-                final controllers = AddressControllers();
-                controllers.id = addrJson['address_id'] as int?;
-
-                controllers.addressController.text =
-                    addrJson['address_line_1'] ?? '';
-                controllers.address2Controller.text =
-                    addrJson['address_line_2'] ?? '';
-                controllers.address3Controller.text =
-                    addrJson['address_line_3'] ?? '';
-                controllers.pinCodeController.text =
-                    addrJson['pincode'] ?? '';
-                controllers.contactController.text =
-                    addrJson['contact_number'] ?? '';
-                controllers.timeZoneController.text =
-                    addrJson['time_zone'] ?? '';
-                controllers.country = addrJson['country_name'];
-                controllers.state = addrJson['state_name'];
-                controllers.city = addrJson['city_name'];
-
+              if (i >= _addressRows.length) {
                 _addressRows.add(controllers);
               }
-            });
-          }
-        } catch (e) {
-          debugPrint('Error fetching plant addresses: $e');
+            }
+
+            if (_addressRows.length > finalAddresses.length) {
+              for (int j = _addressRows.length - 1; j >= finalAddresses.length; j--) {
+                _addressRows[j].dispose();
+                _addressRows.removeAt(j);
+              }
+            }
+          });
         }
+      } catch (e) {
+        debugPrint('Error fetching plant addresses: $e');
       }
     }
   }
@@ -175,31 +279,67 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
   }
 
   Future<void> _save() async {
-    if (_nameController.text.isEmpty) {
+    final siteName = _nameController.text.trim();
+    if (siteName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please fill in Site Name and select a Company'),
+          content: Text('Please fill in Site Name'),
         ),
       );
       return;
     }
 
-    for (var row in _addressRows) {
-      if (row.addressController.text.isEmpty || row.country == null) {
+    String? sanitize(String? str) {
+      if (str == null) return null;
+      final trimmed = str.trim();
+      if (trimmed.isEmpty || trimmed == '--' || trimmed.toLowerCase() == 'null') return null;
+      return trimmed;
+    }
+
+    for (int i = 0; i < _addressRows.length; i++) {
+      final row = _addressRows[i];
+      final country = sanitize(row.country);
+      final address1 = sanitize(row.addressController.text);
+      if (address1 == null || country == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please complete all address details')),
+          SnackBar(content: Text('Please enter Address Line 1 and Country for Address #${i + 1}')),
         );
         return;
       }
     }
 
+    final addressesList = _addressRows.map((row) {
+      final phoneBody = sanitize(row.contactController.text);
+      final fullContact = phoneBody != null
+          ? '${row.selectedCountryCode} $phoneBody'
+          : null;
+
+      return SiteAddressRequest(
+        id: row.id,
+        addressLine1: sanitize(row.addressController.text),
+        addressLine2: sanitize(row.address2Controller.text),
+        addressLine3: sanitize(row.address3Controller.text),
+        pincode: sanitize(row.pinCodeController.text),
+        contactNumber: fullContact,
+        country: sanitize(row.country),
+        state: sanitize(row.state),
+        city: sanitize(row.city),
+        timeZone: sanitize(row.timeZoneController.text),
+      );
+    }).toList();
+
+    final firstRow = _addressRows.first;
 
     final request = SiteCreateRequest(
-      name: _nameController.text,
+      name: siteName,
       orgCode: '',
-      city: _addressRows.first.city,
-      timeZone: '--',
+      country: sanitize(firstRow.country),
+      state: sanitize(firstRow.state),
+      city: sanitize(firstRow.city),
+      timeZone: sanitize(firstRow.timeZoneController.text),
+      status: _status,
       isPartialUpdate: widget.targetAddressId != null,
+      addresses: addressesList,
     );
 
     final bool success;
@@ -698,6 +838,9 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
                 controllers.country = value;
                 controllers.state = null;
                 controllers.city = null;
+                if (value != null && _countryDialCodes.containsKey(value)) {
+                  controllers.selectedCountryCode = _countryDialCodes[value]!;
+                }
                 final defaultTz = TimeZoneUtils.getDefaultTimeZoneForCountry(
                   value,
                 );
@@ -752,9 +895,39 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
           const SizedBox(height: 24),
           _buildLabelField(
             'CONTACT NUMBER',
-            AppTextField(
-              controller: controllers.contactController,
-              hint: 'e.g. +1 234 567 8900',
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 110,
+                  child: AppDropdown<String>(
+                    value: controllers.selectedCountryCode,
+                    hint: 'Code',
+                    items: _commonDialCodes.contains(controllers.selectedCountryCode)
+                        ? _commonDialCodes
+                        : [controllers.selectedCountryCode, ..._commonDialCodes],
+                    itemLabel: (code) => code,
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          controllers.selectedCountryCode = val;
+                        });
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppTextField(
+                    controller: controllers.contactController,
+                    hint: '98765 43210',
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9\s\-]')),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 24),
@@ -819,6 +992,7 @@ class _AddSiteModalState extends ConsumerState<AddSiteModal> {
 
   @override
   void dispose() {
+    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     _companyNameController.dispose();
     for (var controllers in _addressRows) {
