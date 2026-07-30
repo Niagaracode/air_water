@@ -404,13 +404,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                         const SizedBox(height: 32),
                         _buildInfoBar(),
                         const SizedBox(height: 48),
-                        if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                          _buildLabelField(
-                            'PRIMARY COMPANY',
-                            _buildCompanyAutocomplete(),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
 
 
 

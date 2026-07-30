@@ -389,7 +389,7 @@ class AppTableEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 64),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -402,28 +402,28 @@ class AppTableEmptyState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, size: 32, color: const Color(0xFF9CA3AF)),
+            child: Icon(icon, size: 26, color: const Color(0xFF9CA3AF)),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
             title,
             style: GoogleFonts.outfit(
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF374151),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             subtitle,
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: 12,
               color: const Color(0xFF9CA3AF),
             ),
           ),
