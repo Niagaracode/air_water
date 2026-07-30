@@ -17,7 +17,7 @@ extension TankFilterExtension on List<SiteGroupModel> {
         }
 
         // Region filter - using city (adjust if your model uses region)
-        if (selectedRegion != 'All Regions' && tank.city != selectedRegion) {
+        if (selectedRegion != 'All Regions' && tank.region != selectedRegion) {
           return false;
         }
 
