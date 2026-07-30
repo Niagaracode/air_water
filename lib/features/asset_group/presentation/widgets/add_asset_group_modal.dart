@@ -69,6 +69,9 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       ref.read(userProvider.notifier).loadUsers();
       _checkSuperAdminAndLoadCompanies();
       ref.read(productNotifierProvider.notifier).loadProducts();
+      ref.read(deviceNotifierProvider.notifier).loadGroupedDevices(limit: 500);
+      ref.read(siteNotifierProvider.notifier).loadGroupedSites();
+      ref.read(tankNotifierProvider.notifier).loadGroupedTanks();
     });
   }
 
@@ -831,14 +834,48 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
     }
 
     if (rule.parameter == 'DeviceID') {
-      final devices = ref
-          .watch(deviceNotifierProvider)
-          .groupedDevices
+      final deviceState = ref.watch(deviceNotifierProvider);
+      final devices = deviceState.groupedDevices
           .expand((g) => g.devices)
-          .where((d) => _selectedCompanyId == null || d.companyId == _selectedCompanyId)
           .map((d) => {'id': d.id.toString(), 'name': d.deviceId})
           .toList();
       devices.sort((a, b) => (a['name'] ?? '').compareTo(b['name'] ?? ''));
+
+      if (devices.isEmpty && deviceState.isLoading) {
+        return DropdownButtonFormField<String>(
+          isExpanded: true,
+          value: null,
+          items: const [
+            DropdownMenuItem(
+              value: null,
+              child: Text(
+                'Loading devices...',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+          ],
+          onChanged: null,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Select Device ID',
+          ),
+        );
+      }
+
+      if (devices.isEmpty) {
+        return DropdownButtonFormField<String>(
+          isExpanded: true,
+          value: null,
+          items: const [
+            DropdownMenuItem(value: null, child: Text('No devices found')),
+          ],
+          onChanged: null,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: 'Select Device ID',
+          ),
+        );
+      }
 
       // Filter out devices selected in other rows
       final selectedVals = _criteria
