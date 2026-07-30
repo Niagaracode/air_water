@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../app_theme/app_theme.dart';
 
 class AppColorsHelper {
@@ -31,13 +30,13 @@ class AppColorsHelper {
   }
 
   static final List<Color> _groupColors = [
-    const Color(0xFF6366F1), // indigo
-    const Color(0xFF0EA5E9), // sky
-    const Color(0xFF10B981), // emerald
-    const Color(0xFFF59E0B), // amber
-    const Color(0xFFEC4899), // pink
-    const Color(0xFF8B5CF6), // violet
-    const Color(0xFF14B8A6), // teal
+    const Color(0xFF6366F1),
+    const Color(0xFF0EA5E9),
+    const Color(0xFF10B981),
+    const Color(0xFFF59E0B),
+    const Color(0xFFEC4899),
+    const Color(0xFF8B5CF6),
+    const Color(0xFF14B8A6),
   ];
 
   static Color colorForRole(String? role) {

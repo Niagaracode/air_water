@@ -17,6 +17,7 @@ import '../../../../config/app_config.dart';
 import '../../../../core/helpers/date_formatter.dart';
 import '../../../../shared/utils/app_text_styles.dart';
 import '../../../dashboard/data/models/tank_data_model.dart';
+import '../../../dashboard/utils/tank_readings_report_exporter.dart';
 import '../../../dashboard/widgets/tank_level_widget.dart';
 import '../../data/model/tank_channel_model.dart';
 import '../../data/model/tank_reading_model.dart';
@@ -876,10 +877,17 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   final reportTitle = _getReportTitle();
 
                   if (value == 'excel') {
-                    await exportTankReadingsExcel(readings, reportTitle);
+                    await TankReadingsReportExporter.exportExcel(
+                      readings: readings,
+                      tank: widget.tank,
+                      reportTitle: reportTitle,
+                    );
                   }
                   if (value == 'pdf') {
-                    await exportTankReadingsPdf(readings);
+                    await TankReadingsReportExporter.exportPdf(
+                      readings: readings,
+                      tank: widget.tank,
+                    );
                   }
                 },
                 itemBuilder: (context) => [
@@ -1120,10 +1128,17 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
               final reportTitle = _getReportTitle();
 
               if (value == 'excel') {
-                await exportTankReadingsExcel(readings, reportTitle);
+                await TankReadingsReportExporter.exportExcel(
+                  readings: readings,
+                  tank: widget.tank,
+                  reportTitle: reportTitle,
+                );
               }
               if (value == 'pdf') {
-                await exportTankReadingsPdf(readings);
+                await TankReadingsReportExporter.exportPdf(
+                  readings: readings,
+                  tank: widget.tank,
+                );
               }
             },
             itemBuilder: (context) => [
@@ -1879,406 +1894,4 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     return items.join('    ');
   }
 
-
-  Future<void> exportTankReadingsExcel(
-      List<TankReadingModel> readings,
-      String reportTitle,
-      ) async {
-
-    if (!mounted) return;
-
-    final workbook = xls.Workbook();
-    final sheet = workbook.worksheets[0];
-
-    sheet.name = 'Tank Report';
-
-    // =========================
-    // TITLE
-    // =========================
-
-    final titleRange = sheet.getRangeByName('A1:G2');
-    titleRange.merge();
-
-    titleRange.setText('TANK READINGS REPORT');
-
-    titleRange.cellStyle.bold = true;
-    titleRange.cellStyle.fontSize = 20;
-    titleRange.cellStyle.fontColor = '#FFFFFF';
-    titleRange.cellStyle.backColor = '#1F4E78';
-    titleRange.cellStyle.hAlign = xls.HAlignType.center;
-    titleRange.cellStyle.vAlign = xls.VAlignType.center;
-
-    // =========================
-    // REPORT INFO
-    // =========================
-
-
-    sheet.getRangeByName('A4').setText('Site Name');
-    sheet.getRangeByName('B4').setText(widget.tank.siteName);
-
-    sheet.getRangeByName('A5').setText('Product Name');
-    sheet.getRangeByName('B5').setText('${widget.tank.tankName}(${widget.tank.gasType})');
-
-    sheet.getRangeByName('A6').setText('Device ID');
-    sheet.getRangeByName('B6').setText(widget.tank.deviceId);
-
-    sheet.getRangeByName('D5').setText('Generated On');
-    sheet.getRangeByName('E5').setText(
-      DateFormat('dd-MM-yyyy hh:mm a').format(
-        DateTime.now(),
-      ),
-    );
-
-    sheet.getRangeByName('D6').setText('Total Readings');
-    sheet.getRangeByName('E6').setText(
-      readings.length.toString(),
-    );
-
-    for (final cell in [
-      'A4',
-      'A5',
-      'A6',
-      'D4',
-      'D5',
-      'D6'
-    ]) {
-      sheet.getRangeByName(cell).cellStyle.bold = true;
-    }
-
-    // =========================
-    // TABLE HEADER
-    // =========================
-
-    const tableHeaderRow = 8;
-
-    sheet.getRangeByName('A$tableHeaderRow')
-        .setText('Date Time');
-
-    sheet.getRangeByName('B$tableHeaderRow')
-        .setText('Time');
-
-    sheet.getRangeByName('C$tableHeaderRow')
-        .setText('Level (%)');
-
-    sheet.getRangeByName('D$tableHeaderRow')
-        .setText('Pressure (Bar)');
-
-    sheet.getRangeByName('E$tableHeaderRow')
-        .setText('Battery (V)');
-
-    sheet.getRangeByName('F$tableHeaderRow')
-        .setText('Solar (V)');
-
-    sheet.getRangeByName('G$tableHeaderRow')
-        .setText('Volume (L)');
-
-    final headerRange = sheet.getRangeByName('A8:G8');
-
-    headerRange.cellStyle.bold = true;
-    headerRange.cellStyle.fontColor = '#FFFFFF';
-    headerRange.cellStyle.backColor = '#4472C4';
-    headerRange.cellStyle.hAlign =
-        xls.HAlignType.center;
-
-    // =========================
-    // DATA
-    // =========================
-
-    for (int i = 0; i < readings.length; i++) {
-
-      final row = i + 9;
-
-      final item = readings[i];
-
-      sheet.getRangeByName('A$row').setText(
-        DateFormatter.formatDateTime(
-          item.createdAt,
-        ),
-      );
-
-      sheet.getRangeByName('B$row')
-          .setText(item.time);
-
-      sheet.getRangeByName('C$row')
-          .setText(item.level.toString());
-
-      sheet.getRangeByName('D$row')
-          .setText(item.pressure.toString());
-
-      sheet.getRangeByName('E$row')
-          .setText(item.battery.toString());
-
-      sheet.getRangeByName('F$row')
-          .setText(item.solar.toString());
-
-      sheet.getRangeByName('G$row')
-          .setText(item.volume.toString());
-
-      // Alternate row colors
-      if (i.isEven) {
-        sheet.getRangeByName(
-            'A$row:G$row')
-            .cellStyle
-            .backColor = '#F8F9FA';
-      }
-    }
-
-    // =========================
-    // BORDERS
-    // =========================
-
-    final lastRow = readings.length + 8;
-
-    final tableRange =
-    sheet.getRangeByName('A8:G$lastRow');
-
-
-    tableRange.cellStyle.borders.all
-        .lineStyle = xls.LineStyle.thin;
-
-    // =========================
-    // FREEZE HEADER
-    // =========================
-
-    sheet.getRangeByName('A12').freezePanes();
-
-    // =========================
-    // AUTO FIT
-    // =========================
-
-    for (int i = 1; i <= 7; i++) {
-      sheet.autoFitColumn(i);
-    }
-
-    // =========================
-    // SAVE
-    // =========================
-
-    final bytes =
-    workbook.saveAsStream();
-
-    workbook.dispose();
-
-    await FileSaver.instance.saveFile(
-      name: reportTitle,
-      bytes: Uint8List.fromList(bytes),
-      ext: 'xlsx',
-      mimeType: MimeType.microsoftExcel,
-    );
-  }
-
-  Future<void> exportTankReadingsPdf(
-      List<TankReadingModel> readings,
-      ) async {
-
-    final pdf = pw.Document();
-
-    final svgLogo = await rootBundle.loadString(
-      'assets/svg/company_logo.svg',
-    );
-
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: pdfLib.PdfPageFormat.a4,
-        margin: pw.EdgeInsets.all(40),
-        build: (context) => [
-          // Header Section
-          pw.Container(
-            padding: pw.EdgeInsets.only(bottom: 16),
-            decoration: pw.BoxDecoration(
-              border: pw.Border(
-                bottom: pw.BorderSide(
-                  color: pdfLib.PdfColors.blue,
-                  width: 2,
-                ),
-              ),
-            ),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Header(
-                  level: 0,
-                  decoration: const pw.BoxDecoration(), // Removes default line
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text(
-                        'Tank Readings Report',
-                        style: pw.TextStyle(
-                          fontSize: 20,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.SvgImage(
-                        svg: svgLogo,
-                        fit: pw.BoxFit.contain,
-                        height: 25,
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Tank Details in a grid layout
-                pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          _buildDetailRow('Site Name', widget.tank.siteName),
-                          _buildDetailRow('Tank Id & Gas', '${widget.tank.tankName}(${widget.tank.gasType})'),
-                          _buildDetailRow('Device SNo', widget.tank.deviceId),
-                        ],
-                      ),
-                    ),
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          _buildDetailRow('City', widget.tank.city),
-                          _buildDetailRow('Generated On',
-                              DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now())
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          pw.SizedBox(height: 24),
-
-          // Data Table
-          pw.Container(
-            decoration: pw.BoxDecoration(
-              border: pw.Border.all(
-                color: pdfLib.PdfColors.grey300,
-                width: 1,
-              ),
-              borderRadius: pw.BorderRadius.circular(4),
-            ),
-            child: pw.Table.fromTextArray(
-              headers: [
-                'Date Time',
-                'Level',
-                'Pressure',
-                'Battery',
-                'Solar',
-                'Volume',
-              ],
-              headerStyle: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold,
-                color: pdfLib.PdfColors.white,
-                fontSize: 10,
-              ),
-              headerDecoration: pw.BoxDecoration(
-                color: pdfLib.PdfColors.blue,
-                borderRadius: pw.BorderRadius.only(
-                  topLeft: pw.Radius.circular(4),
-                  topRight: pw.Radius.circular(4),
-                ),
-              ),
-              cellAlignment: pw.Alignment.centerLeft,
-              cellStyle: pw.TextStyle(
-                fontSize: 9,
-                color: pdfLib.PdfColors.black,
-              ),
-              rowDecoration: pw.BoxDecoration(
-                border: pw.Border(
-                  bottom: pw.BorderSide(
-                    color: pdfLib.PdfColors.grey200,
-                    width: 0.5,
-                  ),
-                ),
-              ),
-              data: readings.map((item) {
-                return [
-                  DateFormatter.formatDateTime(item.createdAt),
-                  '${item.level.toString()}%',
-                  '${item.pressure.toString()} Bar',
-                  '${item.battery.toString()} V',
-                  '${item.solar.toString()} V',
-                  '${item.volume.toString()} L',
-                ];
-              }).toList(),
-            ),
-          ),
-
-          pw.SizedBox(height: 20),
-
-          // Footer (without page number)
-          pw.Container(
-            alignment: pw.Alignment.center,
-            padding: pw.EdgeInsets.only(top: 12),
-            decoration: pw.BoxDecoration(
-              border: pw.Border(
-                top: pw.BorderSide(
-                  color: pdfLib.PdfColors.grey200,
-                  width: 1,
-                ),
-              ),
-            ),
-            child: pw.Text(
-              'Generated by AirWater System',
-              style: pw.TextStyle(
-                fontSize: 9,
-                color: pdfLib.PdfColors.grey600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    final Uint8List bytes = await pdf.save();
-
-    await FileSaver.instance.saveFile(
-      name: '${widget.tank.tankName}_readings_report_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}',
-      bytes: bytes,
-      ext: 'pdf',
-      mimeType: MimeType.pdf,
-    );
-  }
-
-  pw.Widget _buildDetailRow(String label, String value) {
-    return pw.Container(
-      padding: pw.EdgeInsets.symmetric(vertical: 2),
-      child: pw.Row(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Container(
-            width: 100,
-            child: pw.Text(
-              label,
-              style: pw.TextStyle(
-                fontSize: 11,
-                fontWeight: pw.FontWeight.bold,
-                color: pdfLib.PdfColors.grey700,
-              ),
-            ),
-          ),
-          pw.Text(
-            ': ',
-            style: pw.TextStyle(
-              fontSize: 11,
-              color: pdfLib.PdfColors.grey500,
-            ),
-          ),
-          pw.Expanded(
-            child: pw.Text(
-              value,
-              style: pw.TextStyle(
-                fontSize: 11,
-                fontWeight: pw.FontWeight.bold,
-                color: pdfLib.PdfColors.black,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

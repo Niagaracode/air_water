@@ -7,6 +7,7 @@ import '../../tank/presentation/view/tank_details_view.dart';
 import '../data/models/tank_data_model.dart';
 import '../provider/dashboard_controller.dart';
 import '../provider/dashboard_provider.dart';
+import '../utils/tank_report_exporter.dart';
 import '../widgets/build_loading_view.dart';
 import '../widgets/dashboard_list_view.dart';
 import '../widgets/dashboard_map_view.dart';
@@ -114,15 +115,17 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
                     PopupMenuButton<String>(
                       tooltip: 'Download Report',
                       onSelected: (value) async {
-                        final tanks = ref.read(tankDataProvider).value ?? [];
 
-                        /*if (value == 'excel') {
-                          await exportToExcel(tanks);
-                        }
+                        final allTanks = ref.read(tankDataProvider).value ?? [];
+                        await TankReportExporter.export(
+                          format: value,
+                          allTanks: allTanks,
+                          selectedStatus: _selectedStatus,
+                          selectedRegion: _selectedRegion,
+                          selectedProduct: _selectedProduct,
+                          searchQuery: _searchQuery,
+                        );
 
-                        if (value == 'pdf') {
-                          await exportToPdf(tanks);
-                        }*/
                       },
                       itemBuilder: (context) => [
                         PopupMenuItem(
