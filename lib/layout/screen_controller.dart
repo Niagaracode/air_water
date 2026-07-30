@@ -18,9 +18,7 @@ class ScreenController extends ConsumerWidget {
 
     if (role == null) {
       return const Scaffold(
-        body: Center(child:
-          CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 

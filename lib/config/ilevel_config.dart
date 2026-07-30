@@ -13,9 +13,6 @@ const iLevelConfig = AppConfig(
   mqttMobileHost: '3.0.229.165',
   mqttMobilePort: 1883,
 
-  //mqttUserName: 'mqttuser',
-  //mqttPassword: 'Mqtt@456',
-
   mqttUserName: 'niagara',
   mqttPassword: 'niagara@123',
 
@@ -28,7 +25,7 @@ const iLevelConfig = AppConfig(
   backgroundColor: Color(0xFFFFFFFF),
 
   appLogoPath: 'assets/logos/ilevel/app_logo.svg',
-  companyLogoPath: 'assets/logos/airwater/company_logo.svg',
+  companyLogoPath: 'assets/logos/ilevel/company_logo.svg',
   companySmallLogoPath: 'assets/logos/ilevel/company_logo_small.svg',
   tankImgPath: 'assets/images/tank.svg',
 );
