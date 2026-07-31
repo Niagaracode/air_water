@@ -34,6 +34,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   SiteAutocompleteInfo? _selectedSite;
   CompanyAutocomplete? _selectedCompany;
   List<TankProduct> _products = [];
+  List<SiteAutocompleteInfo> _sites = [];
   bool _isLoadingDropdowns = false;
 
   List<TankRuleModel> _tankRules = [];
@@ -57,6 +58,13 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       _tonnesController.text = tank.tonnes?.toString() ?? '';
       _descriptionController.text = tank.description ?? '';
       _siteAutocompleteController.text = tank.siteName ?? '';
+      if (tank.siteId != null) {
+        _selectedSite = SiteAutocompleteInfo(
+          siteId: tank.siteId!,
+          siteName: tank.siteName ?? '',
+          addressId: tank.addressId,
+        );
+      }
       _status = tank.status;
       if (tank.companyId != null && tank.companyName != null) {
         _selectedCompany = CompanyAutocomplete(
@@ -83,6 +91,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     Map<String, dynamic> data = {};
     List<TankProduct> products = [];
     List<TankRuleModel> rules = [];
+    List<SiteAutocompleteInfo> sites = [];
 
     try {
       final results = await Future.wait<dynamic>([
@@ -102,6 +111,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           debugPrint('Error loading tank dimensions in modal: $e');
           return null;
         }),
+        ref.read(tankNotifierProvider.notifier).searchSites('').catchError((e) {
+          debugPrint('Error loading sites list: $e');
+          return <SiteAutocompleteInfo>[];
+        }),
       ]);
 
       if (results[0] is Map<String, dynamic>) {
@@ -115,6 +128,10 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       if (results[2] is List) {
         rules = List<TankRuleModel>.from(results[2] as Iterable);
       }
+
+      if (results.length > 4 && results[4] is List) {
+        sites = List<SiteAutocompleteInfo>.from(results[4] as Iterable);
+      }
     } catch (e, stackTrace) {
       debugPrint('Error loading dropdowns in Future.wait: $e');
       debugPrintStack(stackTrace: stackTrace);
@@ -122,9 +139,19 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
 
     if (!mounted) return;
 
+    if (_selectedSite != null) {
+      final siteMatches = sites.where((s) => s == _selectedSite);
+      if (siteMatches.isNotEmpty) {
+        _selectedSite = siteMatches.first;
+      } else {
+        sites.insert(0, _selectedSite!);
+      }
+    }
+
     setState(() {
       _products = products;
       _tankRules = rules;
+      _sites = sites;
 
       if (widget.tank != null) {
         // UNIT
@@ -243,13 +270,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
-    final isSuperAdmin = ref.read(userProvider).currentUser?.roleId == 1;
-    if (isSuperAdmin && _selectedCompany == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Company')),
-      );
-      return;
-    }
+
 
     final channelData = getChannelData();
 
@@ -339,6 +360,119 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     });
   }
 
+  void _showEditTankDimensionSideSheet(BuildContext context, TankDimension dim) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Edit Tank Dimension',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: Material(
+            elevation: 8,
+            child: SizedBox(
+              width: 600,
+              height: double.infinity,
+              child: TankDimensionEditView(
+                showViewList: false,
+                tankDimension: dim,
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (dialogContext, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      },
+    ).then((_) async {
+      await ref.read(tankDimensionNotifierProvider.notifier).loadTankDimensions();
+      if (!mounted) return;
+      final updatedDims = ref.read(tankDimensionNotifierProvider).tankDimensions;
+      if (_selectedDimension != null) {
+        final matches = updatedDims.where((d) => d.id == _selectedDimension!.id);
+        setState(() {
+          _selectedDimension = matches.isNotEmpty ? matches.first : null;
+        });
+      }
+    });
+  }
+
+  Future<void> _confirmAndDeleteTankDimension(
+    BuildContext context,
+    TankDimension dim,
+  ) async {
+    final displayName = dim.name.isNotEmpty
+        ? dim.name
+        : (dim.typeName.isNotEmpty ? dim.typeName : dim.type);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Tank Dimension'),
+          content: Text(
+            'Are you sure you want to delete "$displayName"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    final success = await ref
+        .read(tankDimensionNotifierProvider.notifier)
+        .deleteTankDimension(dim.id);
+
+    if (!mounted) return;
+
+    if (success) {
+      if (_selectedDimension?.id == dim.id) {
+        setState(() {
+          _selectedDimension = null;
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.green,
+          content: Text('Tank dimension deleted successfully'),
+        ),
+      );
+    } else {
+      final error = ref.read(tankDimensionNotifierProvider).error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red,
+          content: Text(error ?? 'Delete failed'),
+        ),
+      );
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -420,18 +554,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       const SizedBox(height: 48),
                       _buildLabelField('TANK ID', _buildTankAutocomplete()),
                       const SizedBox(height: 25),
-                      if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                        _buildLabelField(
-                          'PRIMARY COMPANY',
-                          AppTextField(
-                            readOnly: true,
-                            controller: _companyAutocompleteController,
-                            hint: 'Company',
-                          ),
-                        ),
-                        const SizedBox(height: 25),
-                      ],
-                      _buildLabelField('SITE', _buildSiteAutocomplete()),
+
+                      _buildLabelField('SITE', _buildSiteDropdown()),
                       const SizedBox(height: 25),
                       _buildLabelField(
                         'ASSIGNED PRODUCT',
@@ -459,6 +583,45 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                                   if (dim.name.isNotEmpty) return dim.name;
                                   if (dim.typeName.isNotEmpty) return dim.typeName;
                                   return dim.type;
+                                },
+                                itemTrailingBuilder: (context, dim) {
+                                  if (dim == null) return const SizedBox.shrink();
+                                  return Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          _showEditTankDimensionSideSheet(context, dim);
+                                        },
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4.0),
+                                          child: Icon(
+                                            Icons.edit_outlined,
+                                            size: 16,
+                                            color: primary,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      InkWell(
+                                        onTap: () {
+                                          Navigator.of(context).pop();
+                                          _confirmAndDeleteTankDimension(context, dim);
+                                        },
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: const Padding(
+                                          padding: EdgeInsets.all(4.0),
+                                          child: Icon(
+                                            Icons.delete_outline_rounded,
+                                            size: 16,
+                                            color: Color(0xFFDC2626),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
                                 },
                                 hint: 'Select Dimension',
                                 onChanged: (value) {
@@ -771,126 +934,27 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
-  Widget _buildCompanyAutocomplete() {
-    return LayoutBuilder(
-      builder: (context, constraints) => RawAutocomplete<CompanyAutocomplete>(
-        focusNode: _companyFocusNode,
-        textEditingController: _companyAutocompleteController,
-        optionsBuilder: (TextEditingValue v) => v.text.isEmpty
-            ? <CompanyAutocomplete>[]
-            : ref.read(userProvider.notifier).searchCompanies(v.text),
-        displayStringForOption: (o) => o.name,
-        fieldViewBuilder: (context, controller, focus, onSubmitted) =>
-            AppTextField(
-              controller: controller,
-              focusNode: focus,
-              hint: 'Search Company...',
-            ),
-        onSelected: (o) {
-          setState(() {
-            _selectedCompany = o;
-            _selectedSite = null;
-            _siteAutocompleteController.clear();
-          });
-        },
-        optionsViewBuilder: (context, onSelected, options) => Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: constraints.maxWidth,
-              constraints: const BoxConstraints(maxHeight: 300),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: options.length,
-                itemBuilder: (context, i) {
-                  final option = options.elementAt(i);
-                  return ListTile(
-                    hoverColor: const Color(0xFFF3F4F6),
-                    title: Text(
-                      option.name,
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                    onTap: () => onSelected(option),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildSiteAutocomplete() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return RawAutocomplete<SiteAutocompleteInfo>(
-          textEditingController: _siteAutocompleteController,
-          focusNode: FocusNode(),
-          optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty) {
-              return const Iterable<SiteAutocompleteInfo>.empty();
-            }
-            return await ref
-                .read(tankNotifierProvider.notifier)
-                .searchSites(
-                  textEditingValue.text,
-                  companyId: _selectedCompany?.id,
-                );
-          },
-          displayStringForOption: (SiteAutocompleteInfo option) =>
-              option.displayName ?? option.siteName,
-          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return AppTextField(
-              controller: controller,
-              focusNode: focusNode,
-              hint: 'Search Site by Name',
-            );
-          },
-          optionsViewBuilder: (context, onSelected, options) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                child: SizedBox(
-                  width: constraints.maxWidth,
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options.elementAt(index);
-                      return ListTile(
-                        title: Text(
-                          option.displayName ??
-                              "${option.siteName} ${option.fullAddress}",
-                        ),
-                        onTap: () {
-                          onSelected(option);
-                          setState(() {
-                            _selectedSite = option;
-                          });
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
-        );
+
+  Widget _buildSiteDropdown() {
+    if (_isLoadingDropdowns) {
+      return const LinearProgressIndicator(minHeight: 2);
+    }
+    return AppDropdown<SiteAutocompleteInfo>(
+      value: _selectedSite,
+      items: _sites,
+      itemLabel: (site) {
+        if (site.displayName != null && site.displayName!.isNotEmpty) {
+          return site.displayName!;
+        }
+        final addr = site.fullAddress;
+        return addr.isNotEmpty ? '${site.siteName}, $addr' : site.siteName;
+      },
+      hint: 'Select Site',
+      onChanged: (v) {
+        setState(() {
+          _selectedSite = v;
+        });
       },
     );
   }

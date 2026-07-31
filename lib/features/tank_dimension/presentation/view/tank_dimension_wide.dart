@@ -63,7 +63,7 @@ class TankDimensionWide extends ConsumerWidget {
             (index) => Container(
               margin: const EdgeInsets.only(bottom: 5),
               padding: const EdgeInsets.all(5),
-              child: Expanded(child: _skeletonBox(height: 40)),
+              child: _skeletonBox(height: 40),
             ),
           ),
         ],

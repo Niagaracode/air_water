@@ -48,15 +48,12 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
     super.initState();
     _nameController = TextEditingController(text: widget.group.name);
     _descController = TextEditingController(text: widget.group.description);
-    _selectedCompany = widget.group.companyId != null
-        ? CompanyAutocomplete(
-            id: widget.group.companyId!,
-            name: widget.group.companyName ?? '',
-          )
-        : null;
-    if (_selectedCompany != null) {
-      _companyAutocompleteController.text = _selectedCompany!.name;
-    }
+    final currentUser = ref.read(userProvider).currentUser;
+    _selectedCompany = CompanyAutocomplete(
+      id: widget.group.companyId ?? currentUser?.companyId ?? 216,
+      name: widget.group.companyName ?? currentUser?.companyName ?? 'Air Water',
+    );
+    _companyAutocompleteController.text = _selectedCompany!.name;
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(messageTemplateProvider.notifier).loadTemplates();
@@ -216,18 +213,15 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
       }
 
       if (mounted) {
+        final currentUser = ref.read(userProvider).currentUser;
         setState(() {
           _nameController.text = detail.name;
           _descController.text = detail.description;
-          _selectedCompany = detail.companyId != null
-              ? CompanyAutocomplete(
-                  id: detail.companyId!,
-                  name: detail.companyName ?? '',
-                )
-              : null;
-          if (_selectedCompany != null) {
-            _companyAutocompleteController.text = _selectedCompany!.name;
-          }
+          _selectedCompany = CompanyAutocomplete(
+            id: detail.companyId ?? widget.group.companyId ?? currentUser?.companyId ?? 216,
+            name: detail.companyName ?? widget.group.companyName ?? currentUser?.companyName ?? 'Air Water',
+          );
+          _companyAutocompleteController.text = _selectedCompany!.name;
 
           _userConfigs.clear();
           for (final gu in loadedUsers) {
@@ -266,13 +260,6 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
 
     final currentUser = ref.read(userProvider).currentUser;
     if (currentUser == null) return;
-
-    if (currentUser.roleId == 1 && _selectedCompany == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Company')),
-      );
-      return;
-    }
 
     setState(() => _savingRoster = true);
 
@@ -471,14 +458,6 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                         hint: 'e.g. Roster group for notifications',
                       ),
                       const SizedBox(height: 24),
-
-                      // COMPANY (Super Admin only)
-                      if (isSuperAdmin) ...[
-                        _buildLabel('COMPANY*'),
-                        const SizedBox(height: 10),
-                        _buildCompanyDropdown(),
-                        const SizedBox(height: 24),
-                      ],
 
                       _buildLabel('ASSIGN USERS'),
                       const SizedBox(height: 10),
@@ -1233,13 +1212,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
   }
 
 
-  Widget _buildCompanyDropdown() {
-    return AppTextField(
-      readOnly: true,
-      controller: _companyAutocompleteController,
-      hint: 'Company',
-    );
-  }
+
 
   Widget _buildMobileToggle(String label, bool value, ValueChanged<bool> onChanged) {
     return Column(

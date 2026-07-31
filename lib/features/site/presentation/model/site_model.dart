@@ -405,6 +405,65 @@ class SiteGroupedResponse {
   }
 }
 
+class SiteAddressRequest {
+  final int? id;
+  final String? addressLine1;
+  final String? addressLine2;
+  final String? addressLine3;
+  final String? pincode;
+  final String? contactNumber;
+  final String? country;
+  final String? state;
+  final String? city;
+  final String? timeZone;
+
+  SiteAddressRequest({
+    this.id,
+    this.addressLine1,
+    this.addressLine2,
+    this.addressLine3,
+    this.pincode,
+    this.contactNumber,
+    this.country,
+    this.state,
+    this.city,
+    this.timeZone,
+  });
+
+  Map<String, dynamic> toJson() {
+    final map = <String, dynamic>{};
+    if (id != null) map['id'] = id;
+    if (addressLine1 != null && addressLine1!.trim().isNotEmpty) {
+      map['address_line_1'] = addressLine1!.trim();
+    }
+    if (addressLine2 != null && addressLine2!.trim().isNotEmpty) {
+      map['address_line_2'] = addressLine2!.trim();
+    }
+    if (addressLine3 != null && addressLine3!.trim().isNotEmpty) {
+      map['address_line_3'] = addressLine3!.trim();
+    }
+    if (pincode != null && pincode!.trim().isNotEmpty) {
+      map['pincode'] = pincode!.trim();
+    }
+    if (contactNumber != null && contactNumber!.trim().isNotEmpty) {
+      map['contact_number'] = contactNumber!.trim();
+    }
+    if (country != null && country!.trim().isNotEmpty) {
+      map['country'] = country!.trim();
+    }
+    if (state != null && state!.trim().isNotEmpty) {
+      map['state'] = state!.trim();
+    }
+    if (city != null && city!.trim().isNotEmpty) {
+      map['city'] = city!.trim();
+    }
+    if (timeZone != null && timeZone!.trim().isNotEmpty && timeZone != '--') {
+      map['time_zone'] = timeZone!.trim();
+    }
+    return map;
+  }
+}
+
 class SiteCreateRequest {
   final String name;
   final String orgCode;
@@ -412,8 +471,9 @@ class SiteCreateRequest {
   final String? state;
   final String? city;
   final String? timeZone;
+  final int status;
   final bool isPartialUpdate;
-
+  final List<SiteAddressRequest>? addresses;
 
   SiteCreateRequest({
     required this.name,
@@ -422,21 +482,36 @@ class SiteCreateRequest {
     this.state,
     this.city,
     this.timeZone,
+    this.status = 1,
     this.isPartialUpdate = false,
+    this.addresses,
   });
 
-
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> data = {
       'name': name,
       'plant_organization_code': orgCode,
-      'country': country,
-      'state': state,
-      'city': city,
-      'time_zone': timeZone,
+      'status': status,
       'is_partial_update': isPartialUpdate,
     };
 
+    if (country != null && country!.trim().isNotEmpty) {
+      data['country'] = country!.trim();
+    }
+    if (state != null && state!.trim().isNotEmpty) {
+      data['state'] = state!.trim();
+    }
+    if (city != null && city!.trim().isNotEmpty) {
+      data['city'] = city!.trim();
+    }
+    if (timeZone != null && timeZone!.trim().isNotEmpty && timeZone != '--') {
+      data['time_zone'] = timeZone!.trim();
+    }
+    if (addresses != null && addresses!.isNotEmpty) {
+      data['addresses'] = addresses!.map((a) => a.toJson()).toList();
+    }
+
+    return data;
   }
 }
 
@@ -477,8 +552,8 @@ class SiteAutocompleteInfo {
 
   factory SiteAutocompleteInfo.fromJson(Map<String, dynamic> json) {
     return SiteAutocompleteInfo(
-      siteId: json['plant_id'] as int,
-      siteName: json['plant_name'] as String,
+      siteId: (json['plant_id'] ?? json['site_id'] ?? json['id'] ?? 0) as int,
+      siteName: (json['plant_name'] ?? json['site_name'] ?? json['name'] ?? '') as String,
       companyId: json['company_id'] as int?,
       companyName: json['company_name'] as String?,
       displayName: json['display_name'] as String?,
@@ -504,4 +579,17 @@ class SiteAutocompleteInfo {
     ].where((p) => p != null && p.isNotEmpty).toList();
     return parts.join(', ');
   }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    if (other is! SiteAutocompleteInfo) return false;
+    if (siteId > 0 && other.siteId > 0) {
+      return siteId == other.siteId;
+    }
+    return siteName == other.siteName;
+  }
+
+  @override
+  int get hashCode => siteId > 0 ? siteId.hashCode : siteName.hashCode;
 }

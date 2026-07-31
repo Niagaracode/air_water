@@ -181,13 +181,6 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
     final currentUser = ref.read(userProvider).currentUser;
     if (currentUser == null) return;
 
-    if (currentUser.roleId == 1 && _selectedCompany == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Company')),
-      );
-      return;
-    }
-
     final newGroup = AssetGroupModel(
       name: groupName,
       description: _descController.text.trim(),
@@ -291,8 +284,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           child: SizedBox(
             width: MediaQuery.of(context).size.width < 640 ? MediaQuery.of(context).size.width : 640,
             height: MediaQuery.of(context).size.height,
-            child: Expanded(
-              child: SingleChildScrollView(
+            child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(
                     horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
                     vertical: MediaQuery.of(context).size.width < 600 ? 24 : 40),
@@ -358,14 +350,6 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                       hint: 'e.g. Roster group for notifications',
                     ),
                     const SizedBox(height: 24),
-
-                    // ── COMPANY (Super Admin only) ──────────────────────
-                    if (isSuperAdmin) ...[
-                      _buildLabel('COMPANY*'),
-                      const SizedBox(height: 10),
-                      _buildCompanyDropdown(),
-                      const SizedBox(height: 24),
-                    ],
 
                     // ── ASSIGN USERS (always visible) ──────────────────
                     _buildLabel('ASSIGN USERS'),
@@ -606,7 +590,6 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
             ),
           ),
         ),
-      ),
     );
   }
 
@@ -1045,13 +1028,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
     );
   }
 
-  Widget _buildCompanyDropdown() {
-    return AppTextField(
-      readOnly: true,
-      controller: _companyAutocompleteController,
-      hint: 'Company',
-    );
-  }
+
 
 
   // ─── Helpers ───────────────────────────────────────────────────────────────

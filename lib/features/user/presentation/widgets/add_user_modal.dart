@@ -346,10 +346,9 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
           child: SizedBox(
             width: isMobile ? double.infinity : 600,
             height: MediaQuery.of(context).size.height,
-            child: Expanded(
-              child: Stack(
-                children: [
-                  SingleChildScrollView(
+            child: Stack(
+              children: [
+                SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
                       horizontal: isMobile ? 20 : 40,
                       vertical: isMobile ? 24 : 48,
@@ -405,13 +404,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                         const SizedBox(height: 32),
                         _buildInfoBar(),
                         const SizedBox(height: 48),
-                        if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                          _buildLabelField(
-                            'PRIMARY COMPANY',
-                            _buildCompanyAutocomplete(),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
 
 
 
@@ -827,7 +819,6 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
               ),
             ),
           ),
-        ),
       ),
     );
   }

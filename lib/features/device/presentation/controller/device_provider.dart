@@ -117,7 +117,7 @@ class DeviceNotifier extends Notifier<DeviceState> {
     loadGroupedDevices();
   }
 
-  Future<void> loadGroupedDevices() async {
+  Future<void> loadGroupedDevices({int? limit}) async {
     // Auth Guard: Don't fetch if no user is logged in (prevents 401 during logout)
     if (ref.read(userProvider).currentUser == null) return;
 
@@ -126,6 +126,7 @@ class DeviceNotifier extends Notifier<DeviceState> {
       final repository = ref.read(deviceRepositoryProvider);
       final response = await repository.getDevicesGrouped(
         page: 1,
+        limit: limit ?? 50,
         plantName: state.searchSite.isEmpty ? null : state.searchSite,
         deviceId: state.searchDevice.isEmpty ? null : state.searchDevice,
         siteId: state.selectedSiteId,

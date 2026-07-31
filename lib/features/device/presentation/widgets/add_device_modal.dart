@@ -28,6 +28,8 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
   final _siteFocusNode = FocusNode();
   final _tankFocusNode = FocusNode();
 
+  List<SiteAutocompleteInfo> _sites = [];
+  bool _isLoadingSites = false;
   SiteAutocompleteInfo? _selectedSite;
   int? _selectedTankId;
   String? _selectedPowerSource;
@@ -66,6 +68,32 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
 
       _latitude = widget.device!.latitude;
       _longitude = widget.device!.longitude;
+    }
+    _loadSites();
+  }
+
+  Future<void> _loadSites() async {
+    setState(() => _isLoadingSites = true);
+    try {
+      final sites = await ref.read(deviceNotifierProvider.notifier).searchSites('');
+      if (mounted) {
+        if (_selectedSite != null) {
+          final matches = sites.where((s) => s == _selectedSite);
+          if (matches.isNotEmpty) {
+            _selectedSite = matches.first;
+          } else {
+            sites.insert(0, _selectedSite!);
+          }
+        }
+        setState(() {
+          _sites = sites;
+          _isLoadingSites = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingSites = false);
+      }
     }
   }
 
@@ -143,10 +171,9 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
           child: SizedBox(
             width: isMobile ? double.infinity : 600,
             height: MediaQuery.of(context).size.height,
-            child: Expanded(
-              child: Stack(
-                children: [
-                  SingleChildScrollView(
+            child: Stack(
+              children: [
+                SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
                       horizontal: isMobile ? 20 : 40,
                       vertical: isMobile ? 24 : 48,
@@ -222,7 +249,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                           ),
                         ),
                         const SizedBox(height: 32),
-                        _buildLabelField('SITE', _buildSiteAutocomplete()),
+                        _buildLabelField('SITE', _buildSiteDropdown()),
                         const SizedBox(height: 32),
                         _buildLabelField('TANK', _buildTankAutocomplete()),
                         const SizedBox(height: 40),
@@ -459,9 +486,8 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
             ),
           ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
   Future<void> _pickLocation() async {
     final result = await showDialog<LatLng>(
@@ -565,82 +591,27 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     );
   }
 
-  Widget _buildSiteAutocomplete() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return RawAutocomplete<SiteAutocompleteInfo>(
-          textEditingController: _siteAutocompleteController,
-          focusNode: _siteFocusNode,
-          optionsBuilder: (TextEditingValue textEditingValue) async {
-            if (textEditingValue.text.isEmpty) {
-              return const Iterable<SiteAutocompleteInfo>.empty();
-            }
-            return await ref
-                .read(deviceNotifierProvider.notifier)
-                .searchSites(textEditingValue.text);
-          },
-          displayStringForOption: (SiteAutocompleteInfo option) =>
-              option.displayName ?? option.siteName,
-          fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
-            return AppTextField(
-              controller: controller,
-              focusNode: focusNode,
-              hint: 'Search Site by Name',
-              onChanged: (value) {
-                if (value.isEmpty) {
-                  setState(() {
-                    _selectedSite = null;
-                    _selectedTankId = null;
-                    _tankAutocompleteController.clear();
-                  });
-                }
-              },
-            );
-          },
-          optionsViewBuilder: (context, onSelected, options) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                child: SizedBox(
-                  width: constraints.maxWidth,
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (context, index) {
-                      final option = options.elementAt(index);
-
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 4,
-                        ),
-                        title: Text(
-                          option.displayName ??
-                              '${option.siteName} ${option.fullAddress}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                        ),
-                        onTap: () {
-                          onSelected(option);
-                          setState(() {
-                            _selectedSite = option;
-                            // Clear tank selection when site changes
-                            _selectedTankId = null;
-                            _tankAutocompleteController.clear();
-                          });
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
-        );
+  Widget _buildSiteDropdown() {
+    if (_isLoadingSites) {
+      return const LinearProgressIndicator(minHeight: 2);
+    }
+    return AppDropdown<SiteAutocompleteInfo>(
+      value: _selectedSite,
+      items: _sites,
+      itemLabel: (site) {
+        if (site.displayName != null && site.displayName!.isNotEmpty) {
+          return site.displayName!;
+        }
+        final addr = site.fullAddress;
+        return addr.isNotEmpty ? '${site.siteName}, $addr' : site.siteName;
+      },
+      hint: 'Select Site',
+      onChanged: (v) {
+        setState(() {
+          _selectedSite = v;
+          _selectedTankId = null;
+          _tankAutocompleteController.clear();
+        });
       },
     );
   }
