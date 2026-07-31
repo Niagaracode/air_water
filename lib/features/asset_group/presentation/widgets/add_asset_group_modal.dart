@@ -343,50 +343,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                             ],
                           ),
                           const SizedBox(height: 32),
-          
-                          if (widget.initialGroup == null &&
-                              !state.groups.any((g) => g.name == 'All' && g.companyId == _selectedCompanyId)) ...[
-                            _buildLabelField(
-                              'GROUP TYPE',
-                              LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final isNarrow = constraints.maxWidth < 500;
-                                  return isNarrow
-                                      ? Column(
-                                          children: [
-                                            _buildRadioOption(
-                                              'All',
-                                              'Includes all assets automatically',
-                                            ),
-                                            const SizedBox(height: 12),
-                                            _buildRadioOption(
-                                              'Other',
-                                              'Define custom criteria for this group',
-                                            ),
-                                          ],
-                                        )
-                                      : Row(
-                                          children: [
-                                            Expanded(
-                                              child: _buildRadioOption(
-                                                'All',
-                                                'Includes all assets automatically',
-                                              ),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Expanded(
-                                              child: _buildRadioOption(
-                                                'Other',
-                                                'Define custom criteria for this group',
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: 32),
-                          ],
+
 
           
                           if (_groupType == 'Other') ...[
@@ -543,74 +500,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
     );
   }
 
-  Widget _buildRadioOption(String value, String subtitle) {
-    final isSelected = _groupType == value;
-    return InkWell(
-      onTap: () => setState(() => _groupType = value),
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? primary.withValues(alpha: 0.05)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? primary
-                : const Color(0xFFE5E7EB),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: primary.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  value.toUpperCase(),
-                  style: GoogleFonts.outfit(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected
-                        ? primary
-                        : const Color(0xFF374151),
-                  ),
-                ),
-                if (isSelected)
-                  Icon(
-                    Icons.check_circle,
-                    color: primary,
-                    size: 20,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: isSelected
-                    ? primary.withValues(alpha: 0.7)
-                    : const Color(0xFF6B7280),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   TextStyle get _headerStyle => GoogleFonts.inter(
     fontSize: 10,
