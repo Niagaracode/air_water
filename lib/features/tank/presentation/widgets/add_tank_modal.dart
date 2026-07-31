@@ -270,13 +270,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       return;
     }
 
-    final isSuperAdmin = ref.read(userProvider).currentUser?.roleId == 1;
-    if (isSuperAdmin && _selectedCompany == null) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please select a Company')),
-      );
-      return;
-    }
+
 
     final channelData = getChannelData();
 
@@ -560,17 +554,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       const SizedBox(height: 48),
                       _buildLabelField('TANK ID', _buildTankAutocomplete()),
                       const SizedBox(height: 25),
-                      if (ref.watch(userProvider).currentUser?.roleId == 1) ...[
-                        _buildLabelField(
-                          'PRIMARY COMPANY',
-                          AppTextField(
-                            readOnly: true,
-                            controller: _companyAutocompleteController,
-                            hint: 'Company',
-                          ),
-                        ),
-                        const SizedBox(height: 25),
-                      ],
+
                       _buildLabelField('SITE', _buildSiteDropdown()),
                       const SizedBox(height: 25),
                       _buildLabelField(
@@ -950,67 +934,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
-  Widget _buildCompanyAutocomplete() {
-    return LayoutBuilder(
-      builder: (context, constraints) => RawAutocomplete<CompanyAutocomplete>(
-        focusNode: _companyFocusNode,
-        textEditingController: _companyAutocompleteController,
-        optionsBuilder: (TextEditingValue v) => v.text.isEmpty
-            ? <CompanyAutocomplete>[]
-            : ref.read(userProvider.notifier).searchCompanies(v.text),
-        displayStringForOption: (o) => o.name,
-        fieldViewBuilder: (context, controller, focus, onSubmitted) =>
-            AppTextField(
-              controller: controller,
-              focusNode: focus,
-              hint: 'Search Company...',
-            ),
-        onSelected: (o) {
-          setState(() {
-            _selectedCompany = o;
-            _selectedSite = null;
-            _siteAutocompleteController.clear();
-          });
-        },
-        optionsViewBuilder: (context, onSelected, options) => Align(
-          alignment: Alignment.topLeft,
-          child: Material(
-            elevation: 8,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              width: constraints.maxWidth,
-              constraints: const BoxConstraints(maxHeight: 300),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemCount: options.length,
-                itemBuilder: (context, i) {
-                  final option = options.elementAt(i);
-                  return ListTile(
-                    hoverColor: const Color(0xFFF3F4F6),
-                    title: Text(
-                      option.name,
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                    onTap: () => onSelected(option),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildSiteDropdown() {
     if (_isLoadingDropdowns) {
