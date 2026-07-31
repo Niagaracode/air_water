@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-
 import '../../../core/helpers/app_colors_helper.dart';
-
-
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-
-import '../../../core/helpers/app_colors_helper.dart';
 
 class TankLevelWidget extends StatefulWidget {
   final double level;
@@ -217,7 +210,6 @@ class _LiquidPainter extends CustomPainter {
   final double wavePhase;
   final Color color;
   final double bottomRadius;
-
   static const double _waveAmplitude = 3.2;
 
   @override
