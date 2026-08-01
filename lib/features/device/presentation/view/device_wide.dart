@@ -237,11 +237,9 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
         children: [
           AppTableHeaderCell('SI.NO', width: 70),
           AppTableHeaderCell('Date', flex: 2),
-          AppTableHeaderCell('Device ID', flex: 3),
-
-          AppTableHeaderCell('Sim Number', flex: 2),
+          AppTableHeaderCell('Device ID', width: 190),
+          AppTableHeaderCell('Sim Number', width: 160),
           AppTableHeaderCell('Tank', flex: 2),
-          // AppTableHeaderCell('Status', flex: 2),
           AppTableHeaderCell('Site Information', flex: 3),
           AppTableHeaderCell('Action', width: 100),
         ],
@@ -332,11 +330,9 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
           children: [
             const AppTableCell(null, width: 70),
             AppTableCell(device.createdAt?.split('T')[0] ?? '—', flex: 2),
-            AppTableCell(device.deviceId, flex: 3, bold: true),
-
-            AppTableCell(device.simNumber ?? '—', flex: 2),
+            AppTableCell(device.deviceId, width: 190, bold: true),
+            AppTableCell(device.simNumber ?? '—', width: 160),
             AppTableCell(device.tankName ?? '—', flex: 2),
-
             AppTableCell(device.siteInformation?.fullAddress ?? '—', flex: 3),
             AppTableCell(
               null,

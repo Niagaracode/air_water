@@ -67,27 +67,35 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
                     width: tableWidth,
-                    child: Column(
-                      children: [
-                        if (!siteState.isLoading ||
-                            siteState.groupedSites.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0,
-                            ),
-                            child: _buildFixedTableHeader(),
-                          ),
-                        Expanded(
-                          child:
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            if (!siteState.isLoading ||
+                                siteState.groupedSites.isNotEmpty)
+                              _buildFixedTableHeader(),
+                            Expanded(
+                              child:
                               siteState.isLoading &&
                                   siteState.groupedSites.isEmpty
-                              ? const AppTableInitialLoader()
-                              : _buildVirtualizedTable(siteState, siteNotifier),
+                                  ? const AppTableInitialLoader()
+                                  : _buildVirtualizedTable(
+                                siteState,
+                                siteNotifier,
+                              ),
+                            ),
+                            if (siteState.isLoading &&
+                                siteState.groupedSites.isNotEmpty)
+                              const AppTableLoadingMore(),
+                          ],
                         ),
-                        if (siteState.isLoading &&
-                            siteState.groupedSites.isNotEmpty)
-                          const AppTableLoadingMore(),
-                      ],
+                      ),
                     ),
                   ),
                 );
@@ -104,7 +112,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
     return ViewHeader(
       title: 'SITE MANAGEMENT',
       subtitle:
-          'Centralize site information including identification, locations, and status management.',
+      'Centralize site information including identification, locations, and status management.',
       buttonText: 'Add Site',
       onPressed: () {
         showGeneralDialog(
@@ -145,7 +153,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
               return await notifier.searchSites(textEditingValue.text);
             },
             displayStringForOption: (SiteAutocompleteInfo option) =>
-                option.siteName,
+            option.siteName,
             onSelected: (SiteAutocompleteInfo selection) {
               _siteSearchController.text = selection.siteName;
               notifier.setSearchName(selection.siteName);
@@ -153,23 +161,23 @@ class _SiteWideState extends ConsumerState<SiteWide> {
             },
             fieldViewBuilder:
                 (context, controller, focusNode, onFieldSubmitted) {
-                  if (_siteSearchController.text != controller.text &&
-                      _siteSearchController.text.isNotEmpty &&
-                      controller.text.isEmpty) {
-                    controller.text = _siteSearchController.text;
-                  }
+              if (_siteSearchController.text != controller.text &&
+                  _siteSearchController.text.isNotEmpty &&
+                  controller.text.isEmpty) {
+                controller.text = _siteSearchController.text;
+              }
 
-                  return AppTextField(
-                    controller: controller,
-                    focusNode: focusNode,
-                    hint: 'Search By Site',
-                    onSubmitted: (value) {
-                      _siteSearchController.text = value;
-                      notifier.setSearchName(value);
-                      notifier.loadGroupedSites(isReload: true);
-                    },
-                  );
+              return AppTextField(
+                controller: controller,
+                focusNode: focusNode,
+                hint: 'Search By Site',
+                onSubmitted: (value) {
+                  _siteSearchController.text = value;
+                  notifier.setSearchName(value);
+                  notifier.loadGroupedSites(isReload: true);
                 },
+              );
+            },
             optionsViewBuilder: (context, onSelected, options) {
               return Align(
                 alignment: Alignment.topLeft,
@@ -195,9 +203,9 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                           ),
                           subtitle: option.displayName != null
                               ? Text(
-                                  option.displayName!,
-                                  style: GoogleFonts.inter(fontSize: 12),
-                                )
+                            option.displayName!,
+                            style: GoogleFonts.inter(fontSize: 12),
+                          )
                               : null,
                           onTap: () => onSelected(option),
                         );
@@ -254,7 +262,7 @@ class _SiteWideState extends ConsumerState<SiteWide> {
   Widget _buildVirtualizedTable(SiteState state, SiteNotifier notifier) {
     if (state.groupedSites.isEmpty && !state.isLoading) {
       return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24),
+        padding: EdgeInsets.symmetric(vertical: 40),
         child: AppTableEmptyState(
           icon: Icons.park_outlined,
           title: 'No sites found',
@@ -275,7 +283,6 @@ class _SiteWideState extends ConsumerState<SiteWide> {
 
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -300,54 +307,70 @@ class _SiteWideState extends ConsumerState<SiteWide> {
   }
 
   Widget _buildGroupHeader(
-    SiteState state,
-    SiteGroup group,
-    int index,
-    bool isLast,
-  ) {
+      SiteState state,
+      SiteGroup group,
+      int index,
+      bool isLast,
+      ) {
+    final siteName = () {
+      final raw = (group.name ?? '').trim();
+      if (raw.isNotEmpty && raw != 'null') return raw;
+      String? foundSiteName;
+      for (final addr in group.addresses) {
+        final sn = (addr.siteName ?? '').trim();
+        if (sn.isNotEmpty && sn != 'null') {
+          foundSiteName = sn;
+          break;
+        }
+      }
+      return foundSiteName ?? '';
+    }();
+
+    // pull status from the first address in the group — adjust if your
+    // model exposes a dedicated group-level status field instead.
+    final groupStatus = group.addresses.isNotEmpty
+        ? (group.addresses.first.status ?? 1)
+        : 1;
+
     return Container(
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.04),
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade300, width: 1),
-          right: BorderSide(color: Colors.grey.shade300, width: 1),
-          bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
-        ),
-      ),
+      color: primary.withValues(alpha: 0.1),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             SizedBox(
-              width: 70,
+              width: 80,
               child: Text(
                 index.toString().padLeft(2),
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                  color: primary,
                 ),
               ),
             ),
             Text(
-              () {
-                final raw = (group.name ?? '').trim();
-                if (raw.isNotEmpty && raw != 'null') return raw;
-                String? foundSiteName;
-                for (final addr in group.addresses) {
-                  final sn = (addr.siteName ?? '').trim();
-                  if (sn.isNotEmpty && sn != 'null') {
-                    foundSiteName = sn;
-                    break;
-                  }
-                }
-                return foundSiteName ?? '';
-              }(),
+              siteName,
               style: GoogleFonts.outfit(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF111827),
+                color: primary,
               ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            Text(
+              '${group.addresses.length} ${group.addresses.length == 1 ? 'location' : 'locations'}',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF374151),
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 18,
+              color: Color(0xFF374151),
             ),
           ],
         ),
@@ -357,87 +380,77 @@ class _SiteWideState extends ConsumerState<SiteWide> {
 
   Widget _buildFixedTableHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      color: primary.withValues(alpha: 0.1),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+      ),
       child: Row(
         children: [
-          AppTableHeaderCell('SI.NO', width: 70),
+          AppTableHeaderCell('Sl.no', width: 80),
           AppTableHeaderCell('City', flex: 2),
-          AppTableHeaderCell('State', flex: 2),
-          AppTableHeaderCell('Country', flex: 2),
+          AppTableHeaderCell('State', width: 200),
+          AppTableHeaderCell('Country', width: 200),
           AppTableHeaderCell('Address', flex: 3),
-
-          //   AppTableHeaderCell('Status', width: 80),
-          AppTableHeaderCell('Action', width: 80),
+          AppTableHeaderCell('Action', width: 120, textAlign: TextAlign.right),
+          SizedBox(width: 20),
         ],
       ),
     );
   }
 
   Widget _buildSiteRow(SiteGroupAddress site, SiteGroup group, bool isLast) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade300, width: 1),
-          right: BorderSide(color: Colors.grey.shade300, width: 1),
-          bottom: isLast
-              ? BorderSide(color: Colors.grey.shade300, width: 1)
-              : const BorderSide(color: Color(0xFFF3F4F6)),
-        ),
-        borderRadius: isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-              )
-            : BorderRadius.zero,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          children: [
-            const AppTableCell(null, width: 70),
-
-            AppTableCell(site.city ?? '--', flex: 2),
-
-            const SizedBox(width: 16),
-            AppTableCell(site.state ?? '--', flex: 2),
-            AppTableCell(site.country ?? '--', flex: 2),
-
-            AppTableCell(site.fullAddress, flex: 3),
-
-            // AppTableCell(
-            //   null,
-            //   width: 80,
-            //   child: Align(
-            //     alignment: Alignment.centerLeft,
-            //     child: AppStatusBadge(status: site.status ?? 1),
-            //   ),
-            // ),
-            AppTableCell(
-              null,
-              width: 80,
-              child: Row(
-                children: [
-                  AppTableActionButton(
-                    icon: Icons.edit_outlined,
-                    color: primary,
-                    bg: primary.withValues(alpha: 0.1),
-                    onTap: () =>
-                        _showEditModal(site.toSite(), targetAddressId: site.id),
-                  ),
-
-                  const SizedBox(width: 8),
-                  AppTableActionButton(
-                    icon: Icons.delete_outline_rounded,
-                    color: const Color(0xFFDC2626),
-                    bg: const Color(0xFFFEF2F2),
-                    onTap: () => _showDeleteDialog(site.toSite()),
-                  ),
-                ],
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(left: 20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(
+              color: primary.withValues(alpha: 0.3),
+              width: 2,
             ),
-          ],
+            bottom: isLast
+                ? BorderSide.none
+                : const BorderSide(color: Color(0xFFF3F4F6)),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              const AppTableCell(null, width: 80),
+              AppTableCell(site.city ?? '--', flex: 2),
+              AppTableCell(site.state ?? '--', width: 200),
+              AppTableCell(site.country ?? '--', width: 200),
+              AppTableCell(site.fullAddress, flex: 3),
+              SizedBox(
+                width: 120,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    AppTableActionButton(
+                      icon: Icons.edit_outlined,
+                      color: primary,
+                      bg: primary.withValues(alpha: 0.1),
+                      onTap: () => _showEditModal(
+                        site.toSite(),
+                        targetAddressId: site.id,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    AppTableActionButton(
+                      icon: Icons.delete_outline_rounded,
+                      color: const Color(0xFFDC2626),
+                      bg: const Color(0xFFFEF2F2),
+                      onTap: () => _showDeleteDialog(site.toSite()),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 20),
+            ],
+          ),
         ),
       ),
     );
