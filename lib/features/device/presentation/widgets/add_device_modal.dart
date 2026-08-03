@@ -125,15 +125,15 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
 
     final request = DeviceCreateRequest(
       deviceId: _deviceIdController.text,
-      notes: null, // Default to null as requested
+      notes: null,
       simNumber: _simNumberController.text,
-      category: 'Controller', // Default to Controller as requested
+      category: 'Controller',
       siteId: _selectedSite?.siteId ?? widget.device?.siteId,
       addressId: _selectedSite?.addressId ?? widget.device?.addressId,
       companyId: _selectedSite?.companyId ?? widget.device?.companyId,
       address: _selectedSite?.fullAddress,
       tankId: _selectedTankId,
-      unitId: '9', // Default to 'm' (ID 9) as requested
+      unitId: '9',
       powerSource: _selectedPowerSource,
       status: _status,
       lastSync: '1',
@@ -144,8 +144,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     );
 
     final success = widget.device != null
-        ? await ref
-              .read(deviceNotifierProvider.notifier)
+        ? await ref.read(deviceNotifierProvider.notifier)
               .updateDevice(widget.device!.id, request)
         : await ref.read(deviceNotifierProvider.notifier).createDevice(request);
 

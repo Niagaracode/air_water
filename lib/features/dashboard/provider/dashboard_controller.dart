@@ -29,8 +29,7 @@ class DashboardController extends AsyncNotifier<void> {
 
   Future<void> _initializeMqtt() async {
     await mqttNotifier.initializeAndConnect();
-    await mqttNotifier.subscribeToTopic(
-      topic,
+    await mqttNotifier.subscribeToTopic(topic,
       onMessage: _onMqttMessage,
     );
   }
