@@ -127,7 +127,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
       deviceId: _deviceIdController.text,
       notes: null,
       simNumber: _simNumberController.text,
-      category: 'Controller', // Default to Controller as requested
+      category: 'Controller',
       siteId: _selectedSite?.siteId ?? widget.device?.siteId,
       addressId: _selectedSite?.addressId ?? widget.device?.addressId,
       companyId: _selectedSite?.companyId ?? widget.device?.companyId,
