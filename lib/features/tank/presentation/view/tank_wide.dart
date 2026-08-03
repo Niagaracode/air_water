@@ -41,7 +41,7 @@ class _TankWideState extends ConsumerState<TankWide> {
     return ViewHeader(
       title: 'TANK MANAGEMENT',
       subtitle:
-          'Centralize tank information including dimensions, types, products and site associations.',
+      'Centralize tank information including dimensions, types, products and site associations.',
       buttonText: 'Add tank',
       onPressed: () => _showAddDialog(),
     );
@@ -60,7 +60,7 @@ class _TankWideState extends ConsumerState<TankWide> {
             value: state.selectedStatus,
             items: const [null, 1, 0],
             itemLabel: (v) =>
-                v == null ? 'All Status' : (v == 1 ? 'Active' : 'Inactive'),
+            v == null ? 'All Status' : (v == 1 ? 'Active' : 'Inactive'),
             hint: 'Status',
             onChanged: (v) => notifier.setStatus(v),
           ),
@@ -90,7 +90,7 @@ class _TankWideState extends ConsumerState<TankWide> {
             return await notifier.searchSites(textEditingValue.text);
           },
           displayStringForOption: (SiteAutocompleteInfo option) =>
-              option.siteName,
+          option.siteName,
           onSelected: (option) {
             notifier.setSearchSite(option.siteName);
             notifier.loadGroupedTanks();
@@ -236,23 +236,31 @@ class _TankWideState extends ConsumerState<TankWide> {
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
                     width: tableWidth,
-                    child: Column(
-                      children: [
-                        if (!state.isLoading || state.groupedTanks.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24.0,
-                            ),
-                            child: _buildFixedTableHeader(),
-                          ),
-                        Expanded(
-                          child: state.isLoading && state.groupedTanks.isEmpty
-                              ? const AppTableInitialLoader()
-                              : _buildVirtualizedTable(state, notifier),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        if (state.isLoading && state.groupedTanks.isNotEmpty)
-                          const AppTableLoadingMore(),
-                      ],
+                        clipBehavior: Clip.antiAlias,
+                        child: Column(
+                          children: [
+                            if (!state.isLoading ||
+                                state.groupedTanks.isNotEmpty)
+                              _buildFixedTableHeader(),
+                            Expanded(
+                              child: state.isLoading &&
+                                  state.groupedTanks.isEmpty
+                                  ? const AppTableInitialLoader()
+                                  : _buildVirtualizedTable(state, notifier),
+                            ),
+                            if (state.isLoading &&
+                                state.groupedTanks.isNotEmpty)
+                              const AppTableLoadingMore(),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -268,7 +276,7 @@ class _TankWideState extends ConsumerState<TankWide> {
   Widget _buildVirtualizedTable(TankState state, TankNotifier notifier) {
     if (state.groupedTanks.isEmpty && !state.isLoading) {
       return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24),
+        padding: EdgeInsets.symmetric(vertical: 40),
         child: AppTableEmptyState(
           icon: Icons.water_outlined,
           title: 'No tanks found',
@@ -287,7 +295,6 @@ class _TankWideState extends ConsumerState<TankWide> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -313,34 +320,35 @@ class _TankWideState extends ConsumerState<TankWide> {
 
   Widget _buildFixedTableHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      color: primary.withValues(alpha: 0.1),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+      ),
       child: Row(
         children: [
-          AppTableHeaderCell('SI.NO', width: 60),
-          AppTableHeaderCell('Customer/ Tank Id', flex: 2),
-          AppTableHeaderCell('Device id', flex: 2),
-          AppTableHeaderCell('Product', flex: 1, textAlign: TextAlign.center),
-          //    AppTableHeaderCell('Status', flex: 1),
-          AppTableHeaderCell('Site Information', flex: 3),
-          AppTableHeaderCell('Actions', width: 80),
+          AppTableHeaderCell('Sl.no', width: 60),
+          AppTableHeaderCell('Customer/tank id', width: 210),
+          AppTableHeaderCell('Device id', width: 170),
+          AppTableHeaderCell('Product', width: 120, textAlign: TextAlign.center),
+          AppTableHeaderCell('Site information', flex: 3),
+          AppTableHeaderCell(
+            'Actions',
+            width: 120,
+            textAlign: TextAlign.right,
+          ),
+          SizedBox(width: 20),
         ],
       ),
     );
   }
 
   Widget _buildGroupHeader(TankGroup group, int index, bool isLast) {
+
     return Container(
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.04),
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade300, width: 1),
-          right: BorderSide(color: Colors.grey.shade300, width: 1),
-          bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
-        ),
-      ),
+      color: primary.withValues(alpha: 0.1),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             SizedBox(
@@ -349,63 +357,42 @@ class _TankWideState extends ConsumerState<TankWide> {
                 index.toString().padLeft(2),
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1D4ED8),
                 ),
               ),
             ),
-            Expanded(
-              flex: 2,
-              child: Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      group.siteName,
-                      style: GoogleFonts.outfit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF111827),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${group.tanks.length} tanks',
-                      style: GoogleFonts.outfit(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: primary,
-                      ),
-                    ),
-                  ),
-                ],
+            Text(
+              group.siteName,
+              style: GoogleFonts.outfit(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: primary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              group.fullAddress,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF374151),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            Spacer(),
+            Text(
+              '${group.tanks.length} ${group.tanks.length == 1 ? 'tank' : 'tanks'}',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF374151),
               ),
             ),
-            const Expanded(flex: 2, child: SizedBox()),
-            const Expanded(flex: 1, child: SizedBox()),
-            const Expanded(flex: 1, child: SizedBox()),
-            Expanded(
-              flex: 3,
-              child: Text(
-                group.fullAddress,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+            const SizedBox(width: 6),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 18,
+              color: Color(0xFF374151),
             ),
-            const SizedBox(width: 80),
           ],
         ),
       ),
@@ -413,84 +400,63 @@ class _TankWideState extends ConsumerState<TankWide> {
   }
 
   Widget _buildTankRow(
-    Tank tank,
-    TankNotifier notifier,
-    bool isLast,
-    TankGroup group,
-  ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade300, width: 1),
-          right: BorderSide(color: Colors.grey.shade300, width: 1),
-          bottom: isLast
-              ? BorderSide(color: Colors.grey.shade300, width: 1)
-              : const BorderSide(color: Color(0xFFF3F4F6)),
+      Tank tank,
+      TankNotifier notifier,
+      bool isLast,
+      TankGroup group,
+      ) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(
+              color: primary.withValues(alpha: 0.6),
+              width: 2,
+            ),
+            bottom: isLast
+                ? BorderSide.none
+                : const BorderSide(color: Color(0xFFF3F4F6)),
+          ),
         ),
-        borderRadius: isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-              )
-            : BorderRadius.zero,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-        child: Row(
-          children: [
-            const SizedBox(width: 60),
-            Expanded(
-              flex: 2,
-              child: InkWell(
-                child: Text(
-                  tank.tankNumber,
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: Colors.grey.shade600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              const SizedBox(width: 60),
+              AppTableCell(tank.tankNumber ?? '--', width: 210),
+              AppTableCell(tank.deviceId ?? '--', width: 170),
+              AppTableCell(
+                tank.productName ?? '--',
+                width: 120,
+                textAlign: TextAlign.center,
+              ),
+              AppTableCell(tank.fullAddress, flex: 3),
+              SizedBox(
+                width: 120,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    AppTableActionButton(
+                      icon: Icons.edit_outlined,
+                      color: primary,
+                      bg: primary.withValues(alpha: 0.1),
+                      onTap: () => _showAddDialog(tank),
+                    ),
+                    const SizedBox(width: 16),
+                    AppTableActionButton(
+                      icon: Icons.delete_outline,
+                      color: const Color(0xFFDC2626),
+                      bg: const Color(0xFFFEE2E2),
+                      onTap: () => _showDeleteDialog(tank),
+                    ),
+                  ],
                 ),
               ),
-            ),
-
-            AppTableCell(tank.deviceId ?? '--', flex: 2),
-
-            AppTableCell(
-              tank.productName ?? '--',
-              flex: 1,
-              textAlign: TextAlign.center,
-            ),
-
-            // Expanded(
-            //   flex: 1,
-            //   child: Align(
-            //     alignment: Alignment.centerLeft,
-            //     child: AppStatusBadge(status: tank.status),
-            //   ),
-            // ),
-            AppTableCell(tank.fullAddress, flex: 3),
-            SizedBox(
-              width: 80,
-              child: Row(
-                children: [
-                  AppTableActionButton(
-                    icon: Icons.edit_outlined,
-                    color: primary,
-                    bg: primary.withValues(alpha: 0.1),
-                    onTap: () => _showAddDialog(tank),
-                  ),
-                  const SizedBox(width: 5),
-                  AppTableActionButton(
-                    icon: Icons.delete_outline,
-                    color: const Color(0xFFDC2626),
-                    bg: const Color(0xFFFEE2E2),
-                    onTap: () => _showDeleteDialog(tank),
-                  ),
-                ],
-              ),
-            ),
-          ],
+              SizedBox(width: 20),
+            ],
+          ),
         ),
       ),
     );
