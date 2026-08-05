@@ -78,7 +78,6 @@ class DashboardController extends AsyncNotifier<void> {
         result['lastUpdate'] =
             DateFormat('dd/MM/yyyy HH:mm:ss')
                 .parse('$date $time');
-
       } catch (_) {
         result['lastUpdate'] = DateTime.now();
       }

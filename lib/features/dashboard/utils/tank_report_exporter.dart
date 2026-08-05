@@ -84,8 +84,10 @@ class TankReportExporter {
     } else if (format == 'pdf') {
       await _exportToPdf(
         tanksToExport,
+        selectedStatus: selectedStatus,
         selectedRegion: selectedRegion,
         selectedProduct: selectedProduct,
+        searchQuery: searchQuery,
       );
     }
   }
@@ -216,8 +218,208 @@ class TankReportExporter {
     );
   }
 
-
   static Future<void> _exportToPdf(
+      List<TankDataModel> tanks, {
+        required String selectedStatus,
+        required String selectedRegion,
+        required String selectedProduct,
+        required String searchQuery,
+      }) async {
+    final pdf = pw.Document();
+
+    final svgLogo = await rootBundle.loadString(
+      AppConfig.current.companyLogoPath,
+    );
+
+    // Build the same filter summary used in the Excel export
+    final filterParts = <String>[];
+    if (selectedRegion != 'All Regions') filterParts.add('Region: $selectedRegion');
+    if (selectedProduct != 'All Product') filterParts.add('Product: $selectedProduct');
+    if (selectedStatus != 'All Status') filterParts.add('Status: $selectedStatus');
+    if (searchQuery.isNotEmpty) filterParts.add('Search: "$searchQuery"');
+
+    final filterSummary = filterParts.isEmpty
+        ? 'None (showing all records)'
+        : filterParts.join('  |  ');
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: pdfLib.PdfPageFormat.a4,
+        margin: pw.EdgeInsets.all(40),
+        footer: (context) => pw.Container(
+          alignment: pw.Alignment.center,
+          margin: const pw.EdgeInsets.only(top: 10),
+          padding: const pw.EdgeInsets.only(top: 6),
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(
+              top: pw.BorderSide(color: pdfLib.PdfColors.grey300, width: 0.5),
+            ),
+          ),
+          child: pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.SvgImage(svg: svgLogo, fit: pw.BoxFit.contain, height: 12),
+              pw.Text(
+                'Page ${context.pageNumber} of ${context.pagesCount}',
+                style: pw.TextStyle(fontSize: 9, color: pdfLib.PdfColors.grey600),
+              ),
+            ],
+          ),
+        ),
+        build: (context) => [
+          pw.Container(
+            padding: pw.EdgeInsets.only(bottom: 16),
+            decoration: pw.BoxDecoration(
+              border: pw.Border(
+                bottom: pw.BorderSide(color: pdfLib.PdfColors.blue, width: 2),
+              ),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Header(
+                  level: 0,
+                  decoration: const pw.BoxDecoration(),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text(
+                        'Overall Tank Reports',
+                        style: pw.TextStyle(
+                          fontSize: 20,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SvgImage(svg: svgLogo, fit: pw.BoxFit.contain, height: 25),
+                    ],
+                  ),
+                ),
+                pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          _buildDetailRow('Filters', filterSummary),
+                        ],
+                      ),
+                    ),
+                    pw.Expanded(
+                      flex: 2,
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          _buildDetailRow(
+                            'Generated On',
+                            DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now()),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          pw.SizedBox(height: 24),
+
+          pw.Table(
+            border: pw.TableBorder(
+              horizontalInside: pw.BorderSide(color: pdfLib.PdfColors.grey300, width: 0.5),
+              bottom: pw.BorderSide(color: pdfLib.PdfColors.grey300, width: 0.5),
+            ),
+            columnWidths: {
+              0: const pw.FlexColumnWidth(2.2), // Site
+              1: const pw.FlexColumnWidth(1.6), // Tank Id
+              2: const pw.FlexColumnWidth(1.6), // Product
+              3: const pw.FlexColumnWidth(1.2), // Level
+              4: const pw.FlexColumnWidth(1.4), // Pressure
+              5: const pw.FlexColumnWidth(1.2), // Battery
+              6: const pw.FlexColumnWidth(1.2), // Solar
+              7: const pw.FlexColumnWidth(1.4), // Status
+            },
+            children: [
+              // Header row
+              pw.TableRow(
+                decoration: const pw.BoxDecoration(color: pdfLib.PdfColors.blue),
+                children: [
+                  'Site',
+                  'Tank Id',
+                  'Product',
+                  'Level',
+                  'Pressure',
+                  'Battery',
+                  'Solar',
+                  'Status',
+                ].map((h) => pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+                  alignment: pw.Alignment.centerLeft,
+                  child: pw.Text(
+                    h,
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                      color: pdfLib.PdfColors.white,
+                    ),
+                  ),
+                )).toList(),
+              ),
+              // Data rows
+              ...tanks.asMap().entries.map((entry) {
+                final index = entry.key;
+                final tank = entry.value;
+                final bg = index.isEven ? pdfLib.PdfColors.white : pdfLib.PdfColors.grey100;
+
+                final cells = [
+                  tank.siteName,
+                  tank.tankName,
+                  tank.gasType,
+                  '${tank.level}%',
+                  '${tank.pressure} Bar',
+                  '${tank.batteryV} V',
+                  '${tank.solarV} V',
+                  tank.status,
+                ];
+
+                return pw.TableRow(
+                  decoration: pw.BoxDecoration(color: bg),
+                  children: cells.asMap().entries.map((c) {
+                    final isNumericCol = c.key >= 3;
+                    return pw.Container(
+                      padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+                      alignment: isNumericCol ? pw.Alignment.centerLeft : pw.Alignment.centerLeft,
+                      child: pw.Text(
+                        c.value,
+                        style: pw.TextStyle(
+                          fontSize: 9,
+                          color: pdfLib.PdfColors.grey900,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              }),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final Uint8List bytes = await pdf.save();
+
+    await FileSaver.instance.saveFile(
+      name: 'tank_report',
+      bytes: bytes,
+      ext: 'pdf',
+      mimeType: MimeType.pdf,
+    );
+  }
+
+
+  /*static Future<void> _exportToPdf(
       List<TankDataModel> tanks, {
         required String selectedRegion,
         required String selectedProduct,
@@ -401,7 +603,7 @@ class TankReportExporter {
       ext: 'pdf',
       mimeType: MimeType.pdf,
     );
-  }
+  }*/
 
   static pw.Widget _buildDetailRow(String label, String value) {
     return pw.Container(
