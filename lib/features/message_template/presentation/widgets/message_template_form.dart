@@ -583,7 +583,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
         color: Colors.white,
       ),
       child: DropdownButtonFormField<T>(
-        value: value,
+        initialValue: value,
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
