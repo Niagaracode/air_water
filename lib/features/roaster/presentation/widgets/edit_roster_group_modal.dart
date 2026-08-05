@@ -117,6 +117,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
       final repository = ref.read(userRepositoryProvider);
       final response = await repository.searchUsers(
         page: 1,
+        limit: 500,
         companyId: companyId,
       );
       if (mounted) {
@@ -362,7 +363,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
 
     final eligibleUsers = _companyUsers.where((u) {
       final alreadyAdded = _groupUsers.any((a) => a.userId == u.userId);
-      return !alreadyAdded && u.roleId != 1;
+      return !alreadyAdded;
     }).toList();
 
     return Align(

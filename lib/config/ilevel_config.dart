@@ -3,7 +3,7 @@ import 'app_config.dart';
 
 const iLevelConfig = AppConfig(
   appName: 'iLevel',
-  apiUrl: 'https://irrigationcare.niagaraautomation.com:4000/api',
+  apiUrl: 'http://localhost:4000/api',
 
   // Web MQTT
   mqttWebHost: 'wss://irrigationcare.niagaraautomation.com:9443/mqtt',

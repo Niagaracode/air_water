@@ -36,7 +36,6 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
   final Map<int, _UserConfig> _userConfigs = {};
   User? _selectedUserToAdd;
 
-  // Companies loaded for super admin
   List<CompanyAutocomplete> _companies = [];
   bool _isLoadingCompanies = false;
 
@@ -144,6 +143,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
       final repository = ref.read(userRepositoryProvider);
       final response = await repository.searchUsers(
         page: 1,
+        limit: 500,
         companyId: companyId,
       );
       if (mounted) {
@@ -269,7 +269,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
 
     final eligibleUsers = _companyUsers.where((u) {
       final alreadyAdded = _assignedUsers.any((a) => a.userId == u.userId);
-      return !alreadyAdded && u.roleId != 1;
+      return !alreadyAdded;
     }).toList();
 
     return Align(
