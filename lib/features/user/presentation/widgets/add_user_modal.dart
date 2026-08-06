@@ -319,13 +319,32 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       success = await userNotifier.updateUser(widget.user!.userId, request);
     } else {
       success = await userNotifier.createUser(request);
-      if (success) {
-        // ... handled inside notifier if needed, or if we need the ID here later
-      }
     }
 
-    if (success && mounted) {
-      Navigator.pop(context);
+    if (mounted) {
+      if (success) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.user != null
+                  ? 'User updated successfully'
+                  : 'User created successfully',
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        final errorMsg = ref.read(userProvider).error ?? 'Failed to save user';
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

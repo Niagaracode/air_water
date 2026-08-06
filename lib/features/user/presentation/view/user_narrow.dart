@@ -453,6 +453,7 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
                     children: [
                       InkWell(
                         onTap: () async {
+                          final messenger = ScaffoldMessenger.of(context);
                           final confirm = await showDialog<bool>(
                             context: context,
                             builder: (context) => AlertDialog(
@@ -479,7 +480,29 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
                             ),
                           );
                           if (confirm == true) {
-                            await notifier.deleteUser(user.userId);
+                            final success = await notifier.deleteUser(user.userId);
+                            if (mounted) {
+                              if (success) {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('User deleted successfully'),
+                                    backgroundColor: Color(0xFF10B981),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              } else {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      ref.read(userProvider).error ??
+                                          'Failed to delete user',
+                                    ),
+                                    backgroundColor: const Color(0xFFEF4444),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
                           }
                         },
                         borderRadius: BorderRadius.circular(8),
