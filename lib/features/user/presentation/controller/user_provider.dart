@@ -261,7 +261,11 @@ class UserNotifier extends Notifier<UserState> {
   Future<List<Role>> getRoles() async {
     try {
       final repository = ref.read(userRepositoryProvider);
-      return await repository.getRoles();
+      final roles = await repository.getRoles();
+      if (state.currentUser?.roleId == 2) {
+        return roles.where((r) => r.id != 1).toList();
+      }
+      return roles;
     } catch (e) {
       return [];
     }

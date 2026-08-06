@@ -57,7 +57,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
       _nameController.text = widget.initialGroup!.name;
       _descriptionController.text = widget.initialGroup!.description;
       _displayInTree = widget.initialGroup!.displayInTree;
-      _groupType = widget.initialGroup!.name == 'All' ? 'All' : 'Other';
+      _groupType = widget.initialGroup!.name.trim().toLowerCase().contains('all') ? 'All' : 'Other';
       Future.microtask(() => _loadFullDetails());
     } else {
       _groupType = 'Other';
@@ -1381,7 +1381,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   Widget _buildUserSection(UserState userState) {
     final allGroupUsers = userState.users.where((u) => u.companyId == _selectedCompanyId).toList();
 
-    final isEditingAllGroup = _groupType == 'All';
+    final isEditingAllGroup = _groupType == 'All' || _nameController.text.trim().toLowerCase().contains('all');
 
     if (isEditingAllGroup &&
         _assignedUsers.isEmpty &&
@@ -1604,12 +1604,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
           else
             Builder(
               builder: (context) {
-                final displayUsers = _assignedUsers.where((au) {
-                  if (isEditingAllGroup) return true;
-                  final isInAllGroupGlobally =
-                      au.groupNames?.toLowerCase().contains('all') ?? false;
-                  return !isInAllGroupGlobally;
-                }).toList();
+                final displayUsers = _assignedUsers;
 
                 if (displayUsers.isEmpty) {
                   return Container(

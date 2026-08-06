@@ -450,12 +450,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           else
             Builder(
               builder: (context) {
-                final displayUsers = _assignedUsers.where((au) {
-                  if (isEditingAllGroup) return true;
-                  final isInAllGroupGlobally =
-                      au.groupNames?.toLowerCase().contains('all') ?? false;
-                  return !isInAllGroupGlobally;
-                }).toList();
+                final displayUsers = _assignedUsers;
 
                 if (displayUsers.isEmpty) {
                   return Container(

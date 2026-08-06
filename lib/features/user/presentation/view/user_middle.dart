@@ -38,6 +38,17 @@ class _UserMiddleState extends ConsumerState<UserMiddle> {
   }
 
   void _showAddModal([User? user]) {
+    final currentUser = ref.read(userProvider).currentUser;
+    if (user != null && currentUser?.roleId == 2 && user.roleId == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Admin role users cannot edit SuperAdmin accounts'),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -222,78 +233,102 @@ class _UserMiddleState extends ConsumerState<UserMiddle> {
                   user.mobileNumber ?? '-',
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton.icon(
-                      onPressed: () => _showAddModal(user),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: const Text('EDIT'),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton.icon(
-                      onPressed: () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Delete User'),
-                            content: const Text(
-                              'Are you sure you want to delete this user?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text(
-                                  'Delete',
-                                  style: TextStyle(color: Colors.red),
-                                ),
+                (() {
+                  final currentUser = ref.read(userProvider).currentUser;
+                  final canEditUser = !(currentUser?.roleId == 2 && user.roleId == 1);
+                  if (!canEditUser) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Tooltip(
+                          message: 'Admin role users cannot edit SuperAdmin accounts',
+                          child: Row(
+                            children: [
+                              Icon(Icons.lock_outline_rounded, size: 16, color: Colors.grey.shade400),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Not Editable',
+                                style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
                               ),
                             ],
                           ),
-                        );
-                        if (confirm == true) {
-                          final success = await notifier.deleteUser(user.userId);
-                          if (mounted) {
-                            if (success) {
-                              messenger.showSnackBar(
-                                const SnackBar(
-                                  content: Text('User deleted successfully'),
-                                  backgroundColor: Color(0xFF10B981),
-                                  behavior: SnackBarBehavior.floating,
+                        ),
+                      ],
+                    );
+                  }
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => _showAddModal(user),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('EDIT'),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Delete User'),
+                              content: const Text(
+                                'Are you sure you want to delete this user?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
                                 ),
-                              );
-                            } else {
-                              messenger.showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    ref.read(userProvider).error ??
-                                        'Failed to delete user',
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text(
+                                    'Delete',
+                                    style: TextStyle(color: Colors.red),
                                   ),
-                                  backgroundColor: const Color(0xFFEF4444),
-                                  behavior: SnackBarBehavior.floating,
                                 ),
-                              );
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            final success = await notifier.deleteUser(user.userId);
+                            if (mounted) {
+                              if (success) {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('User deleted successfully'),
+                                    backgroundColor: Color(0xFF10B981),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              } else {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      ref.read(userProvider).error ??
+                                          'Failed to delete user',
+                                    ),
+                                    backgroundColor: const Color(0xFFEF4444),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
                             }
                           }
-                        }
-                      },
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: Colors.red,
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          size: 18,
+                          color: Colors.red,
+                        ),
+                        label: const Text(
+                          'DELETE',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
-                      label: const Text(
-                        'DELETE',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  );
+                })(),
               ],
             ),
           ),

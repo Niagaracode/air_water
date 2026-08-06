@@ -40,6 +40,17 @@ class _UserNarrowState extends ConsumerState<UserNarrow> {
   }
 
   void _showAddModal([User? user]) {
+    final currentUser = ref.read(userProvider).currentUser;
+    if (user != null && currentUser?.roleId == 2 && user.roleId == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Admin role users cannot edit SuperAdmin accounts'),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

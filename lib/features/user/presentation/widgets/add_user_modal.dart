@@ -312,6 +312,18 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
       rosterGroupId: widget.user?.rosterGroupId,
     );
 
+    final currentUser = ref.read(userProvider).currentUser;
+    if (widget.user != null && currentUser?.roleId == 2 && widget.user!.roleId == 1) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Admin role users cannot edit SuperAdmin accounts'),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final userNotifier = ref.read(userProvider.notifier);
     bool success;
 
@@ -352,6 +364,10 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
   Widget build(BuildContext context) {
     final userState = ref.watch(userProvider);
     final isMobile = MediaQuery.sizeOf(context).width < 600;
+    final currentUser = userState.currentUser;
+    final isReadOnly = widget.user != null &&
+        currentUser?.roleId == 2 &&
+        widget.user!.roleId == 1;
 
     return Align(
       alignment: Alignment.centerRight,
@@ -421,6 +437,33 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                           ],
                         ),
                         const SizedBox(height: 32),
+                        if (isReadOnly) ...[
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF2F2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFFCA5A5)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.lock_outline_rounded, color: Color(0xFFDC2626), size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Admin role users cannot edit SuperAdmin accounts.',
+                                    style: GoogleFonts.inter(
+                                      color: const Color(0xFF991B1B),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
                         _buildInfoBar(),
                         const SizedBox(height: 48),
 
@@ -798,7 +841,7 @@ class _AddUserModalState extends ConsumerState<AddUserModal> {
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: userState.isProcessing ? null : _save,
+                            onPressed: (userState.isProcessing || isReadOnly) ? null : _save,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primary,
                               foregroundColor: Colors.white,

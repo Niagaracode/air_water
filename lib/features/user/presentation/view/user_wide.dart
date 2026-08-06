@@ -45,6 +45,17 @@ class _UserWideState extends ConsumerState<UserWide> {
   }
 
   void _showAddModal([User? user]) {
+    final currentUser = ref.read(userProvider).currentUser;
+    if (user != null && currentUser?.roleId == 2 && user.roleId == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Admin role users cannot edit SuperAdmin accounts'),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -197,6 +208,8 @@ class _UserWideState extends ConsumerState<UserWide> {
 
         rows: List.generate(state.users.length, (index) {
           final user = state.users[index];
+          final currentUser = state.currentUser;
+          final canEditUser = !(currentUser?.roleId == 2 && user.roleId == 1);
           return DataRow(
             cells: [
               DataCell(TableDataCell(label: '${index + 1}')),
@@ -214,23 +227,32 @@ class _UserWideState extends ConsumerState<UserWide> {
               DataCell(
                 SizedBox(
                   width: 100,
-                  child: Row(
-                    children: [
-                      AppTableActionButton(
-                        icon: Icons.edit_outlined,
-                        color: primary,
-                        bg: primary.withValues(alpha: 0.1),
-                        onTap: () => _showAddModal(user),
-                      ),
-                      const SizedBox(width: 8),
-                      AppTableActionButton(
-                        icon: Icons.delete_outline_rounded,
-                        color: const Color(0xFFDC2626),
-                        bg: const Color(0xFFFEF2F2),
-                        onTap: () => _confirmDelete(user, notifier),
-                      ),
-                    ],
-                  ),
+                  child: canEditUser
+                      ? Row(
+                          children: [
+                            AppTableActionButton(
+                              icon: Icons.edit_outlined,
+                              color: primary,
+                              bg: primary.withValues(alpha: 0.1),
+                              onTap: () => _showAddModal(user),
+                            ),
+                            const SizedBox(width: 8),
+                            AppTableActionButton(
+                              icon: Icons.delete_outline_rounded,
+                              color: const Color(0xFFDC2626),
+                              bg: const Color(0xFFFEF2F2),
+                              onTap: () => _confirmDelete(user, notifier),
+                            ),
+                          ],
+                        )
+                      : Tooltip(
+                          message: 'Admin role users cannot edit SuperAdmin accounts',
+                          child: Icon(
+                            Icons.lock_outline_rounded,
+                            size: 18,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
                 ),
               ),
             ],
