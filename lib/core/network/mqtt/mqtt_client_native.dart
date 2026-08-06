@@ -1,40 +1,19 @@
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
-import '../../../config/app_config.dart';
 
-import 'package:mqtt_client/mqtt_client.dart';
-import 'package:mqtt_client/mqtt_server_client.dart';
+MqttClient setupMqttClient({
+  required String host,
+  required int port,
+  required String clientId,
+  required bool secure,
+}) {
+  final client = MqttServerClient(host, clientId);
 
-
-MqttClient setupMqttClient(String host, String clientId) {
-  return MqttServerClient(
-    host,
-    clientId,
-  );
-}
-/*MqttClient setupMqttClient(String host, String clientId) {
-  String cleanHost = host;
-  bool secure = false;
-  if (host.startsWith('wss://')) {
-    cleanHost = host.substring(6);
-    secure = true;
-  } else if (host.startsWith('ws://')) {
-    cleanHost = host.substring(5);
-  }
-  
-  // Remove port or path suffix if present
-  final colonIndex = cleanHost.indexOf(':');
-  if (colonIndex != -1) {
-    cleanHost = cleanHost.substring(0, colonIndex);
-  } else {
-    final slashIndex = cleanHost.indexOf('/');
-    if (slashIndex != -1) {
-      cleanHost = cleanHost.substring(0, slashIndex);
-    }
-  }
-
-  final client = MqttServerClient.withPort(cleanHost, clientId, AppConfig.current.mqttWebPort);
-  client.useWebSocket = true;
+  client.port = port;
   client.secure = secure;
+
+  // Enable this only if your broker expects MQTT over WebSocket
+  client.useWebSocket = false;
+
   return client;
-}*/
+}

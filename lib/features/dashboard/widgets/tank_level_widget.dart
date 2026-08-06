@@ -43,7 +43,7 @@ class _TankLevelWidgetState extends State<TankLevelWidget>
     const tankWidth = 120.0;
     const tankHeight = 200.0;
     // Height of the cylindrical body
-    const liquidAreaHeight = 169.0;
+    const liquidAreaHeight = 160.0;
     final color = AppColorsHelper.getGasTypeColor(widget.gasType);
     final clampedLevel = widget.level.clamp(0, 100).toDouble();
 
@@ -179,7 +179,7 @@ class _TankLevelWidgetState extends State<TankLevelWidget>
           //--------------------------------------------------
           Positioned(
             left: 72,
-            top: 8,
+            top: 15,
             bottom: 30,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

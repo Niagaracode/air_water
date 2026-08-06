@@ -338,7 +338,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                           ),
                           DataColumn2(
                             label: Text('READING TIME'),
-                            fixedWidth: 170,
+                            fixedWidth: 180,
                           ),
                           DataColumn2(
                             label: Text('THRESHOLDS'),

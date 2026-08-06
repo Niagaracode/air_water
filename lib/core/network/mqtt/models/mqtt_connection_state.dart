@@ -1,3 +1,5 @@
+const _unset = Object();
+
 class MqttConnectionStateModel {
   final bool isConnected;
   final String? error;
@@ -13,13 +15,13 @@ class MqttConnectionStateModel {
 
   MqttConnectionStateModel copyWith({
     bool? isConnected,
-    String? error,
+    Object? error = _unset, // sentinel lets us pass error:null to CLEAR it
     DateTime? lastConnectedAt,
     bool? isConnecting,
   }) {
     return MqttConnectionStateModel(
       isConnected: isConnected ?? this.isConnected,
-      error: error ?? this.error,
+      error: identical(error, _unset) ? this.error : error as String?,
       lastConnectedAt: lastConnectedAt ?? this.lastConnectedAt,
       isConnecting: isConnecting ?? this.isConnecting,
     );

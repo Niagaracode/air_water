@@ -23,7 +23,7 @@ class _CustomerDashboardNarrowState extends ConsumerState<CustomerDashboardNarro
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(dashboardControllerProvider);
+
     final tanksAsync = ref.watch(tankDataProvider);
     final groupedTanks = ref.watch(groupedTanksProvider);
 

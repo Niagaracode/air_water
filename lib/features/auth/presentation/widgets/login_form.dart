@@ -131,9 +131,35 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             height: widget.isNarrow ? 60 : 54,
             child: ElevatedButton(
               onPressed: state.isLoading ? null : _submit,
-              child: state.isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Login'),
+              style: ElevatedButton.styleFrom(
+                disabledBackgroundColor: Theme.of(context).primaryColor.withOpacity(0.7),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
+                child: state.isLoading
+                    ? Row(
+                  key: const ValueKey('loading'),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.black,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Logging in...'),
+                  ],
+                )
+                    : const Text('Login', key: ValueKey('idle')),
+              ),
             ),
           ),
 
