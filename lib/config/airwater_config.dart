@@ -7,12 +7,13 @@ const airWaterConfig = AppConfig(
   apiUrl: 'https://irrigationcare.niagaraautomation.com:4000/api',
 
   // Web MQTTcd
-  mqttWebHost: 'wss://irrigationcare.niagaraautomation.com:9443/mqtt',
+  mqttWebHost: 'irrigationcare.niagaraautomation.com',
   mqttWebPort: 9443,
 
   // Mobile MQTT
   mqttMobileHost: 'irrigationcare.niagaraautomation.com',
   mqttMobilePort: 8883,
+  mqttSecure: true,
 
   mqttUserName: 'mqttuser',
   mqttPassword: 'Mqtt@456',

@@ -1,20 +1,20 @@
-/*
 import 'package:mqtt_client/mqtt_browser_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 
-MqttClient setupMqttClient(String host, String clientId) {
-  final client = MqttBrowserClient(host, clientId);
-  client.websocketProtocols = ['mqtt'];
-  return client;
-}*/
+MqttClient setupMqttClient({
+  required String host,
+  required int port,
+  required String clientId,
+  required bool secure,
+}) {
+  final protocol = secure ? 'wss' : 'ws';
 
-import 'package:mqtt_client/mqtt_browser_client.dart';
-import 'package:mqtt_client/mqtt_client.dart';
-
-MqttClient setupMqttClient(String host, String clientId) {
-  final client = MqttBrowserClient(host,
+  final client = MqttBrowserClient(
+    '$protocol://$host:$port/mqtt',
     clientId,
   );
-  client.websocketProtocols = ['mqtt'];
+
+  client.websocketProtocols = const ['mqtt'];
+
   return client;
 }

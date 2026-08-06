@@ -6,12 +6,13 @@ const iLevelConfig = AppConfig(
   apiUrl: 'http://localhost:4000/api',
 
   // Web MQTT
-  mqttWebHost: 'wss://irrigationcare.niagaraautomation.com:9443/mqtt',
+  mqttWebHost: 'irrigationcare.niagaraautomation.com',
   mqttWebPort: 9443,
 
   // Mobile MQTT
   mqttMobileHost: '3.0.229.165',
   mqttMobilePort: 1883,
+  mqttSecure: false,
 
   mqttUserName: 'niagara',
   mqttPassword: 'niagara@123',

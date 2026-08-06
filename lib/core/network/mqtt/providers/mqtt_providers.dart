@@ -1,117 +1,108 @@
+// lib/core/network/mqtt/providers/mqtt_providers.dart
 import 'dart:async';
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-
 import '../mqtt_service.dart';
 import 'mqtt_notifier.dart';
 import '../models/mqtt_message.dart';
 import '../models/mqtt_connection_state.dart';
 
-/// ------------------------------------------------------------
-/// MQTT SERVICE PROVIDER
-/// ------------------------------------------------------------
+// ==================== SERVICE PROVIDER ====================
 
 final mqttServiceProvider = Provider<MqttService>((ref) {
-
   final service = MqttService.instance;
 
-  /// Initialize only once
+  // Initialize only once
   service.initialize();
 
-  /// IMPORTANT:
-  /// Do NOT disconnect on provider dispose.
-  /// MQTT should stay alive across navigation.
+  ref.onDispose(() {
+    // Don't dispose the service as it should stay alive
+    // But we can clean up if needed
+  });
 
   return service;
 });
 
+// ==================== NOTIFIER PROVIDER ====================
 
-/// ------------------------------------------------------------
-/// MQTT NOTIFIER PROVIDER
-/// ------------------------------------------------------------
-
-final mqttProvider = StateNotifierProvider<
-    MqttNotifier,
-    MqttConnectionStateModel>(
+final mqttProvider = StateNotifierProvider<MqttNotifier, MqttConnectionStateModel>(
       (ref) {
-
     final service = ref.watch(mqttServiceProvider);
-
     return MqttNotifier(service);
   },
 );
 
+// ==================== LAST MESSAGE PROVIDER ====================
 
-/// ------------------------------------------------------------
-/// LAST MESSAGE PROVIDER
-/// ------------------------------------------------------------
-
-final mqttLastMessageProvider =
-Provider.family<MqttMessageModel?, String>(
+final mqttLastMessageProvider = Provider.family<MqttMessageModel?, String>(
       (ref, topic) {
-
-    final mqttNotifier =
-    ref.watch(mqttProvider.notifier);
-
+    final mqttNotifier = ref.watch(mqttProvider.notifier);
     return mqttNotifier.getLastMessage(topic);
   },
 );
 
+// ==================== ALL MESSAGES PROVIDER ====================
 
-/// ------------------------------------------------------------
-/// MQTT TOPIC STREAM PROVIDER
-/// ------------------------------------------------------------
+final mqttAllMessagesProvider = Provider<Map<String, MqttMessageModel>>(
+      (ref) {
+    final mqttNotifier = ref.watch(mqttProvider.notifier);
+    return mqttNotifier.getAllMessages();
+  },
+);
 
-final mqttTopicStreamProvider =
-StreamProvider.family<MqttMessageModel, String>(
+// ==================== TOPIC STREAM PROVIDER ====================
+
+final mqttTopicStreamProvider = StreamProvider.family<MqttMessageModel, String>(
       (ref, topic) {
+    final controller = StreamController<MqttMessageModel>.broadcast();
+    final mqttNotifier = ref.read(mqttProvider.notifier);
 
-    final controller =
-    StreamController<MqttMessageModel>.broadcast();
-
-    final mqttNotifier =
-    ref.read(mqttProvider.notifier);
-
-    /// Store callback reference
     late final Function(MqttMessageModel) callback;
 
     callback = (message) {
-
       if (!controller.isClosed) {
-
+        debugPrint('📤 Stream adding message for $topic');
         controller.add(message);
       }
     };
 
-    /// Subscribe
+    // Subscribe
     Future.microtask(() async {
-
-      /// Ensure MQTT connected
-      await mqttNotifier.initializeAndConnect();
-
-      /// Subscribe topic
-      await mqttNotifier.subscribeToTopic(
-        topic,
-        onMessage: callback,
-      );
+      try {
+        debugPrint('📡 Initializing stream for topic: $topic');
+        await mqttNotifier.initializeAndConnect();
+        await mqttNotifier.subscribeToTopic(topic, onMessage: callback);
+        debugPrint('✅ Stream ready for topic: $topic');
+      } catch (e) {
+        debugPrint('❌ Stream initialization error: $e');
+        if (!controller.isClosed) {
+          controller.addError(e);
+        }
+      }
     });
 
-    /// Cleanup only local stream
     ref.onDispose(() {
-
+      debugPrint('🧹 Cleaning up stream for topic: $topic');
       controller.close();
-
-      /// Optional:
-      /// Remove ONLY callback
-      /// Keep broker subscription alive
-
-      mqttNotifier.unsubscribeFromTopic(
-        topic,
-        onMessage: callback,
-      );
+      mqttNotifier.unsubscribeFromTopic(topic, onMessage: callback);
     });
 
     return controller.stream;
   },
 );
+
+// ==================== DEBUG PROVIDER ====================
+
+final mqttDebugProvider = Provider<Map<String, dynamic>>((ref) {
+  final notifier = ref.watch(mqttProvider.notifier);
+
+  return {
+    'isConnected': ref.watch(mqttProvider.select((state) => state.isConnected)),
+    'isConnecting': ref.watch(mqttProvider.select((state) => state.isConnecting)),
+    'error': ref.watch(mqttProvider.select((state) => state.error)),
+    'lastConnectedAt': ref.watch(mqttProvider.select((state) => state.lastConnectedAt)),
+    'subscribedTopics': notifier.getSubscribedTopics(),
+    'totalMessages': ref.watch(mqttAllMessagesProvider).length,
+  };
+});
