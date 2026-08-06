@@ -12,6 +12,7 @@ class StatisticsCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     final total = statistics['total'] ?? 0;
     final active = statistics['online'] ?? 0;
     final offline = statistics['offline'] ?? 0;
