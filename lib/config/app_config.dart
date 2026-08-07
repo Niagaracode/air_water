@@ -11,6 +11,7 @@ class AppConfig {
   // MQTT Mobile
   final String mqttMobileHost;
   final int mqttMobilePort;
+  final bool mqttSecure;
 
   final String mqttUserName;
   final String mqttPassword;
@@ -39,6 +40,7 @@ class AppConfig {
     // MQTT Mobile
     required this.mqttMobileHost,
     required this.mqttMobilePort,
+    required this.mqttSecure,
 
     required this.mqttUserName,
     required this.mqttPassword,

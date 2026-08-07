@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/app_theme/app_theme.dart';
 import '../../tank/presentation/view/tank_details_view.dart';
 import '../data/models/tank_data_model.dart';
-import '../provider/dashboard_controller.dart';
 import '../provider/dashboard_provider.dart';
 
 import '../utils/tank_report_exporter.dart';
@@ -38,8 +37,6 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
   @override
   Widget build(BuildContext context) {
 
-    /// MQTT + realtime init
-    ref.watch(dashboardControllerProvider);
     final tanksAsync = ref.watch(tankDataProvider);
     final groupedTanks = ref.watch(groupedTanksProvider);
     final statistics = ref.watch(tankStatisticsProvider);

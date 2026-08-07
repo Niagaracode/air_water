@@ -37,8 +37,6 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
   @override
   Widget build(BuildContext context) {
 
-    /// MQTT + realtime init
-    ref.watch(dashboardControllerProvider);
     final tanksAsync = ref.watch(tankDataProvider);
     final groupedTanks = ref.watch(groupedTanksProvider);
     final statistics = ref.watch(tankStatisticsProvider);

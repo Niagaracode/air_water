@@ -75,41 +75,38 @@ final tankStatisticsProvider = Provider<Map<String, int>>((ref) {
   return tankAsync.when(
     data: (tanks) {
 
-      final active = tanks.where((t) {
-        return t.status=='ONLINE';
-      }).length;
+      final onlineTanks = tanks.where((t) => t.status == 'ONLINE').toList();
+      final offlineTanks = tanks.where((t) => t.status == 'OFFLINE').toList();
 
-      final offline = tanks.where((t) {
-        return t.status=='OFFLINE';
-      }).length;
-
-      final lowBattery = tanks.where((t) {
-        final batteryLow = t.isBatteryEnabled &&
+      final lowBattery = onlineTanks.where((t) {
+        final batteryLow =
+            t.isBatteryEnabled &&
                 t.batteryV <= t.thresholdValues.battery;
-        final solarLow = t.isSolarEnabled &&
+
+        final solarLow =
+            t.isSolarEnabled &&
                 t.solarV <= t.thresholdValues.battery;
+
         return batteryLow || solarLow;
       }).length;
 
-
-      final lowLevel = tanks.where((t) {
-        final isLowLevel = t.level <= t.thresholdValues.level;
-        final isReorder = t.level <= t.thresholdValues.reorder;
-        return isLowLevel && !isReorder;
+      final lowLevel = onlineTanks.where((t) {
+        return t.level <= t.thresholdValues.level &&
+            t.level > t.thresholdValues.reorder;
       }).length;
 
-      final lowPressure = tanks.where((t) {
-        return t.pressure <= t.thresholdValues.pressure;
-      }).length;
-
-      final reorder = tanks.where((t) {
+      final reorder = onlineTanks.where((t) {
         return t.level <= t.thresholdValues.reorder;
+      }).length;
+
+      final lowPressure = onlineTanks.where((t) {
+        return t.pressure <= t.thresholdValues.pressure;
       }).length;
 
       return {
         'total': tanks.length,
-        'online': active,
-        'offline': offline,
+        'online': onlineTanks.length,
+        'offline': offlineTanks.length,
         'lowBattery': lowBattery,
         'lowLevel': lowLevel,
         'lowPressure': lowPressure,

@@ -1,7 +1,12 @@
 import 'package:mqtt_client/mqtt_client.dart';
 
-MqttClient setupMqttClient(String host, String clientId) {
+MqttClient setupMqttClient({
+  required String host,
+  required int port,
+  required String clientId,
+  required bool secure,
+}) {
   throw UnsupportedError(
-    'Cannot create MQTT client on this platform',
+    'MQTT is not supported on this platform.',
   );
 }

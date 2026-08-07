@@ -20,11 +20,37 @@ class TankReportExporter {
         required String searchQuery,
       }) {
     return tanks.where((tank) {
+      final matchesStatus = selectedStatus == 'All Status' ||
+          tank.status.trim().toLowerCase() ==
+              selectedStatus.trim().toLowerCase();
+
+      final matchesRegion =
+          selectedRegion == 'All Regions' || tank.region == selectedRegion;
+
+      final matchesProduct =
+          selectedProduct == 'All Product' || tank.gasType == selectedProduct;
+
+      final matchesSearch = searchQuery.isEmpty ||
+          tank.tankName.toLowerCase().contains(searchQuery.trim().toLowerCase()) ||
+          tank.siteName.toLowerCase().contains(searchQuery.trim().toLowerCase());
+
+      return matchesStatus && matchesRegion && matchesProduct && matchesSearch;
+    }).toList();
+  }
+  /*static List<TankDataModel> applyFilters(
+      List<TankDataModel> tanks, {
+        required String selectedStatus,
+        required String selectedRegion,
+        required String selectedProduct,
+        required String searchQuery,
+      }) {
+    return tanks.where((tank) {
+
       final matchesStatus =
           selectedStatus == 'All Status' || tank.status == selectedStatus;
 
       final matchesRegion =
-          selectedRegion == 'All Regions' || tank.region == selectedRegion; // adjust field name if different
+          selectedRegion == 'All Regions' || tank.region == selectedRegion;
 
       final matchesProduct =
           selectedProduct == 'All Product' || tank.gasType == selectedProduct;
@@ -33,9 +59,10 @@ class TankReportExporter {
           tank.tankName.toLowerCase().contains(searchQuery.toLowerCase()) ||
           tank.siteName.toLowerCase().contains(searchQuery.toLowerCase());
 
+
       return matchesStatus && matchesRegion && matchesProduct && matchesSearch;
     }).toList();
-  }
+  }*/
 
   static bool hasActiveFilters({
     required String selectedStatus,
@@ -417,193 +444,6 @@ class TankReportExporter {
       mimeType: MimeType.pdf,
     );
   }
-
-
-  /*static Future<void> _exportToPdf(
-      List<TankDataModel> tanks, {
-        required String selectedRegion,
-        required String selectedProduct,
-      }) async {
-    final pdf = pw.Document();
-
-    final svgLogo = await rootBundle.loadString(
-      AppConfig.current.companyLogoPath,
-    );
-
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: pdfLib.PdfPageFormat.a4,
-        margin: pw.EdgeInsets.all(40),
-        footer: (context) => pw.Container(
-          alignment: pw.Alignment.center,
-          margin: const pw.EdgeInsets.only(top: 10),
-          padding: const pw.EdgeInsets.only(top: 6),
-          decoration: const pw.BoxDecoration(
-            border: pw.Border(
-              top: pw.BorderSide(color: pdfLib.PdfColors.grey300, width: 0.5),
-            ),
-          ),
-          child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              pw.SvgImage(svg: svgLogo, fit: pw.BoxFit.contain, height: 12),
-              pw.Text(
-                'Page ${context.pageNumber} of ${context.pagesCount}',
-                style: pw.TextStyle(fontSize: 9, color: pdfLib.PdfColors.grey600),
-              ),
-            ],
-          ),
-        ),
-        build: (context) => [
-          pw.Container(
-            padding: pw.EdgeInsets.only(bottom: 16),
-            decoration: pw.BoxDecoration(
-              border: pw.Border(
-                bottom: pw.BorderSide(color: pdfLib.PdfColors.blue, width: 2),
-              ),
-            ),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Header(
-                  level: 0,
-                  decoration: const pw.BoxDecoration(),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      pw.Text(
-                        'Overall Tank Reports',
-                        style: pw.TextStyle(
-                          fontSize: 20,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                      pw.SvgImage(svg: svgLogo, fit: pw.BoxFit.contain, height: 25),
-                    ],
-                  ),
-                ),
-                pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          _buildDetailRow('Region', selectedRegion),
-                          _buildDetailRow('Product', selectedProduct),
-                        ],
-                      ),
-                    ),
-                    pw.Expanded(
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          _buildDetailRow(
-                            'Generated On',
-                            DateFormat('dd-MM-yyyy hh:mm a').format(DateTime.now()),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          pw.SizedBox(height: 24),
-
-          pw.Table(
-            border: pw.TableBorder(
-              horizontalInside: pw.BorderSide(color: pdfLib.PdfColors.grey300, width: 0.5),
-              bottom: pw.BorderSide(color: pdfLib.PdfColors.grey300, width: 0.5),
-            ),
-            columnWidths: {
-              0: const pw.FlexColumnWidth(2.2), // Site
-              1: const pw.FlexColumnWidth(1.6), // Tank Id
-              2: const pw.FlexColumnWidth(1.6), // Product
-              3: const pw.FlexColumnWidth(1.2), // Level
-              4: const pw.FlexColumnWidth(1.4), // Pressure
-              5: const pw.FlexColumnWidth(1.2), // Battery
-              6: const pw.FlexColumnWidth(1.2), // Solar
-              7: const pw.FlexColumnWidth(1.4), // Status
-            },
-            children: [
-              // Header row
-              pw.TableRow(
-                decoration: const pw.BoxDecoration(color: pdfLib.PdfColors.blue),
-                children: [
-                  'Site',
-                  'Tank Id',
-                  'Product',
-                  'Level',
-                  'Pressure',
-                  'Battery',
-                  'Solar',
-                  'Status',
-                ].map((h) => pw.Container(
-                  padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-                  alignment: pw.Alignment.centerLeft,
-                  child: pw.Text(
-                    h,
-                    style: pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
-                      color: pdfLib.PdfColors.white,
-                    ),
-                  ),
-                )).toList(),
-              ),
-              // Data rows
-              ...tanks.asMap().entries.map((entry) {
-                final index = entry.key;
-                final tank = entry.value;
-                final bg = index.isEven ? pdfLib.PdfColors.white : pdfLib.PdfColors.grey100;
-
-                final cells = [
-                  tank.siteName,
-                  tank.tankName,
-                  tank.gasType,
-                  '${tank.level}%',
-                  '${tank.pressure} Bar',
-                  '${tank.batteryV} V',
-                  '${tank.solarV} V',
-                  tank.status,
-                ];
-
-                return pw.TableRow(
-                  decoration: pw.BoxDecoration(color: bg),
-                  children: cells.asMap().entries.map((c) {
-                    final isNumericCol = c.key >= 3; // Level, Pressure, Battery, Solar, Status columns right-ish
-                    return pw.Container(
-                      padding: const pw.EdgeInsets.symmetric(vertical: 6, horizontal: 6),
-                      alignment: isNumericCol ? pw.Alignment.centerLeft : pw.Alignment.centerLeft,
-                      child: pw.Text(
-                        c.value,
-                        style: pw.TextStyle(
-                          fontSize: 9,
-                          color: pdfLib.PdfColors.grey900,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                );
-              }),
-            ],
-          ),
-        ],
-      ),
-    );
-
-    final Uint8List bytes = await pdf.save();
-
-    await FileSaver.instance.saveFile(
-      name: 'tank_report',
-      bytes: bytes,
-      ext: 'pdf',
-      mimeType: MimeType.pdf,
-    );
-  }*/
 
   static pw.Widget _buildDetailRow(String label, String value) {
     return pw.Container(
