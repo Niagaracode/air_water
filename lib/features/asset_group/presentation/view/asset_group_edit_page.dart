@@ -119,7 +119,12 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
             }
           }
           _initialCriteriaCount = _criteria.length;
-          _assignedUsers = List.from(fullGroup.users ?? []);
+          _assignedUsers = List.from(
+            (fullGroup.users ?? []).where((u) {
+              final role = (u.roleName ?? '').toLowerCase().replaceAll(' ', '');
+              return !role.contains('superadmin');
+            }),
+          );
           _selectedCompanyId = fullGroup.companyId;
           if (_criteria.isEmpty) _addCriteria();
           _isLoadingDetails = false;
@@ -274,12 +279,10 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
   }
 
   Widget _buildUserSection(UserState userState) {
-    final allGroupUsers = userState.users
-        .where(
-          (u) =>
-              u.companyId == _selectedCompanyId,
-        )
-        .toList();
+    final allGroupUsers = userState.users.where((u) {
+      final isSuper = u.roleId == 1 || (u.roleName ?? '').toLowerCase().replaceAll(' ', '').contains('superadmin');
+      return u.companyId == _selectedCompanyId && !isSuper;
+    }).toList();
 
     final isEditingAllGroup =
         _nameController.text.trim().toLowerCase() == 'all';
@@ -311,8 +314,9 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       final isAlreadyAssigned = _assignedUsers.any(
         (au) => au.userId == u.userId,
       );
-      // Do not exclude Super Admin or Company Admin
-      final isRestrictedRole = false;
+      final isSuperAdmin = u.roleId == 1 ||
+          (u.roleName ?? '').toLowerCase().replaceAll(' ', '').contains('superadmin');
+      if (isSuperAdmin) return false;
 
       // If we are NOT editing the "All" group, exclude users who are already in the "All" group globally
       final isInAllGroupGlobally =
@@ -321,7 +325,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
 
       final isCorrectCompany = u.companyId == _selectedCompanyId;
 
-      return !isAlreadyAssigned && !isRestrictedRole && isCorrectCompany;
+      return !isAlreadyAssigned && isCorrectCompany;
     }).toList();
 
     return Container(
