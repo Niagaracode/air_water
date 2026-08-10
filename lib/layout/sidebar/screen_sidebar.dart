@@ -40,7 +40,7 @@ class ScreenSidebar extends ConsumerWidget {
               border: Border(
                 right: BorderSide(
                   color: Colors.black.withValues(alpha: 0.08),
-                  width: 1,
+                  width: 1.5,
                 ),
               ),
             ),
@@ -201,7 +201,7 @@ class SidebarGroup extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -209,7 +209,7 @@ class SidebarGroup extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
+              color: color.withValues(alpha: 0.17),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -217,7 +217,7 @@ class SidebarGroup extends StatelessWidget {
               style: GoogleFonts.outfit(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
-                color: color.withValues(alpha: 0.95),
+                color: Colors.black54,
                 letterSpacing: 0.6,
               ),
             ),
@@ -231,8 +231,8 @@ class SidebarGroup extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                 left: BorderSide(
-                  color: color.withValues(alpha: 0.3),
-                  width: 2,
+                  color: color.withValues(alpha: 0.7),
+                  width: 1.3,
                 ),
               ),
             ),
