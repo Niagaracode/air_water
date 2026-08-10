@@ -195,7 +195,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
     if (success && mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Asset Group saved successfully')),
+        const SnackBar(content: Text('User Group saved successfully')),
       );
     }
   }
@@ -215,7 +215,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
         title: Text(
-          widget.group == null ? 'Create Asset Group' : 'Edit Asset Group',
+          widget.group == null ? 'Create User Group' : 'Edit User Group',
           style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
         ),
         actions: [

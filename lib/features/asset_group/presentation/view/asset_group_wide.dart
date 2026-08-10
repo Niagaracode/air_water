@@ -103,7 +103,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
 
   Widget _buildHeader(BuildContext context) {
     return ViewHeader(
-      title: 'ASSET GROUP MANAGER',
+      title: 'USER GROUP MANAGER',
       subtitle:
           'Define dynamic grouping rules based on asset parameters and assign users.',
       buttonText: 'CREATE GROUP',
@@ -171,7 +171,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     if (state.groups.isEmpty) {
       return const AppTableEmptyState(
         icon: Icons.layers_outlined,
-        title: 'No Asset Groups defined',
+        title: 'No User Groups defined',
         subtitle: 'Click "Create Group" to start defining asset rules.',
       );
     }
@@ -396,7 +396,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
                             showDialog(
                               context: context,
                               builder: (context) => AlertDialog(
-                                title: const Text('Delete Asset Group'),
+                                title: const Text('Delete User Group'),
                                 content: Text(
                                   'Are you sure you want to delete "${group.name}"? This action cannot be undone.',
                                 ),

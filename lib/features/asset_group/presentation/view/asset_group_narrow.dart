@@ -173,7 +173,7 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ASSET GROUP MANAGEMENT',
+                    'USER GROUP MANAGEMENT',
                     style: GoogleFonts.outfit(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -544,7 +544,7 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
             ),
             const SizedBox(height: 12),
             Text(
-              'No asset groups found',
+              'No user groups found',
               style: GoogleFonts.inter(
                 color: Colors.grey.shade500,
                 fontSize: 14,
@@ -553,7 +553,7 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Create your first asset group to get started',
+              'Create your first user group to get started',
               style: GoogleFonts.inter(
                 color: Colors.grey.shade400,
                 fontSize: 12,
@@ -574,7 +574,7 @@ class _AssetGroupNarrowState extends ConsumerState<AssetGroupNarrow> {
           borderRadius: BorderRadius.circular(14),
         ),
         title: Text(
-          'Delete Asset Group',
+          'Delete User Group',
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w700,
             fontSize: 18,
