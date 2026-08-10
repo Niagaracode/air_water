@@ -12,6 +12,9 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
   final Map<String, Set<void Function(MqttMessageModel)>> _topicCallbacks = {};
   final Set<String> _subscribedTopics = {};
 
+  // Maps MQTT requestId -> setting id
+  //final Map<String, String> _requestToSettingId = {};
+
   Future<void>? _connectFuture;
   bool _isInitialized = false;
 

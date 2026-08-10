@@ -44,7 +44,7 @@ class TankDetailsTab extends ConsumerWidget {
       color: Colors.white,
       child: SingleChildScrollView(
         child: SizedBox(
-          height: 350,
+          height: 470,
           child: TankMultiLineChart(
             data: readingsState.readings,
           ),

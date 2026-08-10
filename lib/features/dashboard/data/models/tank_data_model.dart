@@ -30,6 +30,9 @@ class TankDataModel {
   final String thresholds;
   final String channelStatus;
 
+  final double minLevel;
+  final double maxLevel;
+
   TankDataModel({
     required this.id,
     required this.tankName,
@@ -51,6 +54,8 @@ class TankDataModel {
     required this.longitude,
     required this.thresholds,
     required this.channelStatus,
+    required this.minLevel,
+    required this.maxLevel,
   });
 
   factory TankDataModel.fromJson(Map<String, dynamic> json) {
@@ -75,6 +80,8 @@ class TankDataModel {
       longitude: double.tryParse('${json['longitude']}') ?? 0,
       thresholds: json['thresholds'] ?? '00:00_3.5_25.0_1.0_20.0',
       channelStatus: json['channel_status'] ?? '1_1_1_1',
+      minLevel: json['minLevel'] ?? 0,
+      maxLevel: json['maxLevel'] ?? 100,
     );
   }
 
@@ -123,6 +130,8 @@ class TankDataModel {
       longitude: longitude,
       thresholds: thresholds,
       channelStatus: channelStatus,
+      minLevel: minLevel,
+      maxLevel: maxLevel,
     );
   }
 

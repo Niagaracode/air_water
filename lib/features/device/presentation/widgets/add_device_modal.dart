@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../data/providers/device_settings_update_provider.dart';
 import '../model/device_model.dart';
 import '../../../site/presentation/model/site_model.dart';
 import '../controller/device_provider.dart';
 import '../../../../shared/widgets/app_text_field.dart';
 import '../../../../shared/widgets/app_dropdown.dart';
+import '../model/device_setting_update.dart';
 import '../widgets/map_picker_dialog.dart';
 import '../../../../shared/widgets/app_autocomplete.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/app_theme/app_theme.dart';
+import 'device_settings_update_dialog.dart';
 
 class AddDeviceModal extends ConsumerStatefulWidget {
   final Device? device;
@@ -109,17 +112,24 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
   }
 
   Future<void> _save() async {
+
     final messenger = ScaffoldMessenger.of(context);
 
-    if (_deviceIdController.text.isEmpty) {
+   if (_deviceIdController.text.trim().isEmpty) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('Device ID is required')),
+        const SnackBar(
+          content: Text('Device ID is required'),
+        ),
       );
       return;
     }
 
     if (_selectedTankId == null) {
-      messenger.showSnackBar(const SnackBar(content: Text('Invalid Tank')));
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Invalid Tank'),
+        ),
+      );
       return;
     }
 
@@ -144,13 +154,90 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
     );
 
     final success = widget.device != null
-        ? await ref.read(deviceNotifierProvider.notifier)
-              .updateDevice(widget.device!.id, request)
+        ? await ref.read(deviceNotifierProvider.notifier).updateDevice(widget.device!.id, request)
         : await ref.read(deviceNotifierProvider.notifier).createDevice(request);
+
+    if (!success || !mounted) {
+      return;
+    }
 
     if (success && mounted) {
       Navigator.pop(context);
     }
+
+    final settings = <DeviceSettingUpdate>[
+      DeviceSettingUpdate(
+        id: 'DT',
+        name: 'Date-Time',
+        value: 'DT,26/08/07/14/57/10,',
+      ),
+
+      DeviceSettingUpdate(
+        id: 'PL',
+        name: 'Pressure Low',
+        value: 'pressure_low,6',
+      ),
+
+      DeviceSettingUpdate(
+        id: 'SL',
+        name: 'Solar Low',
+        value: 'solar_low,5',
+      ),
+
+      DeviceSettingUpdate(
+        id: 'BL',
+        name: 'Battery Low',
+        value: 'battery_low,8',
+      ),
+
+      DeviceSettingUpdate(
+        id: 'GLH',
+        name: 'Gas Level High',
+        value: 'gas_level_high,90',
+      ),
+
+      DeviceSettingUpdate(
+        id: 'RL',
+        name: 'Reorder Level',
+        value: 'REORDERLEVEL,30',
+      ),
+
+      DeviceSettingUpdate(
+        id: 'GCL',
+        name: 'Gas Level Critical',
+        value: 'gas_level_critical,20',
+      ),
+
+      DeviceSettingUpdate(
+        id: 'GLL',
+        name: 'Gas Level Low',
+        value: 'gas_level_low,10',
+      ),
+
+      DeviceSettingUpdate(
+        id: 'DIN',
+        name: 'Data Interval',
+        value: 'DATAINTERVAL,0100',
+      ),
+
+      DeviceSettingUpdate(
+        id: 'SRT',
+        name: 'Sensor Rating',
+        value:
+        'SENSORRATING,1,6500,,O2,1.00000,1.00000,0,',
+      ),
+    ];
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return DeviceSettingsUpdateDialog(
+          deviceId: _deviceIdController.text.trim(),
+          settings: settings,
+        );
+      },
+    );
   }
 
   @override
@@ -190,8 +277,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    widget.device != null
-                                        ? 'Edit Device'
+                                    widget.device != null ? 'Edit Device'
                                         : 'Create New Device',
                                     style: GoogleFonts.outfit(
                                       fontSize: 28,
@@ -228,9 +314,7 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                         const SizedBox(height: 32),
                         _buildInfoBar(),
                         const SizedBox(height: 48),
-
-                        _buildLabelField(
-                          'DEVICE',
+                        _buildLabelField('DEVICE',
                           AppAutocomplete<String>(
                             controller: _deviceIdController,
                             hint: 'Enter Unique Device ID',
@@ -252,7 +336,6 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                         const SizedBox(height: 32),
                         _buildLabelField('TANK', _buildTankAutocomplete()),
                         const SizedBox(height: 40),
-
                         // Section: Network & Location
                         Row(
                           children: [
@@ -274,7 +357,6 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                           thickness: 1,
                           color: Color(0xFFF3F4F6),
                         ),
-
                         _buildLabelField(
                           'SIM CARD NUMBER',
                           AppTextField(
@@ -345,11 +427,8 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
                           ],
                         ),
                         const SizedBox(height: 24),
-
                         const SizedBox(height: 40),
-
                         const SizedBox(height: 40),
-
                         // Status Selector
                         Container(
                           padding: const EdgeInsets.all(24),

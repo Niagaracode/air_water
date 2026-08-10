@@ -68,7 +68,7 @@ class _TankMultiLineChartState extends State<TankMultiLineChart> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          height: 315,
+          height: 435,
           child: SfCartesianChart(
             trackballBehavior: _trackball,
             zoomPanBehavior: _zoomPan,
