@@ -418,7 +418,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                 value: item.value,
                 unit: getChannelUnit(item.name),
                 readingTime: DateFormatter.formatDateTime(item.readingTime),
-                thresholdText: buildThresholdText(item.threshold),
+                thresholdText: 'Threshold : ${buildThresholdText(item.threshold)}',
               ),
             );
           }).toList(),
