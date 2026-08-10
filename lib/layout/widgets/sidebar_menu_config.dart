@@ -6,7 +6,8 @@ const mainMenu = [
   SidebarMenuItem(
     key: 'Dashboard',
     label: 'Dashboard',
-    icon: Icons.home_rounded,
+    icon: Icons.dashboard_rounded,
+    iconColor: Colors.indigo,
     allowedRoles: [
       UserRole.superAdmin,
       UserRole.companyAdmin,
@@ -19,27 +20,44 @@ const configurationMenu = [
   SidebarMenuItem(
     key: 'Site',
     label: 'Site',
-    icon: Icons.local_florist_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    icon: Icons.location_on_rounded,
+    iconColor: Colors.green,
+    allowedRoles: [
+      UserRole.superAdmin,
+      UserRole.companyAdmin,
+    ],
   ),
+
   SidebarMenuItem(
     key: 'Tank',
     label: 'Tank',
-    icon: Icons.storage_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    icon: Icons.water_rounded,
+    iconColor: Colors.blue,
+    allowedRoles: [
+      UserRole.superAdmin,
+      UserRole.companyAdmin,
+    ],
   ),
 
   SidebarMenuItem(
     key: 'Device',
     label: 'Device',
-    icon: Icons.settings_input_component_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    icon: Icons.memory_rounded,
+    iconColor: Colors.deepPurple,
+    allowedRoles: [
+      UserRole.superAdmin,
+      UserRole.companyAdmin,
+    ],
   ),
+
   SidebarMenuItem(
     key: 'Product',
     label: 'Product',
-    icon: Icons.category_rounded,
-    allowedRoles: [UserRole.superAdmin],
+    icon: Icons.inventory_2_rounded,
+    iconColor: Colors.orange,
+    allowedRoles: [
+      UserRole.superAdmin,
+    ],
   ),
 ];
 
@@ -48,13 +66,22 @@ const userMenu = [
     key: 'User',
     label: 'User',
     icon: Icons.person_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    iconColor: Colors.teal,
+    allowedRoles: [
+      UserRole.superAdmin,
+      UserRole.companyAdmin,
+    ],
   ),
+
   SidebarMenuItem(
     key: 'Asset Group',
     label: 'Asset Group',
-    icon: Icons.layers_outlined,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    icon: Icons.account_tree_rounded,
+    iconColor: Colors.cyan,
+    allowedRoles: [
+      UserRole.superAdmin,
+      UserRole.companyAdmin,
+    ],
   ),
 ];
 
@@ -62,20 +89,34 @@ const eventsMenu = [
   SidebarMenuItem(
     key: 'Rule Group',
     label: 'Rule Group',
-    icon: Icons.rule_folder_outlined,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    icon: Icons.rule_rounded,
+    iconColor: Colors.deepOrange,
+    allowedRoles: [
+      UserRole.superAdmin,
+      UserRole.companyAdmin,
+    ],
   ),
+
   SidebarMenuItem(
     key: 'Message Template',
     label: 'Message Template',
-    icon: Icons.forum_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    icon: Icons.markunread_rounded,
+    iconColor: Colors.pink,
+    allowedRoles: [
+      UserRole.superAdmin,
+      UserRole.companyAdmin,
+    ],
   ),
+
   SidebarMenuItem(
-    key: 'Roster',
+    key: 'Roster Group',
     label: 'Roster Group',
-    icon: Icons.people_alt_rounded,
-    allowedRoles: [UserRole.superAdmin, UserRole.companyAdmin],
+    icon: Icons.groups_rounded,
+    iconColor: Colors.amber,
+    allowedRoles: [
+      UserRole.superAdmin,
+      UserRole.companyAdmin,
+    ],
   ),
 ];
 
@@ -83,17 +124,22 @@ const reportMenu = [
   SidebarMenuItem(
     key: 'Report',
     label: 'Events',
-    icon: Icons.event_note_rounded,
+    icon: Icons.event_rounded,
+    iconColor: Colors.red,
     allowedRoles: [
       UserRole.superAdmin,
       UserRole.companyAdmin,
       UserRole.customer,
     ],
   ),
+
   SidebarMenuItem(
     key: 'Activity',
     label: 'User Activity Logs',
-    icon: Icons.report,
-    allowedRoles: [UserRole.superAdmin],
+    icon: Icons.history_rounded,
+    iconColor: Colors.blueGrey,
+    allowedRoles: [
+      UserRole.superAdmin,
+    ],
   ),
 ];

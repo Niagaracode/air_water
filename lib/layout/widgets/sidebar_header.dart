@@ -21,7 +21,7 @@ class SidebarHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox(
       height: 65,
-      width: isExpanded ? 250 : 70,
+      width: isExpanded ? 250 : 72,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: 65,

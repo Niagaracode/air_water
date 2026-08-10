@@ -46,7 +46,7 @@ class ScreenHeader extends ConsumerWidget {
         child: Row(
           children: [
             SidebarHeader(isExpanded: isExpanded, userRole: userRole),
-            const SizedBox(width: 16),
+            const SizedBox(width: 20),
             Text(
               '${AppConfig.current.appName} welcomes, $finalDisplayName!',
               style: GoogleFonts.outfit(fontSize: 20, color: Colors.black54),

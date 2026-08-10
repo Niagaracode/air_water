@@ -5,12 +5,14 @@ class SidebarMenuItem {
   final String key;
   final String label;
   final IconData icon;
+  final Color iconColor;
   final List<UserRole> allowedRoles;
 
   const SidebarMenuItem({
     required this.key,
     required this.label,
     required this.icon,
+    required this.iconColor,
     required this.allowedRoles,
   });
 }

@@ -5,6 +5,7 @@ import '../../core/app_theme/app_theme.dart';
 
 class NaveMenu extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String label;
   final bool isSelected;
   final bool isExpanded;
@@ -13,6 +14,7 @@ class NaveMenu extends StatelessWidget {
   const NaveMenu({
     super.key,
     required this.icon,
+    required this.iconColor,
     required this.label,
     required this.isExpanded,
     required this.onTap,
@@ -24,37 +26,37 @@ class NaveMenu extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeInOut,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
+      margin: EdgeInsets.symmetric(
+        horizontal: isExpanded ? 6 : 10,
+        vertical: 1,
+      ),
       decoration: BoxDecoration(
-        color: isSelected ? primary.withValues(alpha: 0.9): Colors.transparent,
-        borderRadius: BorderRadius.circular(3),
+        color: isSelected ? primary.withValues(alpha: 0.9) : Colors.transparent,
+        borderRadius: BorderRadius.circular(6),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(6),
         onTap: onTap,
-        hoverColor: Colors.black.withValues(alpha: 0.08),
-        splashColor: Colors.black.withValues(alpha: 0.12),
+        hoverColor: Colors.black.withValues(alpha: 0.05),
+        splashColor: Colors.black.withValues(alpha: 0.08),
         child: Padding(
           padding: EdgeInsets.symmetric(
-            vertical: 10,
-            horizontal: isExpanded ? 14 : 0,
+            vertical: 8,
+            horizontal: isExpanded ? 12 : 0,
           ),
           child: Row(
-            mainAxisAlignment: isExpanded
-                ? MainAxisAlignment.start
-                : MainAxisAlignment.center,
+            mainAxisAlignment:
+            isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
             children: [
               /// ICON
-              Icon(
-                icon,
-                size: 20,
-                color: isSelected ? Colors.white : primary.withValues(alpha: 0.7),
+              Icon(icon, size: 20,
+                color: isSelected ? Colors.white : iconColor,
               ),
 
               /// SPACE — animate instead of jump
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: isExpanded ? 12 : 0,
+                width: isExpanded ? 10 : 0,
               ),
 
               /// LABEL — smooth fade/size animation
@@ -71,11 +73,12 @@ class NaveMenu extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.fade,
                       style: GoogleFonts.outfit(
-                        fontSize: 15,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: isSelected ? Colors.white : Colors.black.withValues(alpha: 0.88),
+                        fontSize: 15.5,
+                        fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected
+                            ? Colors.white
+                            : Colors.black.withValues(alpha: 0.78),
                       ),
                     ),
                   ),
