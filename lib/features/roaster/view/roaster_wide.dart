@@ -168,7 +168,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Select an asset group to configure notifications.',
+                        'Select an User group to configure notifications.',
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           color: const Color(0xFF6B7280),
@@ -240,7 +240,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No asset groups found',
+              'No user groups found',
               style: GoogleFonts.inter(color: const Color(0xFF9CA3AF)),
             ),
           ],

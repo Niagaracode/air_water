@@ -74,9 +74,9 @@ const userMenu = [
   ),
 
   SidebarMenuItem(
-    key: 'Asset Group',
-    label: 'Asset Group',
-    icon: Icons.account_tree_rounded,
+    key: 'User Group',
+    label: 'User Group',
+    icon: Icons.groups,
     iconColor: Colors.cyan,
     allowedRoles: [
       UserRole.superAdmin,

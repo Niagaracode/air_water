@@ -284,7 +284,7 @@ class _TankWideState extends ConsumerState<TankWide> {
       );
     }
 
-    // Generate linear list (Site Headers + Tank Rows + Asset Groups)
+    // Generate linear list (Site Headers + Tank Rows + User Groups)
     final List<dynamic> items = [];
     for (int i = 0; i < state.groupedTanks.length; i++) {
       final group = state.groupedTanks[i];
