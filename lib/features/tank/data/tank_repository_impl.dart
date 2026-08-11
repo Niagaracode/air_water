@@ -1,6 +1,7 @@
 import 'package:air_water/features/tank/data/model/tank_channel_model.dart';
 import 'package:air_water/features/tank/data/tank_repository.dart';
 
+import 'model/sent_and_received_model.dart';
 import 'model/tank_event_model.dart';
 import 'model/tank_model.dart';
 import 'model/tank_rule_model.dart';
@@ -111,6 +112,11 @@ class TankRepositoryImpl implements TankRepository {
   @override
   Future<void> updateTankChannelEvent(int tankId, Map<String, dynamic> data) {
     return _api.updateTankEvent(tankId, data);
+  }
+
+  @override
+  Future<List<SentAndReceivedModel>> getTankSentAndReceived(int tankId) {
+    return _api.getTankSentAndReceived(tankId);
   }
 
 }
