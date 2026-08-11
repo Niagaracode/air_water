@@ -111,7 +111,7 @@ const eventsMenu = [
   SidebarMenuItem(
     key: 'Roster Group',
     label: 'Roster Group',
-    icon: Icons.groups_rounded,
+    icon: Icons.group_work,
     iconColor: Colors.amber,
     allowedRoles: [
       UserRole.superAdmin,
