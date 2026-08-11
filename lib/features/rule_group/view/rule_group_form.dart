@@ -71,6 +71,14 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
       ],
       "Pressure": [
         {
+          "description": "High Pressure",
+          "comparator": "<=",
+          "value": "",
+          "unit": "Bar",
+          "icon": Icons.speed,
+          "color": const Color(0xFF8B5CF6),
+        },
+        {
           "description": "Low Pressure",
           "comparator": "<=",
           "value": "",
