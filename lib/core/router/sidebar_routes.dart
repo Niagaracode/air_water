@@ -14,7 +14,8 @@ const Map<String, String> menuRoutes = {
   //'Group': '/asset-group',
   'Rule Group': '/rule-group',
   'Message Template': '/message-template',
-  'Roster': '/roster',
+  //'Roster': '/roster',
+  'Roster Group': '/roster',
   'Activity': '/event',
 
   'Setting': '/setting',
