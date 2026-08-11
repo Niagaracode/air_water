@@ -12,8 +12,8 @@ abstract class DeviceRepository {
     int? siteId,
     int? companyId,
   });
-  Future<void> createDevice(DeviceCreateRequest request);
-  Future<void> updateDevice(int id, DeviceCreateRequest request);
+  Future<Map<String, dynamic>?> createDevice(DeviceCreateRequest request);
+  Future<Map<String, dynamic>?> updateDevice(int id, DeviceCreateRequest request);
   Future<void> deleteDevice(int id);
   Future<List<SiteAutocompleteInfo>> getPlantsForDeviceAutocomplete({
     String? q,
@@ -50,12 +50,12 @@ class DeviceRepositoryImpl implements DeviceRepository {
   }
 
   @override
-  Future<void> createDevice(DeviceCreateRequest request) {
+  Future<Map<String, dynamic>?> createDevice(DeviceCreateRequest request) {
     return _api.createDevice(request);
   }
 
   @override
-  Future<void> updateDevice(int id, DeviceCreateRequest request) {
+  Future<Map<String, dynamic>?> updateDevice(int id, DeviceCreateRequest request) {
     return _api.updateDevice(id, request);
   }
 

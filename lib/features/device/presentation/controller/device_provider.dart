@@ -185,31 +185,35 @@ class DeviceNotifier extends Notifier<DeviceState> {
     }
   }
 
-  Future<bool> createDevice(DeviceCreateRequest request) async {
+  Future<Map<String, dynamic>?> createDevice(DeviceCreateRequest request) async {
     state = state.copyWith(isProcessing: true, error: null);
     try {
       final repository = ref.read(deviceRepositoryProvider);
-      await repository.createDevice(request);
+      final response = await repository.createDevice(request);
+
+      print('Device created successfully. Setting: ${response?['setting']}');
       state = state.copyWith(isProcessing: false);
       await loadGroupedDevices();
-      return true;
+      return response;
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
-      return false;
+      return null;
     }
   }
 
-  Future<bool> updateDevice(int id, DeviceCreateRequest request) async {
+  Future<Map<String, dynamic>?> updateDevice(int id, DeviceCreateRequest request) async {
     state = state.copyWith(isProcessing: true, error: null);
     try {
       final repository = ref.read(deviceRepositoryProvider);
-      await repository.updateDevice(id, request);
+      final response = await repository.updateDevice(id, request);
+
+      print('Device updated successfully. Setting: ${response?['setting']}');
       state = state.copyWith(isProcessing: false);
       await loadGroupedDevices();
-      return true;
+      return response;
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
-      return false;
+      return null;
     }
   }
 

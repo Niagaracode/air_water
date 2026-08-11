@@ -39,12 +39,14 @@ class DeviceApi {
     );
   }
 
-  Future<void> createDevice(DeviceCreateRequest request) async {
-    await _client.post('/devices', data: request.toJson());
+  Future<Map<String, dynamic>?> createDevice(DeviceCreateRequest request) async {
+    final response = await _client.post('/devices', data: request.toJson());
+    return response.data != null ? Map<String, dynamic>.from(response.data) : null;
   }
 
-  Future<void> updateDevice(int id, DeviceCreateRequest request) async {
-    await _client.put('/devices/$id', data: request.toJson());
+  Future<Map<String, dynamic>?> updateDevice(int id, DeviceCreateRequest request) async {
+    final response = await _client.put('/devices/$id', data: request.toJson());
+    return response.data != null ? Map<String, dynamic>.from(response.data) : null;
   }
 
   Future<void> deleteDevice(int id) async {
