@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 
 import '../../site/presentation/model/site_model.dart';
 import '../../../core/network/http/api_service.dart';
+import 'model/sent_and_received_model.dart';
 import 'model/tank_channel_model.dart';
 import 'model/tank_event_model.dart';
 import 'model/tank_model.dart';
@@ -172,6 +173,12 @@ class TankApi {
 
   Future<void> updateTankEvent(int tankId, Map<String, dynamic> data) async {
     await _client.put('/tank/$tankId/channel_events', data: data);
+  }
+
+  Future<List<SentAndReceivedModel>> getTankSentAndReceived(int tankId) async {
+    final response = await _client.get('/tank/$tankId/send_and_receive');
+    final List data = response.data['data']['send_receive'] ?? [];
+    return data.map((e) => SentAndReceivedModel.fromJson(e)).toList();
   }
 
 }

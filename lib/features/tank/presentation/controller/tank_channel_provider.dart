@@ -3,8 +3,7 @@ import '../../data/model/tank_channel_model.dart';
 import '../../data/tank_repository.dart';
 import 'tank_provider.dart';
 
-final tankChannelProvider =
-StateNotifierProvider.autoDispose.family<
+final tankChannelProvider = StateNotifierProvider.autoDispose.family<
     TankChannelNotifier,
     TankChannelState,
     int>((ref, tankId) {
@@ -56,8 +55,7 @@ class TankChannelNotifier extends StateNotifier<TankChannelState> {
 
     try {
 
-      final channels =
-      await repository.getTankChannels(tankId);
+      final channels = await repository.getTankChannels(tankId);
 
       if (!mounted) return;
 

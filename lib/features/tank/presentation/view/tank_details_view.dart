@@ -1,4 +1,5 @@
 import 'package:air_water/core/app_theme/app_theme.dart';
+import 'package:air_water/features/tank/presentation/view/sent_received_sheet.dart';
 import 'package:air_water/features/tank/presentation/view/tabs/tank_details_tab.dart';
 import 'package:air_water/features/tank/presentation/view/tabs/tank_events_tab.dart';
 import 'package:air_water/features/tank/presentation/view/tabs/tank_map_tab.dart';
@@ -17,7 +18,9 @@ import '../../../../shared/utils/app_text_styles.dart';
 import '../../../dashboard/data/models/tank_data_model.dart';
 import '../../../dashboard/utils/tank_readings_report_exporter.dart';
 import '../../../dashboard/widgets/tank_level_widget.dart';
+import '../../data/model/sent_and_received_model.dart';
 import '../../data/model/tank_channel_model.dart';
+import '../controller/sent_and_received_provider.dart';
 import '../controller/tank_channel_provider.dart';
 import '../controller/tank_provider.dart';
 import '../controller/tank_readings_provider.dart';
@@ -67,6 +70,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   @override
   Widget build(BuildContext context) {
     final channelState = ref.watch(tankChannelProvider(widget.tankId));
+    final sentAndRecState = ref.watch(tankSentAndReceivedProvider(widget.tankId));
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
@@ -76,8 +80,8 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
             // Header with tank info and data channels
             SliverToBoxAdapter(
               child: widget.isNarrow
-                  ? _buildNarrowHeader(channelState)
-                  : _buildWideHeader(channelState),
+                  ? _buildNarrowHeader(channelState, sentAndRecState)
+                  : _buildWideHeader(channelState, sentAndRecState),
             ),
             // Tab Bar
             SliverToBoxAdapter(
@@ -112,7 +116,10 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   }
 
   // ==================== NARROW HEADER ====================
-  Widget _buildNarrowHeader(TankChannelState channelState) {
+  Widget _buildNarrowHeader(
+      TankChannelState channelState,
+      TankSentAndReceivedState srState, // Added this parameter
+      ) {
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 8),
       child: Column(
@@ -204,15 +211,18 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
             ],
           ),
           const SizedBox(height: 8),
-          // Data Channels Section
-          _buildDataChannelsSection(channelState),
+          // Data Channels Section - Pass both parameters
+          _buildDataChannelsSection(channelState, srState),
         ],
       ),
     );
   }
 
-  // ==================== WIDE HEADER ====================
-  Widget _buildWideHeader(TankChannelState channelState) {
+// ==================== WIDE HEADER ====================
+  Widget _buildWideHeader(
+      TankChannelState channelState,
+      TankSentAndReceivedState srState, // Added this parameter
+      ) {
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 8),
       child: Column(
@@ -296,9 +306,9 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   ),
                 ],
               ),
-              // Right Column - Data Channels
+              // Right Column - Data Channels - Pass both parameters
               Expanded(
-                child: _buildDataChannelsSection(channelState),
+                child: _buildDataChannelsSection(channelState, srState),
               ),
             ],
           ),
@@ -308,9 +318,12 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   }
 
   // ==================== DATA CHANNELS SECTION ====================
-  Widget _buildDataChannelsSection(TankChannelState channelState) {
-    // Extract channels from the AsyncValue
+  Widget _buildDataChannelsSection(
+      TankChannelState channelState,
+      TankSentAndReceivedState srState,
+      ) {
     final List<TankChannelModel> channels = channelState.channels;
+    final List<SentAndReceivedModel> msgSentReceived = srState.sentAndRec;
     final bool isLoading = channelState.isLoading;
 
     return Column(
@@ -336,6 +349,23 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                 ),
                 label: Text(
                   'View Event Details',
+                  style: TextStyle(
+                    color: primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: () => _showSRSideSheet(msgSentReceived),
+                icon: Icon(
+                  Icons.message,
+                  color: primary,
+                  size: 18,
+                ),
+                label: Text(
+                  'Sent & Received',
                   style: TextStyle(
                     color: primary,
                     fontWeight: FontWeight.w600,
@@ -700,6 +730,28 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
           ],
         ),
       ),
+    );
+  }
+
+  void _showSRSideSheet(List<SentAndReceivedModel> messages) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Sent & Received',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, __, ___) {
+        return Align(
+          alignment: Alignment.centerRight,
+          child: SentReceivedSheet(
+            messages: messages,
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final tween = Tween(begin: const Offset(1, 0), end: Offset.zero);
+        return SlideTransition(position: animation.drive(tween), child: child);
+      },
     );
   }
 
