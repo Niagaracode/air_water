@@ -27,7 +27,7 @@ class ScreenSidebar extends ConsumerWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(top: 5, left: 8),
+      padding: const EdgeInsets.only(top: 5),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeInOut,
@@ -201,7 +201,7 @@ class SidebarGroup extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

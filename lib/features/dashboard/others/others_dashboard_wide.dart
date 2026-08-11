@@ -59,7 +59,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                 children: [
                   StatisticsCards(statistics: statistics),
                   const SizedBox(height: 30),
-                  SearchAndFilters(
+                  /*SearchAndFilters(
                     isNarrow: false,
                     onSearchChanged: (val) {
                       setState(() {
@@ -99,7 +99,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                     selectedStatus: _selectedStatus,
                     selectedProduct: _selectedProduct,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 16),*/
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -111,7 +111,50 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                           });
                         },
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: SearchAndFilters(
+                          isNarrow: false,
+                          onSearchChanged: (val) {
+                            setState(() {
+                              _searchQuery = val;
+                            });
+                          },
+
+                          onRegionChanged: (val) {
+                            setState(() {
+                              _selectedRegion = val;
+                            });
+                          },
+
+                          onStatusChanged: (val) {
+                            setState(() {
+                              _selectedStatus = val;
+                            });
+                          },
+
+                          onProductChanged: (val) { // ADDED this
+                            setState(() {
+                              _selectedProduct = val;
+                            });
+                          },
+
+                          onClearFilters: () {
+                            setState(() {
+                              _selectedRegion = 'All Regions';
+                              _selectedStatus = 'All Status';
+                              _selectedProduct = 'All Product';
+                              _searchQuery = '';
+                            });
+                            _searchController.clear();
+                          },
+
+                          selectedRegion: _selectedRegion,
+                          selectedStatus: _selectedStatus,
+                          selectedProduct: _selectedProduct,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
                       PopupMenuButton<String>(
                         tooltip: 'Download Report',
                         onSelected: (value) async {
