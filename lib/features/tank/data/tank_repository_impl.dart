@@ -114,9 +114,4 @@ class TankRepositoryImpl implements TankRepository {
     return _api.updateTankEvent(tankId, data);
   }
 
-  @override
-  Future<List<SentAndReceivedModel>> getTankSentAndReceived(int tankId) {
-    return _api.getTankSentAndReceived(tankId);
-  }
-
 }

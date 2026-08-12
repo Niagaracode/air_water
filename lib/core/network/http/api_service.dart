@@ -51,6 +51,10 @@ class ApiService {
           try {
             final decryptedJson = decryptPayload(encryptedData);
             final decryptedData = jsonDecode(decryptedJson);
+
+            final jsonString = jsonEncode(decryptedData);
+            debugPrint('decryptedData: $jsonString');
+
             response.data = decryptedData;
           } catch (e) {
             debugPrint("Failed to decrypt response: $e");

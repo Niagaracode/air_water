@@ -29,8 +29,6 @@ class SiteState {
   final int totalEntries;
   final String? error;
   final String searchName;
-  final int? selectedStatus;
-  final String? selectedDate;
 
   SiteState({
     this.sites = const [],
@@ -42,8 +40,6 @@ class SiteState {
     this.totalEntries = 0,
     this.error,
     this.searchName = '',
-    this.selectedStatus,
-    this.selectedDate,
   });
 
   SiteState copyWith({
@@ -56,7 +52,6 @@ class SiteState {
     int? totalEntries,
     String? error,
     String? searchName,
-    int? selectedStatus,
     String? selectedDate,
     bool clearStatus = false,
     bool clearDate = false,
@@ -71,10 +66,6 @@ class SiteState {
       totalEntries: totalEntries ?? this.totalEntries,
       error: error ?? this.error,
       searchName: searchName ?? this.searchName,
-      selectedStatus: clearStatus
-          ? null
-          : (selectedStatus ?? this.selectedStatus),
-      selectedDate: clearDate ? null : (selectedDate ?? this.selectedDate),
     );
   }
 }
@@ -115,8 +106,7 @@ class SiteNotifier extends Notifier<SiteState> {
         page: 1,
         limit: _limit,
         name: state.searchName,
-        status: state.selectedStatus,
-        date: state.selectedDate,
+        status: 1,
       );
 
       state = state.copyWith(
@@ -143,8 +133,7 @@ class SiteNotifier extends Notifier<SiteState> {
         page: nextPage,
         limit: _limit,
         name: state.searchName,
-        status: state.selectedStatus,
-        date: state.selectedDate,
+        status: 1,
       );
 
       state = state.copyWith(
@@ -176,14 +165,6 @@ class SiteNotifier extends Notifier<SiteState> {
     }
   }
 
-  void setStatus(int? status) {
-    if (status == null) {
-      state = state.copyWith(clearStatus: true);
-    } else {
-      state = state.copyWith(selectedStatus: status);
-    }
-    loadGroupedSites(isReload: true);
-  }
 
   void setDate(String? date) {
     if (date == null) {
