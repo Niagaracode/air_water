@@ -129,7 +129,6 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     final notifier = ref.read(deviceNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
         children: [
           _buildHeader(context),

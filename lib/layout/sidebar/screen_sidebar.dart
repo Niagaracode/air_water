@@ -26,93 +26,90 @@ class ScreenSidebar extends ConsumerWidget {
       isExpanded = true;
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 5),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeInOut,
-        width: isExpanded ? 250 : 72,
-        child: Material(
-          color: Colors.white,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              border: Border(
-                right: BorderSide(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  width: 1.5,
-                ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      curve: Curves.easeInOut,
+      width: isExpanded ? 250 : 72,
+      child: Material(
+        color: Colors.white,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            border: Border(
+              right: BorderSide(
+                color: Colors.black.withValues(alpha: 0.08),
+                width: 1.5,
               ),
             ),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              children: [
-                if (isNarrow) ...[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: SvgPicture.asset(
-                        AppConfig.current.appLogoPath,
-                        height: 32,
-                        fit: BoxFit.contain,
-                      ),
+          ),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            children: [
+              if (isNarrow) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SvgPicture.asset(
+                      AppConfig.current.appLogoPath,
+                      height: 32,
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Divider(height: 1),
-                  const SizedBox(height: 8),
-                ],
-
-                SidebarGroup(
-                  title: 'MAIN MENU',
-                  color: const Color(0xFF60A5FA), // light blue
-                  items: mainMenu,
-                  location: location,
-                  isExpanded: isExpanded,
-                  role: userRole,
-                  isNarrow: isNarrow,
                 ),
-                SidebarGroup(
-                  title: 'ASSETS',
-                  color: const Color(0xFFFB923C), // light orange
-                  items: configurationMenu,
-                  location: location,
-                  isExpanded: isExpanded,
-                  role: userRole,
-                  isNarrow: isNarrow,
-                ),
-                SidebarGroup(
-                  title: 'USER',
-                  color: const Color(0xFF2DD4BF), // light teal
-                  items: userMenu,
-                  location: location,
-                  isExpanded: isExpanded,
-                  role: userRole,
-                  isNarrow: isNarrow,
-                ),
-                SidebarGroup(
-                  title: 'EVENTS CONFIG',
-                  color: const Color(0xFFF87171), // light red
-                  items: eventsMenu,
-                  location: location,
-                  isExpanded: isExpanded,
-                  role: userRole,
-                  isNarrow: isNarrow,
-                ),
-                SidebarGroup(
-                  title: 'EVENTS',
-                  color: const Color(0xFFC084FC), // light purple
-                  items: reportMenu,
-                  location: location,
-                  isExpanded: isExpanded,
-                  role: userRole,
-                  isNarrow: isNarrow,
-                ),
-
-                _buildFooterLogo(isExpanded),
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
               ],
-            ),
+
+              SidebarGroup(
+                title: 'MAIN MENU',
+                color: const Color(0xFF60A5FA), // light blue
+                items: mainMenu,
+                location: location,
+                isExpanded: isExpanded,
+                role: userRole,
+                isNarrow: isNarrow,
+              ),
+              SidebarGroup(
+                title: 'ASSETS',
+                color: const Color(0xFFFB923C), // light orange
+                items: configurationMenu,
+                location: location,
+                isExpanded: isExpanded,
+                role: userRole,
+                isNarrow: isNarrow,
+              ),
+              SidebarGroup(
+                title: 'USER',
+                color: const Color(0xFF2DD4BF), // light teal
+                items: userMenu,
+                location: location,
+                isExpanded: isExpanded,
+                role: userRole,
+                isNarrow: isNarrow,
+              ),
+              SidebarGroup(
+                title: 'EVENTS CONFIG',
+                color: const Color(0xFFF87171), // light red
+                items: eventsMenu,
+                location: location,
+                isExpanded: isExpanded,
+                role: userRole,
+                isNarrow: isNarrow,
+              ),
+              SidebarGroup(
+                title: 'EVENTS',
+                color: const Color(0xFFC084FC), // light purple
+                items: reportMenu,
+                location: location,
+                isExpanded: isExpanded,
+                role: userRole,
+                isNarrow: isNarrow,
+              ),
+
+              _buildFooterLogo(isExpanded),
+            ],
           ),
         ),
       ),

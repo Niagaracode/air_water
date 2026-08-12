@@ -23,11 +23,14 @@ class OthersLayoutWide extends StatelessWidget {
         children: [
           ScreenHeader(userRole: userRole),
           Expanded(
-            child: Row(
-              children: [
-                ScreenSidebar(userRole: userRole, isNarrow: false),
-                Expanded(child: child),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Row(
+                children: [
+                  ScreenSidebar(userRole: userRole, isNarrow: false),
+                  Expanded(child: child),
+                ],
+              ),
             ),
           ),
         ],

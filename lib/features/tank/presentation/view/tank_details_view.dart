@@ -18,7 +18,6 @@ import '../../../dashboard/data/models/tank_data_model.dart';
 import '../../../dashboard/utils/tank_readings_report_exporter.dart';
 import '../../../dashboard/widgets/tank_level_widget.dart';
 import '../../data/model/tank_channel_model.dart';
-import '../controller/sent_and_received_provider.dart';
 import '../controller/tank_channel_provider.dart';
 import '../controller/tank_provider.dart';
 import '../controller/tank_readings_provider.dart';
@@ -70,7 +69,6 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     final channelState = ref.watch(tankChannelProvider(widget.tankId));
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [

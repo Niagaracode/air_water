@@ -77,7 +77,6 @@ class _UserWideState extends ConsumerState<UserWide> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: state.isLoading
           ? Center(child: CircularProgressIndicator())
           : Column(

@@ -57,7 +57,6 @@ class _SiteWideState extends ConsumerState<SiteWide> {
     });*/
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
         children: [
           _buildHeader(context),

@@ -112,9 +112,8 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                   duration: const Duration(milliseconds: 150),
                   height: 40,
                   decoration: BoxDecoration(
-                    color: _isSearchFocused
-                        ? Colors.white
-                        : const Color(0xFFF1F3F4),
+                    color: _isSearchFocused ? Colors.white
+                        : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: _isSearchFocused
@@ -137,7 +136,7 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                     onChanged: _debouncer.setValue,
                     textAlignVertical: TextAlignVertical.center,
                     style: GoogleFonts.inter(
-                      fontSize: 13,
+                      fontSize: 13.5,
                       color: const Color(0xFF3C4043),
                     ),
                     decoration: InputDecoration(
@@ -145,11 +144,11 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                       hintText: 'Search anything...',
                       hintStyle: GoogleFonts.inter(
                         color: const Color(0xFF9AA0A6),
-                        fontSize: 13,
+                        fontSize: 13.5,
                       ),
                       prefixIcon: const Icon(
                         Icons.search_rounded,
-                        size: 18,
+                        size: 20,
                         color: Colors.black54,
                       ),
                       prefixIconConstraints: const BoxConstraints(
@@ -187,7 +186,7 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
               ),
             ),
 
-            const Spacer(),
+            const SizedBox(width: 30),
 
             Text(
               '${AppConfig.current.appName} welcomes, $finalDisplayName!',
