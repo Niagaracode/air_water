@@ -6,6 +6,7 @@ import 'package:air_water/shared/widgets/app_dropdown.dart';
 import 'package:air_water/shared/widgets/app_date_picker.dart';
 import 'package:air_water/shared/widgets/app_table.dart';
 import '../../../../core/app_theme/app_theme.dart';
+import '../../../../layout/provider/search_provider.dart';
 import '../../../../shared/widgets/view_header.dart';
 import '../controller/site_provider.dart';
 import '../widgets/add_site_modal.dart';
@@ -45,18 +46,25 @@ class _SiteWideState extends ConsumerState<SiteWide> {
 
   @override
   Widget build(BuildContext context) {
+
     final siteState = ref.watch(siteNotifierProvider);
     final siteNotifier = ref.read(siteNotifierProvider.notifier);
+
+    // Search text now comes from the global header search bar.
+    /*final searchText = ref.watch(globalSearchProvider);
+    ref.listen<String>(globalSearchProvider, (previous, next) {
+      widget.onSearchChanged(next);
+    });*/
 
     return Scaffold(
       backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: Column(
         children: [
           _buildHeader(context),
-          Padding(
+         /* Padding(
             padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
             child: _buildFilterRow(siteNotifier, siteState),
-          ),
+          ),*/
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -69,32 +77,25 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                     width: tableWidth,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          children: [
-                            if (!siteState.isLoading ||
-                                siteState.groupedSites.isNotEmpty)
-                              _buildFixedTableHeader(),
-                            Expanded(
-                              child:
-                              siteState.isLoading &&
-                                  siteState.groupedSites.isEmpty
-                                  ? const AppTableInitialLoader()
-                                  : _buildVirtualizedTable(
-                                siteState,
-                                siteNotifier,
-                              ),
+                      child: Column(
+                        children: [
+                          if (!siteState.isLoading ||
+                              siteState.groupedSites.isNotEmpty)
+                            _buildFixedTableHeader(),
+                          Expanded(
+                            child:
+                            siteState.isLoading &&
+                                siteState.groupedSites.isEmpty
+                                ? const AppTableInitialLoader()
+                                : _buildVirtualizedTable(
+                              siteState,
+                              siteNotifier,
                             ),
-                            if (siteState.isLoading &&
-                                siteState.groupedSites.isNotEmpty)
-                              const AppTableLoadingMore(),
-                          ],
-                        ),
+                          ),
+                          if (siteState.isLoading &&
+                              siteState.groupedSites.isNotEmpty)
+                            const AppTableLoadingMore(),
+                        ],
                       ),
                     ),
                   ),
@@ -214,37 +215,6 @@ class _SiteWideState extends ConsumerState<SiteWide> {
                   ),
                 ),
               );
-            },
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          flex: 1,
-          child: AppDropdown<int>(
-            value: state.selectedStatus,
-            items: const [1, 0],
-            hint: 'Status',
-            itemLabel: (v) => v == 1 ? 'Active' : 'Inactive',
-            onChanged: (v) => notifier.setStatus(v),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          flex: 1,
-          child: AppDatePickerField(
-            selectedDate: state.selectedDate != null
-                ? DateTime.parse(state.selectedDate!)
-                : null,
-            firstDate: DateTime(2000),
-            lastDate: DateTime(2100),
-            onDateChanged: (date) {
-              if (date != null) {
-                final formatted =
-                    "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-                notifier.setDate(formatted);
-              } else {
-                notifier.setDate(null);
-              }
             },
           ),
         ),

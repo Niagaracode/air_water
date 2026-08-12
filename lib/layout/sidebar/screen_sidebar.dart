@@ -226,16 +226,7 @@ class SidebarGroup extends StatelessWidget {
           /// Children — indented, thin colored left border, matching
           /// the "folder contents" look from the reference.
           Container(
-            margin: const EdgeInsets.only(top: 4, left: 4),
-            padding: const EdgeInsets.only(left: 1),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(
-                  color: color.withValues(alpha: 0.7),
-                  width: 1.3,
-                ),
-              ),
-            ),
+            margin: const EdgeInsets.only(top: 7),
             child: Column(
               children: filteredItems.map((item) {
                 final route = menuRoutes[item.key];

@@ -122,8 +122,7 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                           : Colors.black12,
                       width: 1,
                     ),
-                    boxShadow: _isSearchFocused
-                        ? [
+                    boxShadow: _isSearchFocused ? [
                       BoxShadow(
                         color: primary.withValues(alpha: 0.15),
                         blurRadius: 6,
@@ -151,7 +150,7 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                       prefixIcon: const Icon(
                         Icons.search_rounded,
                         size: 18,
-                        color: Color(0xFF9AA0A6),
+                        color: Colors.black54,
                       ),
                       prefixIconConstraints: const BoxConstraints(
                         minWidth: 40,
