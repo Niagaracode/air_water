@@ -41,12 +41,18 @@ class SidebarHeader extends ConsumerWidget {
               IconButton(
                 icon: Icon(
                   Icons.menu_open,
-                  size: 20,
+                  size: 18,
                   color: primary,
+                ),
+                iconSize: 18,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(
+                  minWidth: 34,
+                  minHeight: 34,
                 ),
                 style: IconButton.styleFrom(
                   backgroundColor: primary.withValues(alpha: 0.1),
-                  foregroundColor: Colors.white,
+                  foregroundColor: primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -60,16 +66,16 @@ class SidebarHeader extends ConsumerWidget {
         ) :
         Center(
           child: InkWell(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8),
             onTap: () {
               ref.read(sidebarExpandedProvider.notifier).toggle();
             },
             child: Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.menu_open,

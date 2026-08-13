@@ -68,7 +68,7 @@ class _AssetGroupWideState extends ConsumerState<AssetGroupWide> {
     final deviceState = ref.watch(deviceNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           _buildHeader(context),

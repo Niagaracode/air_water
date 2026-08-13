@@ -18,82 +18,152 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           _buildHeader(context),
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
+            child: Padding(
+              padding: const EdgeInsets.only(left: 40, right: 16, bottom: 8),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: Consumer(
+                      builder: (context, ref, child) {
 
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
-                        ),
-                        child: Consumer(
-                          builder: (context, ref, child) {
+                        final state = ref.watch(ruleGroupProvider);
 
-                            final state = ref.watch(ruleGroupProvider);
+                        if (state.isLoading && state.ruleGroups.isEmpty) {
+                          return SizedBox(
+                            height: constraints.maxHeight - 48,
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
 
-                            if (state.isLoading && state.ruleGroups.isEmpty) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            }
+                        if (state.error != null) {
+                          return SizedBox(
+                            height: constraints.maxHeight - 48,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 64,
+                                    color: Colors.red,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(state.error!),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
 
-                            if (state.error != null) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      size: 64,
-                                      color: Colors.red,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(state.error!),
-                                  ],
-                                ),
-                              );
-                            }
+                        if (state.ruleGroups.isEmpty) {
+                          return SizedBox(
+                            height: constraints.maxHeight - 48,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.rule_folder, size: 64),
+                                  const SizedBox(height: 16),
+                                  Text('No Rule Groups Found'),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
 
-                            if (state.ruleGroups.isEmpty) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.rule_folder, size: 64),
-                                    const SizedBox(height: 16),
-                                    Text('No Rule Groups Found'),
-                                  ],
-                                ),
-                              );
-                            }
-
-                            return ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: state.ruleGroups.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 20),
-                              itemBuilder: (context, index) {
-                                final rule = state.ruleGroups[index];
-                                return _buildRuleGroupCard(rule);
-                              },
+                        // Numbered-circle + connecting-line timeline,
+                        // matching the site/device management pages.
+                        // No forced min-height here — content sizes naturally,
+                        // so a single short card never triggers a scrollbar.
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: state.ruleGroups.length,
+                          itemBuilder: (context, index) {
+                            final rule = state.ruleGroups[index];
+                            final isLast = index == state.ruleGroups.length - 1;
+                            return _buildTimelineItem(
+                              rule,
+                              index + 1,
+                              isLast,
                             );
                           },
-                        ),
-                      ),
-                    );
-                  },
-                );
-
-              },
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---- Timeline column (numbered circle + connecting line) beside each
+  // rule group card. Circle and line are left-aligned within their column
+  // so the line clearly runs down the left side of the number, and the
+  // line connects this circle down to the next one, stopping after the
+  // last card.
+  Widget _buildTimelineItem(RuleGroupModel rule, int index, bool isLast) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 44,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: primaryLight,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '$index',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    // Centers the 2px line under the 28px circle above it.
+                    padding: const EdgeInsets.only(left: 13),
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      color: primary.withValues(alpha: 0.45),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: _buildRuleGroupCard(rule),
           ),
         ],
       ),
@@ -113,8 +183,7 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -130,11 +199,8 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.07),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
+              color: primary.withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
               border: Border(
                 bottom: BorderSide(color: const Color(0xFFE5E7EB)),
               ),
@@ -171,7 +237,7 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.only(left: 12, top: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

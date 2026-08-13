@@ -55,7 +55,7 @@ class _NotificationWideState extends ConsumerState<NotificationWide> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      backgroundColor: Colors.white,
       body: state.isLoading && state.notifications.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : Column(

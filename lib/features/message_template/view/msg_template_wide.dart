@@ -53,7 +53,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
     final notifier = ref.read(messageTemplateProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           _buildHeader(state, notifier),

@@ -239,48 +239,17 @@ class _SiteWideState extends ConsumerState<SiteWide> {
       );
     }
 
-    // Generate linear list of items (headers and rows)
-    final List<dynamic> items = [];
-    for (int i = 0; i < state.groupedSites.length; i++) {
-      final group = state.groupedSites[i];
-      items.add({'type': 'header', 'group': group, 'index': i + 1});
-
-      for (final addr in group.addresses) {
-        items.add({'type': 'row', 'address': addr, 'group': group});
-      }
-    }
-
     return ListView.builder(
       controller: _scrollController,
-      itemCount: items.length,
+      itemCount: state.groupedSites.length,
       itemBuilder: (context, index) {
-        final item = items[index];
-        final isLast = index == items.length - 1;
-
-        if (item['type'] == 'header') {
-          return _buildGroupHeader(
-            state,
-            item['group'] as SiteGroup,
-            item['index'] as int,
-            isLast,
-          );
-        } else {
-          return _buildSiteRow(
-            item['address'] as SiteGroupAddress,
-            item['group'] as SiteGroup,
-            isLast,
-          );
-        }
+        final group = state.groupedSites[index];
+        return _buildSiteGroup(group, index + 1);
       },
     );
   }
 
-  Widget _buildGroupHeader(
-      SiteState state,
-      SiteGroup group,
-      int index,
-      bool isLast,
-      ) {
+  Widget _buildSiteGroup(SiteGroup group, int index) {
     final siteName = () {
       final raw = (group.name ?? '').trim();
       if (raw.isNotEmpty && raw != 'null') return raw;
@@ -295,131 +264,168 @@ class _SiteWideState extends ConsumerState<SiteWide> {
       return foundSiteName ?? '';
     }();
 
-    // pull status from the first address in the group — adjust if your
-    // model exposes a dedicated group-level status field instead.
-    final groupStatus = group.addresses.isNotEmpty
-        ? (group.addresses.first.status ?? 1)
-        : 1;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ---- Timeline column: numbered circle + connecting line ----
+          SizedBox(
+            width: 60,
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: primaryLight,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '$index',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                // Line only draws if there are rows beneath to connect to.
+                if (group.addresses.isNotEmpty)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      color: primary.withValues(alpha: 0.25),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // ---- Content column: header + rows ----
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildGroupHeader(group, siteName),
+                ...group.addresses.asMap().entries.map(
+                      (entry) => _buildSiteRow(
+                    entry.value,
+                    group,
+                    entry.key == group.addresses.length - 1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+
+  Widget _buildGroupHeader(SiteGroup group, String siteName) {
     return Container(
-      color: primary.withValues(alpha: 0.1),
-      child: Padding(
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Text(
+            siteName,
+            style: GoogleFonts.outfit(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: primary,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const Spacer(),
+          Text(
+            '${group.addresses.length} ${group.addresses.length == 1 ? 'location' : 'locations'}',
+            style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF374151)),
+          ),
+          const SizedBox(width: 6),
+          const Icon(Icons.keyboard_arrow_down, size: 18, color: Color(0xFF374151)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFixedTableHeader() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 60), // aligns with the 60px timeline column
+      child: Container(
+        color: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            SizedBox(
-              width: 80,
-              child: Text(
-                index.toString().padLeft(2),
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: primary,
-                ),
-              ),
-            ),
-            Text(
-              siteName,
-              style: GoogleFonts.outfit(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: primary,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-            const Spacer(),
-            Text(
-              '${group.addresses.length} ${group.addresses.length == 1 ? 'location' : 'locations'}',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: const Color(0xFF374151),
-              ),
-            ),
-            const SizedBox(width: 6),
-            const Icon(
-              Icons.keyboard_arrow_down,
-              size: 18,
-              color: Color(0xFF374151),
-            ),
+            AppTableHeaderCell('City', flex: 2),
+            AppTableHeaderCell('State', width: 200),
+            AppTableHeaderCell('Country', width: 200),
+            AppTableHeaderCell('Address', flex: 3),
+            AppTableHeaderCell('Action', width: 120, textAlign: TextAlign.right),
+            SizedBox(width: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFixedTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
-      ),
-      child: Row(
-        children: [
-          AppTableHeaderCell('Sl.no', width: 80),
-          AppTableHeaderCell('City', flex: 2),
-          AppTableHeaderCell('State', width: 200),
-          AppTableHeaderCell('Country', width: 200),
-          AppTableHeaderCell('Address', flex: 3),
-          AppTableHeaderCell('Action', width: 120, textAlign: TextAlign.right),
-          SizedBox(width: 20),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSiteRow(SiteGroupAddress site, SiteGroup group, bool isLast) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            left: BorderSide(
-              color: primary.withValues(alpha: 0.3),
-              width: 2,
-            ),
-            bottom: isLast
-                ? BorderSide.none
-                : const BorderSide(color: Color(0xFFF3F4F6)),
-          ),
+    return Container(
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          bottom: isLast
+              ? BorderSide.none
+              : const BorderSide(color: Color(0xFFF3F4F6)),
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              const AppTableCell(null, width: 80),
-              AppTableCell(site.city ?? '--', flex: 2),
-              AppTableCell(site.state ?? '--', width: 200),
-              AppTableCell(site.country ?? '--', width: 200),
-              AppTableCell(site.fullAddress, flex: 3),
-              SizedBox(
-                width: 120,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    AppTableActionButton(
-                      icon: Icons.edit_outlined,
-                      color: primary,
-                      bg: primary.withValues(alpha: 0.1),
-                      onTap: () => _showEditModal(
-                        site.toSite(),
-                        targetAddressId: site.id,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    AppTableActionButton(
-                      icon: Icons.delete_outline_rounded,
-                      color: const Color(0xFFDC2626),
-                      bg: const Color(0xFFFEF2F2),
-                      onTap: () => _showDeleteDialog(site.toSite()),
-                    ),
-                  ],
-                ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            AppTableCell(site.city ?? '--', flex: 2),
+            AppTableCell(site.state ?? '--', width: 200),
+            AppTableCell(site.country ?? '--', width: 200),
+            AppTableCell(site.fullAddress, flex: 3),
+            SizedBox(
+              width: 120,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AppTableActionButton(
+                    icon: Icons.edit_outlined,
+                    color: primary,
+                    bg: primary.withValues(alpha: 0.1),
+                    onTap: () => _showEditModal(site.toSite(), targetAddressId: site.id),
+                  ),
+                  const SizedBox(width: 16),
+                  AppTableActionButton(
+                    icon: Icons.delete_outline_rounded,
+                    color: const Color(0xFFDC2626),
+                    bg: const Color(0xFFFEF2F2),
+                    onTap: () => _showDeleteDialog(site.toSite()),
+                  ),
+                ],
               ),
-              SizedBox(width: 20),
-            ],
-          ),
+            ),
+            SizedBox(width: 20),
+          ],
         ),
       ),
     );

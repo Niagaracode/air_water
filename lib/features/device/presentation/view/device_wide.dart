@@ -57,7 +57,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     return ViewHeader(
       title: 'DEVICE MANAGEMENT',
       subtitle:
-          'Monitor and configure your water monitoring hardware across various sites.',
+      'Monitor and configure your water monitoring hardware across various sites.',
       buttonText: 'Add Device',
       onPressed: () => _showAddModal(),
     );
@@ -132,10 +132,10 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
       body: Column(
         children: [
           _buildHeader(context),
-          Padding(
+          /*Padding(
             padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
             child: _buildFilterRow(state, notifier),
-          ),
+          ),*/
 
           Expanded(
             child: LayoutBuilder(
@@ -161,12 +161,12 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
                             ),
                           Expanded(
                             child:
-                                state.isLoading && state.groupedDevices.isEmpty
+                            state.isLoading && state.groupedDevices.isEmpty
                                 ? const Center(
-                                    child: CircularProgressIndicator(
-                                      color: Color(0xFF141E7A),
-                                    ),
-                                  )
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF141E7A),
+                              ),
+                            )
                                 : _buildVirtualizedTable(state, notifier),
                           ),
                           if (state.isLoading &&
@@ -186,6 +186,8 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     );
   }
 
+  // ---- Grouped list: one item per site group, each rendering its own
+  // numbered circle + connecting timeline line down through its device rows.
   Widget _buildVirtualizedTable(DeviceState state, DeviceNotifier notifier) {
     if (state.groupedDevices.isEmpty && !state.isLoading) {
       return const Padding(
@@ -197,127 +199,161 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
       );
     }
 
-    // Generate linear list (Site Headers + Device Rows)
-    final List<dynamic> items = [];
-    for (int i = 0; i < state.groupedDevices.length; i++) {
-      final group = state.groupedDevices[i];
-      items.add({'type': 'header', 'group': group, 'index': i + 1});
-      for (final device in group.devices) {
-        items.add({'type': 'row', 'device': device, 'group': group});
-      }
-    }
-
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      itemCount: items.length,
+      itemCount: state.groupedDevices.length,
       itemBuilder: (context, index) {
-        final item = items[index];
-        final isLast = index == items.length - 1;
-
-        if (item['type'] == 'header') {
-          return _buildGroupHeader(
-            item['group'] as DeviceGroup,
-            item['index'] as int,
-            isLast,
-          );
-        } else {
-          return _buildDeviceRow(item['device'] as Device, notifier, isLast);
-        }
+        final group = state.groupedDevices[index];
+        return _buildDeviceGroup(group, index + 1, notifier);
       },
     );
   }
 
   Widget _buildFixedTableHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      color: primary.withValues(alpha: 0.1),
-      child: Row(
-        children: [
-          AppTableHeaderCell('SI.NO', width: 70),
-          AppTableHeaderCell('Device ID', width: 190),
-          AppTableHeaderCell('Sim Number', width: 160),
-          AppTableHeaderCell('Tank', flex: 2),
-          AppTableHeaderCell('Site Information', flex: 3),
-          AppTableHeaderCell('Action', width: 80),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGroupHeader(DeviceGroup group, int index, bool isLast) {
-    return Container(
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.04),
-        border: Border(
-          left: BorderSide(color: Colors.grey.shade300, width: 1),
-          right: BorderSide(color: Colors.grey.shade300, width: 1),
-          bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Padding(
+      // Aligns header columns with the content column, offset past the
+      // 60px timeline (circle + line) column used in each group below.
+      padding: const EdgeInsets.only(left: 60),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        color: Colors.white,
         child: Row(
           children: [
-            SizedBox(
-              width: 70,
-              child: Text(
-                index.toString().padLeft(2),
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            Text(
-              group.siteName ?? '',
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF111827),
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-            Spacer(),
-            Text(
-              group.fullAddress,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: Colors.grey.shade600,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(width: 20),
+            AppTableHeaderCell('Device ID', width: 190),
+            AppTableHeaderCell('Sim Number', width: 160),
+            AppTableHeaderCell('Tank', flex: 2),
+            AppTableHeaderCell('Site Information', flex: 3),
+            AppTableHeaderCell('Action', width: 80),
           ],
         ),
       ),
     );
   }
 
+  // ---- Timeline column (numbered circle + connecting line) + content
+  // column (site header row + its device rows), grouped so the line spans
+  // exactly the height of that site's rows.
+  Widget _buildDeviceGroup(
+      DeviceGroup group,
+      int index,
+      DeviceNotifier notifier,
+      ) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ---- Timeline: numbered circle + line ----
+          SizedBox(
+            width: 60,
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: primaryLight,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '$index',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                if (group.devices.isNotEmpty)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      color: primary.withValues(alpha: 0.25),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // ---- Content: site header + device rows ----
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildGroupHeader(group),
+                ...group.devices.asMap().entries.map(
+                      (entry) => _buildDeviceRow(
+                    entry.value,
+                    notifier,
+                    entry.key == group.devices.length - 1,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupHeader(DeviceGroup group) {
+    return Container(
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Text(
+            group.siteName ?? '',
+            style: GoogleFonts.outfit(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: primary,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const Spacer(),
+          Text(
+            group.fullAddress,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: const Color(0xFF374151),
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDeviceRow(Device device, DeviceNotifier notifier, bool isLast) {
     return Container(
+      margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          left: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
-          right: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
           bottom: isLast
-              ? const BorderSide(color: Color(0xFFD1D5DB), width: 1.5)
+              ? BorderSide.none
               : const BorderSide(color: Color(0xFFF3F4F6)),
         ),
-        borderRadius: isLast
-            ? const BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-              )
-            : BorderRadius.zero,
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         child: Row(
           children: [
-            const AppTableCell(null, width: 70),
             AppTableCell(device.deviceId, width: 190, bold: true),
             AppTableCell(device.simNumber ?? '—', width: 160),
             AppTableCell(device.tankName ?? '—', flex: 2),
@@ -326,6 +362,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
               null,
               width: 80,
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   AppTableActionButton(
                     icon: Icons.edit_outlined,
@@ -362,7 +399,7 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
             return await notifier.searchSites(textEditingValue.text);
           },
           displayStringForOption: (SiteAutocompleteInfo option) =>
-              option.siteName,
+          option.siteName,
           onSelected: (option) {
             notifier.setSearchSite(option.siteName);
             notifier.loadGroupedDevices();
@@ -571,10 +608,10 @@ class _SliverHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
+      BuildContext context,
+      double shrinkOffset,
+      bool overlapsContent,
+      ) {
     return SizedBox.expand(child: child);
   }
 

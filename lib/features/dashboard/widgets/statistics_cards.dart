@@ -55,27 +55,28 @@ class StatisticsCards extends StatelessWidget {
         ),
       ),
       StatData(
-        title: 'Low Level',
-        subtitle: 'Below Threshold',
-        value: lowLevel,
+        title: 'Reorder Level',
+        subtitle: 'Need Restock',
+        value: reorderLevel,
         total: total,
         color: Colors.orange,
-        icon: Icons.water_drop,
+        icon: Icons.inventory,
         gradient: const LinearGradient(
           colors: [Color(0xFFFED7AA), Color(0xFFF97316)],
         ),
       ),
       StatData(
-        title: 'Reorder Level',
-        subtitle: 'Need Restock',
-        value: reorderLevel,
+        title: 'Low Level',
+        subtitle: 'Below Threshold',
+        value: lowLevel,
         total: total,
-        color: Colors.amber,
-        icon: Icons.inventory,
+        color: Colors.red,
+        icon: Icons.water_drop,
         gradient: const LinearGradient(
-          colors: [Color(0xFFFEF3C7), Color(0xFFFBBF24)],
+          colors: [Color(0xFFFECACA), Color(0xFFEF4444)],
         ),
       ),
+
     ];
 
     return LayoutBuilder(
