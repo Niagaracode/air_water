@@ -84,9 +84,9 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
       width: double.infinity,
       child: Card(
         color: Colors.white,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: primary,
         margin: EdgeInsets.zero,
-        elevation: 2.5,
+        elevation: 1.2,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.zero),
         ),
@@ -94,17 +94,11 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
           children: [
             SidebarHeader(isExpanded: isExpanded, userRole: widget.userRole),
             const SizedBox(width: 16),
-
-            /// BROWSER-STYLE REFRESH BUTTON
-            SyncButton(
-              browserStyle: true,
-              onSync: () async {
-                await RouteRefreshHelper.refreshCurrentPage(ref, context);
-              },
+            Text(
+              '${AppConfig.current.appName} welcomes, $finalDisplayName!',
+              style: GoogleFonts.outfit(fontSize: 16, color: Colors.black54),
             ),
-            const SizedBox(width: 16),
-
-            /// BROWSER-STYLE SEARCH / ADDRESS BAR
+            const SizedBox(width: 24),
             Expanded(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
@@ -117,13 +111,13 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: _isSearchFocused
-                          ? primary.withValues(alpha: 0.5)
+                          ? primary.withValues(alpha: 0.3)
                           : Colors.black12,
                       width: 1,
                     ),
                     boxShadow: _isSearchFocused ? [
                       BoxShadow(
-                        color: primary.withValues(alpha: 0.15),
+                        color: primary.withValues(alpha: 0.02),
                         blurRadius: 6,
                         spreadRadius: 1,
                       ),
@@ -185,16 +179,15 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                 ),
               ),
             ),
-
-            const SizedBox(width: 30),
-
-            Text(
-              '${AppConfig.current.appName} welcomes, $finalDisplayName!',
-              style: GoogleFonts.outfit(fontSize: 16, color: Colors.black54),
-            ),
-            const SizedBox(width: 24),
-
+            const SizedBox(width: 16),
             const MqttConnectionStatus(),
+            const SizedBox(width: 16),
+            SyncButton(
+              browserStyle: true,
+              onSync: () async {
+                await RouteRefreshHelper.refreshCurrentPage(ref, context);
+              },
+            ),
             const SizedBox(width: 16),
             PopupMenuButton<void>(
               offset: const Offset(0, 48),
@@ -358,7 +351,6 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
     );
   }
 }
-
 
 /*
 class ScreenHeader extends ConsumerWidget {

@@ -88,21 +88,19 @@ class _SyncButtonState extends State<SyncButton>
       return Tooltip(
         message: _isSyncing ? widget.syncingLabel : widget.label,
         child: Material(
-          color: Colors.transparent,
+          color: primary,
           shape: const CircleBorder(),
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: _isSyncing ? null : _handleSync,
-            hoverColor: const Color(0xFFF1F3F4),
-            splashColor: const Color(0xFFE8EAED),
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: RotationTransition(
                 turns: _spinController,
                 child: Icon(
                   Icons.refresh_rounded,
-                  size: 25,
-                  color: primary,
+                  size: 20,
+                  color: Colors.white,
                 ),
               ),
             ),
@@ -111,7 +109,7 @@ class _SyncButtonState extends State<SyncButton>
       );
     }
 
-    return widget.isNarrow ? IconButton(
+    return IconButton(
       onPressed: _isSyncing ? null : _handleSync,
       style: IconButton.styleFrom(
         backgroundColor: primary,
@@ -121,44 +119,6 @@ class _SyncButtonState extends State<SyncButton>
       icon: RotationTransition(
         turns: _spinController,
         child: const Icon(Icons.refresh),
-      ),
-    ) : ElevatedButton(
-      onPressed: _isSyncing ? null : _handleSync,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primary,
-        foregroundColor: widget.foregroundColor,
-        elevation: 2,
-        shadowColor: primary.withValues(alpha: 0.3),
-        padding: widget.padding,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(widget.borderRadius),
-        ),
-        disabledBackgroundColor: primary.withValues(alpha: 0.5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_isSyncing)
-            SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor:
-                AlwaysStoppedAnimation<Color>(widget.foregroundColor),
-              ),
-            )
-          else
-            Icon(widget.icon, size: 14),
-          const SizedBox(width: 8),
-          Text(
-            _isSyncing ? widget.syncingLabel : widget.label,
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
       ),
     );
   }

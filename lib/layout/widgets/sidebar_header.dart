@@ -19,9 +19,8 @@ class SidebarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
+    return SizedBox(
       height: 65,
-      color: Colors.white,
       width: isExpanded ? 250 : 72,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -40,16 +39,22 @@ class SidebarHeader extends ConsumerWidget {
             if(userRole != UserRole.customer)...[
               const Spacer(),
               IconButton(
-                icon: const Icon(
-                  Icons.keyboard_double_arrow_left_rounded,
+                icon: Icon(
+                  Icons.menu_open,
                   size: 20,
+                  color: primary,
                 ),
-                color: primary,
-                splashRadius: 20,
+                style: IconButton.styleFrom(
+                  backgroundColor: primary.withValues(alpha: 0.1),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 onPressed: () {
                   ref.read(sidebarExpandedProvider.notifier).toggle();
                 },
-              ),
+              )
             ]
           ],
         ) :
@@ -67,7 +72,7 @@ class SidebarHeader extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
-                Icons.keyboard_double_arrow_right_rounded,
+                Icons.menu_open,
                 size: 18,
                 color: primary,
               ),

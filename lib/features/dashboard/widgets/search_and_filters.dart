@@ -199,7 +199,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                   icon: Icon(
                     Icons.filter_alt_off,
                     color: hasFilters ? Colors.red : const Color(0xFF94A3B8),
-                    size: 20,
+                    size: 18,
                   ),
                   tooltip: 'Clear all filters',
                   onPressed: hasFilters ? _clearFilters : null,
@@ -348,7 +348,7 @@ class _SearchAndFiltersState extends ConsumerState<SearchAndFilters> {
                 icon: Icon(
                   Icons.filter_alt_off,
                   color: hasFilters ? primary : const Color(0xFF94A3B8),
-                  size: 20,
+                  size: 18,
                 ),
                 tooltip: 'Clear all filters',
                 onPressed: hasFilters ? _clearFilters : null,
