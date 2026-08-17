@@ -21,7 +21,7 @@ class ProductWide extends ConsumerWidget {
     final state = ref.watch(productNotifierProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           _buildHeader(context),

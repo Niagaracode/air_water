@@ -315,39 +315,6 @@ class _SiteNarrowState extends ConsumerState<SiteNarrow> {
             },
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: AppDropdown<int>(
-                value: siteState.selectedStatus,
-                items: const [1, 0],
-                hint: 'Status',
-                itemLabel: (v) => v == 1 ? 'Active' : 'Inactive',
-                onChanged: (v) => siteNotifier.setStatus(v),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: AppDatePickerField(
-                selectedDate: siteState.selectedDate != null
-                    ? DateTime.parse(siteState.selectedDate!)
-                    : null,
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2100),
-                onDateChanged: (date) {
-                  if (date != null) {
-                    final formatted =
-                        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-                    siteNotifier.setDate(formatted);
-                  } else {
-                    siteNotifier.setDate(null);
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }

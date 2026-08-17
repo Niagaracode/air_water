@@ -41,7 +41,7 @@ class _TankWideState extends ConsumerState<TankWide> {
     return ViewHeader(
       title: 'TANK MANAGEMENT',
       subtitle:
-      'Centralize tank information including dimensions, types, products and site associations.',
+      'Centralize tank information including tank details, types, products and site associations.',
       buttonText: 'Add tank',
       onPressed: () => _showAddDialog(),
     );
@@ -218,14 +218,14 @@ class _TankWideState extends ConsumerState<TankWide> {
     final notifier = ref.read(tankNotifierProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           _buildHeader(context),
-          Padding(
+          /*Padding(
             padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
             child: _buildFilterRow(state, notifier),
-          ),
+          ),*/
           Expanded(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -238,28 +238,21 @@ class _TankWideState extends ConsumerState<TankWide> {
                     width: tableWidth,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          children: [
-                            if (!state.isLoading ||
-                                state.groupedTanks.isNotEmpty)
-                              _buildFixedTableHeader(),
-                            Expanded(
-                              child: state.isLoading &&
-                                  state.groupedTanks.isEmpty
-                                  ? const AppTableInitialLoader()
-                                  : _buildVirtualizedTable(state, notifier),
-                            ),
-                            if (state.isLoading &&
-                                state.groupedTanks.isNotEmpty)
-                              const AppTableLoadingMore(),
-                          ],
-                        ),
+                      child: Column(
+                        children: [
+                          if (!state.isLoading ||
+                              state.groupedTanks.isNotEmpty)
+                            _buildFixedTableHeader(),
+                          Expanded(
+                            child: state.isLoading &&
+                                state.groupedTanks.isEmpty
+                                ? const AppTableInitialLoader()
+                                : _buildVirtualizedTable(state, notifier),
+                          ),
+                          if (state.isLoading &&
+                              state.groupedTanks.isNotEmpty)
+                            const AppTableLoadingMore(),
+                        ],
                       ),
                     ),
                   ),
@@ -328,10 +321,10 @@ class _TankWideState extends ConsumerState<TankWide> {
       child: Row(
         children: [
           AppTableHeaderCell('Sl.no', width: 60),
-          AppTableHeaderCell('Customer/tank id', width: 210),
+          AppTableHeaderCell('Site/tank id', width: 210),
           AppTableHeaderCell('Device id', width: 170),
           AppTableHeaderCell('Product', width: 120, textAlign: TextAlign.center),
-          AppTableHeaderCell('Site information', flex: 3),
+          AppTableHeaderCell('Site address', flex: 3),
           AppTableHeaderCell(
             'Actions',
             width: 120,

@@ -36,7 +36,6 @@ abstract class TankRepository {
   Future<List<TankEventModel>> getTankEvents(int tankId, String day);
   Future<List<TankRuleModel>> getAllTankRules();
   Future<List<TankChannelModel>> getTankChannels(int tankId);
-  Future<List<SentAndReceivedModel>> getTankSentAndReceived(int tankId);
   Future<void> updateTankChannelEvent(int tankId, Map<String, dynamic> data);
 
 }

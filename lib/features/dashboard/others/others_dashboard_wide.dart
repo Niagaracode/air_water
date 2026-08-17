@@ -25,7 +25,6 @@ class OthersDashboardWide extends ConsumerStatefulWidget {
 
 class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
 
-  final TextEditingController _searchController = TextEditingController();
 
   String _selectedStatus = 'All Status';
   String _selectedRegion = 'All Regions';
@@ -59,47 +58,6 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                 children: [
                   StatisticsCards(statistics: statistics),
                   const SizedBox(height: 30),
-                  /*SearchAndFilters(
-                    isNarrow: false,
-                    onSearchChanged: (val) {
-                      setState(() {
-                        _searchQuery = val;
-                      });
-                    },
-
-                    onRegionChanged: (val) {
-                      setState(() {
-                        _selectedRegion = val;
-                      });
-                    },
-
-                    onStatusChanged: (val) {
-                      setState(() {
-                        _selectedStatus = val;
-                      });
-                    },
-
-                    onProductChanged: (val) { // ADDED this
-                      setState(() {
-                        _selectedProduct = val;
-                      });
-                    },
-
-                    onClearFilters: () {
-                      setState(() {
-                        _selectedRegion = 'All Regions';
-                        _selectedStatus = 'All Status';
-                        _selectedProduct = 'All Product';
-                        _searchQuery = '';
-                      });
-                      _searchController.clear();
-                    },
-
-                    selectedRegion: _selectedRegion,
-                    selectedStatus: _selectedStatus,
-                    selectedProduct: _selectedProduct,
-                  ),
-                  const SizedBox(height: 16),*/
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -144,9 +102,7 @@ class _OthersDashboardWideState extends ConsumerState<OthersDashboardWide> {
                               _selectedRegion = 'All Regions';
                               _selectedStatus = 'All Status';
                               _selectedProduct = 'All Product';
-                              _searchQuery = '';
                             });
-                            _searchController.clear();
                           },
 
                           selectedRegion: _selectedRegion,

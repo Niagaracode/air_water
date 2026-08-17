@@ -84,9 +84,10 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
       width: double.infinity,
       child: Card(
         color: Colors.white,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: primary,
+        shadowColor: primary.withValues(alpha: 0.2),
         margin: EdgeInsets.zero,
-        elevation: 2.5,
+        elevation: 1.2,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.zero),
         ),
@@ -94,17 +95,11 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
           children: [
             SidebarHeader(isExpanded: isExpanded, userRole: widget.userRole),
             const SizedBox(width: 16),
-
-            /// BROWSER-STYLE REFRESH BUTTON
-            SyncButton(
-              browserStyle: true,
-              onSync: () async {
-                await RouteRefreshHelper.refreshCurrentPage(ref, context);
-              },
+            Text(
+              '${AppConfig.current.appName} welcomes, $finalDisplayName!',
+              style: GoogleFonts.outfit(fontSize: 16, color: Colors.black54),
             ),
-            const SizedBox(width: 16),
-
-            /// BROWSER-STYLE SEARCH / ADDRESS BAR
+            const SizedBox(width: 24),
             Expanded(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
@@ -112,20 +107,18 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                   duration: const Duration(milliseconds: 150),
                   height: 40,
                   decoration: BoxDecoration(
-                    color: _isSearchFocused
-                        ? Colors.white
-                        : const Color(0xFFF1F3F4),
+                    color: _isSearchFocused ? Colors.white
+                        : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(24),
                     border: Border.all(
                       color: _isSearchFocused
-                          ? primary.withValues(alpha: 0.5)
+                          ? primary.withValues(alpha: 0.3)
                           : Colors.black12,
                       width: 1,
                     ),
-                    boxShadow: _isSearchFocused
-                        ? [
+                    boxShadow: _isSearchFocused ? [
                       BoxShadow(
-                        color: primary.withValues(alpha: 0.15),
+                        color: primary.withValues(alpha: 0.02),
                         blurRadius: 6,
                         spreadRadius: 1,
                       ),
@@ -138,7 +131,7 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                     onChanged: _debouncer.setValue,
                     textAlignVertical: TextAlignVertical.center,
                     style: GoogleFonts.inter(
-                      fontSize: 13,
+                      fontSize: 13.5,
                       color: const Color(0xFF3C4043),
                     ),
                     decoration: InputDecoration(
@@ -146,12 +139,12 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                       hintText: 'Search anything...',
                       hintStyle: GoogleFonts.inter(
                         color: const Color(0xFF9AA0A6),
-                        fontSize: 13,
+                        fontSize: 13.5,
                       ),
                       prefixIcon: const Icon(
                         Icons.search_rounded,
-                        size: 18,
-                        color: Color(0xFF9AA0A6),
+                        size: 20,
+                        color: Colors.black54,
                       ),
                       prefixIconConstraints: const BoxConstraints(
                         minWidth: 40,
@@ -187,16 +180,15 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
                 ),
               ),
             ),
-
-            const Spacer(),
-
-            Text(
-              '${AppConfig.current.appName} welcomes, $finalDisplayName!',
-              style: GoogleFonts.outfit(fontSize: 16, color: Colors.black54),
-            ),
-            const SizedBox(width: 24),
-
+            const SizedBox(width: 16),
             const MqttConnectionStatus(),
+            const SizedBox(width: 16),
+            SyncButton(
+              browserStyle: true,
+              onSync: () async {
+                await RouteRefreshHelper.refreshCurrentPage(ref, context);
+              },
+            ),
             const SizedBox(width: 16),
             PopupMenuButton<void>(
               offset: const Offset(0, 48),
@@ -360,212 +352,3 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
     );
   }
 }
-
-
-/*
-class ScreenHeader extends ConsumerWidget {
-  const ScreenHeader({super.key, required this.userRole});
-  final UserRole userRole;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final userNameAsync = ref.watch(userNameProvider);
-    final userName = userNameAsync.value ?? 'User';
-    final isExpanded = ref.watch(sidebarExpandedProvider);
-    final userState = ref.watch(userProvider);
-    final currentUser = userState.currentUser;
-    final displayName = currentUser != null
-        ? '${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}'.trim()
-        : '';
-    final finalDisplayName = displayName.isNotEmpty ? displayName : userName;
-
-    return SizedBox(
-      height: 65,
-      width: double.infinity,
-      child: Card(
-        color: Colors.white,
-        surfaceTintColor: Colors.white,
-        margin: EdgeInsets.zero,
-        elevation: 0.3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.zero),
-        ),
-        child: Row(
-          children: [
-            SidebarHeader(isExpanded: isExpanded, userRole: userRole),
-            const SizedBox(width: 20),
-            Text(
-              '${AppConfig.current.appName} welcomes, $finalDisplayName!',
-              style: GoogleFonts.outfit(fontSize: 20, color: Colors.black54),
-            ),
-            const Spacer(),
-            const MqttConnectionStatus(),
-            const SizedBox(width: 16),
-            SyncButton(
-              onSync: () async {
-                await RouteRefreshHelper.refreshCurrentPage(ref, context);
-              },
-            ),
-            const SizedBox(width: 16),
-            PopupMenuButton<void>(
-              offset: const Offset(0, 48),
-              elevation: 8,
-              color: Colors.white,
-              padding: EdgeInsets.zero,
-              tooltip: 'Notification',
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFFE5E7EB)),
-              ),
-              position: PopupMenuPosition.under,
-              child: Container(
-                width: 35,
-                height: 35,
-                decoration: BoxDecoration(
-                  color: primary,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: Center(
-                  child: Badge(
-                    alignment: const AlignmentDirectional(0.8, -0.8),
-                    smallSize: 8,
-                    backgroundColor: Colors.red.shade500,
-                    isLabelVisible: ref
-                        .watch(notificationNotifierProvider)
-                        .notifications
-                        .isNotEmpty,
-                    child: const Icon(
-                      Icons.notifications_none_rounded,
-                      size: 20,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              itemBuilder: (context) => [
-                const PopupMenuItem<void>(
-                  enabled: false,
-                  padding: EdgeInsets.zero,
-                  child: NotificationDropdown(),
-                ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            PopupMenuButton<String>(
-              offset: const Offset(0, 48),
-              elevation: 8,
-              color: Colors.white,
-              tooltip: '${AppConfig.current.appName} Account',
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: Color(0xFFE5E7EB)),
-              ),
-              onSelected: (value) async {
-                if (value == 'logout') {
-                  await ref.read(authControllerProvider.notifier).logout();
-                } else if (value == 'profile') {
-                  context.go('/profile');
-                }
-              },
-              child: userNameAsync.when(
-                data: (name) => CircleAvatar(
-                  radius: 16,
-                  backgroundColor: primary,
-                  child: Text(
-                    (name ?? 'U').isNotEmpty
-                        ? (name ?? 'U')[0].toUpperCase()
-                        : 'U',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                loading: () => CircleAvatar(
-                  radius: 16,
-                  backgroundColor: primary.withValues(alpha: 0.2),
-                ),
-                error: (_, __) => CircleAvatar(
-                  radius: 16,
-                  backgroundColor: primary,
-                  child: Text(
-                    'U',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-              itemBuilder: (context) => [
-                if (userRole == UserRole.superAdmin ||
-                    userRole == UserRole.companyAdmin ||
-                    userRole == UserRole.customer)
-                  PopupMenuItem(
-                    value: 'profile',
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: ListTile(
-                      dense: true,
-                      leading: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.person_outline_rounded,
-                          size: 18,
-                          color: primary,
-                        ),
-                      ),
-                      title: Text(
-                        'Profile',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF374151),
-                        ),
-                      ),
-                    ),
-                  ),
-                PopupMenuItem(
-                  value: 'logout',
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: ListTile(
-                    dense: true,
-                    leading: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.logout_rounded,
-                        size: 18,
-                        color: Colors.red.shade500,
-                      ),
-                    ),
-                    title: Text(
-                      'Logout',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.red.shade600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 12),
-          ],
-        ),
-      ),
-    );
-  }
-}*/

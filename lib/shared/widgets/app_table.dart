@@ -1,3 +1,4 @@
+import 'package:air_water/core/app_theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -26,7 +27,7 @@ class AppTableHeaderCell extends StatelessWidget {
       style: GoogleFonts.outfit(
         fontWeight: FontWeight.w600,
         fontSize: 12,
-        color: Colors.black.withValues(alpha: 0.6),
+        color: primaryDark,
         letterSpacing: 0.8,
       ),
     );

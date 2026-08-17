@@ -589,35 +589,6 @@ class _SiteMiddleState extends ConsumerState<SiteMiddle> {
             },
           ),
         ),
-        SizedBox(
-          width: 150,
-          child: AppDropdown<int>(
-            value: state.selectedStatus,
-            items: const [1, 0],
-            hint: 'Status',
-            itemLabel: (v) => v == 1 ? 'Active' : 'Inactive',
-            onChanged: (v) => notifier.setStatus(v),
-          ),
-        ),
-        SizedBox(
-          width: 180,
-          child: AppDatePickerField(
-            selectedDate: state.selectedDate != null
-                ? DateTime.parse(state.selectedDate!)
-                : null,
-            firstDate: DateTime(2000),
-            lastDate: DateTime(2100),
-            onDateChanged: (date) {
-              if (date != null) {
-                final formatted =
-                    "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-                notifier.setDate(formatted);
-              } else {
-                notifier.setDate(null);
-              }
-            },
-          ),
-        ),
         AppClearButton(
           onPressed: () {
             _siteSearchController.clear();

@@ -21,7 +21,7 @@ class _RuleGroupNarrowState extends ConsumerState<RuleGroupNarrow> {
     final state = ref.watch(ruleGroupProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primary,
         onPressed: () => _showAddModal(),

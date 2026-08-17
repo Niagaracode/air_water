@@ -43,7 +43,7 @@ class _EventWideState extends ConsumerState<EventWide> {
     final state = ref.watch(eventProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           _buildHeader(context),

@@ -1,5 +1,4 @@
 import 'package:air_water/core/app_theme/app_theme.dart';
-import 'package:air_water/features/tank/presentation/view/sent_received_sheet.dart';
 import 'package:air_water/features/tank/presentation/view/tabs/tank_details_tab.dart';
 import 'package:air_water/features/tank/presentation/view/tabs/tank_events_tab.dart';
 import 'package:air_water/features/tank/presentation/view/tabs/tank_map_tab.dart';
@@ -18,9 +17,7 @@ import '../../../../shared/utils/app_text_styles.dart';
 import '../../../dashboard/data/models/tank_data_model.dart';
 import '../../../dashboard/utils/tank_readings_report_exporter.dart';
 import '../../../dashboard/widgets/tank_level_widget.dart';
-import '../../data/model/sent_and_received_model.dart';
 import '../../data/model/tank_channel_model.dart';
-import '../controller/sent_and_received_provider.dart';
 import '../controller/tank_channel_provider.dart';
 import '../controller/tank_provider.dart';
 import '../controller/tank_readings_provider.dart';
@@ -70,18 +67,27 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   @override
   Widget build(BuildContext context) {
     final channelState = ref.watch(tankChannelProvider(widget.tankId));
-    final sentAndRecState = ref.watch(tankSentAndReceivedProvider(widget.tankId));
+
+    final bool isOffline = widget.tank.status.toLowerCase() == 'offline';
 
     return Scaffold(
-      backgroundColor: Colors.white.withValues(alpha: 0.2),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
+            // Pinned back button — stays visible on screen no matter how
+            // far the user scrolls down; everything else in the header
+            // (site info, data channels) scrolls away normally.
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _PinnedBackButtonDelegate(
+                onBack: () => context.pop(),
+              ),
+            ),
             // Header with tank info and data channels
             SliverToBoxAdapter(
               child: widget.isNarrow
-                  ? _buildNarrowHeader(channelState, sentAndRecState)
-                  : _buildWideHeader(channelState, sentAndRecState),
+                  ? _buildNarrowHeader(channelState, isOffline)
+                  : _buildWideHeader(channelState, isOffline),
             ),
             // Tab Bar
             SliverToBoxAdapter(
@@ -116,12 +122,10 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   }
 
   // ==================== NARROW HEADER ====================
-  Widget _buildNarrowHeader(
-      TankChannelState channelState,
-      TankSentAndReceivedState srState, // Added this parameter
-      ) {
+  Widget _buildNarrowHeader(TankChannelState channelState, bool isOffline) {
     return Padding(
-      padding: const EdgeInsets.only(top: 24, bottom: 8),
+      // Top padding increased to clear the pinned back-button bar above it.
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
       child: Column(
         children: [
           // Tank Info
@@ -137,29 +141,10 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(width: 20),
-                        SizedBox(
-                          width: 35,
-                          child: Tooltip(
-                            message: 'Back',
-                            child: InkWell(
-                              onTap: () => context.pop(),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: primary,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.arrow_back_ios_new,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
+                        // Back button now lives in the pinned sliver above;
+                        // this left inset keeps the site name aligned the
+                        // same as before.
+                        const SizedBox(width: 67),
                         Expanded(
                           child: Text(
                             widget.tank.siteName,
@@ -198,7 +183,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                         ),
                       ),
                       TankLevelWidget(
-                        level: widget.tank.level.toDouble(),
+                        level: isOffline ? 0 : widget.tank.level.toDouble(),
                         svgAsset: AppConfig.current.tankImgPath,
                         gasType: widget.tank.gasType,
                         minLevel: widget.tank.minLevel,
@@ -212,124 +197,98 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
           ),
           const SizedBox(height: 8),
           // Data Channels Section - Pass both parameters
-          _buildDataChannelsSection(channelState, srState),
+          _buildDataChannelsSection(channelState, isOffline),
         ],
       ),
     );
   }
 
 // ==================== WIDE HEADER ====================
-  Widget _buildWideHeader(
-      TankChannelState channelState,
-      TankSentAndReceivedState srState, // Added this parameter
-      ) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, bottom: 8),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left Column - Tank Info
-              Column(
-                children: [
-                  SizedBox(
-                    width: 420,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+  Widget _buildWideHeader(TankChannelState channelState, bool isOffline) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left Column - Tank Info
+            Column(
+              children: [
+                SizedBox(
+                  width: 420,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Back button now lives in the pinned sliver above;
+                      // this left inset keeps the site name aligned the
+                      // same as before.
+                      const SizedBox(width: 67),
+                      Expanded(
+                        child: Text(
+                          widget.tank.siteName,
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF111827),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: 420,
+                  height: 150,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 70),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(width: 20),
-                        SizedBox(
-                          width: 35,
-                          child: Tooltip(
-                            message: 'Back',
-                            child: InkWell(
-                              onTap: () => context.pop(),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: primary,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.arrow_back_ios_new,
-                                  size: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            widget.tank.siteName,
-                            style: GoogleFonts.outfit(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF111827),
-                            ),
-                          ),
-                        ),
+                        Text(widget.tank.addressLine_1,
+                            style: AppTextStyles.body()),
+                        Text(widget.tank.addressLine_2,
+                            style: AppTextStyles.body()),
+                        Text(widget.tank.addressLine_3,
+                            style: AppTextStyles.body()),
+                        Text(widget.tank.city, style: AppTextStyles.body()),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: 420,
-                    height: 150,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 70),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(widget.tank.addressLine_1,
-                              style: AppTextStyles.body()),
-                          Text(widget.tank.addressLine_2,
-                              style: AppTextStyles.body()),
-                          Text(widget.tank.addressLine_3,
-                              style: AppTextStyles.body()),
-                          Text(widget.tank.city, style: AppTextStyles.body()),
-                        ],
-                      ),
-                    ),
-                  ),
-                  TankLevelWidget(
-                    level: widget.tank.level.toDouble(),
-                    svgAsset: AppConfig.current.tankImgPath,
-                    gasType: widget.tank.gasType,
-                    minLevel: widget.tank.minLevel,
-                    maxLevel: widget.tank.maxLevel,
-                  ),
-                ],
-              ),
-              // Right Column - Data Channels - Pass both parameters
-              Expanded(
-                child: _buildDataChannelsSection(channelState, srState),
-              ),
-            ],
-          ),
-        ],
-      ),
+                ),
+                TankLevelWidget(
+                  level: isOffline ? 0 : widget.tank.level.toDouble(),
+                  svgAsset: AppConfig.current.tankImgPath,
+                  gasType: widget.tank.gasType,
+                  minLevel: widget.tank.minLevel,
+                  maxLevel: widget.tank.maxLevel,
+                ),
+              ],
+            ),
+            // Right Column - Data Channels - Pass both parameters
+            Expanded(
+              child: _buildDataChannelsSection(channelState, isOffline),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   // ==================== DATA CHANNELS SECTION ====================
   Widget _buildDataChannelsSection(
       TankChannelState channelState,
-      TankSentAndReceivedState srState,
+      bool isOffline
       ) {
     final List<TankChannelModel> channels = channelState.channels;
-    final List<SentAndReceivedModel> msgSentReceived = srState.sentAndRec;
     final bool isLoading = channelState.isLoading;
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 16, top: 10, right: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -358,14 +317,14 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
               ),
               const SizedBox(width: 8),
               TextButton.icon(
-                onPressed: () => _showSRSideSheet(msgSentReceived),
+                onPressed: () => _showViewSettingsDialog(),
                 icon: Icon(
-                  Icons.message,
+                  Icons.settings,
                   color: primary,
                   size: 18,
                 ),
                 label: Text(
-                  'Sent & Received',
+                  'View Settings',
                   style: TextStyle(
                     color: primary,
                     fontWeight: FontWeight.w600,
@@ -379,14 +338,14 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
         ),
         Padding(
           padding: const EdgeInsets.only(left: 16, right: 16),
-          child: isLoading
-              ? const SizedBox(
+          child: isLoading ? const SizedBox(
             height: 220,
             child: Center(child: CircularProgressIndicator()),
           )
               : _buildDataChannelCards(
-            context,
-            channels,
+              context,
+              channels,
+              isOffline
           ),
         ),
       ],
@@ -397,6 +356,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   Widget _buildDataChannelCards(
       BuildContext context,
       List<TankChannelModel> channels,
+      bool isOffline
       ) {
     final enabledChannels = channels
         .where((item) => item.channelEnable)
@@ -445,7 +405,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
               width: cardWidth,
               child: DataChannelCard(
                 channelName: item.name,
-                value: item.value,
+                value: isOffline ? 0:item.value,
                 unit: getChannelUnit(item.name),
                 readingTime: DateFormatter.formatDateTime(item.readingTime),
                 thresholdText: 'Threshold : ${buildThresholdText(item.threshold)}',
@@ -733,19 +693,17 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     );
   }
 
-  void _showSRSideSheet(List<SentAndReceivedModel> messages) {
+  void _showViewSettingsDialog() {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'Sent & Received',
+      barrierLabel: 'Device Settings',
       barrierColor: Colors.black54,
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (_, __, ___) {
         return Align(
           alignment: Alignment.centerRight,
-          child: SentReceivedSheet(
-            messages: messages,
-          ),
+          child: SizedBox(),
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -1427,5 +1385,58 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
       items.add('L: ${threshold.low!.comparator} ${threshold.low!.value}');
     }
     return items.join('    ');
+  }
+}
+
+/// Pinned sliver header holding only the back button. Stays fixed at the
+/// top of the screen while the rest of the tank-details header (site
+/// info, address, tank level, data channels) scrolls away underneath it.
+class _PinnedBackButtonDelegate extends SliverPersistentHeaderDelegate {
+  _PinnedBackButtonDelegate({required this.onBack});
+
+  final VoidCallback onBack;
+
+  static const double _height = 56;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    // Fades in a subtle background once content has scrolled behind it,
+    // so the button stays legible over whatever content is underneath.
+    return Container(
+      height: _height,
+      color: Colors.white.withValues(alpha: overlapsContent ? 0.96 : 0),
+      padding: const EdgeInsets.only(left: 20, top: 12, bottom: 12),
+      alignment: Alignment.centerLeft,
+      child: Tooltip(
+        message: 'Back',
+        child: InkWell(
+          onTap: onBack,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: primary,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 16,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _PinnedBackButtonDelegate oldDelegate) {
+    return oldDelegate.onBack != onBack;
   }
 }

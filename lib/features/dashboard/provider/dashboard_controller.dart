@@ -117,10 +117,15 @@ class DashboardController extends AsyncNotifier<void> {
 
           switch (key) {
             case 'TNP':
-            case 'TON':
               if (numValue != null) {
                 result['level'] = numValue;
                 debugPrint('📊 Level: $numValue');
+              }
+              break;
+            case 'TON':
+              if (numValue != null) {
+                //result['level'] = numValue;
+                debugPrint('📊 TON: $numValue');
               }
               break;
 

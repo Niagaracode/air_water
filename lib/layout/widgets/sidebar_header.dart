@@ -19,9 +19,8 @@ class SidebarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
+    return SizedBox(
       height: 65,
-      color: Colors.white,
       width: isExpanded ? 250 : 72,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -40,34 +39,46 @@ class SidebarHeader extends ConsumerWidget {
             if(userRole != UserRole.customer)...[
               const Spacer(),
               IconButton(
-                icon: const Icon(
-                  Icons.keyboard_double_arrow_left_rounded,
-                  size: 20,
+                icon: Icon(
+                  Icons.menu_open,
+                  size: 18,
+                  color: primary,
                 ),
-                color: primary,
-                splashRadius: 20,
+                iconSize: 18,
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(
+                  minWidth: 34,
+                  minHeight: 34,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: primary.withValues(alpha: 0.1),
+                  foregroundColor: primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 onPressed: () {
                   ref.read(sidebarExpandedProvider.notifier).toggle();
                 },
-              ),
+              )
             ]
           ],
         ) :
         Center(
           child: InkWell(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8),
             onTap: () {
               ref.read(sidebarExpandedProvider.notifier).toggle();
             },
             child: Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 color: primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
-                Icons.keyboard_double_arrow_right_rounded,
+                Icons.menu_open,
                 size: 18,
                 color: primary,
               ),

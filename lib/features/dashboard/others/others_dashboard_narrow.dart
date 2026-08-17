@@ -42,7 +42,7 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
     final statistics = ref.watch(tankStatisticsProvider);
 
     return Container(
-      color: Colors.white.withValues(alpha: 0.2),
+      color: Colors.white,
 
       child: tanksAsync.when(
         loading: () => buildLoadingView(),

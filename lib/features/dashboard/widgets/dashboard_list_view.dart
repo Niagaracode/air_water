@@ -413,6 +413,11 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
   }
 
   Widget _buildAdminTankRow(TankDataModel tank) {
+    final isOffline = _isOffline(tank);
+
+    final displayLevel = isOffline ? 0.0 : tank.level;
+    final displayPressure = isOffline ? 0.0 : tank.pressure;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -421,6 +426,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
+            color: isOffline ? Colors.grey.shade50 : null,
             border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
           ),
           child: Row(
@@ -430,7 +436,9 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                   children: [
                     CircleAvatar(
                       radius: 15,
-                      backgroundColor: AppColorsHelper.getGasTypeColor(tank.gasType),
+                      backgroundColor: isOffline
+                          ? Colors.grey.shade400
+                          : AppColorsHelper.getGasTypeColor(tank.gasType),
                       child: Text(
                         tank.gasType,
                         style: const TextStyle(
@@ -443,7 +451,11 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                     SizedBox(width: 8),
                     Text(
                       tank.tankName,
-                      style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.grey.shade700),
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: isOffline ? Colors.grey.shade400 : Colors.grey.shade700,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -451,21 +463,35 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
               ),
               SizedBox(
                 width: 200,
-                child: Text(tank.deviceId, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600)),
+                child: Text(
+                  tank.deviceId,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isOffline ? Colors.grey.shade400 : Colors.black,
+                  ),
+                ),
               ),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('${tank.level.toStringAsFixed(1)}%', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700,
-                        color: AppColorsHelper.getLevelColor(tank.level))),
+                    Text(
+                      isOffline ? '--' : '${displayLevel.toStringAsFixed(1)}%',
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: isOffline ? Colors.grey.shade400 : AppColorsHelper.getLevelColor(tank.level),
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
-                        value: tank.level / 100,
+                        // Bar itself is zeroed and greyed when offline — no stale fill.
+                        value: isOffline ? 0.0 : displayLevel / 100,
                         backgroundColor: Colors.grey.shade200,
-                        color: AppColorsHelper.getLevelColor(tank.level),
+                        color: isOffline ? Colors.grey.shade300 : AppColorsHelper.getLevelColor(tank.level),
                         minHeight: 5,
                       ),
                     ),
@@ -475,10 +501,12 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
               SizedBox(
                 width: 100,
                 child: Center(
-                  child: RichText(
+                  child: isOffline
+                      ? Text('--', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.grey.shade400))
+                      : RichText(
                     text: TextSpan(
                       children: [
-                        TextSpan(text: tank.pressure.toStringAsFixed(1), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black)),
+                        TextSpan(text: displayPressure.toStringAsFixed(1), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.black)),
                         TextSpan(text: ' Bar', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey)),
                       ],
                     ),
@@ -489,9 +517,16 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                 width: 100,
                 child: Center(
                   child: Text(
-                    tank.isBatteryEnabled ? '${tank.batteryV.toStringAsFixed(1)} v' : '--',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: tank.isBatteryEnabled ?
-                    AppColorsHelper.getBatSolColor(tank.batteryV) : Colors.grey),
+                    isOffline
+                        ? '--'
+                        : (tank.isBatteryEnabled ? '${tank.batteryV.toStringAsFixed(1)} v' : '--'),
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isOffline
+                          ? Colors.grey.shade400
+                          : (tank.isBatteryEnabled ? AppColorsHelper.getBatSolColor(tank.batteryV) : Colors.grey),
+                    ),
                   ),
                 ),
               ),
@@ -499,9 +534,16 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                 width: 80,
                 child: Center(
                   child: Text(
-                    tank.isSolarEnabled ? '${tank.solarV.toStringAsFixed(1)} v' : '--',
-                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w700, color: tank.isSolarEnabled ?
-                    AppColorsHelper.getBatSolColor(tank.solarV) : Colors.grey),
+                    isOffline
+                        ? '--'
+                        : (tank.isSolarEnabled ? '${tank.solarV.toStringAsFixed(1)} v' : '--'),
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isOffline
+                          ? Colors.grey.shade400
+                          : (tank.isSolarEnabled ? AppColorsHelper.getBatSolColor(tank.solarV) : Colors.grey),
+                    ),
                   ),
                 ),
               ),
@@ -511,15 +553,27 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColorsHelper.getStatusColor(tank.status).withValues(alpha: 0.1),
+                      color: isOffline
+                          ? Colors.grey.shade200
+                          : AppColorsHelper.getStatusColor(tank.status).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(width: 6, height: 6, decoration: BoxDecoration(color: AppColorsHelper.getStatusColor(tank.status), shape: BoxShape.circle)),
+                        if (isOffline)
+                          Icon(Icons.cloud_off_rounded, size: 10, color: Colors.grey.shade600)
+                        else
+                          Container(width: 6, height: 6, decoration: BoxDecoration(color: AppColorsHelper.getStatusColor(tank.status), shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Text(tank.status, style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600, color: AppColorsHelper.getStatusColor(tank.status))),
+                        Text(
+                          isOffline ? 'OFFLINE' : tank.status,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isOffline ? Colors.grey.shade600 : AppColorsHelper.getStatusColor(tank.status),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -530,7 +584,10 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                 child: Center(
                   child: Text(
                     DateFormatter.formatDateTime(tank.lastUpdate),
-                    style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade600),
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: isOffline ? Colors.grey.shade400 : Colors.grey.shade600,
+                    ),
                   ),
                 ),
               ),
@@ -544,20 +601,32 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
   // ==================== CUSTOMER VIEW (MOBILE-OPTIMIZED) ====================
 
   Widget _buildCustomerTankListItem(TankDataModel tank) {
+
+    final isOffline = _isOffline(tank);
     final isSelected = !widget.isNarrow && _selectedTank?.deviceId == tank.deviceId;
-    final levelColor = AppColorsHelper.getLevelColor(tank.level);
+
+    // Force zeroed-out values when offline, so nothing stale is shown as "current".
+    final displayLevel = isOffline ? 0.0 : tank.level;
+    final displayPressure = isOffline ? 0.0 : tank.pressure;
+    final levelColor = isOffline ? Colors.grey.shade400 : AppColorsHelper.getLevelColor(tank.level);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: isSelected ? primary.withValues(alpha: 0.07) : Colors.white,
+        color: isOffline
+            ? Colors.grey.shade50
+            : (isSelected ? primary.withValues(alpha: 0.07) : Colors.white),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isSelected ? primary.withValues(alpha: 0.25) : Colors.grey.shade200,
-          width: isSelected ? 1.4 : 1,
+          color: isOffline
+              ? Colors.grey.shade300
+              : (isSelected ? primary.withValues(alpha: 0.25) : Colors.grey.shade200),
+          width: isSelected && !isOffline ? 1.4 : 1,
         ),
-        boxShadow: [
+        boxShadow: isOffline
+            ? []
+            : [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 12,
@@ -570,6 +639,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
+          // Disabled: nothing to tap into on an offline device.
           onTap: () {
             setState(() {
               _selectedTank = tank;
@@ -587,7 +657,9 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                   children: [
                     CircleAvatar(
                       radius: 18,
-                      backgroundColor: AppColorsHelper.getGasTypeColor(tank.gasType),
+                      backgroundColor: isOffline
+                          ? Colors.grey.shade400
+                          : AppColorsHelper.getGasTypeColor(tank.gasType),
                       child: Text(
                         tank.gasType,
                         style: const TextStyle(
@@ -607,7 +679,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                             style: GoogleFonts.outfit(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1E293B),
+                              color: isOffline ? Colors.grey.shade500 : const Color(0xFF1E293B),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -625,30 +697,39 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                       ),
                     ),
                     const SizedBox(width: 6),
+                    // Offline badge is always the grey "no signal" style, regardless
+                    // of getStatusColor, so it can't be mistaken for a live status.
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColorsHelper.getStatusColor(tank.status).withValues(alpha: 0.12),
+                        color: isOffline
+                            ? Colors.grey.shade200
+                            : AppColorsHelper.getStatusColor(tank.status).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(30),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: AppColorsHelper.getStatusColor(tank.status),
-                              shape: BoxShape.circle,
+                          if (isOffline)
+                            Icon(Icons.cloud_off_rounded, size: 12, color: Colors.grey.shade600)
+                          else
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: AppColorsHelper.getStatusColor(tank.status),
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                          ),
                           const SizedBox(width: 5),
                           Text(
-                            tank.status,
+                            isOffline ? 'Offline' : tank.status,
                             style: GoogleFonts.outfit(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: AppColorsHelper.getStatusColor(tank.status),
+                              color: isOffline
+                                  ? Colors.grey.shade600
+                                  : AppColorsHelper.getStatusColor(tank.status),
                             ),
                           ),
                         ],
@@ -661,99 +742,129 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                /// LEVEL (animated liquid-fill tank) + PRESSURE (animated gauge)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          AnimatedTankLevel(
-                            level: tank.level,
-                            color: levelColor,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${tank.level.toStringAsFixed(0)}%',
-                            style: GoogleFonts.outfit(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: levelColor,
+
+                // Everything below is dimmed + non-interactive when offline,
+                // so the gauges read as "no data" rather than a live reading.
+                IgnorePointer(
+                  ignoring: isOffline,
+                  child: Opacity(
+                    opacity: isOffline ? 0.4 : 1.0,
+                    child: Column(
+                      children: [
+                        /// LEVEL + PRESSURE
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  AnimatedTankLevel(
+                                    level: displayLevel,
+                                    color: levelColor,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    isOffline ? '--' : '${displayLevel.toStringAsFixed(0)}%',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: levelColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  Text(
+                                    'Level',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            'Level',
-                            style: GoogleFonts.outfit(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade500,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  AnimatedPressureGauge(
+                                    percentage: isOffline ? 0.0 : getMaxPressure(tank.thresholds, tank.pressure),
+                                    valueLabel: isOffline ? '-- bar' : '${displayPressure.toStringAsFixed(0)} bar',
+                                    color: isOffline ? Colors.grey.shade400 : AppColorsHelper.getBatSolColor(tank.pressure),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  Text(
+                                    'Pressure',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Divider(color: Colors.grey.shade200, height: 1),
+                        const SizedBox(height: 10),
+                        /// BOTTOM METRICS
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: _buildBottomMetric(
+                                'Battery',
+                                isOffline ? '--' : (tank.isBatteryEnabled ? '${tank.batteryV.toStringAsFixed(1)} v' : '--'),
+                                Icons.battery_std,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: _buildBottomMetric(
+                                'Solar',
+                                isOffline ? '--' : (tank.isSolarEnabled ? '${tank.solarV.toStringAsFixed(1)} v' : '--'),
+                                Icons.solar_power,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: _buildBottomMetric(
+                                'Last Reading',
+                                DateFormatter.formatDateTime(tank.lastUpdate),
+                                Icons.access_time,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          AnimatedPressureGauge(
-                            percentage: getMaxPressure(tank.thresholds, tank.pressure),
-                            valueLabel: '${tank.pressure.toStringAsFixed(0)} bar',
-                            color: AppColorsHelper.getBatSolColor(tank.pressure),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            'Pressure',
-                            style: GoogleFonts.outfit(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Divider(color: Colors.grey.shade200, height: 1),
-                const SizedBox(height: 10),
-                /// BOTTOM METRICS
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: _buildBottomMetric(
-                        'Battery',
-                        tank.isBatteryEnabled ? '${tank.batteryV.toStringAsFixed(1)} v' : '--',
-                        Icons.battery_std,
+                if (isOffline) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, size: 13, color: Colors.grey.shade500),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Device offline — last reading shown above is not live',
+                        style: GoogleFonts.outfit(fontSize: 11, color: Colors.grey.shade500),
                       ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: _buildBottomMetric(
-                        'Solar',
-                        tank.isSolarEnabled ? '${tank.solarV.toStringAsFixed(1)} v' : '--',
-                        Icons.solar_power,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: _buildBottomMetric(
-                        'Last Reading',
-                        DateFormatter.formatDateTime(tank.lastUpdate),
-                        Icons.access_time,
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  bool _isOffline(TankDataModel tank) {
+    return tank.status.toLowerCase() == 'offline';
   }
 
   double getMaxPressure(String thresholds, double cVal) {
