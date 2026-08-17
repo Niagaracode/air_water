@@ -3,7 +3,6 @@ import 'package:air_water/features/tank/presentation/controller/tank_provider.da
 import 'package:flutter_riverpod/legacy.dart';
 import '../../data/model/tank_reading_model.dart';
 
-
 class TankReadingParams {
   final int tankId;
   final String? day;
@@ -35,11 +34,15 @@ class TankReadingParams {
   );
 }
 
-final tankReadingsProvider = StateNotifierProvider.family<
-    TankReadingsNotifier,
-    TankReadingsState,
-    TankReadingParams>((ref, params) {
-
+// autoDispose: when the Readings tab (and this provider's last listener)
+// is disposed, the cached notifier + state are thrown away. Coming back to
+// the tab creates a brand-new notifier, which fetches fresh data instead
+// of reusing a stale snapshot from the first visit.
+final tankReadingsProvider = StateNotifierProvider.family
+    .autoDispose<TankReadingsNotifier, TankReadingsState, TankReadingParams>((
+    ref,
+    params,
+    ) {
   return TankReadingsNotifier(
     ref.read(tankRepositoryProvider),
     params.tankId,
@@ -48,7 +51,6 @@ final tankReadingsProvider = StateNotifierProvider.family<
     params.endDate,
   );
 });
-
 
 class TankReadingsState {
   final bool isLoading;
@@ -61,8 +63,11 @@ class TankReadingsState {
     this.error,
   });
 
-  TankReadingsState copyWith({bool? isLoading,
-    List<TankReadingModel>? readings, String? error}) {
+  TankReadingsState copyWith({
+    bool? isLoading,
+    List<TankReadingModel>? readings,
+    String? error,
+  }) {
     return TankReadingsState(
       isLoading: isLoading ?? this.isLoading,
       readings: readings ?? this.readings,

@@ -23,7 +23,8 @@ class TankReadingsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final readingsState = ref.watch(tankReadingsProvider(
+
+    final state = ref.watch(tankReadingsProvider(
       TankReadingParams(
         tankId: tankId,
         day: day,
@@ -32,11 +33,12 @@ class TankReadingsTab extends ConsumerWidget {
       ),
     ));
 
-    if (readingsState.isLoading) {
+
+    if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (readingsState.readings.isEmpty) {
+    if (state.readings.isEmpty) {
       return const Center(child: Text('No readings available'));
     }
 
@@ -91,7 +93,7 @@ class TankReadingsTab extends ConsumerWidget {
               DataColumn2(label: Text('SOLAR'), size: ColumnSize.S),
             ],
 
-            rows: readingsState.readings.asMap().entries.map((entry) {
+            rows: state.readings.asMap().entries.map((entry) {
               final index = entry.key;
               final reading = entry.value;
               final isEven = index % 2 == 0;

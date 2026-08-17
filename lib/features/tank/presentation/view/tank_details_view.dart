@@ -57,18 +57,34 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (_tabController.indexIsChanging) return;
+    if (_tabController.index == 2) {
+      ref.invalidate(tankReadingsProvider(
+        TankReadingParams(
+          tankId: widget.tankId,
+          day: selectedSegment.isEmpty ? null : selectedSegment,
+          startDate: customStartDate,
+          endDate: customEndDate,
+        ),
+      ));
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final channelState = ref.watch(tankChannelProvider(widget.tankId));
 
+    final channelState = ref.watch(tankChannelProvider(widget.tankId));
     final bool isOffline = widget.tank.status.toLowerCase() == 'offline';
 
     return Scaffold(
