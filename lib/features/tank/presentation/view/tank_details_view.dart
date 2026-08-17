@@ -399,7 +399,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16),
+          padding: const EdgeInsets.only(right: 16),
           child: isLoading ? const SizedBox(
             height: 220,
             child: Center(child: CircularProgressIndicator()),
@@ -426,7 +426,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
     if (enabledChannels.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 40),
+        padding: const EdgeInsets.symmetric(vertical: 50),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -447,7 +447,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
         int columns;
         if (width >= 900) {
           columns = 4;
-        } else if (width >= 600) {
+        } else if (width >= 500) {
           columns = 2;
         } else {
           columns = 1;
