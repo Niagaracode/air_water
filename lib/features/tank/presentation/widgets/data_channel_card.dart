@@ -126,7 +126,7 @@ class DataChannelCard extends StatelessWidget {
               children: [
                 const Icon(
                   Icons.access_time,
-                  size: 13,
+                  size: 14,
                   color: Colors.grey,
                 ),
 
@@ -138,31 +138,13 @@ class DataChannelCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 12,
                       color: Colors.grey,
                     ),
                   ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 7),
-
-            // =====================================================
-            // THRESHOLD
-            // =====================================================
-
-            if (thresholdText.isNotEmpty)
-              Text(
-                thresholdText,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B7280),
-                ),
-              ),
           ],
         ),
       ),

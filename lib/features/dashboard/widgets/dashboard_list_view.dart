@@ -320,7 +320,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 1200),
+            constraints: const BoxConstraints(minWidth: 1050),
             child: SizedBox(
               width: screenWidth,
               child: Column(

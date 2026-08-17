@@ -49,6 +49,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
   late List<Map<String, dynamic>> _channels;
   late List<bool> _channelEnabled;
 
+  TimeOfDay _dataInterval = const TimeOfDay(hour: 0, minute: 30);
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +74,14 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
           name: tank.companyName!,
         );
         _companyAutocompleteController.text = tank.companyName!;
+      }
+
+      // NEW: parse existing "HH:mm" data interval, e.g. "01:30"
+      if (tank.dataInterval != null && tank.dataInterval!.contains(':')) {
+        final parts = tank.dataInterval!.split(':');
+        final h = int.tryParse(parts[0]) ?? 0;
+        final m = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+        _dataInterval = TimeOfDay(hour: h, minute: m);
       }
     } else {
       _selectedCompany = CompanyAutocomplete(
@@ -285,6 +295,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
       companyId: _selectedCompany?.id ?? widget.tank?.companyId,
       ruleId: _selectedRule?.id,
       tankDimension: _selectedDimension?.id,
+      dataInterval: _formatDataInterval(_dataInterval),
     );
 
     final success = widget.tank != null
@@ -679,6 +690,8 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       ),
                       const SizedBox(height: 25),
                       _buildLabelField('DATA CHANNELS', _buildChannelsTable()),
+                      const SizedBox(height: 25),
+                      _buildLabelField('DATA INTERVAL', _buildDataIntervalPicker()), // NEW
                       const SizedBox(height: 32),
                       Container(
                         padding: const EdgeInsets.all(24),
@@ -934,7 +947,61 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
     );
   }
 
+  Widget _buildDataIntervalPicker() {
+    return InkWell(
+      onTap: _pickDataInterval,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.timer_outlined, size: 18, color: primary),
+            const SizedBox(width: 10),
+            Text(
+              _formatDataInterval(_dataInterval),
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF111827),
+              ),
+            ),
+            const Spacer(),
+            Icon(Icons.arrow_drop_down, color: Colors.grey.shade400),
+          ],
+        ),
+      ),
+    );
+  }
 
+  Future<void> _pickDataInterval() async {
+    // Force 24-hour HH:mm display in the picker, regardless of device locale.
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _dataInterval,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() => _dataInterval = picked);
+    }
+  }
+
+  String _formatDataInterval(TimeOfDay time) {
+    final hh = time.hour.toString().padLeft(2, '0');
+    final mm = time.minute.toString().padLeft(2, '0');
+    return '$hh:$mm';
+  }
 
   Widget _buildSiteDropdown() {
     if (_isLoadingDropdowns) {

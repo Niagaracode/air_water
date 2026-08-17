@@ -33,6 +33,7 @@ class Tank {
   final String? country;
   final String? pincode;
   final int? tankDimension;
+  final String? dataInterval;
 
   Tank({
     required this.tankId,
@@ -67,6 +68,7 @@ class Tank {
     this.country,
     this.pincode,
     this.tankDimension,
+    this.dataInterval,
   });
 
   factory Tank.fromJson(Map<String, dynamic> json) {
@@ -99,7 +101,7 @@ class Tank {
       timeZone: json['time_zone'] as String?,
       status: json['status'] ?? 1,
       useStrappingChart:
-          json['use_strapping_chart'] == 1 ||
+      json['use_strapping_chart'] == 1 ||
           json['use_strapping_chart'] == true,
 
       tankName: json['tank_name'] as String?,
@@ -116,6 +118,7 @@ class Tank {
       country: json['country'] as String?,
       pincode: json['pincode'] as String?,
       tankDimension: _toInt(json['tank_dimension']),
+      dataInterval: json['data_interval'] as String?,
     );
   }
 
@@ -336,6 +339,7 @@ class TankCreateRequest {
   final int? companyId;
   final int? ruleId;
   final int? tankDimension;
+  final String? dataInterval;
 
   TankCreateRequest({
     required this.tankNumber,
@@ -349,6 +353,7 @@ class TankCreateRequest {
     this.companyId,
     this.ruleId,
     this.tankDimension,
+    this.dataInterval,
   });
 
   Map<String, dynamic> toJson() {
@@ -364,6 +369,7 @@ class TankCreateRequest {
       'company_id': companyId,
       'rule_id': ruleId,
       'tank_dimension': tankDimension,
+      'data_interval': dataInterval,
     };
   }
 }

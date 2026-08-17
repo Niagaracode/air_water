@@ -99,8 +99,8 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
   }
 
   void _notifyCallbacks(String topic, MqttMessageModel message) {
-    debugPrint('🔍 Looking for callbacks for topic: $topic');
-    debugPrint('📋 Registered topics: ${_topicCallbacks.keys}');
+    //debugPrint('🔍 Looking for callbacks for topic: $topic');
+    //debugPrint('📋 Registered topics: ${_topicCallbacks.keys}');
 
     int matchedCount = 0;
 
@@ -108,11 +108,11 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
       final pattern = entry.key;
       final callbacks = entry.value;
 
-      debugPrint('🔎 Checking pattern: "$pattern" against "$topic"');
+      //debugPrint('🔎 Checking pattern: "$pattern" against "$topic"');
 
       if (_topicMatches(pattern, topic)) {
-        debugPrint('✅ MATCH FOUND for pattern: $pattern');
-        debugPrint('📞 Notifying ${callbacks.length} callback(s)');
+        //debugPrint('✅ MATCH FOUND for pattern: $pattern');
+        //debugPrint('📞 Notifying ${callbacks.length} callback(s)');
 
         for (final callback in callbacks) {
           try {
@@ -140,7 +140,7 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
     final patternParts = pattern.split('/');
     final topicParts = actualTopic.split('/');
 
-    debugPrint('🔍 Matching parts: pattern=$patternParts, topic=$topicParts');
+    //debugPrint('🔍 Matching parts: pattern=$patternParts, topic=$topicParts');
 
     for (var i = 0; i < patternParts.length; i++) {
       if (patternParts[i] == '#') {
@@ -250,8 +250,7 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
 
   // ==================== SUBSCRIPTION MANAGEMENT ====================
 
-  Future<void> subscribeToTopic(
-      String topic, {
+  Future<void> subscribeToTopic(String topic, {
         Function(MqttMessageModel)? onMessage,
       }) async {
     debugPrint('📡 subscribeToTopic: $topic');
@@ -268,8 +267,7 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
     // Add callback
     if (onMessage != null) {
       _topicCallbacks.putIfAbsent(
-        topic,
-            () => <Function(MqttMessageModel)>{},
+        topic, () => <Function(MqttMessageModel)>{},
       );
       _topicCallbacks[topic]!.add(onMessage);
       debugPrint(
@@ -278,8 +276,7 @@ class MqttNotifier extends StateNotifier<MqttConnectionStateModel> {
     }
   }
 
-  void unsubscribeFromTopic(
-      String topic, {
+  void unsubscribeFromTopic(String topic, {
         Function(MqttMessageModel)? onMessage,
       }) {
     debugPrint('📡 unsubscribeFromTopic: $topic');
