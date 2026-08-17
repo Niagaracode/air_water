@@ -691,7 +691,7 @@ class _AddTankModalState extends ConsumerState<AddTankModal> {
                       const SizedBox(height: 25),
                       _buildLabelField('DATA CHANNELS', _buildChannelsTable()),
                       const SizedBox(height: 25),
-                      _buildLabelField('DATA INTERVAL', _buildDataIntervalPicker()), // NEW
+                      _buildLabelField('DATA INTERVAL (HH:MM)', _buildDataIntervalPicker()), // NEW
                       const SizedBox(height: 32),
                       Container(
                         padding: const EdgeInsets.all(24),

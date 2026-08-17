@@ -320,7 +320,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 1050),
+            constraints: const BoxConstraints(minWidth: 1000),
             child: SizedBox(
               width: screenWidth,
               child: Column(
@@ -349,8 +349,8 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
       ),
       child: Row(
         children: [
-          Expanded(child: Text('SITE / TANK ID', style: _adminHeaderStyle())),
-          SizedBox(width: 200, child: Text('DEVICE ID', style: _adminHeaderStyle())),
+          SizedBox(width: 190,child: Text('SITE / TANK ID', style: _adminHeaderStyle())),
+          SizedBox(width: 170, child: Text('DEVICE ID', style: _adminHeaderStyle())),
           Expanded(child: Text('LEVEL', style: _adminHeaderStyle(), textAlign: TextAlign.center)),
           SizedBox(width: 100, child: Text('PRESSURE', style: _adminHeaderStyle(), textAlign: TextAlign.center)),
           SizedBox(width: 100, child: Text('BATTERY', style: _adminHeaderStyle(), textAlign: TextAlign.center)),
@@ -431,7 +431,8 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
           ),
           child: Row(
             children: [
-              Expanded(
+              SizedBox(
+                width: 190,
                 child: Row(
                   children: [
                     CircleAvatar(
@@ -462,7 +463,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                 ),
               ),
               SizedBox(
-                width: 200,
+                width: 170,
                 child: Text(
                   tank.deviceId,
                   style: GoogleFonts.outfit(

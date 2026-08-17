@@ -39,6 +39,7 @@ class SidebarHeader extends ConsumerWidget {
             if(userRole != UserRole.customer)...[
               const Spacer(),
               IconButton(
+                tooltip: 'Menu close',
                 icon: Icon(
                   Icons.menu_open,
                   size: 18,
