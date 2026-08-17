@@ -101,7 +101,7 @@ class MqttService {
         .startClean()
         .keepAliveFor(60)
         .withWillTopic('will/topic')
-        .withWillMessage('${_clientId} disconnected')
+        .withWillMessage('$_clientId disconnected')
         .withWillQos(MqttQos.atLeastOnce);
 
     _client!.connectionMessage = connMessage;

@@ -22,6 +22,7 @@ import '../controller/tank_channel_provider.dart';
 import '../controller/tank_provider.dart';
 import '../controller/tank_readings_provider.dart';
 import '../widgets/data_channel_card.dart';
+import 'device_settings_bottom_sheet.dart';
 
 class TankDetailsView extends ConsumerStatefulWidget {
   final int tankId;
@@ -265,6 +266,51 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   minLevel: widget.tank.minLevel,
                   maxLevel: widget.tank.maxLevel,
                 ),
+                const SizedBox(height: 12),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Gas : ',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF6B7280), // Gray title
+                        ),
+                      ),
+                      TextSpan(
+                        text: widget.tank.gasType,
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF111827), // Black value
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Tank Id : ',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF6B7280), // Gray title
+                        ),
+                      ),
+                      TextSpan(
+                        text: widget.tank.tankName,
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF111827), // Black value
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             // Right Column - Data Channels - Pass both parameters
@@ -307,7 +353,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   size: 18,
                 ),
                 label: Text(
-                  'View Event Details',
+                  'Event Details',
                   style: TextStyle(
                     color: primary,
                     fontWeight: FontWeight.w600,
@@ -341,8 +387,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
           child: isLoading ? const SizedBox(
             height: 220,
             child: Center(child: CircularProgressIndicator()),
-          )
-              : _buildDataChannelCards(
+          ) : _buildDataChannelCards(
               context,
               channels,
               isOffline
@@ -694,22 +739,9 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   }
 
   void _showViewSettingsDialog() {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'Device Settings',
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (_, __, ___) {
-        return Align(
-          alignment: Alignment.centerRight,
-          child: SizedBox(),
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final tween = Tween(begin: const Offset(1, 0), end: Offset.zero);
-        return SlideTransition(position: animation.drive(tween), child: child);
-      },
+    showDeviceSettingsBottomSheet(
+      context,
+      deviceId: widget.tank.deviceId,
     );
   }
 
