@@ -31,6 +31,9 @@ class OthersLayoutNarrow extends ConsumerWidget {
       drawer: Drawer(
         surfaceTintColor: Colors.white,
         backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
         child: ScreenSidebar(
           userRole: userRole, isNarrow: true,
         ),
