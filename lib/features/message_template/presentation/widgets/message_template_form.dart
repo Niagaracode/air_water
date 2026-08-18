@@ -139,7 +139,9 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
       items: _subjectPlaceholders.map((placeholder) {
         return PopupMenuItem(
           value: placeholder,
-          child: Text(placeholder),
+          child: Text(placeholder, style: GoogleFonts.outfit(
+            fontSize: 15,
+          )),
         );
       }).toList(),
     ).then((value) {
@@ -409,7 +411,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.1),
+                  color: primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -439,7 +441,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.1),
+                  color: primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -478,7 +480,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: primary.withOpacity(0.1),
+                          color: primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -594,13 +596,13 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
             value: item,
             child: Text(
               item.toString(),
-              style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF111827)),
+              style: GoogleFonts.roboto(fontSize: 14, color: const Color(0xFF111827)),
             ),
           );
         }).toList(),
         onChanged: onChanged,
         isExpanded: true,
-        style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF111827)),
+        style: GoogleFonts.roboto(fontSize: 14, color: const Color(0xFF111827)),
         icon: const SizedBox.shrink(),
         dropdownColor: Colors.white,
         borderRadius: BorderRadius.circular(12),
