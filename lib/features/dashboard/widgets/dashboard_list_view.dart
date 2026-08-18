@@ -112,7 +112,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
 
     final filteredGroups = _getFilteredGroups();
     final totalTanks = _getTotalTanksCount();
-    final isSplitView = totalTanks >= 1; // Show left panel when 1 or more tanks
+    final isSplitView = totalTanks >= 1;
     final mediaWidth = MediaQuery.of(context).size.width;
     final isExpanded = ref.watch(sidebarExpandedProvider);
     final screenWidth = isExpanded ? mediaWidth - 300 : mediaWidth - 120;
@@ -761,7 +761,7 @@ class _DashboardListViewState extends ConsumerState<DashboardListView> {
                                 children: [
                                   AnimatedTankLevel(
                                     level: displayLevel,
-                                    color: levelColor,
+                                    color: AppColorsHelper.getGasTypeColor(tank.gasType),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
