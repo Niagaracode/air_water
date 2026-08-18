@@ -313,7 +313,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         decoration: BoxDecoration(
-          color: isSelected ? theme.primaryColor.withOpacity(0.05) : Colors.transparent,
+          color: isSelected ? theme.primaryColor.withValues(alpha: 0.05) : Colors.transparent,
           border: Border.all(
             color: isSelected ? theme.primaryColor : const Color(0xFFE5E7EB),
             width: isSelected ? 1.5 : 1,

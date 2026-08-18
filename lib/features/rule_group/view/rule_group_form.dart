@@ -342,7 +342,7 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: primary.withOpacity(0.05),
+              color: primary.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -415,7 +415,7 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: (rule["color"] as Color).withOpacity(0.1),
+                color: (rule["color"] as Color).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(

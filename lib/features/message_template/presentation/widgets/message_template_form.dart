@@ -512,7 +512,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [primary.withOpacity(0.08), primary.withOpacity(0.02)],
+              colors: [primary.withValues(alpha: 0.08), primary.withValues(alpha: 0.02)],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -618,7 +618,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [primary.withOpacity(0.08), primary.withOpacity(0.02)],
+              colors: [primary.withValues(alpha: 0.08), primary.withValues(alpha: 0.02)],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -675,7 +675,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: _isActive == 1 ? primary.withOpacity(0.1) : const Color(0xFFFEE2E2),
+                  color: _isActive == 1 ? primary.withValues(alpha: 0.1) : const Color(0xFFFEE2E2),
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: Switch(
@@ -684,7 +684,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                   activeColor: primary,
                   inactiveThumbColor: Colors.red.shade300,
                   inactiveTrackColor: Colors.red.shade100,
-                  activeTrackColor: primary.withOpacity(0.5),
+                  activeTrackColor: primary.withValues(alpha: 0.5),
                 ),
               ),
             ],

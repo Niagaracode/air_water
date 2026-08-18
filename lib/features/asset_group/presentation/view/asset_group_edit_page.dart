@@ -585,7 +585,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                                 size: 20,
                               ),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.red.withOpacity(0.05),
+                                backgroundColor: Colors.red.withValues(alpha: 0.05),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -752,7 +752,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
         border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -831,8 +831,8 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: _displayInTree
-                ? const Color(0xFF10B981).withOpacity(0.2)
-                : const Color(0xFFEF4444).withOpacity(0.2),
+                ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                : const Color(0xFFEF4444).withValues(alpha: 0.2),
           ),
         ),
         child: Row(
@@ -873,8 +873,8 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: visible
-              ? const Color(0xFF10B981).withOpacity(0.2)
-              : const Color(0xFFEF4444).withOpacity(0.2),
+              ? const Color(0xFF10B981).withValues(alpha: 0.2)
+              : const Color(0xFFEF4444).withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -1533,7 +1533,7 @@ class _AssetGroupEditPageState extends ConsumerState<AssetGroupEditPage> {
                 size: 20,
               ),
               style: IconButton.styleFrom(
-                backgroundColor: Colors.red.withOpacity(0.05),
+                backgroundColor: Colors.red.withValues(alpha: 0.05),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

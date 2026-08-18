@@ -48,7 +48,7 @@ class AppTheme {
           if (states.contains(WidgetState.selected)) {
             return primaryLight;
           }
-          return primaryLight.withOpacity(0.1);
+          return primaryLight.withValues(alpha: 0.1);
         }),
         foregroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.selected)) {
