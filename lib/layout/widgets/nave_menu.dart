@@ -31,7 +31,7 @@ class NaveMenu extends StatelessWidget {
         vertical: 1,
       ),
       decoration: BoxDecoration(
-        color: isSelected ? primary.withValues(alpha: 0.9) : Colors.transparent,
+        color: isSelected ? primary.withValues(alpha: 0.8) : Colors.transparent,
         borderRadius: BorderRadius.circular(6),
       ),
       child: InkWell(
