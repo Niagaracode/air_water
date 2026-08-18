@@ -6,15 +6,19 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../controller/message_template_provider.dart';
 import '../../../../core/app_theme/app_theme.dart';
 
-
 class MessageTemplateForm extends ConsumerStatefulWidget {
   final MessageTemplate? initialTemplate;
   final bool isNarrow;
 
-  const MessageTemplateForm({super.key, this.initialTemplate, required this.isNarrow});
+  const MessageTemplateForm({
+    super.key,
+    this.initialTemplate,
+    required this.isNarrow,
+  });
 
   @override
-  ConsumerState<MessageTemplateForm> createState() => _MessageTemplateFormState();
+  ConsumerState<MessageTemplateForm> createState() =>
+      _MessageTemplateFormState();
 }
 
 class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
@@ -65,22 +69,18 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
       debugPrint('Config Data: $configData');
 
       setState(() {
-        _dateFormats =
-        List<String>.from(configData['Date Format'] ?? []);
+        _dateFormats = List<String>.from(configData['Date Format'] ?? []);
 
-        _subjectPlaceholders =
-        List<String>.from(
-            configData['Template Content Subject'] ?? []);
+        _subjectPlaceholders = List<String>.from(
+          configData['Template Content Subject'] ?? [],
+        );
 
-        _timeFormats =
-        List<String>.from(configData['Time Format'] ?? []);
+        _timeFormats = List<String>.from(configData['Time Format'] ?? []);
 
-        _timeZoneTypes =
-        List<String>.from(configData['Time Zone Type'] ?? []);
+        _timeZoneTypes = List<String>.from(configData['Time Zone Type'] ?? []);
 
         _isLoading = false;
       });
-
     } catch (e, stackTrace) {
       debugPrint('Error loading template config: $e');
       debugPrintStack(stackTrace: stackTrace);
@@ -92,8 +92,10 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
     }
   }
 
-
-  void _insertPlaceholder(String placeholder, TextEditingController controller) {
+  void _insertPlaceholder(
+    String placeholder,
+    TextEditingController controller,
+  ) {
     final text = controller.text;
     final selection = controller.selection;
     final cursorPos = selection.baseOffset;
@@ -102,7 +104,10 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
     int newCursorPos;
 
     if (cursorPos >= 0 && cursorPos <= text.length) {
-      newText = text.substring(0, cursorPos) + placeholder + text.substring(cursorPos);
+      newText =
+          text.substring(0, cursorPos) +
+          placeholder +
+          text.substring(cursorPos);
       newCursorPos = cursorPos + placeholder.length;
     } else {
       newText = text + placeholder;
@@ -114,19 +119,15 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
   }
 
   void _showPlaceholderMenu(
-      BuildContext buttonContext,
-      TextEditingController controller,
-      ) {
-    final RenderBox button =
-    buttonContext.findRenderObject() as RenderBox;
+    BuildContext buttonContext,
+    TextEditingController controller,
+  ) {
+    final RenderBox button = buttonContext.findRenderObject() as RenderBox;
 
     final RenderBox overlay =
-    Overlay.of(buttonContext).context.findRenderObject() as RenderBox;
+        Overlay.of(buttonContext).context.findRenderObject() as RenderBox;
 
-    final Offset offset = button.localToGlobal(
-      Offset.zero,
-      ancestor: overlay,
-    );
+    final Offset offset = button.localToGlobal(Offset.zero, ancestor: overlay);
 
     showMenu(
       context: buttonContext,
@@ -137,10 +138,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
         overlay.size.height - offset.dy,
       ),
       items: _subjectPlaceholders.map((placeholder) {
-        return PopupMenuItem(
-          value: placeholder,
-          child: Text(placeholder),
-        );
+        return PopupMenuItem(value: placeholder, child: Text(placeholder));
       }).toList(),
     ).then((value) {
       if (value != null) {
@@ -149,7 +147,6 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
       }
     });
   }
-
 
   Future<void> _save() async {
     if (_nameController.text.trim().isEmpty) {
@@ -163,8 +160,12 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
 
     final data = {
       'name': _nameController.text.trim(),
-      'description': _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
-      'subject': _subjectController.text.trim().isEmpty ? null : _subjectController.text.trim(),
+      'description': _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
+      'subject': _subjectController.text.trim().isEmpty
+          ? null
+          : _subjectController.text.trim(),
       'body': _bodyController.text.trim(),
       'date_format': _selectedDateFormat,
       'time_format': _selectedTimeFormat,
@@ -182,7 +183,11 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
 
     if (success && mounted) {
       Navigator.of(context).pop();
-      _showSnackBar(widget.initialTemplate != null ? 'Template updated successfully' : 'Template created successfully');
+      _showSnackBar(
+        widget.initialTemplate != null
+            ? 'Template updated successfully'
+            : 'Template created successfully',
+      );
     }
   }
 
@@ -230,9 +235,11 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                widget.initialTemplate != null ? 'Edit Template' : 'Create New Template',
+                                widget.initialTemplate != null
+                                    ? 'Edit Template'
+                                    : 'Create New Template',
                                 style: GoogleFonts.outfit(
-                                  fontSize: widget.isNarrow? 26 : 32,
+                                  fontSize: widget.isNarrow ? 26 : 32,
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF111827),
                                   letterSpacing: -0.5,
@@ -253,7 +260,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                             ],
                           ),
                         ),
-                        SizedBox(width: 8,),
+                        SizedBox(width: 8),
                         Container(
                           width: 50,
                           decoration: BoxDecoration(
@@ -273,57 +280,67 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                       ],
                     ),
                     const SizedBox(height: 36),
-          
+
                     // TEMPLATE NAME
                     _buildLabelField(
                       'TEMPLATE NAME *',
                       AppTextField(
                         controller: _nameController,
                         hint: 'e.g., Alarm Notification, Welcome Email',
-                        prefixIcon: const Icon(Icons.text_fields, size: 20, color: Color(0xFF6B7280)),
+                        prefixIcon: const Icon(
+                          Icons.text_fields,
+                          size: 20,
+                          color: Color(0xFF6B7280),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
-          
+
                     // DESCRIPTION
                     _buildLabelField(
                       'DESCRIPTION',
                       AppTextField(
                         controller: _descriptionController,
                         hint: 'Short description of the template purpose',
-                        prefixIcon: const Icon(Icons.description_outlined, size: 20, color: Color(0xFF6B7280)),
+                        prefixIcon: const Icon(
+                          Icons.description_outlined,
+                          size: 20,
+                          color: Color(0xFF6B7280),
+                        ),
                         maxLines: 1,
                       ),
                     ),
                     const SizedBox(height: 24),
-          
+
                     // SUBJECT FIELD WITH PLACEHOLDER MENU
                     _buildTextFieldWithPlaceholders(
                       label: 'SUBJECT (WITH PLACEHOLDERS)',
                       controller: _subjectController,
-                      hint: 'e.g., Alert: {site_name} - {customer_name} - {tank_name}',
+                      hint:
+                          'e.g., Alert: {site_name} - {customer_name} - {tank_name}',
                       icon: Icons.subject,
                     ),
                     const SizedBox(height: 24),
-          
+
                     // BODY FIELD WITH PLACEHOLDER MENU
                     _buildTextFieldWithPlaceholders(
                       label: 'BODY CONTENT (HTML SUPPORTED)',
                       controller: _bodyController,
-                      hint: 'Enter template body with HTML formatting...\n\nExample:\n<h2>{site_name} Alert</h2>\n<p>Dear {customer_name},</p>\n<p>Tank {tank_name} has reached {Tank_display_level} at {last_reading_time}</p>',
+                      hint:
+                          'Enter template body with HTML formatting...\n\nExample:\n<h2>{site_name} Alert</h2>\n<p>Dear {customer_name},</p>\n<p>Tank {tank_name} has reached {Tank_display_level} at {last_reading_time}</p>',
                       icon: Icons.code,
                       maxLines: 10,
                     ),
                     const SizedBox(height: 32),
-          
+
                     // ADVANCED CONFIGURATION SECTION
                     _buildAdvancedConfigSection(),
                     const SizedBox(height: 32),
-          
+
                     // STATUS CONFIGURATION
                     _buildStatusSection(),
                     const SizedBox(height: 48),
-          
+
                     // ACTION BUTTONS
                     Row(
                       children: [
@@ -332,7 +349,10 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                             onPressed: () => Navigator.of(context).pop(),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF4B5563),
-                              side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.5),
+                              side: const BorderSide(
+                                color: Color(0xFFD1D5DB),
+                                width: 1.5,
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
@@ -360,7 +380,9 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                               ),
                             ),
                             child: Text(
-                              widget.initialTemplate != null ? 'Update Template' : 'Create Template',
+                              widget.initialTemplate != null
+                                  ? 'Update Template'
+                                  : 'Create Template',
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -392,7 +414,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if(widget.isNarrow)...[
+        if (widget.isNarrow) ...[
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -423,7 +445,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
               ),
             ],
           ),
-        ]else...[
+        ] else ...[
           Row(
             children: [
               Text(
@@ -466,7 +488,11 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                 controller: controller,
                 hint: hint,
                 maxLines: maxLines,
-                prefixIcon: Icon(icon, size: 20, color: const Color(0xFF6B7280)),
+                prefixIcon: Icon(
+                  icon,
+                  size: 20,
+                  color: const Color(0xFF6B7280),
+                ),
               ),
               Positioned(
                 right: 12,
@@ -474,7 +500,8 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                 child: Builder(
                   builder: (buttonContext) {
                     return InkWell(
-                      onTap: () => _showPlaceholderMenu(buttonContext, controller),
+                      onTap: () =>
+                          _showPlaceholderMenu(buttonContext, controller),
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
@@ -587,14 +614,21 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          suffixIcon: Icon(Icons.keyboard_arrow_down, color: Color(0xFF6B7280), size: 20),
+          suffixIcon: Icon(
+            Icons.keyboard_arrow_down,
+            color: Color(0xFF6B7280),
+            size: 20,
+          ),
         ),
         items: items.map((item) {
           return DropdownMenuItem<T>(
             value: item,
             child: Text(
               item.toString(),
-              style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF111827)),
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                color: const Color(0xFF111827),
+              ),
             ),
           );
         }).toList(),
@@ -673,7 +707,9 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
               ),
               Container(
                 decoration: BoxDecoration(
-                  color: _isActive == 1 ? primary.withOpacity(0.1) : const Color(0xFFFEE2E2),
+                  color: _isActive == 1
+                      ? primary.withOpacity(0.1)
+                      : const Color(0xFFFEE2E2),
                   borderRadius: BorderRadius.circular(40),
                 ),
                 child: Switch(
