@@ -86,6 +86,14 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
           "icon": Icons.speed,
           "color": const Color(0xFF8B5CF6),
         },
+        {
+          "description": "High Pressure",
+          "comparator": "<=",
+          "value": "",
+          "unit": "Bar",
+          "icon": Icons.speed,
+          "color": const Color(0xFF8B5CF6),
+        },
       ],
       "Battery": [
         {
@@ -126,13 +134,27 @@ class _RuleGroupFormState extends ConsumerState<RuleGroupForm> {
 
         // Populate event values
         for (var event in rule.events) {
-          final existingEvent = eventsList.cast<Map<String, dynamic>>().firstWhere(
-                (e) => e["description"] == event.description,
-            orElse: () => null as Map<String, dynamic>,
-          );
+          Map<String, dynamic>? existingEvent;
+          for (var e in eventsList) {
+            if (e["description"] == event.description) {
+              existingEvent = e;
+              break;
+            }
+          }
 
-          existingEvent["value"] = event.value.toString();
-          existingEvent["comparator"] = event.comparator;
+          if (existingEvent != null) {
+            existingEvent["value"] = event.value.toString();
+            existingEvent["comparator"] = event.comparator;
+          } else {
+            eventsList.add({
+              "description": event.description,
+              "comparator": event.comparator,
+              "value": event.value.toString(),
+              "unit": event.unit.isNotEmpty ? event.unit : "Bar",
+              "icon": Icons.speed,
+              "color": const Color(0xFF8B5CF6),
+            });
+          }
         }
 
         // Populate missing data for Level category

@@ -25,27 +25,27 @@ class DeviceSettingsUpdateState {
   });
 
   int get completedCount {
-    return settings.where((setting) =>
-      setting.status == SettingUpdateStatus.completed,
-    ).length;
+    return settings
+        .where((setting) => setting.status == SettingUpdateStatus.completed)
+        .length;
   }
 
   int get failedCount {
-    return settings.where((setting) =>
-      setting.status == SettingUpdateStatus.failed,
-    ).length;
+    return settings
+        .where((setting) => setting.status == SettingUpdateStatus.failed)
+        .length;
   }
 
   int get sendingCount {
-    return settings.where((setting) =>
-      setting.status == SettingUpdateStatus.sending,
-    ).length;
+    return settings
+        .where((setting) => setting.status == SettingUpdateStatus.sending)
+        .length;
   }
 
   int get pendingCount {
-    return settings.where((setting) =>
-      setting.status == SettingUpdateStatus.pending,
-    ).length;
+    return settings
+        .where((setting) => setting.status == SettingUpdateStatus.pending)
+        .length;
   }
 
   int get totalCount => settings.length;
@@ -59,16 +59,17 @@ class DeviceSettingsUpdateState {
       return false;
     }
 
-    return settings.every((setting) =>
-      setting.status == SettingUpdateStatus.completed ||
+    return settings.every(
+      (setting) =>
+          setting.status == SettingUpdateStatus.completed ||
           setting.status == SettingUpdateStatus.failed,
     );
   }
 
   bool get allCompleted {
     return settings.isNotEmpty &&
-        settings.every((setting) =>
-          setting.status == SettingUpdateStatus.completed,
+        settings.every(
+          (setting) => setting.status == SettingUpdateStatus.completed,
         );
   }
 
@@ -91,7 +92,6 @@ class DeviceSettingsUpdateState {
 
 class DeviceSettingsUpdateNotifier
     extends StateNotifier<DeviceSettingsUpdateState> {
-
   // ----------------------------------------------------------
   // MQTT NOTIFIER
   // ----------------------------------------------------------
@@ -133,12 +133,8 @@ class DeviceSettingsUpdateNotifier
   // Constructor
   // ----------------------------------------------------------
 
-  DeviceSettingsUpdateNotifier(
-      this._mqttNotifier,
-      this._mqttService,
-      ) : super(
-    const DeviceSettingsUpdateState(),
-  );
+  DeviceSettingsUpdateNotifier(this._mqttNotifier, this._mqttService)
+    : super(const DeviceSettingsUpdateState());
 
   // ==========================================================
   // UPDATE SETTINGS
@@ -148,11 +144,8 @@ class DeviceSettingsUpdateNotifier
     required String deviceId,
     required List<DeviceSettingUpdate> settings,
   }) async {
-
     if (settings.isEmpty) {
-      debugPrint(
-        '⚠️ No device settings to update',
-      );
+      debugPrint('⚠️ No device settings to update');
 
       return;
     }
@@ -185,12 +178,11 @@ class DeviceSettingsUpdateNotifier
     // Set state
     // --------------------------------------------------------
 
-    state = state.copyWith(settings: [...settings],
+    state = state.copyWith(
+      settings: [...settings],
       isUpdating: true,
       error: null,
     );
-
-
 
     // ========================================================
     // ACK TOPIC
@@ -198,16 +190,13 @@ class DeviceSettingsUpdateNotifier
 
     final ackTopic = 'level/$deviceId';
 
-    await _registerAckCallback(
-      ackTopic,
-    );
+    await _registerAckCallback(ackTopic);
 
     // ========================================================
     // PUBLISH SETTINGS
     // ========================================================
 
     for (int i = 0; i < settings.length; i++) {
-
       final setting = settings[i];
 
       // ------------------------------------------------------
@@ -222,10 +211,7 @@ class DeviceSettingsUpdateNotifier
       // Mark as sending
       // ------------------------------------------------------
 
-      _updateStatus(
-        setting.id,
-        SettingUpdateStatus.sending,
-      );
+      _updateStatus(setting.id, SettingUpdateStatus.sending);
 
       // ------------------------------------------------------
       // Save sent time
@@ -237,9 +223,7 @@ class DeviceSettingsUpdateNotifier
       // Add to ACK waiting list
       // ------------------------------------------------------
 
-      _waitingForAck.add(
-        setting.id,
-      );
+      _waitingForAck.add(setting.id);
 
       // ------------------------------------------------------
       // MQTT topic
@@ -251,29 +235,16 @@ class DeviceSettingsUpdateNotifier
       // Actual IoT payload
       final payload = {'sentSms': setting.value};
 
-
       // ======================================================
       // PUBLISH
       try {
+        await _mqttService.publishJson(topic, payload);
 
-        await _mqttService.publishJson(
-          topic,
-          payload,
-        );
-
-        debugPrint(
-          '✅ ${setting.name} published successfully',
-        );
-
+        debugPrint('✅ ${setting.name} published successfully');
       } catch (e) {
+        debugPrint('❌ Failed to publish ${setting.name}');
 
-        debugPrint(
-          '❌ Failed to publish ${setting.name}',
-        );
-
-        debugPrint(
-          '❌ Error: $e',
-        );
+        debugPrint('❌ Error: $e');
 
         // ----------------------------------------------------
         // Mark failed
@@ -287,9 +258,7 @@ class DeviceSettingsUpdateNotifier
         // Remove from ACK waiting list
         // ----------------------------------------------------
 
-        _waitingForAck.remove(
-          setting.id,
-        );
+        _waitingForAck.remove(setting.id);
 
         // ----------------------------------------------------
         // Update state
@@ -306,14 +275,9 @@ class DeviceSettingsUpdateNotifier
       // ======================================================
 
       if (i < settings.length - 1) {
+        debugPrint('⏳ Waiting 5 seconds before next setting...');
 
-        debugPrint(
-          '⏳ Waiting 5 seconds before next setting...',
-        );
-
-        await Future.delayed(
-          const Duration(seconds: 5),
-        );
+        await Future.delayed(const Duration(seconds: 5));
       }
     }
 
@@ -321,25 +285,15 @@ class DeviceSettingsUpdateNotifier
     // ALL SETTINGS PUBLISHED
     // ========================================================
 
-    debugPrint(
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-    );
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    debugPrint(
-      '📤 ALL SETTINGS HAVE BEEN PUBLISHED',
-    );
+    debugPrint('📤 ALL SETTINGS HAVE BEEN PUBLISHED');
 
-    debugPrint(
-      '📥 Waiting for IoT device acknowledgements...',
-    );
+    debugPrint('📥 Waiting for IoT device acknowledgements...');
 
-    debugPrint(
-      '⏳ Waiting settings: $_waitingForAck',
-    );
+    debugPrint('⏳ Waiting settings: $_waitingForAck');
 
-    debugPrint(
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-    );
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     // --------------------------------------------------------
     // IMPORTANT
@@ -357,21 +311,14 @@ class DeviceSettingsUpdateNotifier
   // ==========================================================
 
   Future<void> _registerAckCallback(String ackTopic) async {
-
     // --------------------------------------------------------
     // If previous topic is different
     // --------------------------------------------------------
 
     if (_ackTopic != null && _ackTopic != ackTopic && _ackCallbackRegistered) {
+      debugPrint('🧹 Removing old ACK callback: $_ackTopic');
 
-      debugPrint(
-        '🧹 Removing old ACK callback: $_ackTopic',
-      );
-
-      _mqttNotifier.unsubscribeFromTopic(
-        _ackTopic!,
-        onMessage: _handleAck,
-      );
+      _mqttNotifier.unsubscribeFromTopic(_ackTopic!, onMessage: _handleAck);
 
       _ackCallbackRegistered = false;
     }
@@ -380,12 +327,8 @@ class DeviceSettingsUpdateNotifier
     // Already registered
     // --------------------------------------------------------
 
-    if (_ackTopic == ackTopic &&
-        _ackCallbackRegistered) {
-
-      debugPrint(
-        'ℹ️ ACK callback already registered',
-      );
+    if (_ackTopic == ackTopic && _ackCallbackRegistered) {
+      debugPrint('ℹ️ ACK callback already registered');
 
       return;
     }
@@ -406,22 +349,15 @@ class DeviceSettingsUpdateNotifier
     // and add this callback.
     // --------------------------------------------------------
 
-    await _mqttNotifier.subscribeToTopic(
-      ackTopic,
-      onMessage: _handleAck,
-    );
+    await _mqttNotifier.subscribeToTopic(ackTopic, onMessage: _handleAck);
 
     _ackTopic = ackTopic;
 
     _ackCallbackRegistered = true;
 
-    debugPrint(
-      '✅ Settings ACK callback registered',
-    );
+    debugPrint('✅ Settings ACK callback registered');
 
-    debugPrint(
-      '📡 ACK Topic: $ackTopic',
-    );
+    debugPrint('📡 ACK Topic: $ackTopic');
   }
 
   // ==========================================================
@@ -429,23 +365,13 @@ class DeviceSettingsUpdateNotifier
   // ==========================================================
 
   void _handleAck(MqttMessageModel message) {
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    debugPrint(
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-    );
+    debugPrint('📥 DEVICE RESPONSE RECEIVED');
 
-    debugPrint(
-      '📥 DEVICE RESPONSE RECEIVED',
-    );
+    debugPrint('📌 Raw Payload: ${message.rawPayload}');
 
-    debugPrint(
-      '📌 Raw Payload: ${message.rawPayload}',
-    );
-
-
-    debugPrint(
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-    );
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     final data = message.data;
 
@@ -454,9 +380,7 @@ class DeviceSettingsUpdateNotifier
     // --------------------------------------------------------
 
     if (data.isEmpty) {
-      debugPrint(
-        '⚠️ Empty device response',
-      );
+      debugPrint('⚠️ Empty device response');
 
       return;
     }
@@ -471,37 +395,26 @@ class DeviceSettingsUpdateNotifier
     final ackSignature = data.toString();
 
     if (_lastAckSignature == ackSignature) {
-
-      debugPrint(
-        '⚠️ Duplicate device response ignored',
-      );
+      debugPrint('⚠️ Duplicate device response ignored');
 
       return;
     }
 
     _lastAckSignature = ackSignature;
 
-
     // --------------------------------------------------------
     // Find which setting this response belongs to
     // --------------------------------------------------------
 
-    final setting = _findMatchingSetting(
-      data,
-    );
+    final setting = _findMatchingSetting(data);
 
     if (setting == null) {
-
-      debugPrint(
-        '⚠️ Device response does not match any pending setting',
-      );
+      debugPrint('⚠️ Device response does not match any pending setting');
 
       return;
     }
 
-    debugPrint(
-      '🎯 ACK MATCHED SETTING: ${setting.name}',
-    );
+    debugPrint('🎯 ACK MATCHED SETTING: ${setting.name}');
 
     // ========================================================
     // MARK COMPLETED
@@ -517,25 +430,19 @@ class DeviceSettingsUpdateNotifier
     // Remove from waiting list
     // --------------------------------------------------------
 
-    _waitingForAck.remove(
-      setting.id,
-    );
+    _waitingForAck.remove(setting.id);
 
     // --------------------------------------------------------
     // Update Riverpod
     // --------------------------------------------------------
 
-    state = state.copyWith(
-      settings: [...state.settings],
-    );
+    state = state.copyWith(settings: [...state.settings]);
 
-    debugPrint(
-      '✅ ${setting.name} COMPLETED',
-    );
+    debugPrint('✅ ${setting.name} COMPLETED');
 
     debugPrint(
       '📊 Progress: '
-          '${state.completedCount}/${state.totalCount}',
+      '${state.completedCount}/${state.totalCount}',
     );
 
     // --------------------------------------------------------
@@ -550,19 +457,15 @@ class DeviceSettingsUpdateNotifier
   // ==========================================================
 
   DeviceSettingUpdate? _findMatchingSetting(Map<String, dynamic> data) {
-
     final responseText = _buildResponseText(data);
 
-    debugPrint(
-      '🔎 Searching ACK against: $responseText',
-    );
+    debugPrint('🔎 Searching ACK against: $responseText');
 
     // --------------------------------------------------------
     // Search only settings waiting for ACK
     // --------------------------------------------------------
 
     for (final setting in state.settings) {
-
       if (!_waitingForAck.contains(setting.id)) {
         continue;
       }
@@ -584,7 +487,6 @@ class DeviceSettingsUpdateNotifier
   // ==========================================================
 
   String _buildResponseText(Map<String, dynamic> data) {
-
     final values = <String>[];
 
     for (final entry in data.entries) {
@@ -600,11 +502,10 @@ class DeviceSettingsUpdateNotifier
   // ==========================================================
 
   bool _isSettingAcknowledged(
-      DeviceSettingUpdate setting,
-      String responseText,
-      Map<String, dynamic> data,
-      ) {
-
+    DeviceSettingUpdate setting,
+    String responseText,
+    Map<String, dynamic> data,
+  ) {
     // --------------------------------------------------------
     // 1. DATE & TIME matching
 
@@ -618,7 +519,8 @@ class DeviceSettingsUpdateNotifier
     // --------------------------------------------------------
     // 2. DATA INTERVAL special response
 
-    if (setting.id == 'DIN' || setting.name.toUpperCase().contains('DATA INTERVAL')) {
+    if (setting.id == 'DIN' ||
+        setting.name.toUpperCase().contains('DATA INTERVAL')) {
       final cM = data['cM']?.toString().toUpperCase() ?? '';
       if (cM.contains('DATA DELAY')) {
         return true;
@@ -631,6 +533,14 @@ class DeviceSettingsUpdateNotifier
     if (setting.id == 'PL') {
       final cM = data['cM']?.toString().toUpperCase() ?? '';
       if (cM.contains('PRESS LOW SET VALUE')) {
+        return true;
+      }
+    }
+
+    // 4. PRESSURE HIGH
+    if (setting.id == 'PH') {
+      final cM = data['cM']?.toString().toUpperCase() ?? '';
+      if (cM.contains('PRESS HIGH SET VALUE')) {
         return true;
       }
     }
@@ -711,20 +621,15 @@ class DeviceSettingsUpdateNotifier
     return false;
   }
 
-
   // ==========================================================
   // UPDATE STATUS
   // ==========================================================
 
   void _updateStatus(String id, SettingUpdateStatus status) {
-
     final index = state.settings.indexWhere((item) => item.id == id);
 
     if (index == -1) {
-
-      debugPrint(
-        '⚠️ Setting not found: $id',
-      );
+      debugPrint('⚠️ Setting not found: $id');
 
       return;
     }
@@ -744,13 +649,9 @@ class DeviceSettingsUpdateNotifier
     // Notify UI
     // --------------------------------------------------------
 
-    state = state.copyWith(
-      settings: [...state.settings],
-    );
+    state = state.copyWith(settings: [...state.settings]);
 
-    debugPrint(
-      '🔄 ${setting.name} → $status',
-    );
+    debugPrint('🔄 ${setting.name} → $status');
   }
 
   // ==========================================================
@@ -758,49 +659,33 @@ class DeviceSettingsUpdateNotifier
   // ==========================================================
 
   void _checkAllSettingsFinished() {
-
     if (state.settings.isEmpty) {
       return;
     }
 
-    final allFinished =
-    state.settings.every((setting) =>
-      setting.status == SettingUpdateStatus.completed ||
+    final allFinished = state.settings.every(
+      (setting) =>
+          setting.status == SettingUpdateStatus.completed ||
           setting.status == SettingUpdateStatus.failed,
     );
 
     if (!allFinished) {
-
-      debugPrint(
-        '⏳ Still waiting for device ACK...',
-      );
+      debugPrint('⏳ Still waiting for device ACK...');
 
       return;
     }
 
-    debugPrint(
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-    );
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    debugPrint(
-      '🎉 ALL SETTINGS ACKNOWLEDGED',
-    );
+    debugPrint('🎉 ALL SETTINGS ACKNOWLEDGED');
 
-    debugPrint(
-      '✅ Completed: ${state.completedCount}',
-    );
+    debugPrint('✅ Completed: ${state.completedCount}');
 
-    debugPrint(
-      '❌ Failed: ${state.failedCount}',
-    );
+    debugPrint('❌ Failed: ${state.failedCount}');
 
-    debugPrint(
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-    );
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    state = state.copyWith(
-      isUpdating: false,
-    );
+    state = state.copyWith(isUpdating: false);
   }
 
   // ==========================================================
@@ -808,26 +693,16 @@ class DeviceSettingsUpdateNotifier
   // ==========================================================
 
   void cancel() {
-
-    debugPrint(
-      '🛑 Cancelling settings update',
-    );
+    debugPrint('🛑 Cancelling settings update');
 
     // --------------------------------------------------------
     // Remove callback
     // --------------------------------------------------------
 
-    if (_ackTopic != null &&
-        _ackCallbackRegistered) {
+    if (_ackTopic != null && _ackCallbackRegistered) {
+      _mqttNotifier.unsubscribeFromTopic(_ackTopic!, onMessage: _handleAck);
 
-      _mqttNotifier.unsubscribeFromTopic(
-        _ackTopic!,
-        onMessage: _handleAck,
-      );
-
-      debugPrint(
-        '🧹 Settings ACK callback removed',
-      );
+      debugPrint('🧹 Settings ACK callback removed');
     }
 
     _ackTopic = null;
@@ -848,9 +723,7 @@ class DeviceSettingsUpdateNotifier
     // Stop updating
     // --------------------------------------------------------
 
-    state = state.copyWith(
-      isUpdating: false,
-    );
+    state = state.copyWith(isUpdating: false);
   }
 
   // ==========================================================
@@ -859,18 +732,10 @@ class DeviceSettingsUpdateNotifier
 
   @override
   void dispose() {
+    debugPrint('🧹 Disposing DeviceSettingsUpdateNotifier');
 
-    debugPrint(
-      '🧹 Disposing DeviceSettingsUpdateNotifier',
-    );
-
-    if (_ackTopic != null &&
-        _ackCallbackRegistered) {
-
-      _mqttNotifier.unsubscribeFromTopic(
-        _ackTopic!,
-        onMessage: _handleAck,
-      );
+    if (_ackTopic != null && _ackCallbackRegistered) {
+      _mqttNotifier.unsubscribeFromTopic(_ackTopic!, onMessage: _handleAck);
     }
 
     _waitingForAck.clear();

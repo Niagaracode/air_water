@@ -178,6 +178,13 @@ class _AddDeviceModalState extends ConsumerState<AddDeviceModal> {
           value: 'pressure_low,${rawSetting['pressure_low']}',
         ));
       }
+      if (rawSetting['pressure_high'] != null) {
+        settings.add(DeviceSettingUpdate(
+          id: 'PH',
+          name: 'Pressure High',
+          value: 'pressure_high,${rawSetting['pressure_high']}',
+        ));
+      }
       if (rawSetting['solar_low'] != null) {
         settings.add(DeviceSettingUpdate(
           id: 'SL',
