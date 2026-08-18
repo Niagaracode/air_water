@@ -424,7 +424,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
               vertical: widget.isNarrow ? 12 : 16,
             ),
             decoration: BoxDecoration(
-              color: primary.withOpacity(0.05),
+              color: primary.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
@@ -562,7 +562,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: (rule["color"] as Color).withOpacity(0.1),
+                color: (rule["color"] as Color).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -654,7 +654,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: (rule["color"] as Color).withOpacity(0.1),
+                  color: (rule["color"] as Color).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Icon(
@@ -698,7 +698,7 @@ class _ThresholdSideSheetState extends ConsumerState<ThresholdSideSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.1),
+                  color: primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(

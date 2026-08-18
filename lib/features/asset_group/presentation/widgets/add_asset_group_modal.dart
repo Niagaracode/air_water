@@ -1118,7 +1118,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     size: 20,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.red.withOpacity(0.05),
+                    backgroundColor: Colors.red.withValues(alpha: 0.05),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1133,7 +1133,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     size: 20,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.green.withOpacity(0.05),
+                    backgroundColor: Colors.green.withValues(alpha: 0.05),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1263,7 +1263,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     size: 20,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.red.withOpacity(0.05),
+                    backgroundColor: Colors.red.withValues(alpha: 0.05),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1283,7 +1283,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     size: 20,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.green.withOpacity(0.05),
+                    backgroundColor: Colors.green.withValues(alpha: 0.05),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1739,7 +1739,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                                 size: 20,
                               ),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.red.withOpacity(0.05),
+                                backgroundColor: Colors.red.withValues(alpha: 0.05),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),

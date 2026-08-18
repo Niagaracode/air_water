@@ -122,7 +122,7 @@ class _GroupDetailState extends ConsumerState<GroupDetail> {
         children: [
           CircleAvatar(
             radius: 30,
-            backgroundColor: primary.withOpacity(0.1),
+            backgroundColor: primary.withValues(alpha: 0.1),
             child: Icon(Icons.group_outlined, color: primary, size: 30),
           ),
           const SizedBox(width: 20),

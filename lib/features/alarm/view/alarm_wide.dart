@@ -25,7 +25,7 @@ class _AlarmWideState extends ConsumerState<AlarmWide> {
     final state = ref.watch(alarmProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withOpacity(0.1),
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Stack(
         children: [
           CustomScrollView(
@@ -77,7 +77,7 @@ class _AlarmWideState extends ConsumerState<AlarmWide> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -295,10 +295,10 @@ class _AlarmWideState extends ConsumerState<AlarmWide> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _getSeverityColor(alarm.importance).withOpacity(0.1),
+                  color: _getSeverityColor(alarm.importance).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(
-                    color: _getSeverityColor(alarm.importance).withOpacity(0.2),
+                    color: _getSeverityColor(alarm.importance).withValues(alpha: 0.2),
                   ),
                 ),
                 child: Text(

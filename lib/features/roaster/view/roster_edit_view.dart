@@ -441,7 +441,7 @@ class _RosterEditViewState extends ConsumerState<RosterEditView> {
       decoration: BoxDecoration(
         color: isActive ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isActive ? const Color(0xFF10B981).withOpacity(0.2) : const Color(0xFFEF4444).withOpacity(0.2)),
+        border: Border.all(color: isActive ? const Color(0xFF10B981).withValues(alpha: 0.2) : const Color(0xFFEF4444).withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -394,7 +394,7 @@ class _RuleGroupWideState extends ConsumerState<RuleGroupWide> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: _getCategoryColor(rule.category).withOpacity(0.2),
+                            color: _getCategoryColor(rule.category).withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(

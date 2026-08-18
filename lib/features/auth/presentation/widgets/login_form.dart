@@ -132,7 +132,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             child: ElevatedButton(
               onPressed: state.isLoading ? null : _submit,
               style: ElevatedButton.styleFrom(
-                disabledBackgroundColor: Theme.of(context).primaryColor.withOpacity(0.7),
+                disabledBackgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.7),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
