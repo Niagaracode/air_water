@@ -46,7 +46,7 @@ class TankDetailsTab extends ConsumerWidget {
         child: SizedBox(
           height: 470,
           child: TankMultiLineChart(
-            data: readingsState.readings,
+            data: readingsState.readings.reversed.toList(),
           ),
         ),
       ),
