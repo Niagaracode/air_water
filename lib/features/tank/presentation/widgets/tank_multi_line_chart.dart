@@ -96,8 +96,8 @@ class _TankMultiLineChartState extends State<TankMultiLineChart> {
               majorGridLines: MajorGridLines(
                 width: 0.5,
                 color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.08),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.08),
               ),
             ),
 
@@ -263,7 +263,7 @@ class _LegendItem extends StatelessWidget {
             width: 10,
             height: 10,
             decoration: BoxDecoration(
-              color: visible ? color : Colors.grey.withOpacity(0.3),
+              color: visible ? color : Colors.grey.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -273,8 +273,8 @@ class _LegendItem extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               color: visible
-                  ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
-                  : Colors.grey.withOpacity(0.4),
+                  ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)
+                  : Colors.grey.withValues(alpha: 0.4),
             ),
           ),
         ],

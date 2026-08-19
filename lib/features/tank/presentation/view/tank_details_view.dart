@@ -177,10 +177,12 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   ),
                   const SizedBox(height: 12),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
-                        width: 260,
-                        height: 200,
+                        width: widget.isNarrow ? 200:260,
+                        height: widget.isNarrow ? 150 : 200,
                         child: Padding(
                           padding: const EdgeInsets.only(left: 24),
                           child: Column(
@@ -205,9 +207,56 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                         gasType: widget.tank.gasType,
                         minLevel: widget.tank.minLevel,
                         maxLevel: widget.tank.maxLevel,
+                        isNarrow: widget.isNarrow,
                       ),
+
                     ],
-                  )
+                  ),
+                  const SizedBox(height: 12),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Gas : ',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF6B7280), // Gray title
+                          ),
+                        ),
+                        TextSpan(
+                          text: widget.tank.gasType,
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF111827), // Black value
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Tank Id : ',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF6B7280), // Gray title
+                          ),
+                        ),
+                        TextSpan(
+                          text: widget.tank.tankName,
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF111827), // Black value
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -281,6 +330,7 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   gasType: widget.tank.gasType,
                   minLevel: widget.tank.minLevel,
                   maxLevel: widget.tank.maxLevel,
+                  isNarrow: widget.isNarrow,
                 ),
                 const SizedBox(height: 12),
                 RichText(
@@ -377,7 +427,9 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              if(!widget.isNarrow)...[
+                const SizedBox(width: 8),
+              ],
               TextButton.icon(
                 onPressed: () => _showViewSettingsDialog(),
                 icon: Icon(
@@ -394,7 +446,9 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              if(!widget.isNarrow)...[
+                const SizedBox(width: 8),
+              ]
             ],
           ),
         ),

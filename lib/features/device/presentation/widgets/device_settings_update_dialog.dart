@@ -103,7 +103,7 @@ class _DeviceSettingsUpdateDialogState
                     width: 46,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.10),
+                      color: Colors.blue.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -184,10 +184,10 @@ class _DeviceSettingsUpdateDialogState
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.06),
+                    color: Colors.blue.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: Colors.blue.withOpacity(0.15),
+                      color: Colors.blue.withValues(alpha: 0.15),
                     ),
                   ),
                   child: Row(
@@ -616,7 +616,7 @@ class _StatusChip extends StatelessWidget {
         vertical: 5,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius:
         BorderRadius.circular(20),
       ),
@@ -660,11 +660,11 @@ class _FinishedBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius:
         BorderRadius.circular(10),
         border: Border.all(
-          color: color.withOpacity(0.20),
+          color: color.withValues(alpha: 0.20),
         ),
       ),
       child: Row(

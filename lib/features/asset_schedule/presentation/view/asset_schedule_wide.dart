@@ -28,7 +28,7 @@ class _AssetScheduleWideState extends ConsumerState<AssetScheduleWide> {
     final state = ref.watch(assetScheduleProvider);
 
     return Scaffold(
-      backgroundColor: Colors.grey.withOpacity(0.1),
+      backgroundColor: Colors.grey.withValues(alpha: 0.1),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -118,7 +118,7 @@ class _AssetScheduleWideState extends ConsumerState<AssetScheduleWide> {
         border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -166,7 +166,7 @@ class _AssetScheduleWideState extends ConsumerState<AssetScheduleWide> {
               decoration: BoxDecoration(
                 border: Border.all(color: const Color(0xFFE5E7EB)),
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.grey.withOpacity(0.05),
+                color: Colors.grey.withValues(alpha: 0.05),
               ),
               child: Row(
                 children: [

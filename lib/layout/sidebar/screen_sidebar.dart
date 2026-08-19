@@ -205,16 +205,12 @@ class SidebarGroup extends StatelessWidget {
           /// Soft-colored group header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.17),
-              borderRadius: BorderRadius.circular(6),
-            ),
             child: Text(
               title,
               style: GoogleFonts.outfit(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
-                color: Colors.black54,
+                color: Colors.black38,
                 letterSpacing: 0.6,
               ),
             ),

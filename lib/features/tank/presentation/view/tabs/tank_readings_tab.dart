@@ -62,7 +62,7 @@ class TankReadingsTab extends ConsumerWidget {
           child: DataTable2(
             columnSpacing: 12,
             horizontalMargin: 16,
-            minWidth: 1200,
+            minWidth: 600,
 
             headingRowColor: WidgetStateProperty.all(
               const Color(0xFFF9FAFB),

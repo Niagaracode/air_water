@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,8 +31,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
   List<AssetGroupUser> _assignedUsers = [];
   User? _selectedUserForAssignment;
   int? _selectedCompanyId;
-  List<CompanyAutocomplete> _companies = [];
-  bool _isLoadingCompanies = false;
   bool _isLoadingDetails = false;
   bool _didAutoAssign = false;
   int _initialCriteriaCount = 0;
@@ -67,7 +64,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
 
     Future.microtask(() {
       ref.read(userProvider.notifier).loadUsers();
-      _checkSuperAdminAndLoadCompanies();
       ref.read(productNotifierProvider.notifier).loadProducts();
       ref.read(deviceNotifierProvider.notifier).loadGroupedDevices(limit: 500);
       ref.read(siteNotifierProvider.notifier).loadGroupedSites();
@@ -82,30 +78,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
     super.dispose();
   }
 
-  Future<void> _checkSuperAdminAndLoadCompanies() async {
-    final user = ref.read(userProvider).currentUser;
-    if (user != null) {
-      if (user.roleId == 1) {
-        setState(() => _isLoadingCompanies = true);
-        final results = await ref
-            .read(userProvider.notifier)
-            .searchCompanies('');
-        if (mounted) {
-          setState(() {
-            _companies = results;
-            _isLoadingCompanies = false;
-            if (widget.initialGroup == null) {
-              _selectedCompanyId = 216;
-            }
-          });
-        }
-      } else {
-        setState(() {
-          _selectedCompanyId = user.companyId;
-        });
-      }
-    }
-  }
 
   Future<void> _loadFullDetails() async {
     setState(() => _isLoadingDetails = true);
@@ -274,11 +246,6 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
     final state = ref.watch(assetGroupProvider);
     final userState = ref.watch(userProvider);
 
-    ref.listen<UserState>(userProvider, (previous, next) {
-      if (previous?.currentUser == null && next.currentUser != null) {
-        _checkSuperAdminAndLoadCompanies();
-      }
-    });
 
     return Align(
       alignment: Alignment.centerRight,
@@ -1118,7 +1085,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     size: 20,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.red.withOpacity(0.05),
+                    backgroundColor: Colors.red.withValues(alpha: 0.05),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1133,7 +1100,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     size: 20,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.green.withOpacity(0.05),
+                    backgroundColor: Colors.green.withValues(alpha: 0.05),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1263,7 +1230,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     size: 20,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.red.withOpacity(0.05),
+                    backgroundColor: Colors.red.withValues(alpha: 0.05),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1283,7 +1250,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                     size: 20,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: Colors.green.withOpacity(0.05),
+                    backgroundColor: Colors.green.withValues(alpha: 0.05),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1739,7 +1706,7 @@ class _AddAssetGroupModalState extends ConsumerState<AddAssetGroupModal> {
                                 size: 20,
                               ),
                               style: IconButton.styleFrom(
-                                backgroundColor: Colors.red.withOpacity(0.05),
+                                backgroundColor: Colors.red.withValues(alpha: 0.05),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),

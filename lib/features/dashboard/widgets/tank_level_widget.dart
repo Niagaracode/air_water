@@ -7,8 +7,9 @@ class TankLevelWidget extends StatefulWidget {
   final double level;
   final String svgAsset;
   final String gasType;
-  final double minLevel;
-  final double maxLevel;
+  final int minLevel;
+  final int maxLevel;
+  final bool isNarrow;
 
   const TankLevelWidget({
     super.key,
@@ -17,6 +18,7 @@ class TankLevelWidget extends StatefulWidget {
     required this.gasType,
     required this.minLevel,
     required this.maxLevel,
+    required this.isNarrow,
   });
 
   @override
@@ -49,11 +51,11 @@ class _TankLevelWidgetState extends State<TankLevelWidget>
     // ============================================================
 
     const tankWidth = 160.0;
-    const tankHeight = 280.0;
+    final tankHeight = widget.isNarrow ? 200.0 : 280.0;
 
     // Actual gas area inside the tank
-    const liquidAreaWidth = 100.0;
-    const liquidAreaHeight = 210.0;
+    final liquidAreaWidth =  widget.isNarrow ? 70.0 : 100.0;
+    final liquidAreaHeight = widget.isNarrow ? 130.0 : 210.0;
 
     final color = AppColorsHelper.getGasTypeColor(widget.gasType);
     final clampedLevel = widget.level.clamp(0, 100).toDouble();

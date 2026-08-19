@@ -138,7 +138,10 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
         overlay.size.height - offset.dy,
       ),
       items: _subjectPlaceholders.map((placeholder) {
-        return PopupMenuItem(value: placeholder, child: Text(placeholder));
+        return PopupMenuItem(
+          value: placeholder,
+          child: Text(placeholder, style: GoogleFonts.outfit(fontSize: 15)),
+        );
       }).toList(),
     ).then((value) {
       if (value != null) {
@@ -431,7 +434,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.1),
+                  color: primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -461,7 +464,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.1),
+                  color: primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -505,7 +508,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: primary.withOpacity(0.1),
+                          color: primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -537,7 +540,10 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [primary.withOpacity(0.08), primary.withOpacity(0.02)],
+              colors: [
+                primary.withValues(alpha: 0.08),
+                primary.withValues(alpha: 0.02),
+              ],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -625,7 +631,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
             value: item,
             child: Text(
               item.toString(),
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.roboto(
                 fontSize: 14,
                 color: const Color(0xFF111827),
               ),
@@ -634,7 +640,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
         }).toList(),
         onChanged: onChanged,
         isExpanded: true,
-        style: GoogleFonts.outfit(fontSize: 14, color: const Color(0xFF111827)),
+        style: GoogleFonts.roboto(fontSize: 14, color: const Color(0xFF111827)),
         icon: const SizedBox.shrink(),
         dropdownColor: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -650,7 +656,10 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [primary.withOpacity(0.08), primary.withOpacity(0.02)],
+              colors: [
+                primary.withValues(alpha: 0.08),
+                primary.withValues(alpha: 0.02),
+              ],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -708,7 +717,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
               Container(
                 decoration: BoxDecoration(
                   color: _isActive == 1
-                      ? primary.withOpacity(0.1)
+                      ? primary.withValues(alpha: 0.1)
                       : const Color(0xFFFEE2E2),
                   borderRadius: BorderRadius.circular(40),
                 ),
@@ -718,7 +727,7 @@ class _MessageTemplateFormState extends ConsumerState<MessageTemplateForm> {
                   activeColor: primary,
                   inactiveThumbColor: Colors.red.shade300,
                   inactiveTrackColor: Colors.red.shade100,
-                  activeTrackColor: primary.withOpacity(0.5),
+                  activeTrackColor: primary.withValues(alpha: 0.5),
                 ),
               ),
             ],

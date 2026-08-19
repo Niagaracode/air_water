@@ -30,8 +30,8 @@ class TankDataModel {
   final String thresholds;
   final String channelStatus;
 
-  final double minLevel;
-  final double maxLevel;
+  final int minLevel;
+  final int maxLevel;
 
   TankDataModel({
     required this.id,
