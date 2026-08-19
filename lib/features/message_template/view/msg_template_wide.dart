@@ -113,9 +113,8 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          _buildFilterRow(notifier, state),
-          //_buildSearchRow(notifier, state),
+          //const SizedBox(height: 24),
+          //_buildFilterRow(notifier, state),
         ],
       ),
     );
@@ -212,8 +211,158 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
     );
   }
 
+  Widget _buildTableBody(
+      MessageTemplateState state,
+      MessageTemplateNotifier notifier,
+      ) {
+    if (state.templates.isEmpty && !state.isLoading) {
+      return const AppTableEmptyState(
+        icon: Icons.message_outlined,
+        title: 'No templates found',
+      );
+    }
 
-  Widget _buildTableBody(MessageTemplateState state, MessageTemplateNotifier notifier) {
+    return Container(
+      width: MediaQuery.sizeOf(context).width,
+      height: (state.templates.length * 55) + 55,
+      margin: const EdgeInsets.only(
+        left: 20,
+        right: 20,
+        bottom: 8,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.all(
+          Radius.circular(10),
+        ),
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1,
+        ),
+      ),
+      child: DataTable2(
+        columnSpacing: 12,
+        horizontalMargin: 12,
+        minWidth: 1000,
+        dataRowHeight: 55,
+        headingRowHeight: 50,
+        headingRowColor: WidgetStateProperty.all(
+          primary.withValues(alpha: 0.1),
+        ),
+        dividerThickness: 0.5,
+
+        columns: [
+          DataColumn2(
+            label: Center(
+              child: TableHeaderCell(label: 'SI.NO'),
+            ),
+            fixedWidth: 70,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Template Name'),
+            size: ColumnSize.M,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Subject'),
+            size: ColumnSize.M,
+          ),
+          DataColumn2(
+            label: TableHeaderCell(label: 'Description'),
+            size: ColumnSize.M,
+          ),
+          DataColumn2(
+            label: Center(
+              child: TableHeaderCell(label: 'Actions'),
+            ),
+            fixedWidth: 100,
+          ),
+        ],
+
+        rows: List<DataRow>.generate(
+          state.templates.length + (state.hasMore ? 1 : 0),
+              (index) {
+            // Loading row
+            if (state.hasMore && index == state.templates.length) {
+              return const DataRow(
+                cells: [
+                  DataCell(
+                    Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                  DataCell(Text('')),
+                  DataCell(Text('')),
+                  DataCell(Text('')),
+                  DataCell(Text('')),
+                ],
+              );
+            }
+
+            final template = state.templates[index];
+
+            return DataRow2(
+              onTap: () {
+                _showAddModal(template);
+              },
+              cells: [
+                DataCell(
+                  Center(
+                    child: TableDataCell(
+                      label: '${index + 1}',
+                    ),
+                  ),
+                ),
+
+                DataCell(
+                  TableDataCell(
+                    label: template.name,
+                  ),
+                ),
+
+                DataCell(
+                  TableDataCell(
+                    label: template.subject ?? '',
+                  ),
+                ),
+
+                DataCell(
+                  TableDataCell(
+                    label: template.description ?? '',
+                  ),
+                ),
+
+                DataCell(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      AppTableActionButton(
+                        icon: Icons.edit_outlined,
+                        color: primary,
+                        bg: const Color(0xFFEFF6FF),
+                        onTap: () => _showAddModal(template),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      AppTableActionButton(
+                        icon: Icons.delete_outline,
+                        color: const Color(0xFFDC2626),
+                        bg: const Color(0xFFFEF2F2),
+                        onTap: () => _confirmDelete(template),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+
+  /*Widget _buildTableBody(MessageTemplateState state, MessageTemplateNotifier notifier) {
 
     if (state.templates.isEmpty && !state.isLoading) {
       return const AppTableEmptyState(icon: Icons.message_outlined, title: 'No templates found');
@@ -305,7 +454,7 @@ class _MsgTemplateWideState extends ConsumerState<MsgTemplateWide> {
         }),
       ),
     );
-  }
+  }*/
 
   void _showAddModal([MessageTemplate? template]) {
     showGeneralDialog(
