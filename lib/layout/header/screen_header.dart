@@ -1,4 +1,3 @@
-import 'package:air_water/layout/widgets/sidebar_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,10 +13,12 @@ import '../../features/dashboard/widgets/mqtt_connection_status.dart';
 import '../../features/dashboard/widgets/sync_button.dart';
 import '../../features/notification/presentation/widgets/notification_dropdown.dart';
 import '../../features/notification/presentation/controller/notification_provider.dart';
-import '../provider/search_provider.dart';
+import '../provider/header_search_provider.dart';
 import '../provider/sidebar_provider.dart';
 import '../../features/user/presentation/controller/user_provider.dart';
 import 'package:debounce_throttle/debounce_throttle.dart';
+
+import '../widgets/sidebar_header.dart';
 
 
 class ScreenHeader extends ConsumerStatefulWidget {
@@ -49,7 +50,7 @@ class _ScreenHeaderState extends ConsumerState<ScreenHeader> {
     );
     _debouncer.values.listen((value) {
       if (mounted) {
-        ref.read(globalSearchProvider.notifier).state = value;
+        ref.read(headerSearchProvider.notifier).state = value;
       }
     });
   }
