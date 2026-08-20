@@ -6,6 +6,7 @@ import '../../../core/user_config/user_role.dart';
 import '../../tank/presentation/view/tank_details_view.dart';
 import '../data/models/tank_data_model.dart';
 import '../provider/dashboard_provider.dart';
+import '../provider/dashboard_filter_provider.dart';
 import '../utils/tank_report_exporter.dart';
 import '../widgets/build_loading_view.dart';
 import '../widgets/dashboard_list_view.dart';
@@ -14,41 +15,25 @@ import '../widgets/search_and_filters.dart';
 import '../widgets/statistics_cards.dart';
 import '../widgets/view_toggle.dart';
 
-class OthersDashboardNarrow extends ConsumerStatefulWidget {
-  const OthersDashboardNarrow({
-    super.key,
-  });
+class OthersDashboardNarrow extends ConsumerWidget {
+  const OthersDashboardNarrow({super.key});
 
   @override
-  ConsumerState<OthersDashboardNarrow> createState() => _OthersDashboardNarrowState();
-}
-
-class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
-
-  final TextEditingController _searchController = TextEditingController();
-
-  String _selectedStatus = 'All Status';
-  String _selectedRegion = 'All Regions';
-  String _selectedProduct = 'All Product';
-  String _searchQuery = '';
-  bool _isListView = true;
-
-  @override
-  Widget build(BuildContext context) {
-
+  Widget build(BuildContext context, WidgetRef ref) {
     final tanksAsync = ref.watch(tankDataProvider);
     final groupedTanks = ref.watch(groupedTanksProvider);
     final statistics = ref.watch(tankStatisticsProvider);
 
+    final filters = ref.watch(dashboardFilterProvider);
+    final filterNotifier = ref.read(dashboardFilterProvider.notifier);
+
     return Container(
       color: Colors.white,
-
       child: tanksAsync.when(
         loading: () => buildLoadingView(),
         error: (error, _) => Center(
           child: Text(error.toString()),
         ),
-
         data: (tanks) {
           return SingleChildScrollView(
             padding: const EdgeInsets.only(left: 24, right: 24, bottom: 24, top: 12),
@@ -58,71 +43,38 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
                 const SizedBox(height: 20),
                 SearchAndFilters(
                   isNarrow: true,
-                  onSearchChanged: (val) {
-                    setState(() {
-                      _searchQuery = val;
-                    });
-                  },
-
-                  onRegionChanged: (val) {
-                    setState(() {
-                      _selectedRegion = val;
-                    });
-                  },
-
-                  onStatusChanged: (val) {
-                    setState(() {
-                      _selectedStatus = val;
-                    });
-                  },
-
-                  onProductChanged: (val) {
-                    setState(() {
-                      _selectedProduct = val;
-                    });
-                  },
-
-                  onClearFilters: () {
-                    setState(() {
-                      _selectedRegion = 'All Regions';
-                      _selectedStatus = 'All Status';
-                      _selectedProduct = 'All Product';
-                      _searchQuery = '';
-                    });
-                    _searchController.clear();
-                  },
-
-                  selectedRegion: _selectedRegion,
-                  selectedStatus: _selectedStatus,
-                  selectedProduct: _selectedProduct,
+                  onSearchChanged: filterNotifier.setSearch,
+                  onRegionChanged: filterNotifier.setRegion,
+                  onStatusChanged: filterNotifier.setStatus,
+                  onProductChanged: filterNotifier.setProduct,
+                  onClearFilters: filterNotifier.clearFilters,
+                  selectedRegion: filters.selectedRegion,
+                  selectedStatus: filters.selectedStatus,
+                  selectedProduct: filters.selectedProduct,
                 ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ViewToggle(
-                      currentView: _isListView ? ViewType.list : ViewType.map,
-                      onViewChanged: (val) {
-                        setState(() {
-                          _isListView = val == ViewType.list;
-                        });
-                      },
+                      currentView:
+                      filters.isListView ? ViewType.list : ViewType.map,
+                      onViewChanged: (val) =>
+                          filterNotifier.setView(val == ViewType.list),
                     ),
                     const Spacer(),
                     PopupMenuButton<String>(
                       tooltip: 'Download Report',
                       onSelected: (value) async {
-
                         final allTanks = ref.read(tankDataProvider).value ?? [];
                         await TankReportExporter.export(
                           format: value,
                           allTanks: allTanks,
-                          selectedStatus: _selectedStatus,
-                          selectedRegion: _selectedRegion,
-                          selectedProduct: _selectedProduct,
-                          searchQuery: _searchQuery,
+                          selectedStatus: filters.selectedStatus,
+                          selectedRegion: filters.selectedRegion,
+                          selectedProduct: filters.selectedProduct,
+                          searchQuery: filters.searchQuery,
                         );
-
                       },
                       itemBuilder: (context) => [
                         PopupMenuItem(
@@ -170,32 +122,33 @@ class _OthersDashboardNarrowState extends ConsumerState<OthersDashboardNarrow> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                _isListView ? DashboardListView(
+                filters.isListView
+                    ? DashboardListView(
                   groupedTanks: groupedTanks,
                   filteredTanks: tanks,
-                  selectedRegion: _selectedRegion,
-                  selectedStatus: _selectedStatus,
-                  selectedProduct: _selectedProduct,
-                  searchQuery: _searchQuery,
+                  selectedRegion: filters.selectedRegion,
+                  selectedStatus: filters.selectedStatus,
+                  selectedProduct: filters.selectedProduct,
+                  searchQuery: filters.searchQuery,
                   userRole: UserRole.superAdmin,
-                  onTankTap: _callDetailsPage,
+                  onTankTap: (tank) => _callDetailsPage(context, tank),
                   isNarrow: true,
-                ) :
-                DashboardMapView(tanksData: tanks),
+                )
+                    : DashboardMapView(tanksData: tanks),
               ],
             ),
           );
         },
       ),
     );
-
   }
 
-  void _callDetailsPage(TankDataModel tank) {
+  void _callDetailsPage(BuildContext context, TankDataModel tank) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => TankDetailsView(tankId: tank.id, tank: tank, isNarrow: true,),
+        builder: (context) =>
+            TankDetailsView(tankId: tank.id, tank: tank, isNarrow: true),
       ),
     );
   }
