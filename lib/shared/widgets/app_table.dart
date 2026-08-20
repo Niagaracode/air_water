@@ -68,7 +68,7 @@ class AppDataTableCell extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget content =
         child ??
-        Text(
+        SelectableText(
           text ?? '',
           style: GoogleFonts.inter(
             fontSize: fontSize ?? 14,
@@ -78,7 +78,6 @@ class AppDataTableCell extends StatelessWidget {
                 (bold ? const Color(0xFF111827) : const Color(0xFF374151)),
           ),
           textAlign: textAlign,
-          overflow: TextOverflow.ellipsis,
         );
 
     if (width != null) {
@@ -117,7 +116,7 @@ class AppTableCell extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget content =
         child ??
-        Text(
+        SelectableText(
           text ?? '',
           style: GoogleFonts.inter(
             fontSize: fontSize ?? 14,
@@ -127,7 +126,6 @@ class AppTableCell extends StatelessWidget {
                 (bold ? const Color(0xFF111827) : const Color(0xFF374151)),
           ),
           textAlign: textAlign,
-          overflow: TextOverflow.ellipsis,
           maxLines: maxLines,
         );
 

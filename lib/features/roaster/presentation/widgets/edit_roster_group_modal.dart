@@ -219,8 +219,16 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
           _nameController.text = detail.name;
           _descController.text = detail.description;
           _selectedCompany = CompanyAutocomplete(
-            id: detail.companyId ?? widget.group.companyId ?? currentUser?.companyId ?? 216,
-            name: detail.companyName ?? widget.group.companyName ?? currentUser?.companyName ?? 'Air Water',
+            id:
+                detail.companyId ??
+                widget.group.companyId ??
+                currentUser?.companyId ??
+                216,
+            name:
+                detail.companyName ??
+                widget.group.companyName ??
+                currentUser?.companyName ??
+                'Air Water',
           );
           _companyAutocompleteController.text = _selectedCompany!.name;
 
@@ -375,7 +383,9 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
           bottomLeft: Radius.circular(16),
         ),
         child: SizedBox(
-          width: MediaQuery.of(context).size.width < 640 ? MediaQuery.of(context).size.width : 640,
+          width: MediaQuery.of(context).size.width < 640
+              ? MediaQuery.of(context).size.width
+              : 640,
           height: MediaQuery.of(context).size.height,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -385,7 +395,9 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                 height: 4,
                 decoration: BoxDecoration(
                   color: primary,
-                  borderRadius: const BorderRadius.only(topLeft: Radius.circular(16)),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                  ),
                 ),
               ),
 
@@ -393,7 +405,9 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
               Expanded(
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(
-                    horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
+                    horizontal: MediaQuery.of(context).size.width < 600
+                        ? 16
+                        : 40,
                     vertical: MediaQuery.of(context).size.width < 600 ? 24 : 40,
                   ),
                   child: Column(
@@ -411,7 +425,10 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                                 Text(
                                   widget.group.name,
                                   style: GoogleFonts.outfit(
-                                    fontSize: MediaQuery.of(context).size.width < 600 ? 22 : 26,
+                                    fontSize:
+                                        MediaQuery.of(context).size.width < 600
+                                        ? 22
+                                        : 26,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF111827),
                                   ),
@@ -443,7 +460,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                       const SizedBox(height: 32),
 
                       // GROUP NAME
-                      _buildLabel('GROUP NAME*'),
+                      _buildLabel('ROSTER NAME*'),
                       const SizedBox(height: 10),
                       AppTextField(
                         controller: _nameController,
@@ -600,7 +617,9 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF8FAFF),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFFDDE1FF)),
+                                border: Border.all(
+                                  color: const Color(0xFFDDE1FF),
+                                ),
                               ),
                               padding: const EdgeInsets.all(16),
                               child: Column(
@@ -630,8 +649,12 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                                           vertical: 3,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: primary.withValues(alpha: 0.08),
-                                          borderRadius: BorderRadius.circular(20),
+                                          color: primary.withValues(
+                                            alpha: 0.08,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
                                         ),
                                         child: Text(
                                           '${_groupUsers.length} user${_groupUsers.length == 1 ? '' : 's'}',
@@ -674,7 +697,8 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
 
                                   ListView.separated(
                                     shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     itemCount: _groupUsers.length,
                                     separatorBuilder: (context, index) =>
                                         const Divider(height: 1),
@@ -684,7 +708,7 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                                 ],
                               ),
                             );
-                          }
+                          },
                         ),
                       ],
                       const SizedBox(height: 32),
@@ -827,12 +851,18 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
                       _userConfigs.remove(user.userId);
                     });
                   },
-                  icon: const Icon(Icons.close_rounded, color: Colors.red, size: 16),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: Colors.red,
+                    size: 16,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.red.withValues(alpha: 0.08),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                 ),
               ],
@@ -842,13 +872,19 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildMobileToggle('EMAIL', cfg.email, (v) {
-                  setState(() => _userConfigs[user.userId] = cfg.copyWith(email: v));
+                  setState(
+                    () => _userConfigs[user.userId] = cfg.copyWith(email: v),
+                  );
                 }),
                 _buildMobileToggle('PUSH', cfg.push, (v) {
-                  setState(() => _userConfigs[user.userId] = cfg.copyWith(push: v));
+                  setState(
+                    () => _userConfigs[user.userId] = cfg.copyWith(push: v),
+                  );
                 }),
                 _buildMobileToggle('SMS', cfg.sms, (v) {
-                  setState(() => _userConfigs[user.userId] = cfg.copyWith(sms: v));
+                  setState(
+                    () => _userConfigs[user.userId] = cfg.copyWith(sms: v),
+                  );
                 }),
               ],
             ),
@@ -1212,10 +1248,11 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
     );
   }
 
-
-
-
-  Widget _buildMobileToggle(String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildMobileToggle(
+    String label,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
     return Column(
       children: [
         Text(
@@ -1256,7 +1293,10 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
           value: cfg.messageTemplateId,
           hint: Text(
             'Select message template…',
-            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF9CA3AF)),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: const Color(0xFF9CA3AF),
+            ),
           ),
           icon: const Icon(Icons.arrow_drop_down, size: 20),
           items: [
@@ -1264,20 +1304,25 @@ class _EditRosterGroupModalState extends ConsumerState<EditRosterGroupModal> {
               value: null,
               child: Text(
                 'No template',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: const Color(0xFF6B7280),
+                ),
               ),
             ),
             ...ref
                 .watch(messageTemplateProvider)
                 .templates
-                .map((t) => DropdownMenuItem<int>(
-                      value: t.id,
-                      child: Text(
-                        t.name,
-                        style: GoogleFonts.inter(fontSize: 12),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    )),
+                .map(
+                  (t) => DropdownMenuItem<int>(
+                    value: t.id,
+                    child: Text(
+                      t.name,
+                      style: GoogleFonts.inter(fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
           ],
           onChanged: (v) {
             setState(() {

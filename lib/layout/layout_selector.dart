@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import '../core/user_config/user_role.dart';
 import 'customer/customer_layout.dart';
 import 'others/others_layout.dart';
@@ -16,23 +16,24 @@ class LayoutSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
+    Widget layout;
     switch (userRole) {
-
       case UserRole.customer:
-
-        return CustomerLayout(
+        layout = CustomerLayout(
           userRole: userRole,
           child: child,
         );
-
+        break;
       case UserRole.superAdmin:
       case UserRole.companyAdmin:
-
-        return OthersLayout(
+        layout = OthersLayout(
           userRole: userRole,
           child: child,
         );
+        break;
     }
+    return SelectionArea(
+      child: layout,
+    );
   }
 }

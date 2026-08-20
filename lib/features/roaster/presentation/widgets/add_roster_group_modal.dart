@@ -63,10 +63,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
       if (isSuperAdmin) {
         await _loadCompanies();
         if (_selectedCompany == null) {
-          final company = CompanyAutocomplete(
-            id: 216,
-            name: 'Air Water',
-          );
+          final company = CompanyAutocomplete(id: 216, name: 'Air Water');
           if (mounted) {
             setState(() {
               _selectedCompany = company;
@@ -125,7 +122,9 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
       debugPrint('Error loading companies: $e');
       if (mounted) {
         setState(() {
-          _companies = widget.initialCompany != null ? [widget.initialCompany!] : [];
+          _companies = widget.initialCompany != null
+              ? [widget.initialCompany!]
+              : [];
           _isLoadingCompanies = false;
         });
       }
@@ -235,8 +234,7 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
       final error = ref.read(assetGroupProvider).error;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-              'Failed to create group: ${error ?? "Unknown error"}'),
+          content: Text('Failed to create group: ${error ?? "Unknown error"}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -246,13 +244,15 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
   void _addSelectedUser() {
     if (_selectedUserToAdd == null) return;
     setState(() {
-      _assignedUsers.add(AssetGroupUser(
-        userId: _selectedUserToAdd!.userId,
-        username: _selectedUserToAdd!.username,
-        firstName: _selectedUserToAdd!.firstName,
-        lastName: _selectedUserToAdd!.lastName,
-        roleName: _selectedUserToAdd!.roleName,
-      ));
+      _assignedUsers.add(
+        AssetGroupUser(
+          userId: _selectedUserToAdd!.userId,
+          username: _selectedUserToAdd!.username,
+          firstName: _selectedUserToAdd!.firstName,
+          lastName: _selectedUserToAdd!.lastName,
+          roleName: _selectedUserToAdd!.roleName,
+        ),
+      );
       _userConfigs[_selectedUserToAdd!.userId] = _UserConfig(
         userId: _selectedUserToAdd!.userId,
       );
@@ -282,314 +282,324 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
         ),
         child: SafeArea(
           child: SizedBox(
-            width: MediaQuery.of(context).size.width < 640 ? MediaQuery.of(context).size.width : 640,
+            width: MediaQuery.of(context).size.width < 640
+                ? MediaQuery.of(context).size.width
+                : 640,
             height: MediaQuery.of(context).size.height,
             child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(
-                    horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
-                    vertical: MediaQuery.of(context).size.width < 600 ? 24 : 40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ── Header ─────────────────────────────────────────
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Create Roster Group',
-                                style: GoogleFonts.outfit(
-                                  fontSize: MediaQuery.of(context).size.width < 600 ? 22 : 26,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF111827),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Define group info and assign users with notifications.',
-                                style: GoogleFonts.inter(
-                                  fontSize: MediaQuery.of(context).size.width < 600 ? 12 : 13,
-                                  color: const Color(0xFF6B7280),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        IconButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close_rounded),
-                          style: IconButton.styleFrom(
-                            backgroundColor: const Color(0xFFF3F4F6),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-
-                    // ── GROUP NAME ─────────────────────────────────────
-                    _buildLabel('GROUP NAME*'),
-                    const SizedBox(height: 10),
-                    AppTextField(
-                      controller: _nameController,
-                      hint: 'e.g. Battery Maintenance Group',
-                    ),
-                    const SizedBox(height: 24),
-
-                    // ── DESCRIPTION ────────────────────────────────────
-                    _buildLabel('DESCRIPTION'),
-                    const SizedBox(height: 10),
-                    AppTextField(
-                      controller: _descController,
-                      hint: 'e.g. Roster group for notifications',
-                    ),
-                    const SizedBox(height: 24),
-
-                    // ── ASSIGN USERS (always visible) ──────────────────
-                    _buildLabel('ASSIGN USERS'),
-                    const SizedBox(height: 10),
-
-                    // User selector row: dropdown + Add button
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isNarrow = constraints.maxWidth < 500;
-                        final dropdownField = _selectedCompany == null
-                            ? _buildDisabledDropdown(
-                          isSuperAdmin
-                              ? 'Select a company first…'
-                              : 'Loading users…',
-                        )
-                            : _isLoadingUsers
-                            ? _buildLoadingDropdown()
-                            : _buildUserDropdown(eligibleUsers);
-
-                        final addButton = SizedBox(
-                          height: 50,
-                          child: ElevatedButton.icon(
-                            onPressed:
-                            (_selectedCompany == null ||
-                                _selectedUserToAdd == null ||
-                                _isLoadingUsers)
-                                ? null
-                                : _addSelectedUser,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primary,
-                              foregroundColor: Colors.white,
-                              disabledBackgroundColor:
-                              const Color(0xFFE5E7EB),
-                              disabledForegroundColor:
-                              const Color(0xFF9CA3AF),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                  BorderRadius.circular(10)),
-                              elevation: 0,
-                            ),
-                            icon: const Icon(Icons.person_add_alt_1,
-                                size: 18),
-                            label: Text(
-                              'Add User',
-                              style: GoogleFonts.outfit(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        );
-
-                        if (isNarrow) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              dropdownField,
-                              const SizedBox(height: 12),
-                              addButton,
-                            ],
-                          );
-                        }
-
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+              padding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width < 600 ? 16 : 40,
+                vertical: MediaQuery.of(context).size.width < 600 ? 24 : 40,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Header ─────────────────────────────────────────
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(child: dropdownField),
-                            const SizedBox(width: 12),
+                            Text(
+                              'Create Roster Group',
+                              style: GoogleFonts.outfit(
+                                fontSize:
+                                    MediaQuery.of(context).size.width < 600
+                                    ? 22
+                                    : 26,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF111827),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Define group info and assign users with notifications.',
+                              style: GoogleFonts.inter(
+                                fontSize:
+                                    MediaQuery.of(context).size.width < 600
+                                    ? 12
+                                    : 13,
+                                color: const Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close_rounded),
+                        style: IconButton.styleFrom(
+                          backgroundColor: const Color(0xFFF3F4F6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  // ── GROUP NAME ─────────────────────────────────────
+                  _buildLabel('ROSTER NAME*'),
+                  const SizedBox(height: 10),
+                  AppTextField(
+                    controller: _nameController,
+                    hint: 'e.g. Battery Maintenance Group',
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── DESCRIPTION ────────────────────────────────────
+                  _buildLabel('DESCRIPTION'),
+                  const SizedBox(height: 10),
+                  AppTextField(
+                    controller: _descController,
+                    hint: 'e.g. Roster group for notifications',
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── ASSIGN USERS (always visible) ──────────────────
+                  _buildLabel('ASSIGN USERS'),
+                  const SizedBox(height: 10),
+
+                  // User selector row: dropdown + Add button
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 500;
+                      final dropdownField = _selectedCompany == null
+                          ? _buildDisabledDropdown(
+                              isSuperAdmin
+                                  ? 'Select a company first…'
+                                  : 'Loading users…',
+                            )
+                          : _isLoadingUsers
+                          ? _buildLoadingDropdown()
+                          : _buildUserDropdown(eligibleUsers);
+
+                      final addButton = SizedBox(
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed:
+                              (_selectedCompany == null ||
+                                  _selectedUserToAdd == null ||
+                                  _isLoadingUsers)
+                              ? null
+                              : _addSelectedUser,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primary,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: const Color(0xFFE5E7EB),
+                            disabledForegroundColor: const Color(0xFF9CA3AF),
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.person_add_alt_1, size: 18),
+                          label: Text(
+                            'Add User',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      );
+
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            dropdownField,
+                            const SizedBox(height: 12),
                             addButton,
                           ],
                         );
-                      },
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: dropdownField),
+                          const SizedBox(width: 12),
+                          addButton,
+                        ],
+                      );
+                    },
+                  ),
+
+                  // Hint when company users are empty
+                  if (_selectedCompany != null &&
+                      !_isLoadingUsers &&
+                      _companyUsers.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            size: 14,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'No users found for this company.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: const Color(0xFF9CA3AF),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
-                    // Hint when company users are empty
-                    if (_selectedCompany != null &&
-                        !_isLoadingUsers &&
-                        _companyUsers.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.info_outline,
-                                size: 14, color: Color(0xFF9CA3AF)),
-                            const SizedBox(width: 6),
-                            Text(
-                              'No users found for this company.',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: const Color(0xFF9CA3AF),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    // ── Assigned users notification table ───────────────
-                    if (_assignedUsers.isNotEmpty) ...[
-                      const SizedBox(height: 20),
-                      LayoutBuilder(
-                          builder: (context, constraints) {
-                            final isMobile = constraints.maxWidth < 550;
-                            return Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF8FAFF),
-                                borderRadius: BorderRadius.circular(12),
-                                border:
-                                Border.all(color: const Color(0xFFDDE1FF)),
-                              ),
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                  // ── Assigned users notification table ───────────────
+                  if (_assignedUsers.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isMobile = constraints.maxWidth < 550;
+                        return Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFF),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFDDE1FF)),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Sub-header
+                              Row(
                                 children: [
-                                  // Sub-header
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.notifications_active_outlined,
-                                        size: 15,
+                                  Icon(
+                                    Icons.notifications_active_outlined,
+                                    size: 15,
+                                    color: primary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'NOTIFICATION SETTINGS',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: primary,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: primary.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      '${_assignedUsers.length} user${_assignedUsers.length == 1 ? '' : 's'}',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
                                         color: primary,
                                       ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'NOTIFICATION SETTINGS',
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: primary,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: primary
-                                              .withValues(alpha: 0.08),
-                                          borderRadius:
-                                          BorderRadius.circular(20),
-                                        ),
-                                        child: Text(
-                                          '${_assignedUsers.length} user${_assignedUsers.length == 1 ? '' : 's'}',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: primary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Divider(height: 1),
-                                  const SizedBox(height: 8),
-
-                                  // Column headers
-                                  if (!isMobile) ...[
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 3,
-                                          child: Text(
-                                            'USER',
-                                            style: GoogleFonts.outfit(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w700,
-                                              color: const Color(0xFF6B7280),
-                                              letterSpacing: 1.0,
-                                            ),
-                                          ),
-                                        ),
-                                        _tableHeader('EMAIL'),
-                                        _tableHeader('PUSH'),
-                                        _tableHeader('SMS'),
-                                        _tableHeaderWide('TEMPLATE'),
-                                        const SizedBox(width: 36),
-                                      ],
                                     ),
-                                    const Divider(height: 1),
-                                  ],
-
-                                  // User rows
-                                  ListView.separated(
-                                    shrinkWrap: true,
-                                    physics:
-                                    const NeverScrollableScrollPhysics(),
-                                    itemCount: _assignedUsers.length,
-                                    separatorBuilder: (_, __) =>
-                                    const Divider(height: 1),
-                                    itemBuilder: (_, i) =>
-                                        _buildUserRow(_assignedUsers[i], isMobile),
                                   ),
                                 ],
                               ),
-                            );
-                          }
-                      ),
-                    ],
+                              const SizedBox(height: 12),
+                              const Divider(height: 1),
+                              const SizedBox(height: 8),
 
-                    const SizedBox(height: 32),
+                              // Column headers
+                              if (!isMobile) ...[
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 3,
+                                      child: Text(
+                                        'USER',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF6B7280),
+                                          letterSpacing: 1.0,
+                                        ),
+                                      ),
+                                    ),
+                                    _tableHeader('EMAIL'),
+                                    _tableHeader('PUSH'),
+                                    _tableHeader('SMS'),
+                                    _tableHeaderWide('TEMPLATE'),
+                                    const SizedBox(width: 36),
+                                  ],
+                                ),
+                                const Divider(height: 1),
+                              ],
 
-                    // ── CREATE GROUP button ─────────────────────────────
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: state.isProcessing ? null : _save,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16)),
-                          elevation: 2,
-                        ),
-                        child: state.isProcessing
-                            ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
-                        )
-                            : Text(
-                          'CREATE GROUP',
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
+                              // User rows
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _assignedUsers.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (_, i) =>
+                                    _buildUserRow(_assignedUsers[i], isMobile),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ],
-                ),
+
+                  const SizedBox(height: 32),
+
+                  // ── CREATE GROUP button ─────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: state.isProcessing ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: state.isProcessing
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'CREATE GROUP',
+                              style: GoogleFonts.outfit(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
+      ),
     );
   }
 
@@ -605,17 +615,21 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          const Icon(Icons.person_search_outlined,
-              size: 18, color: Color(0xFFD1D5DB)),
+          const Icon(
+            Icons.person_search_outlined,
+            size: 18,
+            color: Color(0xFFD1D5DB),
+          ),
           const SizedBox(width: 8),
           Text(
             hint,
             style: GoogleFonts.inter(
-                fontSize: 13, color: const Color(0xFFD1D5DB)),
+              fontSize: 13,
+              color: const Color(0xFFD1D5DB),
+            ),
           ),
           const Spacer(),
-          const Icon(Icons.arrow_drop_down,
-              color: Color(0xFFD1D5DB)),
+          const Icon(Icons.arrow_drop_down, color: Color(0xFFD1D5DB)),
         ],
       ),
     );
@@ -642,7 +656,9 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           Text(
             'Loading users…',
             style: GoogleFonts.inter(
-                fontSize: 13, color: const Color(0xFF6B7280)),
+              fontSize: 13,
+              color: const Color(0xFF6B7280),
+            ),
           ),
         ],
       ),
@@ -659,22 +675,18 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           : null,
       selectedItemBuilder: (BuildContext context) {
         return eligibleUsers.map<Widget>((u) {
-          final parts = [u.firstName, u.lastName]
-              .whereType<String>()
-              .where((s) => s.isNotEmpty)
-              .toList();
-          final displayName =
-              parts.isNotEmpty ? parts.join(', ') : u.username;
+          final parts = [
+            u.firstName,
+            u.lastName,
+          ].whereType<String>().where((s) => s.isNotEmpty).toList();
+          final displayName = parts.isNotEmpty ? parts.join(', ') : u.username;
           return Row(
             children: [
               CircleAvatar(
                 radius: 12,
-                backgroundColor:
-                    primary.withValues(alpha: 0.08),
+                backgroundColor: primary.withValues(alpha: 0.08),
                 child: Text(
-                  displayName.isNotEmpty
-                      ? displayName[0].toUpperCase()
-                      : '?',
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                   style: GoogleFonts.outfit(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
@@ -702,28 +714,23 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
         eligibleUsers.isEmpty
             ? 'All users already assigned'
             : 'Select a user to assign…',
-        style:
-            GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
+        style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9CA3AF)),
       ),
       items: eligibleUsers.map((u) {
-        final parts = [u.firstName, u.lastName]
-            .whereType<String>()
-            .where((s) => s.isNotEmpty)
-            .toList();
-        final displayName =
-            parts.isNotEmpty ? parts.join(', ') : u.username;
+        final parts = [
+          u.firstName,
+          u.lastName,
+        ].whereType<String>().where((s) => s.isNotEmpty).toList();
+        final displayName = parts.isNotEmpty ? parts.join(', ') : u.username;
         return DropdownMenuItem(
           value: u,
           child: Row(
             children: [
               CircleAvatar(
                 radius: 14,
-                backgroundColor:
-                    primary.withValues(alpha: 0.08),
+                backgroundColor: primary.withValues(alpha: 0.08),
                 child: Text(
-                  displayName.isNotEmpty
-                      ? displayName[0].toUpperCase()
-                      : '?',
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -740,13 +747,17 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                     Text(
                       displayName,
                       style: GoogleFonts.inter(
-                          fontSize: 13, fontWeight: FontWeight.w600),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       u.roleName ?? 'User',
                       style: GoogleFonts.inter(
-                          fontSize: 11, color: const Color(0xFF6B7280)),
+                        fontSize: 11,
+                        color: const Color(0xFF6B7280),
+                      ),
                     ),
                   ],
                 ),
@@ -759,18 +770,15 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           ? null
           : (v) => setState(() => _selectedUserToAdd = v),
       decoration: InputDecoration(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        border:
-            OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide:
-              BorderSide(color: primary, width: 1.5),
+          borderSide: BorderSide(color: primary, width: 1.5),
         ),
         fillColor: Colors.white,
         filled: true,
@@ -781,12 +789,11 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
   // ─── Single assigned user row ──────────────────────────────────────────────
   Widget _buildUserRow(AssetGroupUser user, bool isMobile) {
     final cfg = _userConfigs[user.userId]!;
-    final parts = [user.firstName, user.lastName]
-        .whereType<String>()
-        .where((s) => s.isNotEmpty)
-        .toList();
-    final displayName =
-        parts.isNotEmpty ? parts.join(', ') : user.username;
+    final parts = [
+      user.firstName,
+      user.lastName,
+    ].whereType<String>().where((s) => s.isNotEmpty).toList();
+    final displayName = parts.isNotEmpty ? parts.join(', ') : user.username;
 
     if (isMobile) {
       return Container(
@@ -837,16 +844,24 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                 IconButton(
                   onPressed: () {
                     setState(() {
-                      _assignedUsers.removeWhere((g) => g.userId == user.userId);
+                      _assignedUsers.removeWhere(
+                        (g) => g.userId == user.userId,
+                      );
                       _userConfigs.remove(user.userId);
                     });
                   },
-                  icon: const Icon(Icons.close_rounded, color: Colors.red, size: 16),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: Colors.red,
+                    size: 16,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.red.withValues(alpha: 0.08),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
                 ),
               ],
@@ -856,13 +871,19 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildMobileToggle('EMAIL', cfg.email, (v) {
-                  setState(() => _userConfigs[user.userId] = cfg.copyWith(email: v));
+                  setState(
+                    () => _userConfigs[user.userId] = cfg.copyWith(email: v),
+                  );
                 }),
                 _buildMobileToggle('PUSH', cfg.push, (v) {
-                  setState(() => _userConfigs[user.userId] = cfg.copyWith(push: v));
+                  setState(
+                    () => _userConfigs[user.userId] = cfg.copyWith(push: v),
+                  );
                 }),
                 _buildMobileToggle('SMS', cfg.sms, (v) {
-                  setState(() => _userConfigs[user.userId] = cfg.copyWith(sms: v));
+                  setState(
+                    () => _userConfigs[user.userId] = cfg.copyWith(sms: v),
+                  );
                 }),
               ],
             ),
@@ -884,12 +905,9 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
               children: [
                 CircleAvatar(
                   radius: 15,
-                  backgroundColor:
-                      primary.withValues(alpha: 0.08),
+                  backgroundColor: primary.withValues(alpha: 0.08),
                   child: Text(
-                    displayName.isNotEmpty
-                        ? displayName[0].toUpperCase()
-                        : '?',
+                    displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
                     style: GoogleFonts.outfit(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -929,20 +947,17 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
 
           // Email toggle
           _toggle(cfg.email, (v) {
-            setState(() =>
-                _userConfigs[user.userId] = cfg.copyWith(email: v));
+            setState(() => _userConfigs[user.userId] = cfg.copyWith(email: v));
           }),
 
           // Push toggle
           _toggle(cfg.push, (v) {
-            setState(
-                () => _userConfigs[user.userId] = cfg.copyWith(push: v));
+            setState(() => _userConfigs[user.userId] = cfg.copyWith(push: v));
           }),
 
           // SMS toggle
           _toggle(cfg.sms, (v) {
-            setState(
-                () => _userConfigs[user.userId] = cfg.copyWith(sms: v));
+            setState(() => _userConfigs[user.userId] = cfg.copyWith(sms: v));
           }),
 
           // Template dropdown
@@ -962,29 +977,35 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
                   hint: Text(
                     'Template',
                     style: GoogleFonts.inter(
-                        fontSize: 11, color: const Color(0xFF9CA3AF)),
+                      fontSize: 11,
+                      color: const Color(0xFF9CA3AF),
+                    ),
                   ),
-                  icon:
-                      const Icon(Icons.arrow_drop_down, size: 16),
+                  icon: const Icon(Icons.arrow_drop_down, size: 16),
                   items: [
                     DropdownMenuItem<int>(
                       value: null,
-                      child: Text('None',
-                          style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: const Color(0xFF6B7280))),
+                      child: Text(
+                        'None',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF6B7280),
+                        ),
+                      ),
                     ),
                     ...ref
                         .watch(messageTemplateProvider)
                         .templates
-                        .map((t) => DropdownMenuItem<int>(
-                              value: t.id,
-                              child: Text(
-                                t.name,
-                                style: GoogleFonts.inter(fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )),
+                        .map(
+                          (t) => DropdownMenuItem<int>(
+                            value: t.id,
+                            child: Text(
+                              t.name,
+                              style: GoogleFonts.inter(fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
                   ],
                   onChanged: (v) {
                     setState(() {
@@ -1007,19 +1028,22 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
             child: IconButton(
               onPressed: () {
                 setState(() {
-                  _assignedUsers
-                      .removeWhere((g) => g.userId == user.userId);
+                  _assignedUsers.removeWhere((g) => g.userId == user.userId);
                   _userConfigs.remove(user.userId);
                 });
               },
-              icon: const Icon(Icons.close_rounded,
-                  color: Colors.red, size: 16),
+              icon: const Icon(
+                Icons.close_rounded,
+                color: Colors.red,
+                size: 16,
+              ),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
               style: IconButton.styleFrom(
                 backgroundColor: Colors.red.withValues(alpha: 0.08),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6)),
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
             ),
           ),
@@ -1027,9 +1051,6 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
       ),
     );
   }
-
-
-
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
   Widget _buildLabel(String text) {
@@ -1095,7 +1116,11 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
     );
   }
 
-  Widget _buildMobileToggle(String label, bool value, ValueChanged<bool> onChanged) {
+  Widget _buildMobileToggle(
+    String label,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
     return Column(
       children: [
         Text(
@@ -1136,7 +1161,10 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
           value: cfg.messageTemplateId,
           hint: Text(
             'Select message template…',
-            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF9CA3AF)),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: const Color(0xFF9CA3AF),
+            ),
           ),
           icon: const Icon(Icons.arrow_drop_down, size: 20),
           items: [
@@ -1144,20 +1172,25 @@ class _AddRosterGroupModalState extends ConsumerState<AddRosterGroupModal> {
               value: null,
               child: Text(
                 'No template',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: const Color(0xFF6B7280),
+                ),
               ),
             ),
             ...ref
                 .watch(messageTemplateProvider)
                 .templates
-                .map((t) => DropdownMenuItem<int>(
-                      value: t.id,
-                      child: Text(
-                        t.name,
-                        style: GoogleFonts.inter(fontSize: 12),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    )),
+                .map(
+                  (t) => DropdownMenuItem<int>(
+                    value: t.id,
+                    child: Text(
+                      t.name,
+                      style: GoogleFonts.inter(fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
           ],
           onChanged: (v) {
             setState(() {

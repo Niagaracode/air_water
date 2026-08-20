@@ -129,59 +129,61 @@ class _DeviceWideState extends ConsumerState<DeviceWide> {
     final notifier = ref.read(deviceNotifierProvider.notifier);
 
     return Scaffold(
-      body: Column(
-        children: [
-          _buildHeader(context),
-          /*Padding(
-            padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
-            child: _buildFilterRow(state, notifier),
-          ),*/
+      body: SelectionArea(
+        child: Column(
+          children: [
+            _buildHeader(context),
+            /*Padding(
+              padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
+              child: _buildFilterRow(state, notifier),
+            ),*/
 
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final tableWidth = constraints.maxWidth > 1200
-                    ? constraints.maxWidth
-                    : 1200.0;
-                return Scrollbar(
-                  controller: _scrollController,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: SizedBox(
-                      width: tableWidth,
-                      child: Column(
-                        children: [
-                          if (!state.isLoading ||
-                              state.groupedDevices.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24.0,
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final tableWidth = constraints.maxWidth > 1200
+                      ? constraints.maxWidth
+                      : 1200.0;
+                  return Scrollbar(
+                    controller: _scrollController,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: tableWidth,
+                        child: Column(
+                          children: [
+                            if (!state.isLoading ||
+                                state.groupedDevices.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24.0,
+                                ),
+                                child: _buildFixedTableHeader(),
                               ),
-                              child: _buildFixedTableHeader(),
+                            Expanded(
+                              child:
+                              state.isLoading && state.groupedDevices.isEmpty
+                                  ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFF141E7A),
+                                ),
+                              )
+                                  : _buildVirtualizedTable(state, notifier),
                             ),
-                          Expanded(
-                            child:
-                            state.isLoading && state.groupedDevices.isEmpty
-                                ? const Center(
-                              child: CircularProgressIndicator(
-                                color: Color(0xFF141E7A),
-                              ),
-                            )
-                                : _buildVirtualizedTable(state, notifier),
-                          ),
-                          if (state.isLoading &&
-                              state.groupedDevices.isNotEmpty)
-                            const AppTableLoadingMore(),
-                        ],
+                            if (state.isLoading &&
+                                state.groupedDevices.isNotEmpty)
+                              const AppTableLoadingMore(),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }

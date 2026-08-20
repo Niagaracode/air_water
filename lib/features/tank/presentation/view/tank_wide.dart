@@ -219,8 +219,9 @@ class _TankWideState extends ConsumerState<TankWide> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
+      body: SelectionArea(
+        child: Column(
+          children: [
           _buildHeader(context),
           /*Padding(
             padding: const EdgeInsets.only(left: 30, bottom: 12, right: 24),
@@ -263,7 +264,8 @@ class _TankWideState extends ConsumerState<TankWide> {
           const SizedBox(height: 24),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildVirtualizedTable(TankState state, TankNotifier notifier) {
