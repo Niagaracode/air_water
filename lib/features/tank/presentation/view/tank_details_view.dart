@@ -48,10 +48,8 @@ class _TankDetailsViewState extends ConsumerState<TankDetailsView>
   DateTime? customStartDate;
   DateTime? customEndDate;
 
-  bool get isCustomSelected =>
-      customStartDate != null &&
-          customEndDate != null &&
-          selectedSegment.isEmpty;
+  bool get isCustomSelected => customStartDate != null &&
+          customEndDate != null && selectedSegment.isEmpty;
 
   @override
   void initState() {

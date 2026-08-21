@@ -10,6 +10,17 @@ import '../presentation/widgets/edit_roster_group_modal.dart';
 import '../../../../shared/widgets/app_table.dart';
 import '../../user/presentation/controller/user_provider.dart';
 
+/// -------- Shared style constants (avoids re-allocating on every rebuild) --------
+class _RosterColors {
+  static const bg = Color(0xFFF8FAFC);
+  static const iconTint = Color(0xFF141E7A);
+  static const heading = Color(0xFF111827);
+  static const subText = Color(0xFF6B7280);
+  static const rowTitle = Color(0xFF1F2937);
+  static const rowDivider = Color(0xFFF3F4F6);
+  static const emptyIcon = Color(0xFF9CA3AF);
+}
+
 class RoasterWide extends ConsumerStatefulWidget {
   const RoasterWide({super.key});
 
@@ -26,21 +37,29 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     });
   }
 
+  void _openAddGroupModal() {
+    _showSlideInDialog(const AddRosterGroupModal());
+  }
+
   void _editGroup(AssetGroupModel group) {
+    _showSlideInDialog(EditRosterGroupModal(group: group));
+  }
+
+  /// Shared slide-in-from-right dialog transition so Add/Edit stay consistent.
+  void _showSlideInDialog(Widget page) {
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Dismiss',
       barrierColor: Colors.black.withValues(alpha: 0.5),
       transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) =>
-          EditRosterGroupModal(group: group),
+      pageBuilder: (context, anim1, anim2) => page,
       transitionBuilder: (context, anim1, anim2, child) {
         return SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(1, 0),
             end: Offset.zero,
-          ).animate(anim1),
+          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic)),
           child: child,
         );
       },
@@ -68,30 +87,28 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       ),
     );
 
-    if (confirm == true && group.id != null) {
-      final success = await ref
-          .read(assetGroupProvider.notifier)
-          .deleteGroup(group.id!);
-      if (success) {
-        ref.read(rosterGroupProvider.notifier).loadGroups();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Roster group deleted successfully')),
-          );
-        }
-      } else {
-        if (mounted) {
-          final error = ref.read(assetGroupProvider).error;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Failed to delete group: ${error ?? "Unknown error"}',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
+    if (confirm != true || group.id == null) return;
+    if (!mounted) return;
+
+    final success = await ref
+        .read(assetGroupProvider.notifier)
+        .deleteGroup(group.id!);
+
+    if (!mounted) return;
+
+    if (success) {
+      ref.read(rosterGroupProvider.notifier).loadGroups();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Roster group deleted successfully')),
+      );
+    } else {
+      final error = ref.read(assetGroupProvider).error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete group: ${error ?? "Unknown error"}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -102,20 +119,22 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     final isSuperAdmin = userState.currentUser?.roleId == 1;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: _RosterColors.bg,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildPageHeader(),
           Expanded(
-            child: groupState.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : groupState.error != null
-                ? Center(child: Text(groupState.error!))
-                : _buildGroupTable(
-                    groupState.groups.where((g) => g.status == 1).toList(),
-                    isSuperAdmin,
-                  ),
+            child: switch (groupState) {
+              _ when groupState.isLoading =>
+              const Center(child: CircularProgressIndicator()),
+              _ when groupState.error != null =>
+                  Center(child: Text(groupState.error!)),
+              _ => _buildGroupTable(
+                groupState.groups.where((g) => g.status == 1).toList(),
+                isSuperAdmin,
+              ),
+            },
           ),
         ],
       ),
@@ -124,8 +143,8 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
 
   Widget _buildPageHeader() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 16),
+      margin: const EdgeInsets.only(left: 26, right: 26, top: 26, bottom: 8),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
@@ -134,76 +153,32 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF141E7A).withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
+                Text(
+                  'ROSTER MANAGEMENT',
+                  style: GoogleFonts.outfit(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                    color: const Color(0xFF111827),
                   ),
-                  child: const Icon(
-                    Icons.people_alt_outlined,
-                    color: Color(0xFF141E7A),
-                    size: 24,
-                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'ROSTER MANAGEMENT',
-                        style: GoogleFonts.outfit(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF111827),
-                          letterSpacing: 0.5,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Select an User group to configure notifications.',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          color: const Color(0xFF6B7280),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
+                const SizedBox(height: 4),
+                Text(
+                  'Select an User group to configure notifications.',
+                  style: GoogleFonts.inter(color: Colors.black38, fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
           const SizedBox(width: 16),
           ElevatedButton.icon(
-            onPressed: () {
-              showGeneralDialog(
-                context: context,
-                barrierDismissible: true,
-                barrierLabel: 'Dismiss',
-                barrierColor: Colors.black.withValues(alpha: 0.5),
-                transitionDuration: const Duration(milliseconds: 300),
-                pageBuilder: (context, anim1, anim2) =>
-                    const AddRosterGroupModal(),
-                transitionBuilder: (context, anim1, anim2, child) {
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(1, 0),
-                      end: Offset.zero,
-                    ).animate(anim1),
-                    child: child,
-                  );
-                },
-              );
-            },
+            onPressed: _openAddGroupModal,
             icon: const Icon(Icons.add_circle_outline, size: 18),
             label: Text(
               'CREATE GROUP',
@@ -241,7 +216,7 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
             const SizedBox(height: 16),
             Text(
               'No user groups found',
-              style: GoogleFonts.inter(color: const Color(0xFF9CA3AF)),
+              style: GoogleFonts.inter(color: _RosterColors.emptyIcon),
             ),
           ],
         ),
@@ -249,13 +224,13 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
     }
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      padding: const EdgeInsets.fromLTRB(40, 0, 24, 24),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF141E7A).withValues(alpha: 0.1),
+              color: primary.withValues(alpha: 0.1),
               border: Border(
                 left: BorderSide(color: Colors.grey.shade300, width: 1),
                 right: BorderSide(color: Colors.grey.shade300, width: 1),
@@ -263,24 +238,25 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
               ),
             ),
             child: Row(
-              children: [
+              children: const [
                 AppTableHeaderCell('SI.NO', width: 60),
                 AppTableHeaderCell('GROUP NAME', flex: 2),
-
-                AppTableHeaderCell('ROSTER COUNT', width: 120),
+                AppTableHeaderCell('CONTACTS COUNT', width: 130),
                 AppTableHeaderCell('DESCRIPTION', flex: 3),
-                AppTableHeaderCell('ACTION', width: 120),
+                AppTableHeaderCell('ACTION', width: 100),
               ],
             ),
           ),
           Expanded(
             child: ListView.builder(
               itemCount: groups.length,
-              itemBuilder: (_, i) => _buildGroupRow(
-                groups[i],
-                i,
-                i == groups.length - 1,
-                isSuperAdmin,
+              itemBuilder: (_, i) => _GroupRow(
+                group: groups[i],
+                index: i,
+                isLast: i == groups.length - 1,
+                isSuperAdmin: isSuperAdmin,
+                onEdit: _editGroup,
+                onDelete: _confirmDeleteGroup,
               ),
             ),
           ),
@@ -288,116 +264,158 @@ class _RoasterWideState extends ConsumerState<RoasterWide> {
       ),
     );
   }
+}
 
-  Widget _buildGroupRow(
-    AssetGroupModel group,
-    int index,
-    bool isLast,
-    bool isSuperAdmin,
-  ) {
-    return InkWell(
-      //onTap: () => _editGroup(group),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            left: BorderSide(color: Colors.grey.shade300, width: 1),
-            right: BorderSide(color: Colors.grey.shade300, width: 1),
-            bottom: isLast
-                ? BorderSide(color: Colors.grey.shade300, width: 1)
-                : const BorderSide(color: Color(0xFFF3F4F6)),
+/// Extracted into its own widget so each row only rebuilds itself
+/// (e.g. on hover) instead of the whole list.
+class _GroupRow extends StatelessWidget {
+  const _GroupRow({
+    required this.group,
+    required this.index,
+    required this.isLast,
+    required this.isSuperAdmin,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final AssetGroupModel group;
+  final int index;
+  final bool isLast;
+  final bool isSuperAdmin;
+  final ValueChanged<AssetGroupModel> onEdit;
+  final ValueChanged<AssetGroupModel> onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final siteCriterion = group.criteria
+        .where((c) => c.parameter == 'Site Name')
+        .cast<dynamic>()
+        .firstOrNull;
+
+    final borderRadius = isLast
+        ? const BorderRadius.only(
+      bottomLeft: Radius.circular(16),
+      bottomRight: Radius.circular(16),
+    )
+        : BorderRadius.zero;
+
+    return Material(
+      color: Colors.white,
+      borderRadius: borderRadius,
+      child: InkWell(
+        onTap: () => onEdit(group),
+        hoverColor: _RosterColors.iconTint.withValues(alpha: 0.03),
+        splashColor: _RosterColors.iconTint.withValues(alpha: 0.08),
+        borderRadius: borderRadius,
+        mouseCursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: Colors.grey.shade300, width: 1),
+              right: BorderSide(color: Colors.grey.shade300, width: 1),
+              bottom: isLast
+                  ? BorderSide(color: Colors.grey.shade300, width: 1)
+                  : const BorderSide(color: _RosterColors.rowDivider),
+            ),
+            borderRadius: borderRadius,
           ),
-          borderRadius: isLast
-              ? const BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                )
-              : BorderRadius.zero,
-        ),
-        child: Row(
-          children: [
-            AppTableCell((index + 1).toString().padLeft(2), width: 60),
-
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    group.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1F2937),
-                    ),
-                  ),
-                  if (group.criteria.any((c) => c.parameter == 'Site Name'))
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Site: ${group.criteria.firstWhere((c) => c.parameter == 'Site Name').value}',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: const Color(0xFF6B7280),
-                        ),
+          child: Row(
+            children: [
+              AppTableCell((index + 1).toString().padLeft(2, '0'), width: 60),
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      group.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: _RosterColors.rowTitle,
                       ),
                     ),
-                ],
-              ),
-            ),
-
-            AppTableCell((group.rosterCount ?? 0).toString(), width: 120),
-            Expanded(
-              flex: 3,
-              child: Text(
-                group.description.isNotEmpty ? group.description : '-',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: const Color(0xFF6B7280),
+                    if (siteCriterion != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Site: ${siteCriterion.value}',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: _RosterColors.subText,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            SizedBox(
-              width: 120,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.red,
-                      size: 20,
+              SizedBox(
+                width: 130,
+                child: Center(
+                  child: Text(
+                    (group.rosterCount ?? 0).toString(),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: _RosterColors.rowTitle,
                     ),
-                    onPressed: () => _confirmDeleteGroup(group),
-                    constraints: const BoxConstraints(),
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Delete Group',
                   ),
-                  const SizedBox(width: 12),
-                  InkWell(
-                    onTap: () => _editGroup(group),
-                    child: Container(
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: Text(
+                  group.description.isNotEmpty ? group.description : '-',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: _RosterColors.subText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              SizedBox(
+                width: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      // IconButton consumes the tap itself, so this
+                      // never triggers the row's onEdit as well.
+                      onPressed: () => onDelete(group),
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                      tooltip: 'Delete Group',
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF141E7A).withValues(alpha: 0.08),
+                        color: _RosterColors.iconTint.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(
                         Icons.arrow_forward_ios_rounded,
                         size: 14,
-                        color: Color(0xFF141E7A),
+                        color: _RosterColors.iconTint,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+extension _FirstOrNull<T> on Iterable<T> {
+  T? get firstOrNull => isEmpty ? null : first;
 }
