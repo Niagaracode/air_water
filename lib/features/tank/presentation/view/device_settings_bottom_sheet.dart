@@ -64,9 +64,6 @@ class _DeviceSettingsBottomSheetState
   }
 
   /// Parses the SMS-style `cM` string into a key/value map.
-  /// e.g. "CALMF:100000,OFSET:0,CALKL:1971" ->
-  ///      {"CALMF": "100000", "OFSET": "0", "CALKL": "1971"}
-  /// Malformed trailing fragments with no colon (truncated data) are
   /// skipped rather than throwing.
   Map<String, String> _parseCmField(String cm) {
     final result = <String, String>{};
@@ -98,7 +95,7 @@ class _DeviceSettingsBottomSheetState
         _calibrationSettings = parsed;
         if (date != null && time != null) _lastUpdated = '$date  $time';
       });
-    } else if (parsed.containsKey('CH')) {
+    } else if (parsed.containsKey('SET_GAS')) {
       setState(() {
         _channelSettings = parsed;
         if (date != null && time != null) _lastUpdated = '$date  $time';
