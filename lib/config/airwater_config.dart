@@ -4,14 +4,16 @@ import 'app_config.dart';
 const airWaterConfig = AppConfig(
   appName: 'AIR WATER',
 
-  apiUrl: 'https://irrigationcare.niagaraautomation.com:4000/api',
+  // apiUrl: 'http://localhost:4000/api',
+  //apiUrl: "http://52.140.120.173:4000/api",
+  apiUrl: "https://clevel.aw-ipl.co.in:4000/api",
 
   // Web MQTTcd
-  mqttWebHost: 'irrigationcare.niagaraautomation.com',
+  mqttWebHost: 'clevel.aw-ipl.co.in',
   mqttWebPort: 9443,
 
   // Mobile MQTT
-  mqttMobileHost: 'irrigationcare.niagaraautomation.com',
+  mqttMobileHost: 'clevel.aw-ipl.co.in',
   mqttMobilePort: 8883,
   mqttSecure: true,
 
