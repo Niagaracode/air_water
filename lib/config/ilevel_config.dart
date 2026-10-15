@@ -3,19 +3,19 @@ import 'app_config.dart';
 
 const iLevelConfig = AppConfig(
   appName: 'iLevel',
-  apiUrl: 'http://localhost:4000/api',
+  apiUrl: 'https://irrigationcare.niagaraautomation.com:4000/api',
 
   // Web MQTT
   mqttWebHost: 'irrigationcare.niagaraautomation.com',
   mqttWebPort: 9443,
 
   // Mobile MQTT
-  mqttMobileHost: '3.0.229.165',
-  mqttMobilePort: 1883,
+  mqttMobileHost: 'irrigationcare.niagaraautomation.com',
+  mqttMobilePort: 8883,
   mqttSecure: false,
 
-  mqttUserName: 'niagara',
-  mqttPassword: 'niagara@123',
+  mqttUserName: 'mqttuser',
+  mqttPassword: 'Mqtt@456',
 
   encryptionKey: '0febba516bd1c549147a823b127c96e0',
   packageName: 'com.airwater.monitor',

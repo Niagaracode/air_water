@@ -6,14 +6,15 @@ const airWaterConfig = AppConfig(
 
   // apiUrl: 'http://localhost:4000/api',
   //apiUrl: "http://52.140.120.173:4000/api",
-  apiUrl: "https://clevel.aw-ipl.co.in:4000/api",
+  //apiUrl: "https://clevel.aw-ipl.co.in:4000/api",
+  apiUrl: "https://irrigationcare.niagaraautomation.com:4001/api",
 
   // Web MQTTcd
-  mqttWebHost: 'clevel.aw-ipl.co.in',
+  mqttWebHost: 'irrigationcare.niagaraautomation.com',
   mqttWebPort: 9443,
 
   // Mobile MQTT
-  mqttMobileHost: 'clevel.aw-ipl.co.in',
+  mqttMobileHost: 'irrigationcare.niagaraautomation.com',
   mqttMobilePort: 8883,
   mqttSecure: true,
 
